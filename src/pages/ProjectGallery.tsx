@@ -61,7 +61,7 @@ const ProjectGallery = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <h1 className="font-heading text-5xl md:text-6xl text-center mb-6">
-            Portfolio
+            PORTFOLIO
           </h1>
           <p className="text-center text-lg text-muted-foreground max-w-3xl mx-auto">
             Discover our carefully curated collection of interior design portfolio
