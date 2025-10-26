@@ -3,8 +3,8 @@ import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 
 const ProjectGallery = () => {
-  // Placeholder images - you can replace these with actual project images
-  const projects = [
+  // Placeholder images - you can replace these with actual portfolio images
+  const portfolio = [
     {
       id: 1,
       title: "Jumeirah Park Project",
@@ -31,15 +31,15 @@ const ProjectGallery = () => {
             Portfolio
           </h1>
           <p className="text-center text-lg text-muted-foreground max-w-3xl mx-auto">
-            Discover our carefully curated collection of interior design projects
+            Discover our carefully curated collection of interior design portfolio
           </p>
         </div>
       </section>
 
-      {/* Projects */}
+      {/* Portfolio */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-6xl">
-          {projects.map((project) => (
+          {portfolio.map((project) => (
             <div key={project.id} className="mb-24">
               {/* Project Header */}
               <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
@@ -89,11 +89,11 @@ const ProjectGallery = () => {
             </div>
           ))}
 
-          {/* Add More Projects CTA */}
+          {/* Add More Portfolio CTA */}
           <Card className="p-12 text-center bg-card/50 backdrop-blur">
-            <h3 className="font-heading text-3xl mb-4">More Projects Coming Soon</h3>
+            <h3 className="font-heading text-3xl mb-4">More Portfolio Coming Soon</h3>
             <p className="text-lg text-muted-foreground">
-              We're constantly working on new exciting projects. Check back soon for more inspiration.
+              We're constantly working on new exciting portfolio pieces. Check back soon for more inspiration.
             </p>
           </Card>
         </div>

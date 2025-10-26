@@ -25,7 +25,7 @@ const About = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
             <div className="text-center">
               <div className="text-4xl font-heading font-semibold text-primary mb-2">500+</div>
-              <div className="text-muted-foreground">Projects Completed</div>
+              <div className="text-muted-foreground">Portfolio Completed</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-heading font-semibold text-primary mb-2">100%</div>

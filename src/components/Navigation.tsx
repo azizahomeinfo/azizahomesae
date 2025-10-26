@@ -20,13 +20,13 @@ const Navigation = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <button onClick={() => scrollToSection("hero")} className="transition-smooth hover:opacity-70">
-            <img src={logo} alt="Aziza Home" className="h-10 md:h-12" />
+            <img src={logo} alt="Aziza Home" className="h-14 md:h-16" />
           </button>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              Projects
+              Portfolio
             </Link>
             <button onClick={() => scrollToSection("packages")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               Packages
@@ -53,7 +53,7 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 flex flex-col gap-4">
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              Projects
+              Portfolio
             </Link>
             <button onClick={() => scrollToSection("packages")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left">
               Packages
