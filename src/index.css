@@ -8,38 +8,38 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Japandi Color Palette - Warm Neutrals */
-    --background: 30 25% 96%;
+    /* Custom Color Palette */
+    --background: 32 22% 53%;
     --foreground: 30 15% 15%;
 
-    --card: 0 0% 100%;
+    --card: 32 20% 48%;
     --card-foreground: 30 15% 15%;
 
-    --popover: 0 0% 100%;
+    --popover: 32 20% 48%;
     --popover-foreground: 30 15% 15%;
 
-    /* Dark Forest Green - Primary */
-    --primary: 140 40% 18%;
+    /* Dark Olive Green - Primary */
+    --primary: 68 16% 22%;
     --primary-foreground: 30 25% 96%;
 
-    /* Warm Beige - Secondary */
-    --secondary: 30 20% 88%;
+    /* Warm Tan - Secondary */
+    --secondary: 32 18% 58%;
     --secondary-foreground: 30 15% 15%;
 
-    /* Light Taupe - Muted */
-    --muted: 30 15% 90%;
-    --muted-foreground: 30 12% 45%;
+    /* Light Beige - Muted */
+    --muted: 32 20% 60%;
+    --muted-foreground: 30 12% 35%;
 
-    /* Soft Terracotta - Accent */
-    --accent: 15 50% 65%;
-    --accent-foreground: 30 15% 15%;
+    /* Accent */
+    --accent: 68 16% 28%;
+    --accent-foreground: 30 25% 96%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 30 15% 85%;
-    --input: 30 15% 85%;
-    --ring: 140 40% 18%;
+    --border: 68 16% 30%;
+    --input: 32 18% 45%;
+    --ring: 68 16% 22%;
 
     --radius: 0.25rem;
 
@@ -70,7 +70,7 @@ All colors MUST be HSL.
     --popover: 30 10% 15%;
     --popover-foreground: 30 25% 96%;
 
-    --primary: 140 40% 25%;
+    --primary: 68 16% 22%;
     --primary-foreground: 30 25% 96%;
 
     --secondary: 30 10% 20%;
@@ -79,15 +79,15 @@ All colors MUST be HSL.
     --muted: 30 10% 20%;
     --muted-foreground: 30 15% 60%;
 
-    --accent: 15 50% 55%;
+    --accent: 68 16% 28%;
     --accent-foreground: 30 25% 96%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 30 25% 96%;
 
-    --border: 30 10% 25%;
+    --border: 68 16% 30%;
     --input: 30 10% 25%;
-    --ring: 140 40% 25%;
+    --ring: 68 16% 22%;
     --sidebar-background: 30 10% 12%;
     --sidebar-foreground: 30 25% 96%;
     --sidebar-primary: 75 35% 35%;

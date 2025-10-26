@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/aziza-logo.png";
 import { CartDrawer } from "./CartDrawer";
 
@@ -24,9 +25,9 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <button onClick={() => scrollToSection("projects")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
+            <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               Projects
-            </button>
+            </Link>
             <button onClick={() => scrollToSection("packages")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               Packages
             </button>
@@ -51,9 +52,9 @@ const Navigation = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 flex flex-col gap-4">
-            <button onClick={() => scrollToSection("projects")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left">
+            <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
               Projects
-            </button>
+            </Link>
             <button onClick={() => scrollToSection("packages")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left">
               Packages
             </button>
