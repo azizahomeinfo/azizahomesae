@@ -1,7 +1,7 @@
 import portfolio13New from "@/assets/portfolio-1-3.jpg";
 import diningNew from "@/assets/dining-new.jpg";
 import portfolio18 from "@/assets/portfolio-18.jpg";
-import portfolio16 from "@/assets/portfolio-16.jpg";
+import bedroomNew from "@/assets/bedroom-new.jpg";
 
 const projects = [
   {
@@ -27,10 +27,10 @@ const projects = [
   },
   {
     id: 4,
-    title: "Modern Kitchen Design",
-    category: "Kitchen",
-    image: portfolio16,
-    description: "Clean lines and functional elegance combine in this thoughtfully designed modern kitchen space",
+    title: "Serene Bedroom Retreat",
+    category: "Bedroom",
+    image: bedroomNew,
+    description: "Tranquil sanctuary featuring textured wall art, statement bubble lighting, and warm neutral tones",
   },
 ];
 
