@@ -3,6 +3,8 @@ import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import portfolio1 from "@/assets/portfolio-1.jpg";
 import portfolio12 from "@/assets/portfolio-1-2.jpg";
+import portfolio13New from "@/assets/portfolio-1-3.jpg";
+import portfolio192 from "@/assets/portfolio-19-2.jpg";
 import portfolio2 from "@/assets/portfolio-2.jpeg";
 import portfolio3 from "@/assets/portfolio-3.jpeg";
 import portfolio4 from "@/assets/portfolio-4.jpeg";
@@ -29,8 +31,8 @@ const ProjectGallery = () => {
       title: "Palace Emaar Beachfront",
       description: "A serene two-bedroom apartment at Palace Emaar Beachfront, designed in a classic yet minimalist style that blends warmth and sophistication. Soft neutral tones, walnut finishes, and sculptural furniture create a calm, refined atmosphere, while natural light and clean lines highlight the spacious layout and marina views — reflecting timeless coastal elegance with a modern Dubai touch.",
       images: [
-        portfolio15,
-        portfolio12,
+        portfolio13New,
+        portfolio192,
         portfolio10,
         portfolio13,
         portfolio14,
@@ -39,6 +41,8 @@ const ProjectGallery = () => {
         portfolio16,
         portfolio20,
         portfolio17,
+        portfolio15,
+        portfolio12,
         portfolio19,
         portfolio1,
         portfolio2,
