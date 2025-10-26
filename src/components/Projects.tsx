@@ -1,29 +1,29 @@
 import portfolio13New from "@/assets/portfolio-1-3.jpg";
-import portfolio192 from "@/assets/portfolio-19-2.jpg";
+import diningNew from "@/assets/dining-new.jpg";
 import portfolio18 from "@/assets/portfolio-18.jpg";
 import portfolio16 from "@/assets/portfolio-16.jpg";
 
 const projects = [
   {
     id: 1,
-    title: "Palace Emaar Beachfront - Living Room",
+    title: "Sophisticated Living Space",
     category: "Living Room",
     image: portfolio13New,
-    description: "Sophisticated living space featuring sculptural furniture and warm walnut tones, perfectly balanced with coastal views",
+    description: "Sculptural furniture and warm walnut tones perfectly balanced with elegant coastal views",
   },
   {
     id: 2,
     title: "Elegant Dining Experience",
     category: "Dining",
-    image: portfolio192,
-    description: "Refined dining area with classic design elements and natural light creating an inviting atmosphere",
+    image: diningNew,
+    description: "Organic forms meet minimalist design with a stunning marble table and natural wood accents",
   },
   {
     id: 3,
-    title: "Contemporary Bedroom Suite",
-    category: "Bedroom",
+    title: "Contemporary TV Media Wall",
+    category: "TV Media Wall",
     image: portfolio18,
-    description: "Serene bedroom retreat with soft neutral tones and minimalist aesthetic for ultimate relaxation",
+    description: "Modern entertainment center featuring clean paneling and integrated lighting for a refined look",
   },
   {
     id: 4,
