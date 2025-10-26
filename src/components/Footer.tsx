@@ -3,9 +3,6 @@ import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail, Clock } from "lucid
 import { Button } from "./ui/button";
 
 const Footer = () => {
-  const whatsappNumber = "+971559779635";
-  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`;
-
   return (
     <>
       <footer className="bg-primary text-primary-foreground py-12">
@@ -62,7 +59,7 @@ const Footer = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone className="w-4 h-4 flex-shrink-0" />
-                  <a href={`tel:${whatsappNumber}`} className="hover:opacity-100 transition-opacity">0559779635</a>
+                  <a href="tel:+971559779635" className="hover:opacity-100 transition-opacity">0559779635</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail className="w-4 h-4 flex-shrink-0" />
@@ -84,7 +81,7 @@ const Footer = () => {
 
       {/* WhatsApp Floating Button */}
       <a
-        href={whatsappLink}
+        href="https://wa.me/971559779635"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#20BA5A] rounded-full flex items-center justify-center shadow-lg transition-colors group"
