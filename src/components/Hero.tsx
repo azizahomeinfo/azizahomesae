@@ -34,7 +34,7 @@ const Hero = () => {
   return (
     <>
       {/* Showcase Video Section */}
-      <section className="relative w-full h-[70vh] md:h-[80vh] lg:h-[85vh] overflow-hidden">
+      <section className="relative w-full h-screen overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
