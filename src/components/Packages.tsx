@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import packageImage from "@/assets/package-complete.jpg";
+import packageImage from "@/assets/package-complete-new.jpg";
 import { Button } from "@/components/ui/button";
 import { Check, ShoppingCart } from "lucide-react";
 import { getProducts, ShopifyProduct } from "@/lib/shopify";
