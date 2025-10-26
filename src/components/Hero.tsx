@@ -43,17 +43,17 @@ const Hero = () => {
           playsInline
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/30 to-background/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/5 via-background/20 to-background" />
       </section>
 
-      <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden -mt-32">
         <div className="absolute inset-0">
           <img src={heroImage} alt="Minimalist Japandi interior design" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/50 to-background/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background/80" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4 text-center">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-semibold text-foreground mb-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-semibold text-foreground mb-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 uppercase tracking-wide">
           Timeless Elegance,<br />Minimalist Beauty
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
