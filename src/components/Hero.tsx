@@ -1,4 +1,4 @@
-import heroImage from "@/assets/hero-image.jpg";
+import heroImage from "@/assets/hero-image-new.jpg";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef } from "react";
 import Hls from "hls.js";
@@ -48,7 +48,7 @@ const Hero = () => {
 
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden -mt-32">
         <div className="absolute inset-0">
-          <img src={heroImage} alt="Minimalist Japandi interior design" className="w-full h-full object-cover" />
+          <img src={heroImage} alt="Minimalist Japandi interior design" className="w-full h-full object-cover object-center scale-105" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background/80" />
         </div>
 
