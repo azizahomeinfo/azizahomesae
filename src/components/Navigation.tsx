@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import logo from "@/assets/aziza-logo.png";
+import { CartDrawer } from "./CartDrawer";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,12 +36,16 @@ const Navigation = () => {
             <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               Contact
             </button>
+            <CartDrawer />
           </div>
 
-          {/* Mobile Menu Button */}
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-2 text-foreground">
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile Menu Button & Cart */}
+          <div className="md:hidden flex items-center gap-2">
+            <CartDrawer />
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-foreground">
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
