@@ -12,7 +12,7 @@ const Hero = () => {
   return (
     <>
       {/* Showcase Video Section */}
-      <section className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
+      <section className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
         <video
           autoPlay
           loop
@@ -20,7 +20,7 @@ const Hero = () => {
           playsInline
           className="w-full h-full object-cover"
         >
-          <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+          <source src="https://drive.google.com/uc?export=download&id=1dIxrqY-zsv2oIBzKJAxcp6IBBNtKlSQU" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/60" />
