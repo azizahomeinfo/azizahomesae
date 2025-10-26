@@ -11,14 +11,34 @@ import portfolio6 from "@/assets/portfolio-6.jpeg";
 import portfolio7 from "@/assets/portfolio-7.jpeg";
 import portfolio8 from "@/assets/portfolio-8.jpeg";
 import portfolio9 from "@/assets/portfolio-9.jpeg";
+import portfolio10 from "@/assets/portfolio-10.jpeg";
+import portfolio11 from "@/assets/portfolio-11.jpeg";
+import portfolio13 from "@/assets/portfolio-13.jpeg";
+import portfolio14 from "@/assets/portfolio-14.jpeg";
+import portfolio15 from "@/assets/portfolio-15.jpg";
+import portfolio16 from "@/assets/portfolio-16.jpg";
+import portfolio17 from "@/assets/portfolio-17.jpeg";
+import portfolio18 from "@/assets/portfolio-18.jpg";
+import portfolio19 from "@/assets/portfolio-19.jpg";
+import portfolio20 from "@/assets/portfolio-20.jpeg";
 
 const ProjectGallery = () => {
   const portfolio = [
     {
       id: 1,
-      title: "Jumeirah Park Project",
-      description: "This stunning 7 bedroom villa was beautifully brought to life by our talented interior designer. Every space was thoughtfully reimagined through our bespoke furniture, custom joinery, and premium fit out services. The result is a luxurious sanctuary featuring elegant formal seating areas, a refined living room, tailored walk-in wardrobes, children's bedrooms, and a functional home office.",
+      title: "Palace Emaar Beachfront",
+      description: "A serene two-bedroom apartment at Palace Emaar Beachfront, designed in a classic yet minimalist style that blends warmth and sophistication. Soft neutral tones, walnut finishes, and sculptural furniture create a calm, refined atmosphere, while natural light and clean lines highlight the spacious layout and marina views — reflecting timeless coastal elegance with a modern Dubai touch.",
       images: [
+        portfolio15,
+        portfolio19,
+        portfolio10,
+        portfolio13,
+        portfolio14,
+        portfolio18,
+        portfolio11,
+        portfolio16,
+        portfolio20,
+        portfolio17,
         portfolio1,
         portfolio12,
         portfolio2,
@@ -84,7 +104,7 @@ const ProjectGallery = () => {
                 </div>
                 <div className="space-y-6">
                   <p className="text-lg leading-relaxed text-foreground/80">
-                    Our custom joinery played a key role in reimagining this stunning villa. By focusing on intricate details and the unique needs of our client, we crafted a home that seamlessly blends functionality with refined aesthetics.
+                    Aziza Home provides complete turnkey furnishing and interior design solutions for apartments, villas, and holiday homes across Dubai. From concept to handover, we handle everything — including design, furniture sourcing, custom joinery, décor styling, logistics, and installation — delivering beautifully coordinated spaces in as little as 10 to 15 business days. Our mission is to make premium design effortless, offering clients cohesive, high-quality interiors that enhance comfort, value, and rental appeal.
                   </p>
                   <h3 className="font-heading text-2xl">The Project</h3>
                 </div>
