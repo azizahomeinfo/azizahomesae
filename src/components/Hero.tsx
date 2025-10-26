@@ -12,7 +12,7 @@ const Hero = () => {
   return (
     <>
       {/* Showcase Video Section */}
-      <section className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
+      <section className="relative w-full h-[70vh] md:h-[80vh] lg:h-[85vh] overflow-hidden">
         <video
           autoPlay
           loop
@@ -23,12 +23,7 @@ const Hero = () => {
           <source src="/hero-video.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/60" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-heading font-semibold text-foreground text-center px-4">
-            Bringing Your Vision to Life
-          </h2>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/30 to-background/70" />
       </section>
 
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">

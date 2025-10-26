@@ -9,7 +9,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Custom Color Palette */
-    --background: 38 65% 96%;
+    --background: 38 65% 98%;
     --foreground: 30 15% 15%;
 
     --card: 0 0% 100%;
