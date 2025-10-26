@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import packageImage from "@/assets/package-complete-new.jpg";
+import package1 from "@/assets/package-1.jpg";
+import package2 from "@/assets/package-2.jpg";
+import package3 from "@/assets/package-3.jpg";
 import { Button } from "@/components/ui/button";
-import { Check, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { getProducts, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
@@ -12,11 +14,13 @@ const Packages = () => {
   const [loading, setLoading] = useState(true);
   const addItem = useCartStore(state => state.addItem);
 
+  const packageImages = [package1, package2, package3];
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const fetchedProducts = await getProducts(10);
+        const fetchedProducts = await getProducts(3);
         setProducts(fetchedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -62,11 +66,6 @@ const Packages = () => {
           </p>
         </div>
 
-        {/* Hero Package Image */}
-        <div className="mb-16 rounded-lg overflow-hidden max-w-5xl mx-auto">
-          <img src={packageImage} alt="Complete furnishing package" className="w-full h-auto object-cover" />
-        </div>
-
         {/* Package Options */}
         {loading ? (
           <div className="text-center py-12">
@@ -79,51 +78,50 @@ const Packages = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {products.map((product, index) => {
-              const isFeatured = product.node.title.toLowerCase().includes('complete');
+            {products.slice(0, 3).map((product, index) => {
+              const isFeatured = index === 1;
               const variant = product.node.variants.edges[0]?.node;
-              const image = product.node.images.edges[0]?.node;
               
               return (
                 <Link
                   key={product.node.id}
                   to={`/product/${product.node.handle}`}
-                  className={`bg-card p-8 rounded-lg border transition-smooth hover:shadow-lg block ${
-                    isFeatured ? "border-primary shadow-md md:scale-105" : "border-border"
+                  className={`bg-card rounded-lg border transition-smooth hover:shadow-lg block overflow-hidden group ${
+                    isFeatured ? "border-primary shadow-md" : "border-border"
                   }`}
                 >
                   {isFeatured && (
-                    <div className="inline-block bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full mb-4">
+                    <div className="absolute top-4 right-4 z-10 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full">
                       MOST POPULAR
                     </div>
                   )}
                   
-                  {image && (
-                    <div className="mb-4 rounded-lg overflow-hidden bg-secondary/20">
-                      <img 
-                        src={image.url} 
-                        alt={image.altText || product.node.title}
-                        className="w-full h-48 object-cover"
-                      />
-                    </div>
-                  )}
+                  <div className="relative aspect-[4/3] overflow-hidden bg-secondary/20">
+                    <img 
+                      src={packageImages[index]} 
+                      alt={product.node.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-smooth"
+                    />
+                  </div>
                   
-                  <h3 className="text-2xl font-heading font-semibold text-foreground mb-2">
-                    {product.node.title}
-                  </h3>
-                  <p className="text-xl font-bold text-primary mb-4">
-                    {variant?.price.currencyCode} ${parseFloat(variant?.price.amount || '0').toFixed(2)}
-                  </p>
-                  <p className="text-muted-foreground mb-6 line-clamp-3">{product.node.description}</p>
-                  
-                  <Button
-                    onClick={(e) => handleAddToCart(product, e)}
-                    className={isFeatured ? "w-full" : "w-full"}
-                    variant={isFeatured ? "default" : "outline"}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart
-                  </Button>
+                  <div className="p-6">
+                    <h3 className="text-xl font-heading font-semibold text-foreground mb-2">
+                      {product.node.title}
+                    </h3>
+                    <p className="text-2xl font-bold text-primary mb-3">
+                      from {variant?.price.currencyCode} {parseFloat(variant?.price.amount || '0').toFixed(0)}
+                    </p>
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{product.node.description}</p>
+                    
+                    <Button
+                      onClick={(e) => handleAddToCart(product, e)}
+                      className="w-full"
+                      variant={isFeatured ? "default" : "outline"}
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Add to Cart
+                    </Button>
+                  </div>
                 </Link>
               );
             })}
