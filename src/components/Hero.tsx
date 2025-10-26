@@ -1,7 +1,29 @@
 import heroImage from "@/assets/hero-image.jpg";
 import { Button } from "@/components/ui/button";
+import { useEffect, useRef } from "react";
+import Hls from "hls.js";
 
 const Hero = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const videoSrc = "https://azizahomes.com/cdn/shop/videos/c/vp/71bcecc96b1545d3ac41eb3b20dcbf2e/71bcecc96b1545d3ac41eb3b20dcbf2e.m3u8?v=0";
+
+    if (video) {
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+        return () => {
+          hls.destroy();
+        };
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = videoSrc;
+      }
+    }
+  }, []);
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -14,15 +36,13 @@ const Hero = () => {
       {/* Showcase Video Section */}
       <section className="relative w-full h-[70vh] md:h-[80vh] lg:h-[85vh] overflow-hidden">
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
           className="w-full h-full object-cover"
-        >
-          <source src="/hero-video.mov" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/30 to-background/70" />
       </section>
 
