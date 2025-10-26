@@ -18,8 +18,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 30 15% 15%;
 
-    /* Olive Green - Primary (from logo) */
-    --primary: 75 35% 25%;
+    /* Dark Forest Green - Primary */
+    --primary: 140 40% 18%;
     --primary-foreground: 30 25% 96%;
 
     /* Warm Beige - Secondary */
@@ -39,7 +39,7 @@ All colors MUST be HSL.
 
     --border: 30 15% 85%;
     --input: 30 15% 85%;
-    --ring: 75 35% 25%;
+    --ring: 140 40% 18%;
 
     --radius: 0.25rem;
 
@@ -70,7 +70,7 @@ All colors MUST be HSL.
     --popover: 30 10% 15%;
     --popover-foreground: 30 25% 96%;
 
-    --primary: 75 35% 35%;
+    --primary: 140 40% 25%;
     --primary-foreground: 30 25% 96%;
 
     --secondary: 30 10% 20%;
@@ -87,7 +87,7 @@ All colors MUST be HSL.
 
     --border: 30 10% 25%;
     --input: 30 10% 25%;
-    --ring: 75 35% 35%;
+    --ring: 140 40% 25%;
     --sidebar-background: 30 10% 12%;
     --sidebar-foreground: 30 25% 96%;
     --sidebar-primary: 75 35% 35%;
