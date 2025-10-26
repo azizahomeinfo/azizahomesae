@@ -23,6 +23,7 @@ import portfolio17 from "@/assets/portfolio-17.jpeg";
 import portfolio18 from "@/assets/portfolio-18.jpg";
 import portfolio19 from "@/assets/portfolio-19.jpg";
 import portfolio20 from "@/assets/portfolio-20.jpeg";
+import portfolio21 from "@/assets/portfolio-21.jpeg";
 
 const ProjectGallery = () => {
   const portfolio = [
@@ -43,7 +44,7 @@ const ProjectGallery = () => {
         portfolio17,
         portfolio15,
         portfolio12,
-        portfolio19,
+        portfolio21,
         portfolio1,
         portfolio2,
         portfolio3,
