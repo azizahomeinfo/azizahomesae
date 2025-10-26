@@ -5,6 +5,9 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
+import package1 from "@/assets/package-1.jpg";
+import package2 from "@/assets/package-2.jpg";
+import package3 from "@/assets/package-3.jpg";
 
 type RoomType = "studio" | "1b" | "2b" | "3b";
 
@@ -25,39 +28,39 @@ interface Package {
 const packages: Package[] = [
   {
     id: "essential",
-    name: "Essential Package",
-    description: "Perfect for those seeking comfort and functionality. Our Essential package includes all the basics you need to create a cozy, livable space without compromising on style.",
-    image: "/placeholder.svg",
+    name: "Essential Furnishing Package",
+    description: "Perfect for starting your minimalist journey. This package includes living room essentials, bedroom furniture set, quality materials, and basic styling consultation to transform your space with timeless Japandi aesthetics.",
+    image: package1,
     prices: {
-      studio: "8,500 AED",
-      "1b": "12,000 AED",
-      "2b": "16,500 AED",
-      "3b": "21,000 AED",
+      studio: "2,999 USD",
+      "1b": "4,499 USD",
+      "2b": "6,999 USD",
+      "3b": "8,999 USD",
+    },
+  },
+  {
+    id: "complete",
+    name: "Complete Furnishing Package",
+    description: "Transform your entire home with our most popular package. Includes full home furnishing with living, dining & bedroom sets, premium materials, comprehensive styling consultation, and 3D visualization to see your dream space before it's built.",
+    image: package2,
+    badge: "Most Popular",
+    prices: {
+      studio: "5,999 USD",
+      "1b": "8,499 USD",
+      "2b": "11,999 USD",
+      "3b": "14,999 USD",
     },
   },
   {
     id: "premium",
-    name: "Premium Package",
-    description: "Elevate your living space with our Premium package. Combining quality furnishings with thoughtful design, this package offers enhanced comfort and sophistication for modern living.",
-    image: "/placeholder.svg",
-    badge: "Most Popular",
+    name: "Premium Furnishing Package",
+    description: "Experience luxury living with our premium package. Featuring designer pieces, bespoke furniture selections, comprehensive styling services, and premium materials throughout. Perfect for those who demand excellence in every detail.",
+    image: package3,
     prices: {
-      studio: "14,500 AED",
-      "1b": "19,500 AED",
-      "2b": "26,000 AED",
-      "3b": "32,500 AED",
-    },
-  },
-  {
-    id: "luxury",
-    name: "Luxury Package",
-    description: "Experience the pinnacle of interior design with our Luxury package. Featuring premium materials, designer pieces, and exquisite attention to detail for those who demand the very best.",
-    image: "/placeholder.svg",
-    prices: {
-      studio: "22,000 AED",
-      "1b": "29,000 AED",
-      "2b": "38,500 AED",
-      "3b": "48,000 AED",
+      studio: "8,999 USD",
+      "1b": "12,499 USD",
+      "2b": "16,999 USD",
+      "3b": "21,999 USD",
     },
   },
 ];
