@@ -1,36 +1,36 @@
-import project1 from "@/assets/project-1.jpg";
-import project2 from "@/assets/project-2.jpg";
-import project3 from "@/assets/project-3.jpg";
-import project4 from "@/assets/project-4.jpg";
+import portfolio13New from "@/assets/portfolio-1-3.jpg";
+import portfolio192 from "@/assets/portfolio-19-2.jpg";
+import portfolio18 from "@/assets/portfolio-18.jpg";
+import portfolio16 from "@/assets/portfolio-16.jpg";
 
 const projects = [
   {
     id: 1,
-    title: "Serene Bedroom Retreat",
-    category: "Bedroom",
-    image: project1,
-    description: "Natural oak furniture with minimalist bedding creates a peaceful sanctuary",
+    title: "Palace Emaar Beachfront - Living Room",
+    category: "Living Room",
+    image: portfolio13New,
+    description: "Sophisticated living space featuring sculptural furniture and warm walnut tones, perfectly balanced with coastal views",
   },
   {
     id: 2,
-    title: "Modern Dining Space",
+    title: "Elegant Dining Experience",
     category: "Dining",
-    image: project2,
-    description: "Scandinavian-Japanese fusion with warm wood tones and clean lines",
+    image: portfolio192,
+    description: "Refined dining area with classic design elements and natural light creating an inviting atmosphere",
   },
   {
     id: 3,
-    title: "Elegant Living Room",
-    category: "Living",
-    image: project3,
-    description: "Cream sectional and natural elements for a welcoming atmosphere",
+    title: "Contemporary Bedroom Suite",
+    category: "Bedroom",
+    image: portfolio18,
+    description: "Serene bedroom retreat with soft neutral tones and minimalist aesthetic for ultimate relaxation",
   },
   {
     id: 4,
-    title: "Productive Home Office",
-    category: "Office",
-    image: project4,
-    description: "Functional workspace with natural materials and thoughtful design",
+    title: "Modern Kitchen Design",
+    category: "Kitchen",
+    image: portfolio16,
+    description: "Clean lines and functional elegance combine in this thoughtfully designed modern kitchen space",
   },
 ];
 
