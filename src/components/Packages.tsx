@@ -109,7 +109,7 @@ const Packages = () => {
                       {product.node.title}
                     </h3>
                     <p className="text-2xl font-bold text-primary mb-3">
-                      from {variant?.price.currencyCode} {parseFloat(variant?.price.amount || '0').toFixed(0)}
+                      from AED {parseFloat(variant?.price.amount || '0').toFixed(0)}
                     </p>
                     <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{product.node.description}</p>
                     

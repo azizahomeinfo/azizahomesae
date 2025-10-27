@@ -114,7 +114,7 @@ const ProductDetail = () => {
             <div>
               <h1 className="text-4xl font-heading font-semibold mb-4">{product.title}</h1>
               <p className="text-3xl font-bold text-primary">
-                {selectedVariant?.price.currencyCode} ${parseFloat(selectedVariant?.price.amount || '0').toFixed(2)}
+                AED {parseFloat(selectedVariant?.price.amount || '0').toFixed(0)}
               </p>
             </div>
 
