@@ -20,7 +20,7 @@ const Navigation = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="transition-smooth hover:opacity-70">
-            <img src={logo} alt="Aziza Home" className="h-14 md:h-16" />
+            <img src={logo} alt="Aziza Home" className="h-20 md:h-24" />
           </Link>
 
           {/* Desktop Navigation */}
