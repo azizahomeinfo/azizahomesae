@@ -26,19 +26,19 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <Link to="/services" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              Our Services
+              OUR SERVICES
             </Link>
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              Portfolio
+              PORTFOLIO
             </Link>
             <Link to="/packages" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              Packages
+              PACKAGES
             </Link>
             <button onClick={() => scrollToSection("about")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              About
+              ABOUT US
             </button>
             <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              Contact
+              CONTACT
             </button>
             <CartDrawer />
           </div>
@@ -56,19 +56,19 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 flex flex-col gap-4">
             <Link to="/services" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              Our Services
+              OUR SERVICES
             </Link>
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              Portfolio
+              PORTFOLIO
             </Link>
             <Link to="/packages" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              Packages
+              PACKAGES
             </Link>
             <button onClick={() => scrollToSection("about")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left">
-              About
+              ABOUT US
             </button>
             <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left">
-              Contact
+              CONTACT
             </button>
           </div>
         )}
