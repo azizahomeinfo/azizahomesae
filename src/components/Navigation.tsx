@@ -25,6 +25,9 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
+            <Link to="/services" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
+              Our Services
+            </Link>
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               Portfolio
             </Link>
@@ -52,6 +55,9 @@ const Navigation = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 flex flex-col gap-4">
+            <Link to="/services" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
+              Our Services
+            </Link>
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
               Portfolio
             </Link>
