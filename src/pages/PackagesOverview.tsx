@@ -152,12 +152,12 @@ const PackagesOverview = () => {
                       </div>
                     </div>
 
-                    <Link to={`/product/${pkg.id}-${selectedRoom}`}>
+                    <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" className="block">
                       <Button className="w-full" size="lg">
-                        View Details
+                        Consult on WhatsApp
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
-                    </Link>
+                    </a>
                   </div>
 
                   {/* All Room Prices */}
