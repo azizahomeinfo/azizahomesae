@@ -5,18 +5,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
-  phone: z.string().trim().min(8, "Phone must be at least 8 characters").max(20, "Phone must be less than 20 characters").optional().or(z.literal("")),
+  phone: z.string().trim().max(20, "Phone must be less than 20 characters").optional(),
   message: z.string().trim().min(1, "Message is required").max(2000, "Message must be less than 2000 characters"),
 });
 
 const Contact = () => {
-  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -35,14 +33,19 @@ const Contact = () => {
       // Validate input
       const validated = contactSchema.parse(data);
 
+      // Get current user (if logged in)
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Insert into database
-      const { error } = await supabase.from("contact_messages").insert({
-        user_id: user?.id || null,
-        name: validated.name,
-        email: validated.email,
-        phone: validated.phone || null,
-        message: validated.message,
-      });
+      const { error } = await supabase
+        .from("contact_messages")
+        .insert({
+          user_id: user?.id || null,
+          name: validated.name,
+          email: validated.email,
+          phone: validated.phone || null,
+          message: validated.message,
+        });
 
       if (error) throw error;
 
@@ -125,18 +128,48 @@ const Contact = () => {
             <div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Input type="text" name="name" placeholder="Your Name" required className="w-full" />
+                  <Input 
+                    type="text" 
+                    name="name"
+                    placeholder="Your Name" 
+                    required 
+                    maxLength={100}
+                    className="w-full" 
+                  />
                 </div>
                 <div>
-                  <Input type="email" name="email" placeholder="Your Email" required className="w-full" />
+                  <Input 
+                    type="email" 
+                    name="email"
+                    placeholder="Your Email" 
+                    required 
+                    maxLength={255}
+                    className="w-full" 
+                  />
                 </div>
                 <div>
-                  <Input type="tel" name="phone" placeholder="Phone Number" className="w-full" />
+                  <Input 
+                    type="tel" 
+                    name="phone"
+                    placeholder="Phone Number" 
+                    maxLength={20}
+                    className="w-full" 
+                  />
                 </div>
                 <div>
-                  <Textarea name="message" placeholder="Tell us about your project..." required className="w-full min-h-[150px]" />
+                  <Textarea 
+                    name="message"
+                    placeholder="Tell us about your project..." 
+                    required 
+                    maxLength={2000}
+                    className="w-full min-h-[150px]" 
+                  />
                 </div>
-                <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary hover:bg-primary/90"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
