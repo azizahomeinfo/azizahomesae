@@ -29,7 +29,7 @@ const packages: Package[] = [
   {
     id: "essential",
     name: "Aziza Essential Furnishing",
-    description: "Perfect for starting your minimalist journey. This package includes living room essentials, bedroom furniture set, quality materials, and basic styling consultation to transform your space with timeless Japandi aesthetics.",
+    description: "Including all furniture, decorative wall frames, rugs, lights, and decorative items on top of tables for each apartment. Everything you need to create a complete and stylish living space.",
     image: package1,
     prices: {
       studio: "22,500 AED",
@@ -41,7 +41,7 @@ const packages: Package[] = [
   {
     id: "premium",
     name: "Aziza Premium Furnishing",
-    description: "Transform your entire home with our most popular package. Includes full home furnishing with living, dining & bedroom sets, premium materials, comprehensive styling consultation, and 3D visualization to see your dream space before it's built.",
+    description: "Including everything from the Essential package plus 1 focal wall well design and 1-4 wallpaper/paint applications depending on the size of your apartment. Elevate your space with designer touches.",
     image: package2,
     badge: "Most Popular",
     prices: {
@@ -54,7 +54,7 @@ const packages: Package[] = [
   {
     id: "luxury",
     name: "Aziza Luxury Furnishing",
-    description: "The ultimate luxury furnishing experience. This premium package includes everything from our Premium package plus designer furniture selections, high-end finishes, advanced 3D rendering, and complete white-glove installation service for your ultimate dream home.",
+    description: "Including everything from the Essential package plus all wall well designs throughout your apartment. The ultimate transformation with comprehensive interior design coverage for a truly luxurious living experience.",
     image: package3,
     prices: {
       studio: "35,500 AED",
