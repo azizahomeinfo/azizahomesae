@@ -57,9 +57,9 @@ const packages: Package[] = [
     description: "Including everything from the Essential package plus all wall well designs throughout your apartment. The ultimate transformation with comprehensive interior design coverage for a truly luxurious living experience.",
     image: package3,
     prices: {
-      studio: "35,500 AED",
-      "1b": "49,500 AED",
-      "2b": "68,000 AED",
+      studio: "30,500 AED",
+      "1b": "44,000 AED",
+      "2b": "62,000 AED",
       "3b": "88,000 AED",
     },
   },
