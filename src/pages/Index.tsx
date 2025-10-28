@@ -5,10 +5,12 @@ import Packages from "@/components/Packages";
 import About from "@/components/About";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
+import ClientInfoDialog from "@/components/ClientInfoDialog";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
+      <ClientInfoDialog />
       <Navigation />
       <Hero />
       <Projects />
