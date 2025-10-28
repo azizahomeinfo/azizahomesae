@@ -2,32 +2,36 @@ import { ArrowRight } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import serviceHolidayHome from "@/assets/service-holiday-home.jpg";
+import serviceExpatRelocate from "@/assets/service-expat-relocate.jpg";
+import serviceInvestor from "@/assets/service-investor.jpg";
+import serviceInteriorDesign from "@/assets/service-interior-design.jpg";
 
 const services = [
   {
     id: 1,
     title: "Holiday Home A-Z Furnishing Packages",
     description: "Transform your holiday home into a stunning retreat with our comprehensive furnishing packages. We handle everything from furniture selection to final styling, creating spaces that attract premium guests and maximize your rental income. Our curated packages include high-quality furniture, decor, and essential amenities tailored specifically for Dubai's luxury vacation rental market.",
-    image: "service-holiday-home",
+    image: serviceHolidayHome,
   },
   {
     id: 2,
     title: "Expat Relocate Furnishing Packages",
     description: "Moving to Dubai? We make your relocation seamless with our all-inclusive expat furnishing packages. Whether you're settling into an apartment or villa, we provide thoughtfully designed furniture solutions that blend comfort with style. From essential pieces to complete home setups, we ensure your new Dubai residence feels like home from day one.",
-    image: "service-expat-relocate",
+    image: serviceExpatRelocate,
   },
   {
     id: 3,
     title: "Investor Package",
     description: "Maximize your property investment returns with our specialized Investor Package. Our expertly furnished properties increase your long-term rental profits by 20-25% per year. We understand what tenants seek in Dubai's competitive market and deliver furnished spaces that command premium rents while reducing vacancy periods. Our strategic approach to furnishing ensures your property stands out and attracts quality, long-term tenants willing to pay more for move-in ready homes.",
-    image: "service-investor",
+    image: serviceInvestor,
     highlight: true,
   },
   {
     id: 4,
     title: "Interior Design & Fit-Out Service",
     description: "Bring your dream home to life with our bespoke interior design and fit-out services. Our experienced designers work closely with you to understand your vision, lifestyle, and preferences. From initial concept to final execution, we manage every detail of your project—space planning, material selection, custom furniture, lighting design, and complete fit-out. We create beautiful, functional spaces that reflect your personality and enhance your daily living experience in Dubai.",
-    image: "service-interior-design",
+    image: serviceInteriorDesign,
   },
 ];
 
@@ -65,14 +69,11 @@ const Services = () => {
                 {/* Image */}
                 <div className={`${index % 2 === 1 ? "md:col-start-2" : ""}`}>
                   <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center p-8">
-                        <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-4xl font-bold text-primary">{service.id}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">Service Image</p>
-                      </div>
-                    </div>
+                    <img 
+                      src={service.image} 
+                      alt={service.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                   </div>
                 </div>
 
