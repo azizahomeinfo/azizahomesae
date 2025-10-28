@@ -74,6 +74,66 @@ export type Database = {
         }
         Relationships: []
       }
+      intake_forms: {
+        Row: {
+          budget_range: string
+          client_type: string
+          color_palette: string[] | null
+          created_at: string
+          design_style: string[] | null
+          email: string
+          id: string
+          inspiration_links: string | null
+          name: string
+          phone: string | null
+          property_size: string | null
+          property_type: string | null
+          spaces_to_design: string[] | null
+          special_requirements: string | null
+          status: string | null
+          timeline: string
+          user_id: string | null
+        }
+        Insert: {
+          budget_range: string
+          client_type: string
+          color_palette?: string[] | null
+          created_at?: string
+          design_style?: string[] | null
+          email: string
+          id?: string
+          inspiration_links?: string | null
+          name: string
+          phone?: string | null
+          property_size?: string | null
+          property_type?: string | null
+          spaces_to_design?: string[] | null
+          special_requirements?: string | null
+          status?: string | null
+          timeline: string
+          user_id?: string | null
+        }
+        Update: {
+          budget_range?: string
+          client_type?: string
+          color_palette?: string[] | null
+          created_at?: string
+          design_style?: string[] | null
+          email?: string
+          id?: string
+          inspiration_links?: string | null
+          name?: string
+          phone?: string | null
+          property_size?: string | null
+          property_type?: string | null
+          spaces_to_design?: string[] | null
+          special_requirements?: string | null
+          status?: string | null
+          timeline?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

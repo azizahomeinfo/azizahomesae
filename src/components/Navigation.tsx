@@ -50,9 +50,9 @@ const Navigation = () => {
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               ABOUT US
             </Link>
-            <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
+            <Link to="/contact" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               CONTACT
-            </button>
+            </Link>
             <CartDrawer />
             <Button 
               variant="ghost" 
@@ -98,9 +98,9 @@ const Navigation = () => {
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
               ABOUT US
             </Link>
-            <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left">
+            <Link to="/contact" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
               CONTACT
-            </button>
+            </Link>
             <Button 
               variant="ghost" 
               size="sm" 
