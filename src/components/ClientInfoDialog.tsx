@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import popupImage from "@/assets/popup-image.jpg";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -57,11 +58,30 @@ const ClientInfoDialog = () => {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Client info submitted:", data);
-    localStorage.setItem("clientInfoSubmitted", "true");
-    toast.success("Thank you! Your 5% discount has been applied!");
-    setOpen(false);
+  const onSubmit = async (data: FormValues) => {
+    try {
+      const { error } = await supabase
+        .from('client_submissions')
+        .insert([{
+          name: data.name,
+          phone: data.phone,
+          email: data.email,
+          purpose: data.purpose,
+        }]);
+
+      if (error) {
+        console.error("Error saving submission:", error);
+        toast.error("Sorry, there was an error. Please try again.");
+        return;
+      }
+
+      localStorage.setItem("clientInfoSubmitted", "true");
+      toast.success("Thank you! Your 5% discount has been applied!");
+      setOpen(false);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Sorry, there was an error. Please try again.");
+    }
   };
 
   const purposeOptions = [
