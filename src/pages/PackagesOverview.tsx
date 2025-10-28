@@ -194,7 +194,7 @@ const PackagesOverview = () => {
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
               Can't find exactly what you're looking for? We offer custom furnishing packages tailored to your specific needs and preferences.
             </p>
-            <Link to="/#contact">
+            <Link to="/contact">
               <Button size="lg" variant="default">
                 Contact Us for Custom Package
               </Button>
