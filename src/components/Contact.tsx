@@ -3,11 +3,61 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  phone: z.string().trim().min(8, "Phone must be at least 8 characters").max(20, "Phone must be less than 20 characters").optional().or(z.literal("")),
+  message: z.string().trim().min(1, "Message is required").max(2000, "Message must be less than 2000 characters"),
+});
 
 const Contact = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    toast.success("Thank you for your message! We'll get back to you soon.");
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const data = {
+        name: formData.get("name") as string,
+        email: formData.get("email") as string,
+        phone: formData.get("phone") as string,
+        message: formData.get("message") as string,
+      };
+
+      // Validate input
+      const validated = contactSchema.parse(data);
+
+      // Insert into database
+      const { error } = await supabase.from("contact_messages").insert({
+        user_id: user?.id || null,
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone || null,
+        message: validated.message,
+      });
+
+      if (error) throw error;
+
+      toast.success("Thank you for your message! We'll get back to you soon.");
+      e.currentTarget.reset();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        console.error("Error submitting contact form:", error);
+        toast.error("Failed to send message. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -75,19 +125,19 @@ const Contact = () => {
             <div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Input type="text" placeholder="Your Name" required className="w-full" />
+                  <Input type="text" name="name" placeholder="Your Name" required className="w-full" />
                 </div>
                 <div>
-                  <Input type="email" placeholder="Your Email" required className="w-full" />
+                  <Input type="email" name="email" placeholder="Your Email" required className="w-full" />
                 </div>
                 <div>
-                  <Input type="tel" placeholder="Phone Number" className="w-full" />
+                  <Input type="tel" name="phone" placeholder="Phone Number" className="w-full" />
                 </div>
                 <div>
-                  <Textarea placeholder="Tell us about your project..." required className="w-full min-h-[150px]" />
+                  <Textarea name="message" placeholder="Tell us about your project..." required className="w-full min-h-[150px]" />
                 </div>
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                  Send Message
+                <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90">
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </div>
