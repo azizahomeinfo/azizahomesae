@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Menu, X, LogOut, LogIn } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "@/assets/aziza-logo.png";
 import { CartDrawer } from "./CartDrawer";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "./ui/button";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -13,6 +17,15 @@ const Navigation = () => {
       element.scrollIntoView({ behavior: "smooth" });
       setIsMenuOpen(false);
     }
+  };
+
+  const handleAuthClick = () => {
+    if (user) {
+      signOut();
+    } else {
+      navigate("/auth");
+    }
+    setIsMenuOpen(false);
   };
 
   return (
@@ -41,6 +54,24 @@ const Navigation = () => {
               CONTACT
             </button>
             <CartDrawer />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleAuthClick}
+              className="flex items-center gap-2"
+            >
+              {user ? (
+                <>
+                  <LogOut size={16} />
+                  Sign Out
+                </>
+              ) : (
+                <>
+                  <LogIn size={16} />
+                  Sign In
+                </>
+              )}
+            </Button>
           </div>
 
           {/* Mobile Menu Button & Cart */}
@@ -70,6 +101,24 @@ const Navigation = () => {
             <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left">
               CONTACT
             </button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleAuthClick}
+              className="flex items-center gap-2 justify-start"
+            >
+              {user ? (
+                <>
+                  <LogOut size={16} />
+                  Sign Out
+                </>
+              ) : (
+                <>
+                  <LogIn size={16} />
+                  Sign In
+                </>
+              )}
+            </Button>
           </div>
         )}
       </div>

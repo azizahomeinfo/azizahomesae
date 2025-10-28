@@ -60,6 +60,15 @@ const ClientInfoDialog = () => {
 
   const onSubmit = async (data: FormValues) => {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please sign in to submit your information.");
+        setOpen(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('client_submissions')
         .insert([{
@@ -67,6 +76,7 @@ const ClientInfoDialog = () => {
           phone: data.phone,
           email: data.email,
           purpose: data.purpose,
+          user_id: user.id,
         }]);
 
       if (error) {

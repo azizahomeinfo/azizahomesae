@@ -9,6 +9,7 @@ import ProductDetail from "./pages/ProductDetail";
 import ProjectGallery from "./pages/ProjectGallery";
 import PackagesOverview from "./pages/PackagesOverview";
 import Services from "./pages/Services";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/services" element={<Services />} />
           <Route path="/portfolio" element={<ProjectGallery />} />
           <Route path="/packages" element={<PackagesOverview />} />
