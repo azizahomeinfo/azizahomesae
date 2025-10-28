@@ -32,49 +32,6 @@ const ContactPage = () => {
             </Button>
           </div>
 
-          {/* Contact Information Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-            <div className="text-center p-6 bg-card rounded-lg border border-border animate-fade-in">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
-                <Phone className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Phone</h3>
-              <a href="tel:+971559779635" className="text-muted-foreground hover:text-primary transition-colors">
-                +971 55 977 9635
-              </a>
-            </div>
-
-            <div className="text-center p-6 bg-card rounded-lg border border-border animate-fade-in">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
-                <Mail className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Email</h3>
-              <a href="mailto:info@azizahomes.com" className="text-muted-foreground hover:text-primary transition-colors break-all">
-                info@azizahomes.com
-              </a>
-            </div>
-
-            <div className="text-center p-6 bg-card rounded-lg border border-border animate-fade-in">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
-                <MapPin className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Location</h3>
-              <p className="text-muted-foreground">
-                Forte Tower 1, Downtown Dubai
-              </p>
-            </div>
-
-            <div className="text-center p-6 bg-card rounded-lg border border-border animate-fade-in">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
-                <Clock className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Working Hours</h3>
-              <p className="text-muted-foreground">
-                Monday - Friday<br />
-                9:00 AM - 6:00 PM
-              </p>
-            </div>
-          </div>
 
           {/* Why Contact Us Section */}
           <div className="bg-card rounded-lg border border-border p-8 md:p-12 mb-16 animate-fade-in">
