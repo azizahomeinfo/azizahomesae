@@ -30,6 +30,7 @@ interface IntakeFormDialogProps {
 
 export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [designStyles, setDesignStyles] = useState<string[]>([]);
   const [colorPalettes, setColorPalettes] = useState<string[]>([]);
   const [spacesToDesign, setSpacesToDesign] = useState<string[]>([]);
@@ -83,7 +84,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
         description: "Your inquiry has been submitted successfully.",
       });
 
-      onOpenChange(false);
+      setIsSubmitted(true);
       e.currentTarget.reset();
       setDesignStyles([]);
       setColorPalettes([]);
@@ -108,17 +109,50 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
     }
   };
 
+  const handleWhatsAppClick = () => {
+    const message = encodeURIComponent("Hi! I just submitted an inquiry form on your website. I'd like to discuss my design project further.");
+    window.open(`https://wa.me/971585859530?text=${message}`, "_blank");
+    onOpenChange(false);
+    setIsSubmitted(false);
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setIsSubmitted(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Start Your Design Journey</DialogTitle>
+          <DialogTitle className="text-2xl">
+            {isSubmitted ? "Thank You!" : "Start Your Design Journey"}
+          </DialogTitle>
           <DialogDescription>
-            Tell us about your project and we'll create a personalized design plan for you.
+            {isSubmitted 
+              ? "Your inquiry has been submitted successfully. We'll review your details and get back to you soon."
+              : "Tell us about your project and we'll create a personalized design plan for you."}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {isSubmitted ? (
+          <div className="space-y-6 py-8 text-center">
+            <p className="text-lg">
+              Want to discuss your project right away?
+            </p>
+            <Button 
+              onClick={handleWhatsAppClick}
+              size="lg"
+              className="w-full md:w-auto"
+            >
+              Continue on WhatsApp
+            </Button>
+            <p className="text-sm text-muted-foreground mt-4">
+              Or we'll reach out to you within 24 hours
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Contact Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Contact Information</h3>
@@ -333,11 +367,12 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
             <Button type="submit" disabled={isSubmitting} className="flex-1">
               {isSubmitting ? "Submitting..." : "Submit Inquiry"}
             </Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );
