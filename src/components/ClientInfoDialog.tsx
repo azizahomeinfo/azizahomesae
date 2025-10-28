@@ -83,11 +83,13 @@ const ClientInfoDialog = () => {
             />
             <div className="absolute inset-0 bg-black/10" />
             <div className="absolute top-8 left-0 right-0 text-center px-4">
-              <p className="text-white text-2xl font-light tracking-wider leading-relaxed" style={{ fontFamily: 'serif' }}>
-                5% discount voucher
-                <br />
-                <span className="text-lg">for all packages</span>
-              </p>
+              <div className="inline-block bg-white/90 backdrop-blur-sm px-8 py-4 rounded-sm">
+                <p className="text-gray-800 text-2xl font-light tracking-wider leading-relaxed" style={{ fontFamily: 'serif' }}>
+                  5% discount voucher
+                  <br />
+                  <span className="text-lg">for all packages</span>
+                </p>
+              </div>
             </div>
           </div>
 
