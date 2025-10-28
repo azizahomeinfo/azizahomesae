@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import popupImage from "@/assets/popup-image.jpg";
 import {
   Dialog,
   DialogContent,
@@ -76,11 +77,18 @@ const ClientInfoDialog = () => {
           {/* Image Section */}
           <div className="hidden md:block relative h-full min-h-[400px]">
             <img
-              src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80"
+              src={popupImage}
               alt="Elegant Interior"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="absolute top-8 left-0 right-0 text-center px-4">
+              <p className="text-white text-2xl font-light tracking-wider leading-relaxed" style={{ fontFamily: 'serif' }}>
+                5% discount voucher
+                <br />
+                <span className="text-lg">for all packages</span>
+              </p>
+            </div>
           </div>
 
           {/* Form Section */}
