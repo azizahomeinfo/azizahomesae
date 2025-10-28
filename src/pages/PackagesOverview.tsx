@@ -32,10 +32,10 @@ const packages: Package[] = [
     description: "Perfect for starting your minimalist journey. This package includes living room essentials, bedroom furniture set, quality materials, and basic styling consultation to transform your space with timeless Japandi aesthetics.",
     image: package1,
     prices: {
-      studio: "18,500 AED",
-      "1b": "24,500 AED",
-      "2b": "32,500 AED",
-      "3b": "42,500 AED",
+      studio: "22,500 AED",
+      "1b": "30,000 AED",
+      "2b": "40,000 AED",
+      "3b": "52,500 AED",
     },
   },
   {
@@ -45,10 +45,10 @@ const packages: Package[] = [
     image: package2,
     badge: "Most Popular",
     prices: {
-      studio: "23,500 AED",
-      "1b": "32,500 AED",
-      "2b": "45,500 AED",
-      "3b": "58,500 AED",
+      studio: "26,500 AED",
+      "1b": "36,500 AED",
+      "2b": "51,000 AED",
+      "3b": "65,500 AED",
     },
   },
   {
@@ -57,10 +57,10 @@ const packages: Package[] = [
     description: "The ultimate luxury furnishing experience. This premium package includes everything from our Premium package plus designer furniture selections, high-end finishes, advanced 3D rendering, and complete white-glove installation service for your ultimate dream home.",
     image: package3,
     prices: {
-      studio: "30,500 AED",
-      "1b": "42,500 AED",
-      "2b": "58,500 AED",
-      "3b": "75,500 AED",
+      studio: "35,500 AED",
+      "1b": "49,500 AED",
+      "2b": "68,000 AED",
+      "3b": "88,000 AED",
     },
   },
 ];
