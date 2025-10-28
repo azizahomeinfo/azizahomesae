@@ -92,22 +92,22 @@ const ClientInfoDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="grid md:grid-cols-2">
           {/* Image Section */}
-          <div className="hidden md:block relative h-full min-h-[400px]">
+          <div className="relative h-48 md:h-full md:min-h-[400px]">
             <img
               src={popupImage}
               alt="Elegant Interior"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/10" />
-            <div className="absolute top-8 left-0 right-0 text-center px-4">
-              <div className="inline-block bg-white/90 backdrop-blur-sm px-8 py-4 rounded-sm">
-                <p className="text-gray-800 text-2xl font-light tracking-wider leading-relaxed" style={{ fontFamily: 'serif' }}>
+            <div className="absolute top-4 md:top-8 left-0 right-0 text-center px-4">
+              <div className="inline-block bg-white/90 backdrop-blur-sm px-6 md:px-8 py-3 md:py-4 rounded-sm">
+                <p className="text-gray-800 text-lg md:text-2xl font-light tracking-wider leading-relaxed" style={{ fontFamily: 'serif' }}>
                   5% discount voucher
                   <br />
-                  <span className="text-lg">for all packages</span>
+                  <span className="text-sm md:text-lg">for all packages</span>
                 </p>
               </div>
             </div>
