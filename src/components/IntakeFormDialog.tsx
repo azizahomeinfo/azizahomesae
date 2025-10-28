@@ -110,8 +110,8 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
   };
 
   const handleWhatsAppClick = () => {
-    const message = encodeURIComponent("Hi! I just submitted an inquiry form on your website. I'd like to discuss my design project further.");
-    window.open(`https://wa.me/971585859530?text=${message}`, "_blank");
+    const message = encodeURIComponent("Hi! I just submitted an inquiry form on your website. I would like to discuss my design project further.");
+    window.open(`https://wa.me/971559779635?text=${message}`, "_blank");
     onOpenChange(false);
     setIsSubmitted(false);
   };

@@ -88,8 +88,8 @@ const Contact = () => {
                     <Mail className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                     <div>
                       <div className="font-medium text-foreground">Email</div>
-                      <a href="mailto:info@azizahome.com" className="text-muted-foreground hover:text-primary transition-smooth">
-                        info@azizahome.com
+                      <a href="mailto:info@azizahomes.com" className="text-muted-foreground hover:text-primary transition-smooth">
+                        info@azizahomes.com
                       </a>
                     </div>
                   </div>
@@ -97,8 +97,8 @@ const Contact = () => {
                     <Phone className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                     <div>
                       <div className="font-medium text-foreground">Phone</div>
-                      <a href="tel:+971501234567" className="text-muted-foreground hover:text-primary transition-smooth">
-                        +971 50 123 4567
+                      <a href="tel:+971559779635" className="text-muted-foreground hover:text-primary transition-smooth">
+                        +971 55 977 9635
                       </a>
                     </div>
                   </div>
@@ -107,7 +107,7 @@ const Contact = () => {
                     <div>
                       <div className="font-medium text-foreground">Location</div>
                       <div className="text-muted-foreground">
-                        Dubai, UAE
+                        Forte Tower 1, Downtown Dubai, UAE
                       </div>
                     </div>
                   </div>
@@ -118,8 +118,7 @@ const Contact = () => {
                 <h4 className="font-medium text-foreground mb-2">Business Hours</h4>
                 <div className="text-muted-foreground space-y-1 text-sm">
                   <div>Monday - Friday: 9:00 AM - 6:00 PM</div>
-                  <div>Saturday: 10:00 AM - 4:00 PM</div>
-                  <div>Sunday: Closed</div>
+                  <div>Saturday - Sunday: Closed</div>
                 </div>
               </div>
             </div>

@@ -17,10 +17,10 @@ const ContactPage = () => {
           {/* Header */}
           <div className="text-center mb-16 animate-fade-in">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light mb-6 text-foreground">
-              Let's Create Your Dream Space
+              Need Custom Design?
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Ready to transform your space? Share your vision with us and we'll create a personalized design plan tailored to your needs.
+              Looking for something beyond our standard furnishing packages? Share your unique vision with us and we'll create a personalized design plan tailored specifically to your needs.
             </p>
             <Button 
               size="lg" 
@@ -28,7 +28,7 @@ const ContactPage = () => {
               className="text-lg px-8 py-6 bg-primary hover:bg-primary/90"
             >
               <MessageSquare className="mr-2 h-5 w-5" />
-              Contact Us - Start Your Project
+              Get Started - Custom Design
             </Button>
           </div>
 
@@ -39,8 +39,8 @@ const ContactPage = () => {
                 <Phone className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Phone</h3>
-              <a href="tel:+971507001006" className="text-muted-foreground hover:text-primary transition-colors">
-                +971 50 700 1006
+              <a href="tel:+971559779635" className="text-muted-foreground hover:text-primary transition-colors">
+                +971 55 977 9635
               </a>
             </div>
 
@@ -49,8 +49,8 @@ const ContactPage = () => {
                 <Mail className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Email</h3>
-              <a href="mailto:aziza.home.dxb@gmail.com" className="text-muted-foreground hover:text-primary transition-colors break-all">
-                aziza.home.dxb@gmail.com
+              <a href="mailto:info@azizahomes.com" className="text-muted-foreground hover:text-primary transition-colors break-all">
+                info@azizahomes.com
               </a>
             </div>
 
@@ -60,7 +60,7 @@ const ContactPage = () => {
               </div>
               <h3 className="text-lg font-semibold mb-2">Location</h3>
               <p className="text-muted-foreground">
-                Dubai, UAE
+                Forte Tower 1, Downtown Dubai
               </p>
             </div>
 
@@ -70,8 +70,8 @@ const ContactPage = () => {
               </div>
               <h3 className="text-lg font-semibold mb-2">Working Hours</h3>
               <p className="text-muted-foreground">
-                Sun - Thu: 9AM - 6PM<br />
-                Sat: 10AM - 4PM
+                Monday - Friday<br />
+                9:00 AM - 6:00 PM
               </p>
             </div>
           </div>
@@ -114,12 +114,12 @@ const ContactPage = () => {
           <div className="text-center bg-primary/5 rounded-lg p-8 md:p-12 animate-fade-in">
             <h2 className="text-2xl md:text-3xl font-light mb-4">Prefer WhatsApp?</h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Send us a message on WhatsApp and we'll share the intake form link with you. It's the fastest way to get started!
+              Send us a message on WhatsApp and we will share the intake form link with you. It is the fastest way to get started!
             </p>
             <Button 
               size="lg"
               variant="outline"
-              onClick={() => window.open('https://wa.me/971507001006?text=Hi%20Aziza%20Home%2C%20I%20would%20like%20to%20inquire%20about%20your%20interior%20design%20services', '_blank')}
+              onClick={() => window.open('https://wa.me/971559779635?text=Hi%20Aziza%20Home%2C%20I%20would%20like%20to%20inquire%20about%20your%20custom%20design%20services', '_blank')}
               className="text-lg px-8 py-6"
             >
               <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">

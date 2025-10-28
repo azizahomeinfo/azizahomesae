@@ -55,11 +55,11 @@ const Footer = () => {
               <ul className="space-y-3 text-sm opacity-90">
                 <li className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Dubai, United Arab Emirates</span>
+                  <span>Forte Tower 1, Downtown Dubai, UAE</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone className="w-4 h-4 flex-shrink-0" />
-                  <a href="tel:+971559779635" className="hover:opacity-100 transition-opacity">0559779635</a>
+                  <a href="tel:+971559779635" className="hover:opacity-100 transition-opacity">+971 55 977 9635</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail className="w-4 h-4 flex-shrink-0" />
@@ -67,7 +67,7 @@ const Footer = () => {
                 </li>
                 <li className="flex items-center gap-2">
                   <Clock className="w-4 h-4 flex-shrink-0" />
-                  <span>Time 9:00 AM – 5:00 PM</span>
+                  <span>Mon - Fri: 9:00 AM - 6:00 PM</span>
                 </li>
               </ul>
             </div>
