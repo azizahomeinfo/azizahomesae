@@ -34,6 +34,10 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
   const [designStyles, setDesignStyles] = useState<string[]>([]);
   const [colorPalettes, setColorPalettes] = useState<string[]>([]);
   const [spacesToDesign, setSpacesToDesign] = useState<string[]>([]);
+  const [clientType, setClientType] = useState("");
+  const [otherClientType, setOtherClientType] = useState("");
+  const [otherDesignStyle, setOtherDesignStyle] = useState("");
+  const [otherColorPalette, setOtherColorPalette] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -41,17 +45,27 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
 
     try {
       const formData = new FormData(e.currentTarget);
+      const finalClientType = clientType === "other" ? otherClientType : clientType;
+      const finalDesignStyles = [...designStyles];
+      if (otherDesignStyle.trim()) {
+        finalDesignStyles.push(otherDesignStyle.trim());
+      }
+      const finalColorPalettes = [...colorPalettes];
+      if (otherColorPalette.trim()) {
+        finalColorPalettes.push(otherColorPalette.trim());
+      }
+
       const data = {
         name: formData.get("name") as string,
         email: formData.get("email") as string,
         phone: formData.get("phone") as string,
-        client_type: formData.get("client_type") as string,
+        client_type: finalClientType,
         property_type: formData.get("property_type") as string,
         property_size: formData.get("property_size") as string,
         budget_range: formData.get("budget_range") as string,
         timeline: formData.get("timeline") as string,
         special_requirements: formData.get("special_requirements") as string,
-        inspiration_links: formData.get("inspiration_links") as string,
+        inspiration_links: "",
       };
 
       // Validate
@@ -71,11 +85,11 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
         property_size: validated.property_size || null,
         budget_range: validated.budget_range,
         timeline: validated.timeline,
-        design_style: designStyles.length > 0 ? designStyles : null,
-        color_palette: colorPalettes.length > 0 ? colorPalettes : null,
+        design_style: finalDesignStyles.length > 0 ? finalDesignStyles : null,
+        color_palette: finalColorPalettes.length > 0 ? finalColorPalettes : null,
         spaces_to_design: spacesToDesign.length > 0 ? spacesToDesign : null,
         special_requirements: validated.special_requirements || null,
-        inspiration_links: validated.inspiration_links || null,
+        inspiration_links: null,
       });
 
       if (error) throw error;
@@ -89,6 +103,10 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
       setDesignStyles([]);
       setColorPalettes([]);
       setSpacesToDesign([]);
+      setClientType("");
+      setOtherClientType("");
+      setOtherDesignStyle("");
+      setOtherColorPalette("");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -178,7 +196,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="client_type">I am a *</Label>
-                <Select name="client_type" required>
+                <Select name="client_type" required value={clientType} onValueChange={setClientType}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select client type" />
                   </SelectTrigger>
@@ -187,6 +205,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                     <SelectItem value="holiday_home">Holiday Home Operator</SelectItem>
                     <SelectItem value="investor">Investor/Property Developer</SelectItem>
                     <SelectItem value="expat">Expat Relocating to Dubai</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -206,6 +225,19 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                 </Select>
               </div>
             </div>
+            {clientType === "other" && (
+              <div>
+                <Label htmlFor="other_client_type">Please Specify *</Label>
+                <Input 
+                  id="other_client_type" 
+                  value={otherClientType}
+                  onChange={(e) => setOtherClientType(e.target.value)}
+                  placeholder="Specify your client type"
+                  required
+                  maxLength={100}
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="property_size">Property Size</Label>
               <Select name="property_size">
@@ -234,7 +266,6 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                     <SelectValue placeholder="Select budget" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="under_50k">Under AED 50,000</SelectItem>
                     <SelectItem value="50k_100k">AED 50,000 - 100,000</SelectItem>
                     <SelectItem value="100k_200k">AED 100,000 - 200,000</SelectItem>
                     <SelectItem value="200k_plus">AED 200,000+</SelectItem>
@@ -272,6 +303,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                   { value: "scandinavian", label: "Scandinavian" },
                   { value: "modern", label: "Modern" },
                   { value: "traditional", label: "Traditional" },
+                  { value: "other", label: "Other" },
                 ].map((style) => (
                   <div key={style.value} className="flex items-center space-x-2">
                     <Checkbox
@@ -285,6 +317,18 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                   </div>
                 ))}
               </div>
+              {designStyles.includes("other") && (
+                <div className="mt-3">
+                  <Label htmlFor="other_design_style">Specify Other Design Style</Label>
+                  <Input 
+                    id="other_design_style" 
+                    value={otherDesignStyle}
+                    onChange={(e) => setOtherDesignStyle(e.target.value)}
+                    placeholder="Enter your preferred design style"
+                    maxLength={100}
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -297,6 +341,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                   { value: "earth_tones", label: "Earth Tones" },
                   { value: "monochrome", label: "Monochrome" },
                   { value: "bold_accents", label: "Bold Accents" },
+                  { value: "other", label: "Other" },
                 ].map((palette) => (
                   <div key={palette.value} className="flex items-center space-x-2">
                     <Checkbox
@@ -310,6 +355,18 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                   </div>
                 ))}
               </div>
+              {colorPalettes.includes("other") && (
+                <div className="mt-3">
+                  <Label htmlFor="other_color_palette">Specify Other Color Palette</Label>
+                  <Input 
+                    id="other_color_palette" 
+                    value={otherColorPalette}
+                    onChange={(e) => setOtherColorPalette(e.target.value)}
+                    placeholder="Enter your preferred color palette"
+                    maxLength={100}
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -350,15 +407,6 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                 placeholder="Tell us about any specific requirements, accessibility needs, pet considerations, etc."
                 maxLength={2000}
                 rows={4}
-              />
-            </div>
-            <div>
-              <Label htmlFor="inspiration_links">Inspiration Links (Pinterest, Instagram, etc.)</Label>
-              <Input
-                id="inspiration_links"
-                name="inspiration_links"
-                placeholder="Share links to designs you love"
-                maxLength={500}
               />
             </div>
           </div>
