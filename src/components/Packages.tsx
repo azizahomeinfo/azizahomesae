@@ -4,17 +4,15 @@ import package1 from "@/assets/package-1.jpg";
 import package2 from "@/assets/package-2.jpg";
 import package3 from "@/assets/package-3.jpg";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { getProducts, ShopifyProduct } from "@/lib/shopify";
-import { useCartStore } from "@/stores/cartStore";
-import { toast } from "sonner";
 
 const Packages = () => {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const addItem = useCartStore(state => state.addItem);
 
   const packageImages = [package1, package2, package3];
+  const packagePrices = ["22,500", "26,500", null]; // First two packages have fixed prices
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -32,26 +30,12 @@ const Packages = () => {
     fetchProducts();
   }, []);
 
-  const handleAddToCart = (product: ShopifyProduct, e: React.MouseEvent) => {
+  const handleWhatsAppClick = (product: ShopifyProduct, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    const variant = product.node.variants.edges[0]?.node;
-    if (!variant) return;
-
-    const cartItem = {
-      product,
-      variantId: variant.id,
-      variantTitle: variant.title,
-      price: variant.price,
-      quantity: 1,
-      selectedOptions: variant.selectedOptions || []
-    };
-    
-    addItem(cartItem);
-    toast.success("Added to cart", {
-      description: `${product.node.title} has been added to your cart.`
-    });
+    const message = encodeURIComponent(`Hi, I'm interested in ${product.node.title}`);
+    window.open(`https://wa.me/971559779635?text=${message}`, '_blank');
   };
 
   return (
@@ -109,17 +93,17 @@ const Packages = () => {
                       {product.node.title}
                     </h3>
                     <p className="text-2xl font-bold text-primary mb-3">
-                      from {parseFloat(variant?.price.amount || '0').toLocaleString()} AED
+                      from {packagePrices[index] || parseFloat(variant?.price.amount || '0').toLocaleString()} AED
                     </p>
                     <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{product.node.description}</p>
                     
                     <Button
-                      onClick={(e) => handleAddToCart(product, e)}
+                      onClick={(e) => handleWhatsAppClick(product, e)}
                       className="w-full"
                       variant={isFeatured ? "default" : "outline"}
                     >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Add to Cart
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      More Info on WhatsApp
                     </Button>
                   </div>
                 </Link>
