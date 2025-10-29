@@ -47,8 +47,8 @@ const packages: Package[] = [
     prices: {
       studio: "26,500 AED",
       "1b": "36,500 AED",
-      "2b": "51,000 AED",
-      "3b": "68,800 AED",
+      "2b": "55,000 AED",
+      "3b": "72,800 AED",
     },
   },
   {
@@ -58,9 +58,9 @@ const packages: Package[] = [
     image: package3,
     prices: {
       studio: "30,500 AED",
-      "1b": "44,000 AED",
-      "2b": "62,000 AED",
-      "3b": "83,500 AED",
+      "1b": "46,000 AED",
+      "2b": "65,500 AED",
+      "3b": "88,600 AED",
     },
   },
 ];
