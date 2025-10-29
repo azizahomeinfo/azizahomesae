@@ -5,32 +5,35 @@ import { Button } from "./ui/button";
 const Footer = () => {
   return (
     <>
-      <footer className="bg-primary text-primary-foreground py-12">
+      <footer className="bg-primary text-primary-foreground py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-            {/* Brand Section */}
-            <div className="space-y-4">
-              <img src={logo} alt="Aziza Home" className="h-12 brightness-0 invert" />
-              <p className="text-sm opacity-90 leading-relaxed">
+          {/* Brand Section - Full Width Top */}
+          <div className="mb-12 pb-12 border-b border-primary-foreground/20">
+            <div className="max-w-2xl">
+              <img src={logo} alt="Aziza Home" className="h-20 mb-6 brightness-0 invert" />
+              <p className="text-base opacity-90 leading-relaxed mb-6">
                 We specialize in A-Z stylish furniture packages, offering a seamless and hassle-free way to furnish your space with elegance and efficiency.
               </p>
               <div className="flex gap-3">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
                   <Facebook className="w-5 h-5" />
                 </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
                   <Instagram className="w-5 h-5" />
                 </a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
                   <Linkedin className="w-5 h-5" />
                 </a>
               </div>
             </div>
+          </div>
 
+          {/* Links Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 mb-12">
             {/* Information */}
             <div>
-              <h3 className="font-semibold text-lg mb-4">Information</h3>
-              <ul className="space-y-2 text-sm opacity-90">
+              <h3 className="font-semibold text-lg mb-5">Information</h3>
+              <ul className="space-y-3 text-sm opacity-90">
                 <li><a href="#" className="hover:opacity-100 transition-opacity">Privacy Policy</a></li>
                 <li><a href="#" className="hover:opacity-100 transition-opacity">Terms & Conditions</a></li>
                 <li><a href="#" className="hover:opacity-100 transition-opacity">Refund Policy</a></li>
@@ -40,8 +43,8 @@ const Footer = () => {
 
             {/* Quick Link */}
             <div>
-              <h3 className="font-semibold text-lg mb-4">Quick Link</h3>
-              <ul className="space-y-2 text-sm opacity-90">
+              <h3 className="font-semibold text-lg mb-5">Quick Link</h3>
+              <ul className="space-y-3 text-sm opacity-90">
                 <li><a href="/" className="hover:opacity-100 transition-opacity">Search</a></li>
                 <li><a href="#about" className="hover:opacity-100 transition-opacity">About Us</a></li>
                 <li><a href="#contact" className="hover:opacity-100 transition-opacity">Contact Us</a></li>
@@ -51,21 +54,21 @@ const Footer = () => {
 
             {/* Get In Touch */}
             <div>
-              <h3 className="font-semibold text-lg mb-4">Get In Touch</h3>
+              <h3 className="font-semibold text-lg mb-5">Get In Touch</h3>
               <ul className="space-y-3 text-sm opacity-90">
-                <li className="flex items-start gap-2">
+                <li className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>Forte Tower 1, Downtown Dubai, UAE</span>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-3">
                   <Phone className="w-4 h-4 flex-shrink-0" />
                   <a href="tel:+971559779635" className="hover:opacity-100 transition-opacity">+971 55 977 9635</a>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-3">
                   <Mail className="w-4 h-4 flex-shrink-0" />
                   <a href="mailto:info@azizahomes.com" className="hover:opacity-100 transition-opacity">info@azizahomes.com</a>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-3">
                   <Clock className="w-4 h-4 flex-shrink-0" />
                   <span>Mon - Fri: 9:00 AM - 6:00 PM</span>
                 </li>
