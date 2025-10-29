@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import { getProducts, ShopifyProduct } from "@/lib/shopify";
 
-const Packages = () => {
+interface PackagesProps {
+  onPackageClick?: () => void;
+}
+
+const Packages = ({ onPackageClick }: PackagesProps) => {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,6 +74,7 @@ const Packages = () => {
                 <Link
                   key={product.node.id}
                   to={`/product/${product.node.handle}`}
+                  onClick={onPackageClick}
                   className={`bg-card rounded-lg border transition-smooth hover:shadow-lg block overflow-hidden group ${
                     isFeatured ? "border-primary shadow-md" : "border-border"
                   }`}

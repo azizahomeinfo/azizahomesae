@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import Projects from "@/components/Projects";
@@ -8,13 +9,15 @@ import Footer from "@/components/Footer";
 import ClientInfoDialog from "@/components/ClientInfoDialog";
 
 const Index = () => {
+  const [packageClicked, setPackageClicked] = useState(false);
+
   return (
     <div className="min-h-screen">
-      <ClientInfoDialog />
+      <ClientInfoDialog triggerOnPackageClick={packageClicked} />
       <Navigation />
       <Hero />
       <Projects />
-      <Packages />
+      <Packages onPackageClick={() => setPackageClicked(true)} />
       <About />
       <Contact />
       <Footer />

@@ -38,20 +38,22 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface ClientInfoDialogProps {
   delay?: number; // Delay in milliseconds before showing the popup
+  triggerOnPackageClick?: boolean; // Trigger popup when package is clicked
 }
 
-const ClientInfoDialog = ({ delay = 300000 }: ClientInfoDialogProps) => {
+const ClientInfoDialog = ({ delay = 5000, triggerOnPackageClick = false }: ClientInfoDialogProps) => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const hasSubmitted = localStorage.getItem("clientInfoSubmitted");
-    if (!hasSubmitted) {
+    
+    if (!hasSubmitted && triggerOnPackageClick) {
       const timer = setTimeout(() => {
         setOpen(true);
       }, delay);
       return () => clearTimeout(timer);
     }
-  }, [delay]);
+  }, [delay, triggerOnPackageClick]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
