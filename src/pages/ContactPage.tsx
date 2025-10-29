@@ -61,7 +61,7 @@ const ContactPage = () => {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Receive Your Proposal</h3>
                 <p className="text-muted-foreground">
-                  Get a detailed design proposal with mood boards, timeline, and transparent pricing.
+                  Get a detailed design proposal with mood boards or 3D rendering walkthrough based on the size of your unit and requirements, timeline, and transparent pricing.
                 </p>
               </div>
             </div>
