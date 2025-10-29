@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import serviceHolidayHome from "@/assets/service-holiday-home.jpg";
+import serviceHolidayHome from "@/assets/service-holiday-home-new.jpg";
 import serviceExpatRelocate from "@/assets/service-expat-generated.jpg";
 import serviceInvestor from "@/assets/service-investor.jpg";
 import serviceInteriorDesign from "@/assets/service-interior-design.jpg";
@@ -73,6 +73,7 @@ const Services = () => {
                       src={service.image} 
                       alt={service.title}
                       className="absolute inset-0 w-full h-full object-cover"
+                      style={service.id === 1 ? { objectPosition: 'center 30%' } : undefined}
                     />
                   </div>
                 </div>
