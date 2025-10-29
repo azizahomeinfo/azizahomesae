@@ -60,15 +60,6 @@ const ClientInfoDialog = () => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Please sign in to submit your information.");
-        setOpen(false);
-        return;
-      }
-
       const { error } = await supabase
         .from('client_submissions')
         .insert([{
@@ -76,7 +67,6 @@ const ClientInfoDialog = () => {
           phone: data.phone,
           email: data.email,
           purpose: data.purpose,
-          user_id: user.id,
         }]);
 
       if (error) {
@@ -86,7 +76,7 @@ const ClientInfoDialog = () => {
       }
 
       localStorage.setItem("clientInfoSubmitted", "true");
-      toast.success("Thank you! Your 5% discount has been applied!");
+      toast.success("Thank you! Your 2,000 AED discount has been applied!");
       setOpen(false);
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -115,7 +105,7 @@ const ClientInfoDialog = () => {
             <div className="absolute top-4 md:top-8 left-0 right-0 text-center px-4">
               <div className="inline-block bg-white/90 backdrop-blur-sm px-6 md:px-8 py-3 md:py-4 rounded-sm">
                 <p className="text-gray-800 text-lg md:text-2xl font-light tracking-wider leading-relaxed" style={{ fontFamily: 'serif' }}>
-                  5% discount voucher
+                  2,000 AED discount voucher
                   <br />
                   <span className="text-sm md:text-lg">for all packages</span>
                 </p>
@@ -126,7 +116,7 @@ const ClientInfoDialog = () => {
           {/* Form Section */}
           <div className="p-6">
             <DialogHeader className="text-left mb-4">
-              <DialogTitle className="text-xl">Get 5% Discount!</DialogTitle>
+              <DialogTitle className="text-xl">Get 2,000 AED Discount!</DialogTitle>
               <DialogDescription className="text-sm">
                 Share your furnishing needs for an exclusive discount.
               </DialogDescription>
@@ -207,7 +197,7 @@ const ClientInfoDialog = () => {
                 />
 
                 <Button type="submit" className="w-full">
-                  Submit & Get 5% Discount
+                  Submit & Get 2,000 AED Discount
                 </Button>
               </form>
             </Form>
