@@ -10,7 +10,7 @@ const Footer = () => {
           {/* Brand Section - Full Width Top */}
           <div className="mb-12 pb-12 border-b border-primary-foreground/20">
             <div className="max-w-2xl">
-              <img src={logo} alt="Aziza Home" className="h-20 mb-6 brightness-0 invert" />
+              <img src={logo} alt="Aziza Home" className="h-28 mb-6 brightness-0 invert" />
               <p className="text-base opacity-90 leading-relaxed mb-6">
                 We specialize in A-Z stylish furniture packages, offering a seamless and hassle-free way to furnish your space with elegance and efficiency.
               </p>
