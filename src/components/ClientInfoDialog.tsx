@@ -44,7 +44,7 @@ const ClientInfoDialog = () => {
     if (!hasSubmitted) {
       const timer = setTimeout(() => {
         setOpen(true);
-      }, 1500);
+      }, 300000); // 5 minutes
       return () => clearTimeout(timer);
     }
   }, []);
