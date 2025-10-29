@@ -36,7 +36,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const ClientInfoDialog = () => {
+interface ClientInfoDialogProps {
+  delay?: number; // Delay in milliseconds before showing the popup
+}
+
+const ClientInfoDialog = ({ delay = 300000 }: ClientInfoDialogProps) => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -44,10 +48,10 @@ const ClientInfoDialog = () => {
     if (!hasSubmitted) {
       const timer = setTimeout(() => {
         setOpen(true);
-      }, 300000); // 5 minutes
+      }, delay);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [delay]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import ClientInfoDialog from "@/components/ClientInfoDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
@@ -204,6 +205,7 @@ const PackagesOverview = () => {
       </main>
 
       <Footer />
+      <ClientInfoDialog delay={15000} />
     </div>
   );
 };
