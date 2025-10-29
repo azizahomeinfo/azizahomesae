@@ -38,6 +38,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
   const [otherClientType, setOtherClientType] = useState("");
   const [otherDesignStyle, setOtherDesignStyle] = useState("");
   const [otherColorPalette, setOtherColorPalette] = useState("");
+  const [otherSpace, setOtherSpace] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,6 +54,10 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
       const finalColorPalettes = [...colorPalettes];
       if (otherColorPalette.trim()) {
         finalColorPalettes.push(otherColorPalette.trim());
+      }
+      const finalSpaces = [...spacesToDesign];
+      if (otherSpace.trim()) {
+        finalSpaces.push(otherSpace.trim());
       }
 
       const data = {
@@ -87,7 +92,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
         timeline: validated.timeline,
         design_style: finalDesignStyles.length > 0 ? finalDesignStyles : null,
         color_palette: finalColorPalettes.length > 0 ? finalColorPalettes : null,
-        spaces_to_design: spacesToDesign.length > 0 ? spacesToDesign : null,
+        spaces_to_design: finalSpaces.length > 0 ? finalSpaces : null,
         special_requirements: validated.special_requirements || null,
         inspiration_links: null,
       });
@@ -107,6 +112,7 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
       setOtherClientType("");
       setOtherDesignStyle("");
       setOtherColorPalette("");
+      setOtherSpace("");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -373,13 +379,14 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
               <Label>Spaces to Design (Select all that apply)</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
                 {[
+                  { value: "entire_home", label: "Entire Home" },
                   { value: "living_room", label: "Living Room" },
                   { value: "bedroom", label: "Bedroom" },
                   { value: "kitchen", label: "Kitchen" },
                   { value: "bathroom", label: "Bathroom" },
                   { value: "dining", label: "Dining Area" },
                   { value: "office", label: "Home Office" },
-                  { value: "entire_home", label: "Entire Home" },
+                  { value: "other", label: "Other" },
                 ].map((space) => (
                   <div key={space.value} className="flex items-center space-x-2">
                     <Checkbox
@@ -393,6 +400,18 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                   </div>
                 ))}
               </div>
+              {spacesToDesign.includes("other") && (
+                <div className="mt-3">
+                  <Label htmlFor="other_space">Specify Other Space</Label>
+                  <Input 
+                    id="other_space" 
+                    value={otherSpace}
+                    onChange={(e) => setOtherSpace(e.target.value)}
+                    placeholder="Enter the space you want to design"
+                    maxLength={100}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
