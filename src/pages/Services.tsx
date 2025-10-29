@@ -3,7 +3,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import serviceHolidayHome from "@/assets/service-holiday-home.jpg";
-import serviceExpatRelocate from "@/assets/service-expat-relocate.jpg";
+import serviceExpatRelocate from "@/assets/service-expat-relocate-new.jpg";
 import serviceInvestor from "@/assets/service-investor.jpg";
 import serviceInteriorDesign from "@/assets/service-interior-design.jpg";
 
