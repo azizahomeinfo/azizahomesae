@@ -48,7 +48,7 @@ const packages: Package[] = [
       studio: "26,500 AED",
       "1b": "36,500 AED",
       "2b": "51,000 AED",
-      "3b": "65,500 AED",
+      "3b": "68,800 AED",
     },
   },
   {
