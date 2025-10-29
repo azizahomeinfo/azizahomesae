@@ -31,19 +31,36 @@ const Hero = () => {
     }
   };
 
+  const handleVideoClick = () => {
+    const video = videoRef.current;
+    if (video) {
+      if (!document.fullscreenElement) {
+        video.requestFullscreen().catch(err => {
+          console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
+
   return (
     <>
       {/* Showcase Video Section */}
-      <section className="relative w-full h-screen overflow-hidden">
+      <section className="relative w-full h-[120vh] overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-full object-cover"
+          onClick={handleVideoClick}
+          className="w-full h-full object-cover cursor-pointer transition-transform hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/5 via-background/20 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/5 via-background/20 to-background pointer-events-none" />
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/80 text-sm pointer-events-none animate-pulse">
+          Click video to view fullscreen
+        </div>
       </section>
 
       <section id="hero" className="relative h-screen flex items-center justify-center overflow-hidden -mt-32">
