@@ -76,7 +76,7 @@ const ClientInfoDialog = () => {
       }
 
       localStorage.setItem("clientInfoSubmitted", "true");
-      toast.success("Thank you! Your 2,000 AED discount has been applied!");
+      toast.success("Your 2,000 AED voucher will be shared with you via WhatsApp!");
       setOpen(false);
     } catch (error) {
       console.error("Error submitting form:", error);
