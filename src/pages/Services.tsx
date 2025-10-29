@@ -73,7 +73,7 @@ const Services = () => {
                       src={service.image} 
                       alt={service.title}
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={service.id === 1 ? { objectPosition: 'center 20%' } : undefined}
+                      style={service.id === 1 ? { objectPosition: 'center 60%' } : undefined}
                     />
                   </div>
                 </div>
