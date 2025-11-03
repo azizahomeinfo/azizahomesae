@@ -8,19 +8,10 @@ const Hero = () => {
 
   useEffect(() => {
     const video = videoRef.current;
-    const videoSrc = "https://azizahomes.com/cdn/shop/videos/c/vp/71bcecc96b1545d3ac41eb3b20dcbf2e/71bcecc96b1545d3ac41eb3b20dcbf2e.m3u8?v=0";
-
+    
     if (video) {
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-        return () => {
-          hls.destroy();
-        };
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = videoSrc;
-      }
+      // Use local video file
+      video.src = "/hero-video.mp4";
     }
   }, []);
 
