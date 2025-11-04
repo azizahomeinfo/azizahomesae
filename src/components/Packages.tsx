@@ -89,6 +89,7 @@ const Packages = ({ onPackageClick }: PackagesProps) => {
                     <img 
                       src={packageImages[index]} 
                       alt={product.node.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-smooth"
                     />
                   </div>

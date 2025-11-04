@@ -45,6 +45,8 @@ const Hero = () => {
           loop
           muted
           playsInline
+          preload="metadata"
+          poster={heroImage}
           onClick={handleVideoClick}
           className="w-full h-full object-cover cursor-pointer transition-transform hover:scale-105"
         />
