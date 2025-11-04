@@ -36,24 +36,24 @@ const projects = [
 
 const Projects = () => {
   return (
-    <section id="portfolio" className="py-20 md:py-32 bg-background">
+    <section id="portfolio" className="py-20 md:py-32 bg-background" aria-labelledby="portfolio-heading">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-heading font-semibold text-foreground mb-4 uppercase tracking-wide">
+        <header className="text-center mb-16">
+          <h2 id="portfolio-heading" className="text-3xl md:text-5xl font-heading font-semibold text-foreground mb-4 uppercase tracking-wide">
             Our Portfolio
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Explore our portfolio of thoughtfully designed spaces that blend Japanese and Scandinavian aesthetics
           </p>
-        </div>
+        </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           {projects.map((project) => (
-            <div key={project.id} className="group cursor-pointer">
+            <article key={project.id} className="group cursor-pointer">
               <div className="relative overflow-hidden mb-4 aspect-[4/5]">
                 <img
                   src={project.image}
-                  alt={project.title}
+                  alt={`${project.title} - ${project.description} featuring Japandi style interior design by Aziza Home`}
                   loading="lazy"
                   className="w-full h-full object-cover transition-smooth group-hover:scale-105"
                 />
@@ -70,7 +70,7 @@ const Projects = () => {
                   {project.description}
                 </p>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>

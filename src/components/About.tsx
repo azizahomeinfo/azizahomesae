@@ -1,14 +1,14 @@
 const About = () => {
   return (
-    <section id="about" className="py-20 md:py-32 bg-background">
+    <section id="about" className="py-20 md:py-32 bg-background" aria-labelledby="about-heading">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-heading font-semibold text-foreground mb-6 uppercase tracking-wide">
+        <article className="max-w-4xl mx-auto">
+          <header className="text-center mb-12">
+            <h2 id="about-heading" className="text-3xl md:text-5xl font-heading font-semibold text-foreground mb-6 uppercase tracking-wide">
               About Aziza Home
             </h2>
             <div className="w-20 h-1 bg-primary mx-auto mb-8" />
-          </div>
+          </header>
 
           <div className="space-y-6 text-lg text-foreground/80 leading-relaxed">
             <p>
@@ -36,7 +36,7 @@ const About = () => {
               <div className="text-muted-foreground">Award Winning Design</div>
             </div>
           </div>
-        </div>
+        </article>
       </div>
     </section>
   );

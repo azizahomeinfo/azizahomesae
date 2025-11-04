@@ -7,19 +7,23 @@ import About from "@/components/About";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import ClientInfoDialog from "@/components/ClientInfoDialog";
+import StructuredData from "@/components/StructuredData";
 
 const Index = () => {
   const [packageClicked, setPackageClicked] = useState(false);
 
   return (
     <div className="min-h-screen">
+      <StructuredData />
       <ClientInfoDialog triggerOnPackageClick={packageClicked} />
       <Navigation />
-      <Hero />
-      <Projects />
-      <Packages onPackageClick={() => setPackageClicked(true)} />
-      <About />
-      <Contact />
+      <main>
+        <Hero />
+        <Projects />
+        <Packages onPackageClick={() => setPackageClicked(true)} />
+        <About />
+        <Contact />
+      </main>
       <Footer />
     </div>
   );
