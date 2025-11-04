@@ -12,13 +12,13 @@ const About = () => {
 
           <div className="space-y-6 text-lg text-foreground/80 leading-relaxed">
             <p>
-              At Aziza Home, we believe that a well-designed space is essential to living well. Our philosophy merges the timeless minimalism of Japanese design with the warm functionality of Scandinavian aesthetics—creating interiors that are both beautiful and livable.
+              At Aziza Home, we believe that a well-designed space is essential to living well. Our philosophy merges the timeless minimalism of Japanese design with the warm functionality of Scandinavian aesthetics—creating interiors that are both beautiful and livable. We specialize in turnkey furnishing packages for Dubai apartments, serving investors, expats, and holiday home owners across premium areas including Dubai Marina, Downtown Dubai, Business Bay, and Dubai Harbour.
             </p>
             <p>
-              With years of experience in interior design, we specialize in creating harmonious spaces that reflect your personal style while maintaining the clean lines and natural materials that define the Japandi aesthetic.
+              With years of experience in interior design and furniture production, we create harmonious spaces that reflect your personal style while delivering move-in ready solutions. Whether you're an investor seeking to increase rental value, a relocating professional needing expat home setup, or a property owner looking for holiday home furnishing in Dubai, our complete apartment setup service handles everything remotely—from furniture selection to delivery and installation.
             </p>
             <p>
-              From concept to completion, we offer comprehensive A-Z furnishing packages that take the stress out of designing your space. Whether you're furnishing a single room or an entire home, we're here to guide you through every step of the journey.
+              From concept to completion, we offer comprehensive A-Z furnishing packages featuring luxury furniture packages, custom designer pieces, and durable furniture perfect for rental properties. Our same-day furniture delivery Dubai service and quick home furnishing solutions ensure your space is rent-ready when you need it. Whether it's a complete 2-bedroom furnishing package in Downtown Dubai or short-term rental styling for Dubai Marina properties, we deliver higher ROI through curated home furnishing that maximizes occupancy and rental value.
             </p>
           </div>
 
