@@ -29,7 +29,7 @@ const Footer = () => {
           </div>
 
           {/* Links Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
             {/* Information */}
             <div>
               <h3 className="font-semibold text-lg mb-5">Information</h3>
@@ -49,6 +49,17 @@ const Footer = () => {
                 <li><a href="#about" className="hover:opacity-100 transition-opacity">About Us</a></li>
                 <li><a href="#contact" className="hover:opacity-100 transition-opacity">Contact Us</a></li>
                 <li><a href="#" className="hover:opacity-100 transition-opacity">Order Tracking</a></li>
+              </ul>
+            </div>
+
+            {/* Blog */}
+            <div>
+              <h3 className="font-semibold text-lg mb-5">Resources</h3>
+              <ul className="space-y-3 text-sm opacity-90">
+                <li><a href="/blog" className="hover:opacity-100 transition-opacity">Blog & Insights</a></li>
+                <li><a href="/portfolio" className="hover:opacity-100 transition-opacity">Portfolio</a></li>
+                <li><a href="/packages" className="hover:opacity-100 transition-opacity">Packages</a></li>
+                <li><a href="/services" className="hover:opacity-100 transition-opacity">Services</a></li>
               </ul>
             </div>
 
