@@ -15,14 +15,32 @@ const Footer = () => {
                 We specialize in A-Z stylish furniture packages, offering a seamless and hassle-free way to furnish your space with elegance and efficiency.
               </p>
               <div className="flex gap-3">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
+                <a 
+                  href="https://instagram.com/azizahomes" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors"
+                  aria-label="Follow Aziza Home on Instagram"
+                >
                   <Instagram className="w-5 h-5" />
                 </a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors">
+                <a 
+                  href="https://linkedin.com/company/azizahomes" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors"
+                  aria-label="Connect with Aziza Home on LinkedIn"
+                >
                   <Linkedin className="w-5 h-5" />
+                </a>
+                <a 
+                  href="https://facebook.com/azizahomes" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors"
+                  aria-label="Like Aziza Home on Facebook"
+                >
+                  <Facebook className="w-5 h-5" />
                 </a>
               </div>
             </div>
@@ -56,10 +74,42 @@ const Footer = () => {
             <div>
               <h3 className="font-semibold text-lg mb-5">Resources</h3>
               <ul className="space-y-3 text-sm opacity-90">
-                <li><a href="/blog" className="hover:opacity-100 transition-opacity">Blog & Insights</a></li>
-                <li><a href="/portfolio" className="hover:opacity-100 transition-opacity">Portfolio</a></li>
-                <li><a href="/packages" className="hover:opacity-100 transition-opacity">Packages</a></li>
-                <li><a href="/services" className="hover:opacity-100 transition-opacity">Services</a></li>
+                <li>
+                  <a 
+                    href="/blog" 
+                    className="hover:opacity-100 transition-opacity"
+                    aria-label="Read our interior design and property investment blog"
+                  >
+                    Design Insights & Tips
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/projects" 
+                    className="hover:opacity-100 transition-opacity"
+                    aria-label="View our portfolio of completed interior design projects"
+                  >
+                    Project Gallery
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/packages" 
+                    className="hover:opacity-100 transition-opacity"
+                    aria-label="Explore our furnishing packages for Dubai properties"
+                  >
+                    Furnishing Packages
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/services" 
+                    className="hover:opacity-100 transition-opacity"
+                    aria-label="Discover our interior design and furnishing services"
+                  >
+                    Our Services
+                  </a>
+                </li>
               </ul>
             </div>
 

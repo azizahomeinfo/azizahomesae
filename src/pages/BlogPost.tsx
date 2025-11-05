@@ -8,6 +8,33 @@ import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
 import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
 import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
 
+const generateBlogStructuredData = (article: any, slug: string) => ({
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": article.title,
+  "image": article.image,
+  "datePublished": article.date,
+  "dateModified": article.date,
+  "author": {
+    "@type": "Organization",
+    "name": "Aziza Home",
+    "url": "https://azizahomes.com"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Aziza Home",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://azizahomes.com/aziza-logo.png"
+    }
+  },
+  "description": article.content.substring(0, 160).replace(/<[^>]*>/g, ''),
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `https://azizahomes.com/blog/${slug}`
+  }
+});
+
 const BlogPost = () => {
   const { slug } = useParams();
 
@@ -241,9 +268,22 @@ const BlogPost = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{article.title} - Aziza Home Blog</title>
-        <meta name="description" content={article.content.substring(0, 160)} />
+        <title>{article.title} - Aziza Home Blog | Interior Design & Real Estate Dubai</title>
+        <meta name="description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
+        <meta name="keywords" content={`${article.category}, Dubai interior design, home furnishing, property investment, Aziza Home`} />
         <link rel="canonical" href={`https://azizahomes.com/blog/${slug}`} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
+        <meta property="og:image" content={article.image} />
+        <meta property="og:url" content={`https://azizahomes.com/blog/${slug}`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
+        <meta name="twitter:image" content={article.image} />
+        <script type="application/ld+json">
+          {JSON.stringify(generateBlogStructuredData(article, slug || ''))}
+        </script>
       </Helmet>
 
       <Navigation />
@@ -297,12 +337,47 @@ const BlogPost = () => {
               />
 
               <div className="mt-12 pt-8 border-t">
-                <Link to="/blog">
-                  <Button>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to All Articles
-                  </Button>
-                </Link>
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-4">Related Articles</h3>
+                    <div className="grid gap-4">
+                      {Object.entries(articles)
+                        .filter(([key]) => key !== slug)
+                        .slice(0, 2)
+                        .map(([key, relatedArticle]) => (
+                          <Link 
+                            key={key} 
+                            to={`/blog/${key}`}
+                            className="flex gap-4 p-4 rounded-lg border hover:border-primary transition-colors"
+                          >
+                            <img 
+                              src={relatedArticle.image} 
+                              alt={relatedArticle.title}
+                              className="w-24 h-24 object-cover rounded"
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-semibold mb-2">{relatedArticle.title}</h4>
+                              <p className="text-sm text-muted-foreground">{relatedArticle.category}</p>
+                            </div>
+                          </Link>
+                        ))}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <Link to="/blog">
+                      <Button variant="outline">
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        All Articles
+                      </Button>
+                    </Link>
+                    <Link to="/packages">
+                      <Button>
+                        Explore Our Packages
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

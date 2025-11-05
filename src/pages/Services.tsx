@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import { Helmet } from "react-helmet";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,16 @@ const services = [
 const Services = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Our Services - Interior Design & Furnishing Dubai | Aziza Home</title>
+        <meta name="description" content="Explore Aziza Home's comprehensive furnishing services in Dubai: Holiday Home Packages, Expat Relocation, Investor Packages with 20-25% ROI increase, and Custom Interior Design." />
+        <meta name="keywords" content="Dubai furnishing services, holiday home furnishing, expat relocation Dubai, investor property packages, interior design Dubai, fit-out services UAE" />
+        <link rel="canonical" href="https://azizahomes.com/services" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Our Services - Interior Design & Furnishing Dubai" />
+        <meta property="og:description" content="Comprehensive furnishing and design solutions for Dubai properties. Holiday homes, expat relocations, and investor packages." />
+        <meta property="og:url" content="https://azizahomes.com/services" />
+      </Helmet>
       <Navigation />
       
       {/* Hero Section */}

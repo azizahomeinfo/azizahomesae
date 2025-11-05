@@ -45,8 +45,14 @@ const Blog = () => {
         <title>Blog - Aziza Home | Interior Design & Furnishing Insights Dubai</title>
         <meta 
           name="description" 
-          content="Expert insights on interior design agencies in Dubai, home furnishing tips, and luxury furniture packages for your Dubai property. Read our latest articles." 
+          content="Expert insights on interior design agencies in Dubai, home furnishing tips, property investment strategies, and luxury furniture packages. Read our latest articles." 
         />
+        <meta name="keywords" content="Dubai interior design blog, home furnishing tips, property investment Dubai, interior design agencies, expat relocation guide, holiday home furnishing" />
+        <link rel="canonical" href="https://azizahomes.com/blog" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Blog - Interior Design & Furnishing Insights Dubai" />
+        <meta property="og:description" content="Expert insights on interior design, home furnishing, and property investment in Dubai." />
+        <meta property="og:url" content="https://azizahomes.com/blog" />
         <meta 
           name="keywords" 
           content="interior design blog Dubai, home furnishing tips, Dubai design agencies, luxury furniture Dubai, apartment furnishing guide" 
