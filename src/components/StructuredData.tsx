@@ -57,7 +57,7 @@ const StructuredData = () => {
       "Downtown Dubai furniture packages"
     ],
     "sameAs": [
-      "https://www.instagram.com/azizahome",
+      "https://www.instagram.com/azizahomeaes",
       "https://www.facebook.com/azizahome"
     ]
   };
