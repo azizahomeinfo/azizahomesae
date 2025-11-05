@@ -6,6 +6,7 @@ import { ArrowRight, Clock, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
 import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
+import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
 
 const Blog = () => {
   const articles = [
@@ -26,6 +27,15 @@ const Blog = () => {
       date: "November 4, 2025",
       readTime: "6 min read",
       category: "Home Furnishing"
+    },
+    {
+      id: "where-to-invest-dubai-best-roi-property-growth",
+      title: "Where to Invest in Dubai for the Best ROI and Property Growth",
+      excerpt: "Dubai's real estate market continues to attract global investors thanks to its tax-free environment, world-class infrastructure, and high demand for both short-term and long-term rentals. Discover the key areas for maximum returns.",
+      image: blogDubaiInvestment,
+      date: "November 5, 2025",
+      readTime: "7 min read",
+      category: "Investment Guide"
     }
   ];
 
