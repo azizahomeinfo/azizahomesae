@@ -265,6 +265,16 @@ const BlogPost = () => {
     );
   }
 
+  // Generate full image URL for social sharing
+  const getImageUrl = (slug: string) => {
+    const imageMap: { [key: string]: string } = {
+      "top-7-interior-design-agencies-dubai": "https://azizahomes.com/blog-top-agencies.jpg",
+      "quick-efficient-ways-to-furnish-your-home": "https://azizahomes.com/blog-furnish-home.jpg",
+      "where-to-invest-dubai-best-roi-property-growth": "https://azizahomes.com/blog-dubai-investment.jpg"
+    };
+    return imageMap[slug] || "https://azizahomes.com/hero-image-new.jpg";
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -272,15 +282,23 @@ const BlogPost = () => {
         <meta name="description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
         <meta name="keywords" content={`${article.category}, Dubai interior design, home furnishing, property investment, Aziza Home`} />
         <link rel="canonical" href={`https://azizahomes.com/blog/${slug}`} />
+        
+        {/* Open Graph Meta Tags */}
         <meta property="og:type" content="article" />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
-        <meta property="og:image" content={article.image} />
         <meta property="og:url" content={`https://azizahomes.com/blog/${slug}`} />
+        <meta property="og:image" content={getImageUrl(slug || '')} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Aziza Home" />
+        
+        {/* Twitter Card Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
-        <meta name="twitter:image" content={article.image} />
+        <meta name="twitter:image" content={getImageUrl(slug || '')} />
+        
         <script type="application/ld+json">
           {JSON.stringify(generateBlogStructuredData(article, slug || ''))}
         </script>

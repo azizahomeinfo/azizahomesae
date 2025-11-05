@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ClientInfoDialog from "@/components/ClientInfoDialog";
@@ -78,6 +79,28 @@ const PackagesOverview = () => {
 
   return (
     <div className="min-h-screen">
+      <Helmet>
+        <title>Furnishing Packages - Essential, Premium & Luxury | Aziza Home Dubai</title>
+        <meta name="description" content="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 30,500 AED). Complete furniture packages for Dubai properties." />
+        <meta name="keywords" content="furnishing packages Dubai, furniture packages Dubai, apartment furnishing costs, home furnishing prices Dubai, studio furnishing Dubai, villa furnishing packages" />
+        <link rel="canonical" href="https://azizahomes.com/packages" />
+        
+        {/* Open Graph Meta Tags */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Furnishing Packages - Essential, Premium & Luxury" />
+        <meta property="og:description" content="Complete furnishing packages from 22,500 AED. Essential, Premium, and Luxury options for studios to 3-bedroom apartments in Dubai." />
+        <meta property="og:url" content="https://azizahomes.com/packages" />
+        <meta property="og:image" content="https://azizahomes.com/package-complete-new.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Aziza Home" />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Furnishing Packages - Essential, Premium & Luxury" />
+        <meta name="twitter:description" content="Complete furnishing packages from 22,500 AED for Dubai properties." />
+        <meta name="twitter:image" content="https://azizahomes.com/package-complete-new.jpg" />
+      </Helmet>
       <Navigation />
       
       <main className="pt-32 pb-16">

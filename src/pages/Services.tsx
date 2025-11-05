@@ -44,10 +44,22 @@ const Services = () => {
         <meta name="description" content="Explore Aziza Home's comprehensive furnishing services in Dubai: Holiday Home Packages, Expat Relocation, Investor Packages with 20-25% ROI increase, and Custom Interior Design." />
         <meta name="keywords" content="Dubai furnishing services, holiday home furnishing, expat relocation Dubai, investor property packages, interior design Dubai, fit-out services UAE" />
         <link rel="canonical" href="https://azizahomes.com/services" />
+        
+        {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Our Services - Interior Design & Furnishing Dubai" />
-        <meta property="og:description" content="Comprehensive furnishing and design solutions for Dubai properties. Holiday homes, expat relocations, and investor packages." />
+        <meta property="og:description" content="Comprehensive furnishing and design solutions for Dubai properties. Holiday homes, expat relocations, and investor packages with 20-25% ROI increase." />
         <meta property="og:url" content="https://azizahomes.com/services" />
+        <meta property="og:image" content="https://azizahomes.com/service-holiday-home-new.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Aziza Home" />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Our Services - Interior Design & Furnishing Dubai" />
+        <meta name="twitter:description" content="Holiday homes, expat relocations, and investor packages with 20-25% ROI increase." />
+        <meta name="twitter:image" content="https://azizahomes.com/service-holiday-home-new.jpg" />
       </Helmet>
       <Navigation />
       

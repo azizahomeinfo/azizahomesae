@@ -49,15 +49,22 @@ const Blog = () => {
         />
         <meta name="keywords" content="Dubai interior design blog, home furnishing tips, property investment Dubai, interior design agencies, expat relocation guide, holiday home furnishing" />
         <link rel="canonical" href="https://azizahomes.com/blog" />
+        
+        {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Blog - Interior Design & Furnishing Insights Dubai" />
         <meta property="og:description" content="Expert insights on interior design, home furnishing, and property investment in Dubai." />
         <meta property="og:url" content="https://azizahomes.com/blog" />
-        <meta 
-          name="keywords" 
-          content="interior design blog Dubai, home furnishing tips, Dubai design agencies, luxury furniture Dubai, apartment furnishing guide" 
-        />
-        <link rel="canonical" href="https://azizahomes.com/blog" />
+        <meta property="og:image" content="https://azizahomes.com/blog-top-agencies.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Aziza Home" />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Blog - Interior Design & Furnishing Insights Dubai" />
+        <meta name="twitter:description" content="Expert insights on interior design, home furnishing, and property investment in Dubai." />
+        <meta name="twitter:image" content="https://azizahomes.com/blog-top-agencies.jpg" />
       </Helmet>
 
       <Navigation />

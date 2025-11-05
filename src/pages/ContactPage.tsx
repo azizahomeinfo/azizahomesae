@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,28 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Contact Us - Custom Interior Design Consultation | Aziza Home Dubai</title>
+        <meta name="description" content="Get a custom interior design consultation with Aziza Home. Share your vision and receive a personalized design proposal with mood boards, 3D rendering, timeline, and transparent pricing." />
+        <meta name="keywords" content="contact Aziza Home, custom design consultation Dubai, interior design inquiry Dubai, WhatsApp consultation Dubai, personalized interior design" />
+        <link rel="canonical" href="https://azizahomes.com/contact" />
+        
+        {/* Open Graph Meta Tags */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Contact Us - Custom Interior Design Consultation" />
+        <meta property="og:description" content="Get a custom interior design consultation. Share your vision and receive a personalized design proposal with mood boards and 3D rendering." />
+        <meta property="og:url" content="https://azizahomes.com/contact" />
+        <meta property="og:image" content="https://azizahomes.com/team-photo.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Aziza Home" />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Contact Us - Custom Interior Design Consultation" />
+        <meta name="twitter:description" content="Get a custom design consultation with personalized proposals and 3D rendering." />
+        <meta name="twitter:image" content="https://azizahomes.com/team-photo.jpg" />
+      </Helmet>
       <Navigation />
       
       <main className="pt-32 pb-20">
