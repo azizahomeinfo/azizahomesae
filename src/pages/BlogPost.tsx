@@ -292,12 +292,8 @@ const BlogPost = () => {
               </div>
 
               <div 
-                className="prose prose-lg max-w-none"
+                className="prose prose-lg max-w-none blog-content"
                 dangerouslySetInnerHTML={{ __html: article.content }}
-                style={{
-                  fontSize: '1.125rem',
-                  lineHeight: '1.75',
-                }}
               />
 
               <div className="mt-12 pt-8 border-t">
