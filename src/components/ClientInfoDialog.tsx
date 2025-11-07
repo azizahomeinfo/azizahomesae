@@ -45,6 +45,7 @@ const ClientInfoDialog = ({ delay = 5000, triggerOnPackageClick = false }: Clien
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const hasSubmitted = localStorage.getItem("clientInfoSubmitted");
     
     if (!hasSubmitted && triggerOnPackageClick) {
@@ -81,7 +82,9 @@ const ClientInfoDialog = ({ delay = 5000, triggerOnPackageClick = false }: Clien
         return;
       }
 
-      localStorage.setItem("clientInfoSubmitted", "true");
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("clientInfoSubmitted", "true");
+      }
       toast.success("Your 2,000 AED voucher will be shared with you via WhatsApp!");
       setOpen(false);
     } catch (error) {

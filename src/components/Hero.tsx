@@ -16,6 +16,7 @@ const Hero = () => {
   }, []);
 
   const scrollToSection = (id: string) => {
+    if (typeof window === 'undefined') return;
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -23,6 +24,7 @@ const Hero = () => {
   };
 
   const handleVideoClick = () => {
+    if (typeof window === 'undefined') return;
     const video = videoRef.current;
     if (video) {
       if (!document.fullscreenElement) {

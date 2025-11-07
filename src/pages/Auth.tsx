@@ -49,7 +49,7 @@ const Auth = () => {
         email: validatedData.email,
         password: validatedData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : '/',
         },
       });
 
