@@ -23,6 +23,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   ssr: {
-    noExternal: ['react-helmet-async', 'lucide-react'],
+    noExternal: ['react-helmet-async', 'lucide-react', 'zustand', '@supabase/supabase-js', 'hls.js'],
   },
 }));

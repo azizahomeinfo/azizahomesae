@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import popupImage from "@/assets/popup-image.jpg";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-ssr";
 import {
   Dialog,
   DialogContent,

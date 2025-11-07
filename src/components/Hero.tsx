@@ -1,12 +1,12 @@
 import heroImage from "@/assets/hero-image-new.jpg";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef } from "react";
-import Hls from "hls.js";
 
 const Hero = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const video = videoRef.current;
     
     if (video) {
