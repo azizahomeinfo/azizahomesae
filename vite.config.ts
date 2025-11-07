@@ -22,4 +22,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  ssr: {
+    noExternal: ['react-helmet', 'lucide-react'],
+  },
 }));
