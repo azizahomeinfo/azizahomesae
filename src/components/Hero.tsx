@@ -5,8 +5,7 @@ import { Play } from "lucide-react";
 
 const Hero = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  // Replace 'YOUR_YOUTUBE_VIDEO_ID' with your actual YouTube video ID
-  const youtubeVideoId = "YOUR_YOUTUBE_VIDEO_ID";
+  const youtubeVideoId = "BnkV-TlYDJQ";
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
