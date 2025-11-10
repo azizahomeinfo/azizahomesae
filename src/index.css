@@ -71,6 +71,17 @@ All colors MUST be HSL.
   color: hsl(var(--primary));
 }
 
+.blog-content a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.blog-content a:hover {
+  opacity: 0.8;
+}
+
 @layer base {
   :root {
     /* Custom Color Palette */

@@ -38,6 +38,22 @@ const generateBlogStructuredData = (article: any, slug: string) => ({
 const BlogPost = () => {
   const { slug } = useParams();
 
+  // Related articles mapping
+  const relatedArticles: Record<string, Array<{id: string; title: string; category: string}>> = {
+    "top-7-interior-design-agencies-dubai": [
+      { id: "quick-efficient-ways-to-furnish-your-home", title: "Quick & Efficient Ways to Furnish Your Home", category: "Home Furnishing" },
+      { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" }
+    ],
+    "quick-efficient-ways-to-furnish-your-home": [
+      { id: "top-7-interior-design-agencies-dubai", title: "Top 7 Interior Design Agencies in Dubai", category: "Interior Design" },
+      { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" }
+    ],
+    "where-to-invest-dubai-best-roi-property-growth": [
+      { id: "quick-efficient-ways-to-furnish-your-home", title: "Quick & Efficient Ways to Furnish Your Home", category: "Home Furnishing" },
+      { id: "top-7-interior-design-agencies-dubai", title: "Top 7 Interior Design Agencies in Dubai", category: "Interior Design" }
+    ]
+  };
+
   const articles = {
     "top-7-interior-design-agencies-dubai": {
       title: "Top 7 Interior Design Agencies in Dubai",
@@ -89,6 +105,11 @@ const BlogPost = () => {
         <h2>7. Zen Interiors</h2>
 
         <p>Zen Interiors specializes in creating calm, harmonious spaces inspired by minimalist and contemporary design principles. Their work is characterized by clean lines, neutral palettes, and thoughtful use of natural materials.</p>
+
+        <h2>Why Choose Aziza Homes for Your Interior Design Needs?</h2>
+        <p>Whether you're furnishing a luxury villa, preparing an investment property, or setting up your new home in Dubai, <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">Aziza Homes offers comprehensive interior design and furnishing services</a> tailored to your specific needs. Our team combines creative excellence with efficient execution, delivering stunning results in just 10-15 business days.</p>
+        
+        <p>Ready to transform your space? <a href="/contact" style="color: hsl(var(--primary)); text-decoration: underline;">Get in touch with us today</a> to discuss your project, or explore our <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">furniture packages</a> designed for investors, expats, and homeowners.</p>
       `
     },
     "quick-efficient-ways-to-furnish-your-home": {
@@ -120,7 +141,7 @@ const BlogPost = () => {
           <li><strong>Cost efficiency:</strong> Bundled packages often offer better value than buying items separately.</li>
           <li><strong>Convenience:</strong> Everything is delivered and installed at once, so your home is ready to live in immediately.</li>
         </ul>
-        <p>For property investors and expats, full furnishing packages (like those offered by Aziza Home) are especially practical — eliminating the hassle and guaranteeing rental-ready spaces in record time.</p>
+        <p>For property investors and expats, <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">full furnishing packages</a> (like those offered by Aziza Home) are especially practical — eliminating the hassle and guaranteeing rental-ready spaces in record time.</p>
 
         <h2>3. Focus on Quality Over Quantity</h2>
         <p>It's tempting to buy lots of items to fill space quickly, but investing in quality pieces is smarter:</p>
@@ -139,7 +160,7 @@ const BlogPost = () => {
           <li>Avoid common mistakes (like oversized furniture or poor color coordination).</li>
           <li>Manage logistics, delivery, and installation.</li>
         </ul>
-        <p>At Aziza Home, we specialize in delivering complete, customized furnishing solutions in just 10-15 business days. We handle everything from concept to installation, allowing you to focus on enjoying your space.</p>
+        <p>At Aziza Home, we specialize in delivering complete, customized <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">furnishing solutions</a> in just 10-15 business days. We handle everything from concept to installation, allowing you to focus on enjoying your space.</p>
 
         <h2>5. Opt for Multi-Functional Furniture</h2>
         <p>If you're working with a smaller space or limited budget, multi-functional furniture is key:</p>
@@ -175,12 +196,12 @@ const BlogPost = () => {
           <li><strong>Durability:</strong> Withstands tenant use and reduces maintenance.</li>
           <li><strong>Fast turnaround:</strong> The sooner your property is furnished, the sooner you can start earning rental income.</li>
         </ul>
-        <p>Aziza Home's rental packages are specifically designed to help investors maximize ROI and attract quality tenants quickly.</p>
+        <p>Aziza Home's <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">rental packages</a> are specifically designed to help investors maximize ROI and attract quality tenants quickly.</p>
 
         <h2>Final Thoughts</h2>
         <p>Furnishing your home doesn't have to be stressful or time-consuming. With a clear plan, smart choices, and the right support, you can create a beautifully furnished space quickly and efficiently — whether it's for your personal use or for generating rental income.</p>
-        <p>At Aziza Home, we specialize in simplifying the furnishing process, offering curated packages delivered in just 10-15 business days. From expat relocations to investor properties, we take care of everything — so you can move in, rent out, or enjoy your space stress-free.</p>
-        <p><strong>Ready to furnish your home the smart way?</strong> Contact Aziza Home today and let us bring your vision to life.</p>
+        <p>At Aziza Home, we specialize in simplifying the furnishing process, offering <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">curated packages</a> delivered in just 10-15 business days. From <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">expat relocations to investor properties</a>, we take care of everything — so you can move in, rent out, or enjoy your space stress-free.</p>
+        <p><strong>Ready to furnish your home the smart way?</strong> <a href="/contact" style="color: hsl(var(--primary)); text-decoration: underline;">Contact Aziza Home</a> today and let us bring your vision to life.</p>
       `
     },
     "where-to-invest-dubai-best-roi-property-growth": {
@@ -236,14 +257,14 @@ const BlogPost = () => {
           <li>Provides flexibility between short-term and long-term strategies</li>
         </ul>
 
-        <p>At Aziza Home, we specialize in transforming empty units into <strong>ready-to-rent, beautifully designed spaces</strong> that appeal to both the holiday-home market and long-term tenants — delivered within just 10–15 business days.</p>
+        <p>At Aziza Home, we specialize in transforming empty units into <strong>ready-to-rent, beautifully designed spaces</strong> that appeal to both the holiday-home market and long-term tenants — delivered within just 10–15 business days. <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">Explore our furnishing services</a> to see how we can help maximize your investment returns.</p>
 
         <h2>Final Thoughts</h2>
         <p>Whether your focus is <strong>steady rental income</strong> (Downtown, JVC) or <strong>long-term appreciation</strong> (Dubai Harbour), the key to maximizing your returns lies in <strong>professional furnishing and presentation</strong>.</p>
 
         <p>Dubai's tenants and guests increasingly prefer turn-key, design-forward living spaces — and that's exactly what Aziza Home delivers: <strong>furnished properties that rent faster, at higher rates, and with less hassle.</strong></p>
 
-        <p><strong>Want to boost your property's ROI?</strong><br>Contact us today to learn how our complete furnishing packages can help you attract better tenants and increase your rental income.</p>
+        <p><strong>Want to boost your property's ROI?</strong><br><a href="/contact" style="color: hsl(var(--primary)); text-decoration: underline;">Contact us today</a> to learn how our <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">complete furnishing packages</a> can help you attract better tenants and increase your rental income. Check out our <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">investor-focused services</a> for more details.</p>
       `
     }
   };

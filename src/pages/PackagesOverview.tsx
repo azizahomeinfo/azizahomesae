@@ -216,7 +216,7 @@ const PackagesOverview = () => {
               Need a Custom Solution?
             </h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Can't find exactly what you're looking for? We offer custom furnishing packages tailored to your specific needs and preferences.
+              Can't find exactly what you're looking for? We offer <a href="/services" className="text-primary hover:underline font-medium">custom furnishing packages</a> tailored to your specific needs and preferences. Check out our <a href="/blog" className="text-primary hover:underline font-medium">blog for expert tips</a> on choosing the right package for your property.
             </p>
             <Link to="/contact" onClick={() => window.scrollTo(0, 0)}>
               <Button size="lg" variant="default">

@@ -134,7 +134,7 @@ const Services = () => {
             Ready to Transform Your Space?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Contact us today to discuss your project and discover how we can bring your vision to life.
+            Contact us today to discuss your project and discover how we can bring your vision to life. Explore our <a href="/packages" className="text-primary hover:underline font-medium">furniture packages</a> or read our <a href="/blog" className="text-primary hover:underline font-medium">expert insights on interior design and property investment</a>.
           </p>
           <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer">
             <Button size="lg" className="text-lg px-8">

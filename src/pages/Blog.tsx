@@ -87,6 +87,12 @@ const Blog = () => {
         {/* Articles Grid */}
         <section className="py-20 bg-background">
           <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center mb-12">
+              <p className="text-lg text-muted-foreground">
+                Looking for expert guidance? Explore our <a href="/services" className="text-primary hover:underline font-medium">professional furnishing services</a> and <a href="/packages" className="text-primary hover:underline font-medium">ready-to-go furniture packages</a> designed for Dubai properties.
+              </p>
+            </div>
+            
             <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto">
               {articles.map((article) => (
                 <Link 
