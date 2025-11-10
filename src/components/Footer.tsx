@@ -1,5 +1,5 @@
 import logo from "@/assets/aziza-logo.png";
-import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail, Clock, PinIcon } from "lucide-react";
 import { Button } from "./ui/button";
 
 const Footer = () => {
@@ -25,7 +25,7 @@ const Footer = () => {
                   <Instagram className="w-5 h-5" />
                 </a>
                 <a 
-                  href="https://linkedin.com/company/azizahomes" 
+                  href="https://www.linkedin.com/company/109441186/admin/page-posts/published/" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors"
@@ -34,13 +34,22 @@ const Footer = () => {
                   <Linkedin className="w-5 h-5" />
                 </a>
                 <a 
-                  href="https://facebook.com/azizahomes" 
+                  href="https://www.facebook.com/search/top?q=aziza%20home" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors"
                   aria-label="Like Aziza Home on Facebook"
                 >
                   <Facebook className="w-5 h-5" />
+                </a>
+                <a 
+                  href="https://in.pinterest.com/azizahomes/" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-11 h-11 rounded-full bg-primary-foreground/20 hover:bg-primary-foreground/30 flex items-center justify-center transition-colors"
+                  aria-label="Follow Aziza Home on Pinterest"
+                >
+                  <PinIcon className="w-5 h-5" />
                 </a>
               </div>
             </div>
