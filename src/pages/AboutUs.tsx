@@ -77,7 +77,8 @@ const AboutUs = () => {
               <div className="relative overflow-hidden rounded-lg shadow-2xl">
                 <img 
                   src={founderImage} 
-                  alt="Veronica Xu, Founder of Aziza Home" 
+                  alt="Veronica Xu Founder Aziza Home Dubai Interior Design Japandi Style Furniture Packages Downtown Marina Business Bay" 
+                  loading="lazy"
                   className="w-full h-[500px] object-cover sepia-[0.15] contrast-[1.05] brightness-[1.02]"
                 />
               </div>
@@ -90,7 +91,8 @@ const AboutUs = () => {
               <div className="relative overflow-hidden rounded-lg shadow-2xl">
                 <img 
                   src={teamImage} 
-                  alt="Aziza Home Design Team" 
+                  alt="Aziza Home Interior Design Team Dubai Furniture Package Specialists Downtown Marina Creek Harbour Furnishing Experts" 
+                  loading="lazy"
                   className="w-full h-[500px] object-cover sepia-[0.15] contrast-[1.05] brightness-[1.02]"
                 />
               </div>

@@ -105,7 +105,8 @@ const Blog = () => {
                     <div className="relative overflow-hidden aspect-video">
                       <img 
                         src={article.image} 
-                        alt={article.title}
+                        alt={`${article.title} - ${article.id === 'top-7-interior-design-agencies-dubai' ? 'Top Interior Design Agencies Dubai Comparison Aziza Home Downtown Marina' : article.id === 'quick-efficient-ways-to-furnish-your-home' ? 'Quick Home Furnishing Guide Dubai Apartment Furniture Packages Downtown Marina Business Bay' : 'Dubai Property Investment ROI Guide Best Areas Downtown Marina Creek Harbour Furnishing Packages'}`}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute top-4 left-4">

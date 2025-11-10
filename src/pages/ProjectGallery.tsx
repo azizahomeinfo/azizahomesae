@@ -125,7 +125,8 @@ const ProjectGallery = () => {
                 <div>
                   <img 
                     src={project.images[0]} 
-                    alt={project.title}
+                    alt="Palace Emaar Beachfront 2 Bedroom Apartment Furnishing Package Dubai Marina Japandi Interior Design Luxury Furniture Downtown"
+                    loading="lazy"
                     className="w-full h-[500px] object-cover rounded-lg shadow-lg"
                   />
                 </div>
@@ -136,7 +137,8 @@ const ProjectGallery = () => {
                 <div className="overflow-hidden rounded-lg shadow-lg">
                   <img 
                     src={project.images[1]} 
-                    alt={`${project.title} - Detail 1`}
+                    alt="Palace Emaar Beachfront Dining Room Design 2 Bedroom Apartment Furnishing Dubai Marina Downtown Japandi Style"
+                    loading="lazy"
                     className="w-full h-[400px] object-cover transition-smooth hover:scale-110"
                   />
                 </div>
@@ -154,7 +156,8 @@ const ProjectGallery = () => {
                   <div key={idx} className="overflow-hidden rounded-lg shadow-lg">
                     <img 
                       src={image} 
-                      alt={`${project.title} - Detail ${idx + 2}`}
+                      alt={`Palace Emaar Beachfront ${idx === 0 ? 'Living Room' : idx === 1 ? 'Bedroom' : idx === 2 ? 'Dining Area' : idx === 3 ? 'TV Media Wall' : idx === 4 ? 'Kitchen' : 'Interior Detail'} 2 Bedroom Apartment Furnishing Dubai Marina Downtown Japandi Style Package`}
+                      loading="lazy"
                       className="w-full h-[300px] object-cover transition-smooth hover:scale-110 cursor-pointer"
                     />
                   </div>

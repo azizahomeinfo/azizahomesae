@@ -96,7 +96,8 @@ const Services = () => {
                   <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted">
                     <img 
                       src={service.image} 
-                      alt={service.title}
+                      alt={`${service.title} - Dubai ${service.id === 1 ? 'Holiday Home Furnishing Marina Creek Harbour' : service.id === 2 ? 'Expat Relocation Furniture Package Downtown Business Bay' : service.id === 3 ? 'Investor Property Furnishing Package ROI Rental Income Dubai' : 'Custom Interior Design Services Dubai'}`}
+                      loading="lazy"
                       className="absolute inset-0 w-full h-full object-cover"
                       style={service.id === 1 ? { objectPosition: 'center 60%' } : undefined}
                     />

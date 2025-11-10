@@ -107,7 +107,8 @@ const ClientInfoDialog = ({ delay = 5000, triggerOnPackageClick = false }: Clien
           <div className="relative h-48 md:h-full md:min-h-[400px]">
             <img
               src={popupImage}
-              alt="Elegant Interior"
+              alt="Luxury Apartment Furnishing Package Dubai - 2000 AED Discount Voucher for Studio 1 Bedroom 2 Bedroom Apartments Downtown Dubai Marina"
+              loading="lazy"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/10" />

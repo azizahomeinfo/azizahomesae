@@ -88,7 +88,7 @@ const Packages = ({ onPackageClick }: PackagesProps) => {
                   <div className="relative aspect-[4/3] overflow-hidden bg-secondary/20">
                     <img 
                       src={packageImages[index]} 
-                      alt={product.node.title}
+                      alt={`${product.node.title} - Dubai ${index === 0 ? 'Studio' : index === 1 ? '1 Bedroom' : '2 Bedroom'} Apartment Furnishing Package Downtown Dubai Marina Business Bay`}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-smooth"
                     />

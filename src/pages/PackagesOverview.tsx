@@ -150,7 +150,8 @@ const PackagesOverview = () => {
                   <div className="aspect-[4/3] rounded-lg overflow-hidden bg-muted">
                     <img
                       src={pkg.image}
-                      alt={pkg.name}
+                      alt={`${pkg.name} - Complete Furnishing Package for Studio 1BR 2BR 3BR Apartments Dubai Marina Downtown Creek Harbour Business Bay from ${Object.values(pkg.prices)[0]}`}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   </div>
