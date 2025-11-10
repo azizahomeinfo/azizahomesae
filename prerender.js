@@ -8,12 +8,19 @@ const toAbsolute = (p) => path.resolve(__dirname, p)
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
-const routesToPrerender = fs
-  .readdirSync(toAbsolute('src/pages'))
-  .map((file) => {
-    const name = file.replace(/\.tsx$/, '').toLowerCase()
-    return name === 'index' ? `/` : `/${name}`
-  })
+// Define routes that match the actual app routing and sitemap
+const routesToPrerender = [
+  '/',
+  '/about',
+  '/services',
+  '/packages',
+  '/projects',
+  '/contact',
+  '/blog',
+  '/blog/top-7-interior-design-agencies-dubai',
+  '/blog/quick-efficient-ways-to-furnish-your-home',
+  '/blog/where-to-invest-dubai-best-roi-property-growth'
+]
 
 ;(async () => {
   for (const url of routesToPrerender) {
@@ -34,6 +41,13 @@ const routesToPrerender = fs
     }
 
     const filePath = `dist${url === '/' ? '/index' : url}.html`
+    const fileDir = path.dirname(toAbsolute(filePath))
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(fileDir)) {
+      fs.mkdirSync(fileDir, { recursive: true })
+    }
+    
     fs.writeFileSync(toAbsolute(filePath), html)
     console.log('pre-rendered:', filePath)
   }
