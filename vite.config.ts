@@ -21,7 +21,10 @@ export default defineConfig(({ mode }) => ({
         main: path.resolve(__dirname, 'index.html'),
       },
     },
+    assetsInlineLimit: 0,
+    copyPublicDir: true,
   },
+  publicDir: 'public',
   ssr: {
     noExternal: ['react-helmet-async', 'lucide-react', 'zustand', '@supabase/supabase-js', 'hls.js'],
   },

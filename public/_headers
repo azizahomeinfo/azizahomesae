@@ -1,0 +1,6 @@
+/sitemap.xml
+  Content-Type: application/xml
+  X-Content-Type-Options: nosniff
+
+/robots.txt
+  Content-Type: text/plain
