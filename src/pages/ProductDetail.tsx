@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { getProductByHandle } from "@/lib/shopify";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
@@ -88,10 +89,52 @@ const ProductDetail = () => {
     );
   }
 
+  const productPrice = selectedVariant?.price ? parseFloat(selectedVariant.price.amount).toFixed(0) : '0';
+  const productDescription = product.description ? product.description.substring(0, 155) : 'Premium furnishing package for Dubai properties';
+
   return (
-    <div className="min-h-screen">
-      <Navigation />
-      <div className="container mx-auto px-4 py-20 md:py-32">
+    <>
+      <Helmet>
+        <title>{product.title} - AED {productPrice} | Aziza Home Dubai Furnishing Packages</title>
+        <meta name="description" content={productDescription} />
+        <meta name="keywords" content={`${product.title}, Dubai furnishing package, furniture package Dubai, home furnishing Dubai, Aziza Home`} />
+        <link rel="canonical" href={`https://azizahomes.com/product/${handle}`} />
+        
+        {/* Open Graph Meta Tags */}
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={`${product.title} - AED ${productPrice}`} />
+        <meta property="og:description" content={productDescription} />
+        <meta property="og:url" content={`https://azizahomes.com/product/${handle}`} />
+        {product.images?.edges?.[0] && (
+          <meta property="og:image" content={product.images.edges[0].node.url} />
+        )}
+        <meta property="og:site_name" content="Aziza Home" />
+        
+        {/* Product Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.title,
+            "description": productDescription,
+            "image": product.images?.edges?.[0]?.node.url,
+            "offers": {
+              "@type": "Offer",
+              "price": productPrice,
+              "priceCurrency": "AED",
+              "availability": selectedVariant?.availableForSale ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "seller": {
+                "@type": "Organization",
+                "name": "Aziza Home"
+              }
+            }
+          })}
+        </script>
+      </Helmet>
+      
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-20 md:py-32">
         <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to packages
@@ -165,6 +208,7 @@ const ProductDetail = () => {
       </div>
       <Footer />
     </div>
+    </>
   );
 };
 
