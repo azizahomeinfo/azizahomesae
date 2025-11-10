@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
+import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { IntakeFormDialog } from "@/components/IntakeFormDialog";
 import { MessageSquare, Phone, Mail, MapPin, Clock } from "lucide-react";
@@ -34,6 +35,14 @@ const ContactPage = () => {
         <meta name="twitter:description" content="Get a custom design consultation with personalized proposals and 3D rendering." />
         <meta name="twitter:image" content="https://azizahomes.com/team-photo.jpg" />
       </Helmet>
+      <StructuredData 
+        breadcrumbs={[
+          { name: "Home", url: "https://azizahomes.com" },
+          { name: "Contact", url: "https://azizahomes.com/contact" }
+        ]}
+        pageTitle="Contact"
+        pageDescription="Get a custom interior design consultation with Aziza Home. Share your vision and receive a personalized design proposal with mood boards, 3D rendering, timeline, and transparent pricing."
+      />
       <Navigation />
       
       <main className="pt-32 pb-20">

@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
+import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import serviceHolidayHome from "@/assets/service-holiday-home-new.jpg";
 import serviceExpatRelocate from "@/assets/service-expat-generated.jpg";
@@ -45,6 +46,7 @@ const Services = () => {
         <meta name="description" content="Explore Aziza Home's comprehensive furnishing services in Dubai: Holiday Home Packages, Expat Relocation, Investor Packages with 20-25% ROI increase, and Custom Interior Design." />
         <meta name="keywords" content="Dubai furnishing services, holiday home furnishing, expat relocation Dubai, investor property packages, interior design Dubai, fit-out services UAE" />
         <link rel="canonical" href="https://azizahomes.com/services" />
+        <meta name="robots" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />
@@ -62,6 +64,14 @@ const Services = () => {
         <meta name="twitter:description" content="Holiday homes, expat relocations, and investor packages with 20-25% ROI increase." />
         <meta name="twitter:image" content="https://azizahomes.com/service-holiday-home-new.jpg" />
       </Helmet>
+      <StructuredData 
+        breadcrumbs={[
+          { name: "Home", url: "https://azizahomes.com" },
+          { name: "Services", url: "https://azizahomes.com/services" }
+        ]}
+        pageTitle="Services"
+        pageDescription="Explore Aziza Home's comprehensive furnishing services in Dubai: Holiday Home Packages, Expat Relocation, Investor Packages with 20-25% ROI increase, and Custom Interior Design."
+      />
       <Navigation />
       
       {/* Hero Section */}

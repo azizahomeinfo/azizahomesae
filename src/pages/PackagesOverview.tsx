@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import ClientInfoDialog from "@/components/ClientInfoDialog";
+import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
@@ -102,6 +103,14 @@ const PackagesOverview = () => {
         <meta name="twitter:description" content="Complete furnishing packages from 22,500 AED for Dubai properties." />
         <meta name="twitter:image" content="https://azizahomes.com/package-complete-new.jpg" />
       </Helmet>
+      <StructuredData 
+        breadcrumbs={[
+          { name: "Home", url: "https://azizahomes.com" },
+          { name: "Packages", url: "https://azizahomes.com/packages" }
+        ]}
+        pageTitle="Packages"
+        pageDescription="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 30,500 AED). Complete furniture packages for Dubai properties."
+      />
       <Navigation />
       
       <main className="pt-32 pb-16">

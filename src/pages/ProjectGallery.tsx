@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
+import StructuredData from "@/components/StructuredData";
 import { Card } from "@/components/ui/card";
 import portfolio1 from "@/assets/portfolio-1.jpg";
 import portfolio12 from "@/assets/portfolio-1-2.jpg";
@@ -92,6 +93,14 @@ const ProjectGallery = () => {
         <meta name="twitter:description" content="Stunning Palace Emaar Beachfront project featuring classic minimalist Japandi design." />
         <meta name="twitter:image" content="https://azizahomes.com/portfolio-1-3.jpg" />
       </Helmet>
+      <StructuredData 
+        breadcrumbs={[
+          { name: "Home", url: "https://azizahomes.com" },
+          { name: "Portfolio", url: "https://azizahomes.com/portfolio" }
+        ]}
+        pageTitle="Portfolio"
+        pageDescription="Explore Aziza Home's stunning Palace Emaar Beachfront project. A serene two-bedroom apartment featuring classic minimalist design blending Japandi warmth with sophisticated coastal elegance."
+      />
       <Navigation />
       
       {/* Hero Section */}

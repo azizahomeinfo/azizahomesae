@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
+import StructuredData from "@/components/StructuredData";
 import founderImage from "@/assets/founder-veronica.jpg";
 import teamImage from "@/assets/team-photo.jpg";
 
@@ -30,6 +31,14 @@ const AboutUs = () => {
         <meta name="twitter:description" content="Meet Veronica Xu and the Aziza Home team. We blend Japanese wabi-sabi with Scandinavian design." />
         <meta name="twitter:image" content="https://azizahomes.com/founder-veronica.jpg" />
       </Helmet>
+      <StructuredData 
+        breadcrumbs={[
+          { name: "Home", url: "https://azizahomes.com" },
+          { name: "About Us", url: "https://azizahomes.com/about" }
+        ]}
+        pageTitle="About Us"
+        pageDescription="Meet Veronica Xu and the Aziza Home team. Founded in 2022, we blend Japanese wabi-sabi with Scandinavian design to create timeless, tranquil spaces in Dubai."
+      />
       <Navigation />
       
       <main className="pt-32 pb-20">
