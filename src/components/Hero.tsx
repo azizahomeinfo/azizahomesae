@@ -1,19 +1,12 @@
 import heroImage from "@/assets/hero-image-new.jpg";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef } from "react";
+import { useState } from "react";
+import { Play } from "lucide-react";
 
 const Hero = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const video = videoRef.current;
-    
-    if (video) {
-      // Use local video file
-      video.src = "/hero-video.mp4";
-    }
-  }, []);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  // Replace 'YOUR_YOUTUBE_VIDEO_ID' with your actual YouTube video ID
+  const youtubeVideoId = "YOUR_YOUTUBE_VIDEO_ID";
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
@@ -23,43 +16,13 @@ const Hero = () => {
     }
   };
 
-  const handleVideoClick = () => {
-    if (typeof window === 'undefined') return;
-    const video = videoRef.current;
-    if (video) {
-      if (!document.fullscreenElement) {
-        video.requestFullscreen().catch(err => {
-          console.log(`Error attempting to enable fullscreen: ${err.message}`);
-        });
-      } else {
-        document.exitFullscreen();
-      }
-    }
+  const handlePlayClick = () => {
+    setIsVideoPlaying(true);
   };
 
   return (
     <>
-      {/* Showcase Video Section */}
-      <section className="relative w-full h-[120vh] overflow-hidden" aria-label="Portfolio showcase video">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          poster={heroImage}
-          onClick={handleVideoClick}
-          className="w-full h-full object-cover cursor-pointer transition-transform hover:scale-105"
-          aria-label="Aziza Home interior design portfolio showcase video"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/5 via-background/20 to-background pointer-events-none" />
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/80 text-sm pointer-events-none animate-pulse">
-          Click video to view fullscreen
-        </div>
-      </section>
-
-      <header id="hero" className="relative h-screen flex items-center justify-center overflow-hidden -mt-32">
+      <header id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src={heroImage} 
@@ -86,6 +49,39 @@ const Hero = () => {
           </div>
         </div>
       </header>
+
+      {/* YouTube Video Section */}
+      <section className="relative w-full h-[120vh] overflow-hidden bg-background" aria-label="Portfolio showcase video">
+        {!isVideoPlaying ? (
+          <div 
+            onClick={handlePlayClick}
+            className="relative w-full h-full cursor-pointer group"
+          >
+            <img 
+              src={heroImage} 
+              alt="Play Aziza Home portfolio showcase video"
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Play className="w-12 h-12 text-primary-foreground ml-1" fill="currentColor" />
+              </div>
+            </div>
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white text-sm animate-pulse">
+              Click to play video
+            </div>
+          </div>
+        ) : (
+          <iframe
+            className="w-full h-full"
+            src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+            title="Aziza Home Portfolio Showcase"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        )}
+      </section>
     </>
   );
 };
