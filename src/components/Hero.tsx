@@ -50,7 +50,7 @@ const Hero = () => {
       </header>
 
       {/* YouTube Video Section */}
-      <section className="relative w-full h-[120vh] overflow-hidden bg-background" aria-label="Portfolio showcase video">
+      <section className="relative w-full h-[80vh] overflow-hidden bg-background" aria-label="Portfolio showcase video">
         {!isVideoPlaying ? (
           <div 
             onClick={handlePlayClick}
