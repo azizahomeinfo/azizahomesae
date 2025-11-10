@@ -25,7 +25,7 @@ const routesToPrerender = [
   '/about',
   '/services',
   '/packages',
-  '/projects',
+  '/portfolio',
   '/contact',
   '/blog',
   '/blog/top-7-interior-design-agencies-dubai',
