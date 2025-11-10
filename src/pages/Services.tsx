@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
+import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import serviceHolidayHome from "@/assets/service-holiday-home-new.jpg";
@@ -66,6 +67,7 @@ const Services = () => {
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4">
         <div className="container mx-auto max-w-6xl">
+          <BreadcrumbNav items={[{ label: "Services" }]} />
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               Our Services in Dubai

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
+import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { IntakeFormDialog } from "@/components/IntakeFormDialog";
@@ -37,6 +38,7 @@ const ContactPage = () => {
       
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">
+          <BreadcrumbNav items={[{ label: "Contact" }]} />
           {/* Header */}
           <div className="text-center mb-16 animate-fade-in">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light mb-6 text-foreground">

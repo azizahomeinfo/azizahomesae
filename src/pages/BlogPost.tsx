@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { useParams, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
@@ -341,6 +342,10 @@ const BlogPost = () => {
         {/* Article Content */}
         <article className="container mx-auto px-4 -mt-32 relative z-10">
           <div className="max-w-4xl mx-auto">
+            <BreadcrumbNav items={[
+              { label: "Blog", href: "/blog" },
+              { label: article.title }
+            ]} />
             <Link to="/blog">
               <Button variant="ghost" className="mb-8">
                 <ArrowLeft className="w-4 h-4 mr-2" />

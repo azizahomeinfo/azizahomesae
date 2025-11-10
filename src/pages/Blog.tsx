@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import Navigation from "@/components/Navigation";
+import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Calendar } from "lucide-react";
