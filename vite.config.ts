@@ -20,6 +20,15 @@ export default defineConfig(({ mode }) => ({
       input: {
         main: path.resolve(__dirname, 'index.html'),
       },
+      output: {
+        assetFileNames: (assetInfo) => {
+          // Keep sitemap.xml and robots.txt in root without hashing
+          if (assetInfo.name === 'sitemap.xml' || assetInfo.name === 'robots.txt' || assetInfo.name === '_headers') {
+            return '[name][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        },
+      },
     },
     assetsInlineLimit: 0,
     copyPublicDir: true,

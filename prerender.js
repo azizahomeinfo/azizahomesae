@@ -8,6 +8,17 @@ const toAbsolute = (p) => path.resolve(__dirname, p)
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
+// Copy static files that should not be prerendered
+const staticFiles = ['sitemap.xml', 'robots.txt', '_headers']
+staticFiles.forEach(file => {
+  const sourcePath = toAbsolute(`public/${file}`)
+  const destPath = toAbsolute(`dist/${file}`)
+  if (fs.existsSync(sourcePath)) {
+    fs.copyFileSync(sourcePath, destPath)
+    console.log(`Copied static file: ${file}`)
+  }
+})
+
 // Define routes that match the actual app routing and sitemap
 const routesToPrerender = [
   '/',
