@@ -1,9 +1,9 @@
 # Serve static files directly without routing through the app
-<FilesMatch "^(sitemap\.xml|robots\.txt)$">
+<FilesMatch "^(sitemap\.xml|robots\.txt|llms\.txt)$">
   Header set Content-Type "text/xml; charset=utf-8"
 </FilesMatch>
 
-<FilesMatch "^robots\.txt$">
+<FilesMatch "^(robots\.txt|llms\.txt)$">
   Header set Content-Type "text/plain; charset=utf-8"
 </FilesMatch>
 

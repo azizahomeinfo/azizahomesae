@@ -22,8 +22,8 @@ export default defineConfig(({ mode }) => ({
       },
       output: {
         assetFileNames: (assetInfo) => {
-          // Keep sitemap.xml and robots.txt in root without hashing
-          if (assetInfo.name === 'sitemap.xml' || assetInfo.name === 'robots.txt' || assetInfo.name === '_headers') {
+          // Keep sitemap.xml, robots.txt, llms.txt and _headers in root without hashing
+          if (assetInfo.name === 'sitemap.xml' || assetInfo.name === 'robots.txt' || assetInfo.name === 'llms.txt' || assetInfo.name === '_headers') {
             return '[name][extname]';
           }
           return 'assets/[name]-[hash][extname]';

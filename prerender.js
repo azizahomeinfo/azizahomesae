@@ -9,7 +9,7 @@ const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
 // Copy static files that should not be prerendered
-const staticFiles = ['sitemap.xml', 'robots.txt', '_headers']
+const staticFiles = ['sitemap.xml', 'robots.txt', 'llms.txt', '_headers']
 staticFiles.forEach(file => {
   const sourcePath = toAbsolute(`public/${file}`)
   const destPath = toAbsolute(`dist/${file}`)
