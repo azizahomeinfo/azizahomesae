@@ -227,8 +227,8 @@ const SeoStatus = () => {
   return (
     <>
       <Helmet>
-        <title>SEO Status - Aziza Homes</title>
-        <meta name="description" content="Monitor SEO health and technical configuration" />
+        <title>SEO Status Dashboard | Aziza Home Technical Monitoring</title>
+        <meta name="description" content="Real-time SEO health monitoring for Aziza Home. Check sitemap, robots.txt, structured data, and meta tags status." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
