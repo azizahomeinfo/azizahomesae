@@ -15,6 +15,7 @@ import AboutUs from "./pages/AboutUs";
 import ContactPage from "./pages/ContactPage";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import SeoStatus from "./pages/SeoStatus";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/portfolio" element={<ProjectGallery />} />
           <Route path="/packages" element={<PackagesOverview />} />
           <Route path="/product/:handle" element={<ProductDetail />} />
+          <Route path="/seo-status" element={<SeoStatus />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
