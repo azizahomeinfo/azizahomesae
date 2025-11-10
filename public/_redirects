@@ -1,9 +1,6 @@
-# Static files - serve directly without React Router
-/sitemap.xml /sitemap.xml 200!
-/robots.txt /robots.txt 200!
-/_headers /_headers 200!
-/favicon* /favicon* 200!
-/assets/* /assets/* 200!
+# Static files - serve directly
+/sitemap.xml /sitemap.xml 200
+/robots.txt /robots.txt 200
 
-# SPA fallback - all other routes go to index.html
+# SPA fallback - all other routes
 /* /index.html 200
