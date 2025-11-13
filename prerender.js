@@ -8,8 +8,46 @@ const toAbsolute = (p) => path.resolve(__dirname, p)
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
-// Copy static files that should not be prerendered
-const staticFiles = ['sitemap.xml', 'robots.txt', 'llms.txt', '_headers']
+// Sitemap configuration
+const SITE_URL = 'https://azizahomes.com'
+const routePriorities = {
+  '/': { priority: '1.0', changefreq: 'daily' },
+  '/about': { priority: '0.8', changefreq: 'monthly' },
+  '/services': { priority: '0.9', changefreq: 'weekly' },
+  '/packages': { priority: '0.9', changefreq: 'weekly' },
+  '/portfolio': { priority: '0.8', changefreq: 'weekly' },
+  '/contact': { priority: '0.7', changefreq: 'monthly' },
+  '/blog': { priority: '0.8', changefreq: 'weekly' },
+  '/seo-status': { priority: '0.3', changefreq: 'monthly' }
+}
+
+// Default config for blog posts and other pages
+const defaultConfig = { priority: '0.7', changefreq: 'monthly' }
+
+function generateSitemap(routes) {
+  const currentDate = new Date().toISOString().split('T')[0]
+  
+  const urls = routes.map(route => {
+    const config = routePriorities[route] || defaultConfig
+    return `  <url>
+    <loc>${SITE_URL}${route}</loc>
+    <lastmod>${currentDate}T00:00:00+00:00</lastmod>
+    <changefreq>${config.changefreq}</changefreq>
+    <priority>${config.priority}</priority>
+  </url>`
+  }).join('\n')
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+${urls}
+</urlset>`
+}
+
+// Copy static files that should not be prerendered (except sitemap.xml which we generate)
+const staticFiles = ['robots.txt', 'llms.txt', '_headers']
 staticFiles.forEach(file => {
   const sourcePath = toAbsolute(`public/${file}`)
   const destPath = toAbsolute(`dist/${file}`)
@@ -38,6 +76,15 @@ const routesToPrerender = [
 ]
 
 ;(async () => {
+  // Generate and write sitemap.xml
+  const sitemapContent = generateSitemap(routesToPrerender)
+  fs.writeFileSync(toAbsolute('dist/sitemap.xml'), sitemapContent)
+  console.log('Generated sitemap.xml with', routesToPrerender.length, 'routes')
+  
+  // Also update the source sitemap for development
+  fs.writeFileSync(toAbsolute('public/sitemap.xml'), sitemapContent)
+  console.log('Updated public/sitemap.xml')
+  
   for (const url of routesToPrerender) {
     const { html: appHtml, helmet } = render(url);
     let html = template.replace(`<!--app-html-->`, appHtml)
