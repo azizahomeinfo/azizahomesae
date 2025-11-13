@@ -75,6 +75,21 @@ const routesToPrerender = [
   // Example: '/product/living-room-package',
 ]
 
+// Function to submit sitemap to Google Search Console
+async function submitSitemapToGoogle(sitemapUrl) {
+  try {
+    const pingUrl = `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
+    const response = await fetch(pingUrl)
+    if (response.ok) {
+      console.log('✓ Sitemap successfully submitted to Google Search Console')
+    } else {
+      console.log('⚠ Google sitemap ping returned status:', response.status)
+    }
+  } catch (error) {
+    console.log('⚠ Could not ping Google (this is normal in local builds):', error.message)
+  }
+}
+
 ;(async () => {
   // Generate and write sitemap.xml
   const sitemapContent = generateSitemap(routesToPrerender)
@@ -84,6 +99,10 @@ const routesToPrerender = [
   // Also update the source sitemap for development
   fs.writeFileSync(toAbsolute('public/sitemap.xml'), sitemapContent)
   console.log('Updated public/sitemap.xml')
+  
+  // Submit sitemap to Google Search Console
+  const sitemapUrl = `${SITE_URL}/sitemap.xml`
+  await submitSitemapToGoogle(sitemapUrl)
   
   for (const url of routesToPrerender) {
     const { html: appHtml, helmet } = render(url);
