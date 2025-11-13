@@ -152,43 +152,179 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
 
   const breadcrumbSchema = generateBreadcrumbSchema();
 
-  const serviceSchema = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    "name": "Dubai Turnkey Furniture Package",
-    "provider": {
-      "@type": "InteriorDesignService",
-      "name": "Aziza Home"
-    },
-    "areaServed": [
-      {
-        "@type": "City",
-        "name": "Dubai"
+  // Comprehensive Service Schemas
+  const servicesSchemas = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${baseUrl}#service-turnkey`,
+      "name": "Turnkey Furnishing Package Dubai",
+      "provider": {
+        "@type": "Organization",
+        "@id": `${baseUrl}#organization`,
+        "name": "Aziza Home"
       },
-      {
-        "@type": "City",
-        "name": "Dubai Marina"
+      "serviceType": "Interior Design and Furnishing",
+      "description": "Complete A-Z turnkey furnishing packages for Dubai apartments. Move-in ready furniture solutions including design consultation, furniture selection, production, delivery, and installation. Perfect for investor properties, holiday homes, and expat relocations.",
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Dubai Marina",
+          "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+        },
+        {
+          "@type": "City",
+          "name": "Downtown Dubai",
+          "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+        },
+        {
+          "@type": "City",
+          "name": "Business Bay",
+          "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+        },
+        {
+          "@type": "City",
+          "name": "Dubai Harbour",
+          "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+        },
+        {
+          "@type": "City",
+          "name": "JLT Dubai",
+          "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+        }
+      ],
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "priceRange": "€€€",
+        "priceCurrency": "EUR"
       },
-      {
-        "@type": "City",
-        "name": "Downtown Dubai"
-      },
-      {
-        "@type": "City",
-        "name": "Business Bay"
-      },
-      {
-        "@type": "City",
-        "name": "Dubai Harbour"
-      },
-      {
-        "@type": "City",
-        "name": "JLT Dubai"
+      "category": "Turnkey Furnishing Package",
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Furnishing Packages",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Living Room Package",
+              "description": "Complete living room furnishing with Japandi-style furniture"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Bedroom Package",
+              "description": "Full bedroom setup with modern minimalist furniture"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Complete Home Package",
+              "description": "Entire apartment furnishing solution from A to Z"
+            }
+          }
+        ]
       }
-    ],
-    "serviceType": "Turnkey Furnishing Package",
-    "description": "Complete A-Z furnishing packages for Dubai apartments - investor properties, holiday homes, expat relocations. Move-in ready furniture solutions for Dubai Marina, Downtown, Business Bay, and premium areas."
-  };
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${baseUrl}#service-holiday-home`,
+      "name": "Holiday Home Furnishing Dubai",
+      "provider": {
+        "@type": "Organization",
+        "@id": `${baseUrl}#organization`,
+        "name": "Aziza Home"
+      },
+      "serviceType": "Holiday Home Interior Design",
+      "description": "Transform your Dubai holiday home into a premium vacation rental. Complete furnishing packages designed to maximize guest appeal and rental income with stylish Japandi-inspired interiors.",
+      "areaServed": {
+        "@type": "City",
+        "name": "Dubai",
+        "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+      },
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "priceRange": "€€€"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${baseUrl}#service-expat`,
+      "name": "Expat Relocation Services Dubai",
+      "provider": {
+        "@type": "Organization",
+        "@id": `${baseUrl}#organization`,
+        "name": "Aziza Home"
+      },
+      "serviceType": "Relocation and Furnishing Service",
+      "description": "Hassle-free apartment furnishing for expats relocating to Dubai. We handle everything from furniture selection to installation, making your move stress-free with rent-ready, move-in ready solutions.",
+      "areaServed": {
+        "@type": "City",
+        "name": "Dubai",
+        "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+      },
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "priceRange": "€€€"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${baseUrl}#service-investor`,
+      "name": "Investor Property Furnishing Dubai",
+      "provider": {
+        "@type": "Organization",
+        "@id": `${baseUrl}#organization`,
+        "name": "Aziza Home"
+      },
+      "serviceType": "Property Investment Furnishing",
+      "description": "Remote property furnishing services for Dubai investors. Increase rental value and ROI with professionally furnished apartments. Complete turnkey solutions for investment properties in premium Dubai locations.",
+      "areaServed": {
+        "@type": "City",
+        "name": "Dubai",
+        "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+      },
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "priceRange": "€€€"
+      },
+      "additionalType": "Investment Property Service"
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${baseUrl}#service-interior-design`,
+      "name": "Interior Design Services Dubai",
+      "provider": {
+        "@type": "Organization",
+        "@id": `${baseUrl}#organization`,
+        "name": "Aziza Home"
+      },
+      "serviceType": "Interior Design",
+      "description": "Bespoke interior design services featuring Japandi style - a harmonious blend of Japanese minimalism and Scandinavian functionality. Custom design solutions for residential properties in Dubai.",
+      "areaServed": {
+        "@type": "City",
+        "name": "Dubai",
+        "address": { "@type": "PostalAddress", "addressCountry": "AE" }
+      },
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "priceRange": "€€€"
+      }
+    }
+  ];
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -240,9 +376,11 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       <script type="application/ld+json">
         {JSON.stringify(breadcrumbSchema)}
       </script>
-      <script type="application/ld+json">
-        {JSON.stringify(serviceSchema)}
-      </script>
+      {servicesSchemas.map((schema, index) => (
+        <script key={`service-${index}`} type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      ))}
       <script type="application/ld+json">
         {JSON.stringify(faqSchema)}
       </script>
