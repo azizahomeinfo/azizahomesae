@@ -20,6 +20,7 @@ staticFiles.forEach(file => {
 })
 
 // Define routes that match the actual app routing and sitemap
+// Note: Dynamic routes like /product/:handle need specific handles to be prerendered
 const routesToPrerender = [
   '/',
   '/about',
@@ -30,7 +31,10 @@ const routesToPrerender = [
   '/blog',
   '/blog/top-7-interior-design-agencies-dubai',
   '/blog/quick-efficient-ways-to-furnish-your-home',
-  '/blog/where-to-invest-dubai-best-roi-property-growth'
+  '/blog/where-to-invest-dubai-best-roi-property-growth',
+  '/seo-status'
+  // Add specific product URLs here when you have them
+  // Example: '/product/living-room-package',
 ]
 
 ;(async () => {
