@@ -82,6 +82,20 @@ const ClientInfoDialog = ({ delay = 5000, triggerOnPackageClick = false }: Clien
         return;
       }
 
+      // Send email notification
+      try {
+        await supabase.functions.invoke('send-form-notification', {
+          body: {
+            formType: 'client_info',
+            data,
+            recipientEmail: 'info@azizahomes.com'
+          }
+        });
+      } catch (emailError) {
+        console.error("Error sending email notification:", emailError);
+        // Don't fail the submission if email fails
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem("clientInfoSubmitted", "true");
       }
