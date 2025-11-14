@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "packages": "Packages",
+    "portfolio": "Portfolio",
+    "about": "About Us",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Furnish Your Dubai Property in 30 Days",
+    "subtitle": "Transform your investment property into a rental-ready home with our turnkey furnishing packages. Maximize ROI with premium furniture and expert design.",
+    "cta": "Request Free Consultation"
+  },
+  "about": {
+    "title": "About Aziza Home",
+    "description": "Dubai's trusted interior design partner for investors and expats"
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "cta": "Request Free Consultation"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "quickLinks": "Quick Links",
+    "followUs": "Follow Us"
+  },
+  "common": {
+    "learnMore": "Learn More",
+    "getStarted": "Get Started",
+    "viewMore": "View More",
+    "whatsapp": "WhatsApp Consultation"
+  }
+}

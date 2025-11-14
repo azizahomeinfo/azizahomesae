@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "home": "Home",
+    "services": "Servizi",
+    "packages": "Pacchetti",
+    "portfolio": "Portfolio",
+    "about": "Chi siamo",
+    "blog": "Blog",
+    "contact": "Contatti"
+  },
+  "hero": {
+    "title": "Arreda la tua proprietà a Dubai in 30 giorni",
+    "subtitle": "Trasforma la tua proprietà d'investimento in una casa pronta per l'affitto con i nostri pacchetti di arredamento chiavi in mano. Massimizza il ROI con mobili premium e design esperto.",
+    "cta": "Richiedi consulenza gratuita"
+  },
+  "about": {
+    "title": "Su Aziza Home",
+    "description": "Partner fidato di interior design a Dubai per investitori ed espatriati"
+  },
+  "contact": {
+    "title": "Contattaci",
+    "cta": "Richiedi consulenza gratuita"
+  },
+  "footer": {
+    "rights": "Tutti i diritti riservati.",
+    "quickLinks": "Link veloci",
+    "followUs": "Seguici"
+  },
+  "common": {
+    "learnMore": "Scopri di più",
+    "getStarted": "Inizia",
+    "viewMore": "Vedi altro",
+    "whatsapp": "Consulenza WhatsApp"
+  }
+}

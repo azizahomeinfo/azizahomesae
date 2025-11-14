@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "services": "Services",
+    "packages": "Forfaits",
+    "portfolio": "Portfolio",
+    "about": "À propos",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Meublez votre propriété à Dubaï en 30 jours",
+    "subtitle": "Transformez votre bien d'investissement en maison prête à louer avec nos forfaits d'ameublement clés en main. Maximisez le ROI avec des meubles haut de gamme et un design expert.",
+    "cta": "Demander une consultation gratuite"
+  },
+  "about": {
+    "title": "À propos d'Aziza Home",
+    "description": "Partenaire de confiance en design d'intérieur à Dubaï pour les investisseurs et les expatriés"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "cta": "Demander une consultation gratuite"
+  },
+  "footer": {
+    "rights": "Tous droits réservés.",
+    "quickLinks": "Liens rapides",
+    "followUs": "Suivez-nous"
+  },
+  "common": {
+    "learnMore": "En savoir plus",
+    "getStarted": "Commencer",
+    "viewMore": "Voir plus",
+    "whatsapp": "Consultation WhatsApp"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "home": "首页",
+    "services": "服务",
+    "packages": "套餐",
+    "portfolio": "作品集",
+    "about": "关于我们",
+    "blog": "博客",
+    "contact": "联系我们"
+  },
+  "hero": {
+    "title": "30天内装修您的迪拜房产",
+    "subtitle": "通过我们的一站式家具套餐，将您的投资房产变成可出租的家。通过优质家具和专业设计最大化投资回报率。",
+    "cta": "申请免费咨询"
+  },
+  "about": {
+    "title": "关于 Aziza Home",
+    "description": "迪拜值得信赖的投资者和外籍人士室内设计合作伙伴"
+  },
+  "contact": {
+    "title": "联系我们",
+    "cta": "申请免费咨询"
+  },
+  "footer": {
+    "rights": "版权所有。",
+    "quickLinks": "快速链接",
+    "followUs": "关注我们"
+  },
+  "common": {
+    "learnMore": "了解更多",
+    "getStarted": "开始",
+    "viewMore": "查看更多",
+    "whatsapp": "WhatsApp 咨询"
+  }
+}

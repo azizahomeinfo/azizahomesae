@@ -2,10 +2,12 @@ import heroImage from "@/assets/hero-image-new.jpg";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const Hero = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const youtubeVideoId = "BnkV-TlYDJQ";
+  const { t } = useTranslation();
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
@@ -33,17 +35,17 @@ const Hero = () => {
 
         <div className="relative z-10 container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-semibold text-foreground mb-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 uppercase tracking-wide">
-            Timeless Elegance,<br />Minimalist Beauty
+            {t('hero.title')}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-            Transform your space with our curated Japandi-style interior design and complete furnishing solutions
+            {t('hero.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
             <Button onClick={() => scrollToSection("portfolio")} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              View Our Work
+              {t('common.viewMore')}
             </Button>
             <Button onClick={() => scrollToSection("packages")} size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-              Explore Packages
+              {t('nav.packages')}
             </Button>
           </div>
         </div>

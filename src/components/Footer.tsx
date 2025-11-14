@@ -1,8 +1,11 @@
 import logo from "@/assets/aziza-logo.png";
 import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail, Clock, PinIcon } from "lucide-react";
 import { Button } from "./ui/button";
+import { useTranslation } from "react-i18next";
 
 const Footer = () => {
+  const { t } = useTranslation();
+  
   return (
     <>
       <footer className="bg-primary text-primary-foreground py-16">
@@ -70,11 +73,11 @@ const Footer = () => {
 
             {/* Quick Link */}
             <div>
-              <h3 className="font-semibold text-lg mb-5">Quick Link</h3>
+              <h3 className="font-semibold text-lg mb-5">{t('footer.quickLinks')}</h3>
               <ul className="space-y-3 text-sm opacity-90">
                 <li><a href="/" className="hover:opacity-100 transition-opacity">Search</a></li>
-                <li><a href="#about" className="hover:opacity-100 transition-opacity">About Us</a></li>
-                <li><a href="#contact" className="hover:opacity-100 transition-opacity">Contact Us</a></li>
+                <li><a href="#about" className="hover:opacity-100 transition-opacity">{t('nav.about')}</a></li>
+                <li><a href="#contact" className="hover:opacity-100 transition-opacity">{t('nav.contact')}</a></li>
                 <li><a href="#" className="hover:opacity-100 transition-opacity">Order Tracking</a></li>
               </ul>
             </div>
@@ -147,7 +150,7 @@ const Footer = () => {
           </div>
 
           <div className="border-t border-primary-foreground/20 pt-6 text-center text-sm opacity-80">
-            <p>© {new Date().getFullYear()} Aziza Home. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Aziza Home. {t('footer.rights')}</p>
           </div>
         </div>
       </footer>
