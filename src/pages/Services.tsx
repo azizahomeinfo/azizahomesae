@@ -1,10 +1,11 @@
 import { ArrowRight } from "lucide-react";
-import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
+import { MultilingualSEO } from "@/components/MultilingualSEO";
 import serviceHolidayHome from "@/assets/service-holiday-home-new.jpg";
 import serviceExpatRelocate from "@/assets/service-expat-generated.jpg";
 import serviceInvestor from "@/assets/service-investor.jpg";
@@ -39,31 +40,16 @@ const services = [
 ];
 
 const Services = () => {
+  const { t } = useTranslation();
+  
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Our Services - Interior Design & Furnishing Dubai | Aziza Home</title>
-        <meta name="description" content="Explore Aziza Home's comprehensive furnishing services in Dubai: Holiday Home Packages, Expat Relocation, Investor Packages with 20-25% ROI increase, and Custom Interior Design." />
-        <meta name="keywords" content="Dubai furnishing services, holiday home furnishing, expat relocation Dubai, investor property packages, interior design Dubai, fit-out services UAE" />
-        <link rel="canonical" href="https://azizahomes.com/services" />
-        <meta name="robots" content="index, follow" />
-        
-        {/* Open Graph Meta Tags */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Our Services - Interior Design & Furnishing Dubai" />
-        <meta property="og:description" content="Comprehensive furnishing and design solutions for Dubai properties. Holiday homes, expat relocations, and investor packages with 20-25% ROI increase." />
-        <meta property="og:url" content="https://azizahomes.com/services" />
-        <meta property="og:image" content="https://azizahomes.com/service-holiday-home-new.jpg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:site_name" content="Aziza Home" />
-        
-        {/* Twitter Card Meta Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Our Services - Interior Design & Furnishing Dubai" />
-        <meta name="twitter:description" content="Holiday homes, expat relocations, and investor packages with 20-25% ROI increase." />
-        <meta name="twitter:image" content="https://azizahomes.com/service-holiday-home-new.jpg" />
-      </Helmet>
+      <MultilingualSEO 
+        title={t('pages:services.title')}
+        description={t('pages:services.description')}
+        keywords={t('pages:services.keywords')}
+        path="/services"
+      />
       <StructuredData 
         breadcrumbs={[
           { name: "Home", url: "https://azizahomes.com" },

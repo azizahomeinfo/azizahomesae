@@ -1,7 +1,8 @@
-import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
+import { MultilingualSEO } from "@/components/MultilingualSEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -13,6 +14,8 @@ import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.jpg";
 import blogJvcFamily from "@/assets/blog-jvc-family-rentals.jpg";
 
 const Blog = () => {
+  const { t } = useTranslation();
+  
   const articles = [
     {
       id: "maximize-rental-roi-downtown-dubai",
@@ -72,33 +75,13 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Blog - Aziza Home | Interior Design & Furnishing Insights Dubai</title>
-        <meta 
-          name="description" 
-          content="Expert insights on interior design agencies in Dubai, home furnishing tips, property investment strategies, and luxury furniture packages. Read our latest articles." 
-        />
-        <meta name="keywords" content="Dubai interior design blog, home furnishing tips, property investment Dubai, interior design agencies, expat relocation guide, holiday home furnishing" />
-        <link rel="canonical" href="https://azizahomes.com/blog" />
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-        <meta name="googlebot" content="index, follow" />
-        
-        {/* Open Graph Meta Tags */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Blog - Interior Design & Furnishing Insights Dubai" />
-        <meta property="og:description" content="Expert insights on interior design, home furnishing, and property investment in Dubai." />
-        <meta property="og:url" content="https://azizahomes.com/blog" />
-        <meta property="og:image" content="https://azizahomes.com/blog-top-agencies.jpg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:site_name" content="Aziza Home" />
-        
-        {/* Twitter Card Meta Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Blog - Interior Design & Furnishing Insights Dubai" />
-        <meta name="twitter:description" content="Expert insights on interior design, home furnishing, and property investment in Dubai." />
-        <meta name="twitter:image" content="https://azizahomes.com/blog-top-agencies.jpg" />
-      </Helmet>
+      <MultilingualSEO 
+        title={t('pages:blog.title')}
+        description={t('pages:blog.description')}
+        keywords={t('pages:blog.keywords')}
+        path="/blog"
+        image="https://azizahomes.com/blog-top-agencies.jpg"
+      />
 
       <Navigation />
 
