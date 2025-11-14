@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "services": "Dienstleistungen",
+    "packages": "Pakete",
+    "portfolio": "Portfolio",
+    "about": "Über uns",
+    "blog": "Blog",
+    "contact": "Kontakt"
+  },
+  "hero": {
+    "title": "Möblieren Sie Ihre Dubai-Immobilie in 30 Tagen",
+    "subtitle": "Verwandeln Sie Ihre Anlageimmobilie mit unseren schlüsselfertigen Möblierungspaketen in ein vermietbares Zuhause. Maximieren Sie den ROI mit erstklassigen Möbeln und Expertendesign.",
+    "cta": "Kostenlose Beratung anfordern"
+  },
+  "about": {
+    "title": "Über Aziza Home",
+    "description": "Dubais vertrauenswürdiger Innenarchitekturpartner für Investoren und Expats"
+  },
+  "contact": {
+    "title": "Kontakt aufnehmen",
+    "cta": "Kostenlose Beratung anfordern"
+  },
+  "footer": {
+    "rights": "Alle Rechte vorbehalten.",
+    "quickLinks": "Schnelllinks",
+    "followUs": "Folgen Sie uns"
+  },
+  "common": {
+    "learnMore": "Mehr erfahren",
+    "getStarted": "Loslegen",
+    "viewMore": "Mehr anzeigen",
+    "whatsapp": "WhatsApp Beratung"
+  }
+}

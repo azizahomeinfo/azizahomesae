@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { Menu, X, LogOut, LogIn } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import logo from "@/assets/aziza-logo.png";
 import { CartDrawer } from "./CartDrawer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
@@ -40,20 +43,21 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <Link to="/services" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              OUR SERVICES
+              {t('nav.services').toUpperCase()}
             </Link>
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              PORTFOLIO
+              {t('nav.portfolio').toUpperCase()}
             </Link>
             <Link to="/packages" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              PACKAGES
+              {t('nav.packages').toUpperCase()}
             </Link>
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              ABOUT US
+              {t('nav.about').toUpperCase()}
             </Link>
             <Link to="/contact" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
-              CONTACT
+              {t('nav.contact').toUpperCase()}
             </Link>
+            <LanguageSwitcher />
             <CartDrawer />
             <Button 
               variant="ghost" 
@@ -88,20 +92,23 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 flex flex-col gap-4">
             <Link to="/services" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              OUR SERVICES
+              {t('nav.services').toUpperCase()}
             </Link>
             <Link to="/portfolio" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              PORTFOLIO
+              {t('nav.portfolio').toUpperCase()}
             </Link>
             <Link to="/packages" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              PACKAGES
+              {t('nav.packages').toUpperCase()}
             </Link>
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              ABOUT US
+              {t('nav.about').toUpperCase()}
             </Link>
             <Link to="/contact" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
-              CONTACT
+              {t('nav.contact').toUpperCase()}
             </Link>
+            <div className="pt-2">
+              <LanguageSwitcher />
+            </div>
             <Button 
               variant="ghost" 
               size="sm" 
