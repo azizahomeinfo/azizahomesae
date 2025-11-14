@@ -68,6 +68,7 @@ const routesToPrerender = [
   '/contact',
   '/blog',
   '/blog/maximize-rental-roi-downtown-dubai',
+  '/blog/maximize-holiday-home-roi-dubai-marina',
   '/blog/top-7-interior-design-agencies-dubai',
   '/blog/quick-efficient-ways-to-furnish-your-home',
   '/blog/where-to-invest-dubai-best-roi-property-growth',
