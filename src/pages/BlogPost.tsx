@@ -84,12 +84,9 @@ const BlogPost = () => {
             <h1 class="text-4xl md:text-5xl font-bold text-foreground">Maximize Your Annual Rental ROI in Downtown Dubai</h1>
             <p class="text-xl text-muted-foreground">Upgrade your interior. Increase your rental returns by 10–15% per year — without changing your location.</p>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <div class="flex justify-center pt-4">
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
                 🔹 Request Free Consultation
-              </a>
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
-                📞 WhatsApp Our Team
               </a>
             </div>
             
@@ -328,12 +325,9 @@ const BlogPost = () => {
               Let's increase your rental income with a strategic interior upgrade.
             </p>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg">
+            <div class="flex justify-center pt-4">
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
                 ➡️ Request Free Consultation
-              </a>
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border-2 border-primary bg-background px-10 py-4 text-base font-medium hover:bg-accent transition-colors shadow-lg">
-                📞 WhatsApp Our Team
               </a>
             </div>
 
@@ -601,12 +595,9 @@ const BlogPost = () => {
             <h1 class="text-4xl md:text-5xl font-bold text-foreground">Maximize Your Holiday Home ROI in Dubai Marina</h1>
             <p class="text-xl text-muted-foreground">Transform your Dubai Marina property into a high-performing holiday rental. Increase your nightly rates by 20–30% and achieve 70%+ occupancy with strategic interior design.</p>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <div class="flex justify-center pt-4">
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
                 🔹 Request Free Consultation
-              </a>
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
-                📞 WhatsApp Our Team
               </a>
             </div>
             
@@ -872,12 +863,9 @@ const BlogPost = () => {
               Let's transform your holiday home into a revenue-generating asset with strategic interior design.
             </p>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg">
+            <div class="flex justify-center pt-4">
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
                 ➡️ Request Free Consultation
-              </a>
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border-2 border-primary bg-background px-10 py-4 text-base font-medium hover:bg-accent transition-colors shadow-lg">
-                📞 WhatsApp Our Team
               </a>
             </div>
 
@@ -933,12 +921,9 @@ const BlogPost = () => {
             <h1 class="text-4xl md:text-5xl font-bold text-foreground">JVC Family Rental Furnishing: Maximize Your ROI with Long-Term Tenants</h1>
             <p class="text-xl text-muted-foreground">Attract stable family tenants in Jumeirah Village Circle with strategic furnishing. Increase your rental income by 12–18% and reduce vacancy with family-friendly design.</p>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <div class="flex justify-center pt-4">
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
                 🔹 Request Free Consultation
-              </a>
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
-                📞 WhatsApp Our Team
               </a>
             </div>
             
@@ -1286,12 +1271,9 @@ const BlogPost = () => {
               Transform your apartment into a family-ready home that commands higher rent, attracts quality tenants, and maintains 95%+ occupancy.
             </p>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg">
+            <div class="flex justify-center pt-4">
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
                 ➡️ Request Free JVC Furnishing Consultation
-              </a>
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border-2 border-primary bg-background px-10 py-4 text-base font-medium hover:bg-accent transition-colors shadow-lg">
-                📞 WhatsApp Our Team
               </a>
             </div>
 
