@@ -10,18 +10,26 @@ import fr from './locales/fr.json';
 import it from './locales/it.json';
 import ru from './locales/ru.json';
 
+import enPages from './locales/pages/en.json';
+import arPages from './locales/pages/ar.json';
+import zhPages from './locales/pages/zh.json';
+import dePages from './locales/pages/de.json';
+import frPages from './locales/pages/fr.json';
+import itPages from './locales/pages/it.json';
+import ruPages from './locales/pages/ru.json';
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
-      en: { translation: en },
-      ar: { translation: ar },
-      zh: { translation: zh },
-      de: { translation: de },
-      fr: { translation: fr },
-      it: { translation: it },
-      ru: { translation: ru },
+      en: { translation: en, pages: enPages },
+      ar: { translation: ar, pages: arPages },
+      zh: { translation: zh, pages: zhPages },
+      de: { translation: de, pages: dePages },
+      fr: { translation: fr, pages: frPages },
+      it: { translation: it, pages: itPages },
+      ru: { translation: ru, pages: ruPages },
     },
     fallbackLng: 'en',
     interpolation: {

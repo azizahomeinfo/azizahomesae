@@ -1,39 +1,25 @@
-import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
+import { MultilingualSEO } from "@/components/MultilingualSEO";
 import founderImage from "@/assets/founder-veronica.jpg";
 import teamImage from "@/assets/team-photo.jpg";
 
 const AboutUs = () => {
+  const { t } = useTranslation();
+  
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>About Us - Aziza Home | Interior Design Experts in Dubai</title>
-        <meta name="description" content="Meet Veronica Xu and the Aziza Home team. Founded in 2022, we blend Japanese wabi-sabi with Scandinavian design to create timeless, tranquil spaces in Dubai." />
-        <meta name="keywords" content="Aziza Home founder, Veronica Xu, Japandi design Dubai, interior design team Dubai, wabi-sabi interior design, Scandinavian design UAE" />
-        <link rel="canonical" href="https://azizahomes.com/about" />
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-        <meta name="googlebot" content="index, follow" />
-        
-        {/* Open Graph Meta Tags */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="About Us - Aziza Home Interior Design Experts" />
-        <meta property="og:description" content="Meet Veronica Xu and the Aziza Home team. We blend Japanese wabi-sabi with Scandinavian design to create timeless spaces." />
-        <meta property="og:url" content="https://azizahomes.com/about" />
-        <meta property="og:image" content="https://azizahomes.com/founder-veronica.jpg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:site_name" content="Aziza Home" />
-        
-        {/* Twitter Card Meta Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="About Us - Aziza Home Interior Design Experts" />
-        <meta name="twitter:description" content="Meet Veronica Xu and the Aziza Home team. We blend Japanese wabi-sabi with Scandinavian design." />
-        <meta name="twitter:image" content="https://azizahomes.com/founder-veronica.jpg" />
-      </Helmet>
-      <StructuredData 
+      <MultilingualSEO 
+        title={t('pages:about.title')}
+        description={t('pages:about.description')}
+        keywords={t('pages:about.keywords')}
+        path="/about"
+        image="https://azizahomes.com/founder-veronica.jpg"
+      />
+      <StructuredData
         breadcrumbs={[
           { name: "Home", url: "https://azizahomes.com" },
           { name: "About Us", url: "https://azizahomes.com/about" }

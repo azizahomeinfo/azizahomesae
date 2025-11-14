@@ -1,8 +1,9 @@
-import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import Navigation from "@/components/Navigation";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
+import { MultilingualSEO } from "@/components/MultilingualSEO";
 import { Card } from "@/components/ui/card";
 import portfolio1 from "@/assets/portfolio-1.jpg";
 import portfolio12 from "@/assets/portfolio-1-2.jpg";
@@ -33,6 +34,8 @@ import portfolio22 from "@/assets/portfolio-22.jpeg";
 import portfolio23 from "@/assets/portfolio-23.jpeg";
 
 const ProjectGallery = () => {
+  const { t } = useTranslation();
+  
   const portfolio = [
     {
       id: 1,
@@ -71,31 +74,14 @@ const ProjectGallery = () => {
 
   return (
     <div className="min-h-screen">
-      <Helmet>
-        <title>Portfolio - Palace Emaar Beachfront Project | Aziza Home Dubai</title>
-        <meta name="description" content="Explore Aziza Home's stunning Palace Emaar Beachfront project. A serene two-bedroom apartment featuring classic minimalist design blending Japandi warmth with sophisticated coastal elegance." />
-        <meta name="keywords" content="Aziza Home portfolio, Palace Emaar Beachfront, Dubai interior design projects, Japandi design Dubai, luxury apartment design, coastal interior design Dubai" />
-        <link rel="canonical" href="https://azizahomes.com/portfolio" />
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-        <meta name="googlebot" content="index, follow" />
-        
-        {/* Open Graph Meta Tags */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Portfolio - Palace Emaar Beachfront | Aziza Home" />
-        <meta property="og:description" content="Stunning Palace Emaar Beachfront project featuring classic minimalist Japandi design with coastal elegance." />
-        <meta property="og:url" content="https://azizahomes.com/projects" />
-        <meta property="og:image" content="https://azizahomes.com/portfolio-1-3.jpg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:site_name" content="Aziza Home" />
-        
-        {/* Twitter Card Meta Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Portfolio - Palace Emaar Beachfront | Aziza Home" />
-        <meta name="twitter:description" content="Stunning Palace Emaar Beachfront project featuring classic minimalist Japandi design." />
-        <meta name="twitter:image" content="https://azizahomes.com/portfolio-1-3.jpg" />
-      </Helmet>
-      <StructuredData 
+      <MultilingualSEO 
+        title={t('pages:portfolio.title')}
+        description={t('pages:portfolio.description')}
+        keywords={t('pages:portfolio.keywords')}
+        path="/portfolio"
+        image="https://azizahomes.com/portfolio-1-3.jpg"
+      />
+      <StructuredData
         breadcrumbs={[
           { name: "Home", url: "https://azizahomes.com" },
           { name: "Portfolio", url: "https://azizahomes.com/portfolio" }
