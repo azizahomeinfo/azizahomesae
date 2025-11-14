@@ -121,7 +121,16 @@ async function submitSitemapToGoogle(sitemapUrl) {
       }
     }
 
-    const filePath = `dist${url === '/' ? '/index' : url}.html`
+    // Create directory structure for clean URLs
+    // / -> /index.html
+    // /about -> /about/index.html (so /about serves the HTML)
+    let filePath
+    if (url === '/') {
+      filePath = 'dist/index.html'
+    } else {
+      filePath = `dist${url}/index.html`
+    }
+    
     const fileDir = path.dirname(toAbsolute(filePath))
     
     // Create directory if it doesn't exist
