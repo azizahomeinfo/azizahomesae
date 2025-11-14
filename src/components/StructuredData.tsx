@@ -26,20 +26,31 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
     "description": "Premium Japandi-style interior design and complete A-Z furnishing packages in Dubai. Transform your space with minimalist, timeless design.",
     "foundingDate": "2020",
     "email": "info@azizahome.com",
-    "telephone": "+351-910-163-678",
+    "telephone": "+971-55-977-9635",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Lisbon",
-      "addressCountry": "PT"
+      "streetAddress": "Dubai",
+      "addressLocality": "Dubai",
+      "addressCountry": "AE"
     },
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "telephone": "+351-910-163-678",
-      "contactType": "Customer Service",
-      "email": "info@azizahome.com",
-      "areaServed": ["AE", "PT"],
-      "availableLanguage": ["English", "Portuguese", "Arabic"]
-    },
+    "contactPoint": [
+      {
+        "@type": "ContactPoint",
+        "telephone": "+971-55-977-9635",
+        "contactType": "Customer Service",
+        "email": "info@azizahome.com",
+        "areaServed": ["AE"],
+        "availableLanguage": ["English", "Arabic"]
+      },
+      {
+        "@type": "ContactPoint",
+        "telephone": "+351-910-163-678",
+        "contactType": "Customer Service",
+        "email": "info@azizahome.com",
+        "areaServed": ["PT"],
+        "availableLanguage": ["English", "Portuguese"]
+      }
+    ],
     "sameAs": [
       "https://www.instagram.com/azizahomeaes",
       "https://www.facebook.com/azizahome"
@@ -55,9 +66,11 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
     "image": `${baseUrl}/hero-image-new.jpg`,
     "description": pageDescription || "Premium interior design and turnkey furnishing packages in Dubai. Specializing in holiday homes, expat relocations, and investor properties.",
     "url": baseUrl,
-    "telephone": "+351-910-163-678",
+    "telephone": "+971-55-977-9635",
     "email": "info@azizahome.com",
     "priceRange": "€€€",
+    "currenciesAccepted": "AED, USD, EUR",
+    "paymentAccepted": "Cash, Credit Card, Bank Transfer",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Dubai Marina, Downtown Dubai, Business Bay",
