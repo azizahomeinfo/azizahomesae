@@ -99,6 +99,39 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
 
       if (error) throw error;
 
+      // Send email notification
+      try {
+        const emailData = {
+          name: validated.name,
+          email: validated.email,
+          phone: validated.phone || "Not provided",
+          nationality: formData.get("nationality") as string || "Not provided",
+          residency: formData.get("residency") as string || "Not provided",
+          property_location: formData.get("property_location") as string || "Not provided",
+          property_type: validated.property_type || "Not provided",
+          spaces_to_furnish: finalSpaces,
+          spaces_other: otherSpace || "",
+          budget_range: validated.budget_range,
+          move_in_date: formData.get("move_in_date") as string || "Not provided",
+          design_style: finalDesignStyles,
+          style_other: otherDesignStyle || "",
+          color_palette: finalColorPalettes,
+          color_other: otherColorPalette || "",
+          additional_info: validated.special_requirements || "None provided",
+        };
+
+        await supabase.functions.invoke('send-form-notification', {
+          body: {
+            formType: 'intake',
+            data: emailData,
+            recipientEmail: 'info@azizahomes.com'
+          }
+        });
+      } catch (emailError) {
+        console.error("Error sending email notification:", emailError);
+        // Don't fail the submission if email fails
+      }
+
       toast.success("Thank you! We'll be in touch soon.", {
         description: "Your inquiry has been submitted successfully.",
       });

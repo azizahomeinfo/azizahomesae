@@ -49,6 +49,20 @@ const Contact = () => {
 
       if (error) throw error;
 
+      // Send email notification
+      try {
+        await supabase.functions.invoke('send-form-notification', {
+          body: {
+            formType: 'contact',
+            data: validated,
+            recipientEmail: 'info@azizahomes.com'
+          }
+        });
+      } catch (emailError) {
+        console.error("Error sending email notification:", emailError);
+        // Don't fail the submission if email fails
+      }
+
       toast.success("Thank you for your message! We'll get back to you soon.");
       e.currentTarget.reset();
     } catch (error) {
