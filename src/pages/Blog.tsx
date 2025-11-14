@@ -8,9 +8,19 @@ import { Link } from "react-router-dom";
 import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
 import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
 import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
+import blogRentalRoi from "@/assets/blog-rental-roi-downtown.jpg";
 
 const Blog = () => {
   const articles = [
+    {
+      id: "maximize-rental-roi-downtown-dubai",
+      title: "Maximize Your Annual Rental ROI in Downtown Dubai",
+      excerpt: "Upgrade your interior. Increase your rental returns by 10–15% per year — without changing your location. Perfect for apartments in Grande Signature Residence, Forte Tower, Act One | Act Two Towers, Burj Crown, and Burj Royale.",
+      image: blogRentalRoi,
+      date: "November 14, 2025",
+      readTime: "9 min read",
+      category: "Investment Guide"
+    },
     {
       id: "top-7-interior-design-agencies-dubai",
       title: "Top 7 Interior Design Agencies in Dubai",
