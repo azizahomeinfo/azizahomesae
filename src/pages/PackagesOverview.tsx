@@ -86,6 +86,8 @@ const PackagesOverview = () => {
         <meta name="description" content="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 30,500 AED). Complete furniture packages for Dubai properties." />
         <meta name="keywords" content="furnishing packages Dubai, furniture packages Dubai, apartment furnishing costs, home furnishing prices Dubai, studio furnishing Dubai, villa furnishing packages" />
         <link rel="canonical" href="https://azizahomes.com/packages" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />
