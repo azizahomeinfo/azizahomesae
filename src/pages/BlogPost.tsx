@@ -774,44 +774,44 @@ const BlogPost = () => {
 
           <!-- Our Process Section -->
           <section class="bg-accent/50 rounded-lg p-8 md:p-12 space-y-8">
-            <h2 class="text-3xl font-bold text-foreground text-center">Our Turnkey Process — 4 Simple Steps</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Our Turnkey Process — 4 Simple Steps</h2>
             
             <div class="grid md:grid-cols-4 gap-6">
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   1
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">ROI-Focused Design Proposal</h3>
-                <p class="text-muted-foreground text-sm">Custom design targeting your nightly rate goals</p>
+                <h3 class="font-semibold text-base text-white">ROI-Focused Design Proposal</h3>
+                <p class="text-white/80 text-sm">Custom design targeting your nightly rate goals</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   2
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Procurement & Sourcing</h3>
-                <p class="text-muted-foreground text-sm">High-quality, durable furniture perfect for rentals</p>
+                <h3 class="font-semibold text-base text-white">Procurement & Sourcing</h3>
+                <p class="text-white/80 text-sm">High-quality, durable furniture perfect for rentals</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   3
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Installation & Styling</h3>
-                <p class="text-muted-foreground text-sm">Complete setup with professional photography guidance</p>
+                <h3 class="font-semibold text-base text-white">Installation & Styling</h3>
+                <p class="text-white/80 text-sm">Complete setup with professional photography guidance</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   4
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Ready to List</h3>
-                <p class="text-muted-foreground text-sm">Handover with listing optimization tips</p>
+                <h3 class="font-semibold text-base text-white">Ready to List</h3>
+                <p class="text-white/80 text-sm">Handover with listing optimization tips</p>
               </div>
             </div>
 
             <div class="text-center">
-              <div class="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold">
+              <div class="inline-block bg-primary text-white px-6 py-3 rounded-full font-semibold text-sm">
                 ⚡ Completed within 10–15 business days
               </div>
             </div>
