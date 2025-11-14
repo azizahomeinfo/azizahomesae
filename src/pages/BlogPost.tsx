@@ -9,6 +9,7 @@ import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
 import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
 import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
 import blogRentalRoi from "@/assets/blog-rental-roi-downtown.jpg";
+import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.jpg";
 
 const generateBlogStructuredData = (article: any, slug: string) => ({
   "@context": "https://schema.org",
@@ -43,8 +44,12 @@ const BlogPost = () => {
   // Related articles mapping
   const relatedArticles: Record<string, Array<{id: string; title: string; category: string}>> = {
     "maximize-rental-roi-downtown-dubai": [
-      { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" },
-      { id: "quick-efficient-ways-to-furnish-your-home", title: "Quick & Efficient Ways to Furnish Your Home", category: "Home Furnishing" }
+      { id: "maximize-holiday-home-roi-dubai-marina", title: "Maximize Your Holiday Home ROI in Dubai Marina", category: "Investment Guide" },
+      { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" }
+    ],
+    "maximize-holiday-home-roi-dubai-marina": [
+      { id: "maximize-rental-roi-downtown-dubai", title: "Maximize Your Annual Rental ROI in Downtown Dubai", category: "Investment Guide" },
+      { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" }
     ],
     "top-7-interior-design-agencies-dubai": [
       { id: "quick-efficient-ways-to-furnish-your-home", title: "Quick & Efficient Ways to Furnish Your Home", category: "Home Furnishing" },
@@ -577,6 +582,338 @@ const BlogPost = () => {
 
         <p><strong>Want to boost your property's ROI?</strong><br><a href="/contact" style="color: hsl(var(--primary)); text-decoration: underline;">Contact us today</a> to learn how our <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">complete furnishing packages</a> can help you attract better tenants and increase your rental income. Check out our <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">investor-focused services</a> for more details.</p>
       `
+    },
+    "maximize-holiday-home-roi-dubai-marina": {
+      title: "Maximize Your Holiday Home ROI in Dubai Marina",
+      image: blogHolidayRoi,
+      date: "November 14, 2025",
+      readTime: "8 min read",
+      category: "Investment Guide",
+      content: `
+        <div class="space-y-12">
+          <!-- Hero Section -->
+          <div class="text-center max-w-3xl mx-auto space-y-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-foreground">Maximize Your Holiday Home ROI in Dubai Marina</h1>
+            <p class="text-xl text-muted-foreground">Transform your Dubai Marina property into a high-performing holiday rental. Increase your nightly rates by 20–30% and achieve 70%+ occupancy with strategic interior design.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                🔹 Request Free Consultation
+              </a>
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                📞 WhatsApp Our Team
+              </a>
+            </div>
+            
+            <p class="text-sm text-muted-foreground pt-4">Perfect for properties in <strong>Marina Gate, Marina Promenade, Silverene Towers, The Torch, and Princess Tower</strong></p>
+          </div>
+
+          <!-- Why Design = Higher Revenue Section -->
+          <section class="bg-accent/50 rounded-lg p-8 md:p-12">
+            <h2 class="text-3xl font-bold text-foreground mb-8">Design That Pays Premium Nightly Rates</h2>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+              <div class="space-y-6">
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">💰</span>
+                  <div>
+                    <strong class="text-foreground">Higher Nightly Rates (+20–30% uplift)</strong>
+                    <p class="text-muted-foreground">Premium interiors command premium pricing in the competitive Dubai Marina market</p>
+                  </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">⭐</span>
+                  <div>
+                    <strong class="text-foreground">Better Reviews & Repeat Bookings</strong>
+                    <p class="text-muted-foreground">Guests share photos of beautiful spaces, driving organic bookings</p>
+                  </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">📅</span>
+                  <div>
+                    <strong class="text-foreground">70%+ Occupancy Year-Round</strong>
+                    <p class="text-muted-foreground">Stand out in listings and maintain consistent bookings</p>
+                  </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">🏠</span>
+                  <div>
+                    <strong class="text-foreground">Instant-Book Ready Presentation</strong>
+                    <p class="text-muted-foreground">Professional photos convert browsers to bookers</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-primary/10 rounded-lg p-6">
+                <div class="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium mb-4">
+                  🎯 Smart Investment for Holiday Homes
+                </div>
+                <p class="text-foreground leading-relaxed">
+                  In Dubai Marina's competitive holiday rental market, design isn't just aesthetics—it's your revenue driver. Properties with professionally designed interiors achieve 8–12 month ROI through higher rates and sustained occupancy.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Financial Case Study Section -->
+          <section class="space-y-8">
+            <h2 class="text-3xl font-bold text-foreground text-center">Real ROI from Dubai Marina Properties</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="border-2 border-primary/20 rounded-lg p-6 space-y-4">
+                <h3 class="font-bold text-xl text-foreground">Marina Gate — 2BR</h3>
+                
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-muted-foreground">Before Upgrade</p>
+                    <p class="text-2xl font-bold text-foreground">600–700 AED/night</p>
+                    <p class="text-sm text-muted-foreground">~50% occupancy</p>
+                  </div>
+                  
+                  <div class="h-px bg-border"></div>
+                  
+                  <div>
+                    <p class="text-sm text-muted-foreground">After Upgrade</p>
+                    <p class="text-2xl font-bold text-primary">850–950 AED/night</p>
+                    <p class="text-sm text-muted-foreground">~75% occupancy</p>
+                  </div>
+                </div>
+
+                <div class="bg-primary/10 rounded-lg p-4">
+                  <p class="font-semibold text-lg text-foreground">≈ +40% annual revenue</p>
+                  <p class="text-sm text-muted-foreground">Higher rates + better occupancy</p>
+                </div>
+              </div>
+
+              <div class="border-2 border-primary/20 rounded-lg p-6 space-y-4">
+                <h3 class="font-bold text-xl text-foreground">Silverene Towers — 1BR</h3>
+                
+                <div class="space-y-3">
+                  <div>
+                    <p class="text-sm text-muted-foreground">Before Upgrade</p>
+                    <p class="text-2xl font-bold text-foreground">450–500 AED/night</p>
+                    <p class="text-sm text-muted-foreground">~45% occupancy</p>
+                  </div>
+                  
+                  <div class="h-px bg-border"></div>
+                  
+                  <div>
+                    <p class="text-sm text-muted-foreground">After Upgrade</p>
+                    <p class="text-2xl font-bold text-primary">600–700 AED/night</p>
+                    <p class="text-sm text-muted-foreground">~70% occupancy</p>
+                  </div>
+                </div>
+
+                <div class="bg-primary/10 rounded-lg p-4">
+                  <p class="font-semibold text-lg text-foreground">Faster bookings, premium guests</p>
+                  <p class="text-sm text-muted-foreground">Professional photos drive conversions</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                Request Your ROI Upgrade Proposal
+              </a>
+            </div>
+          </section>
+
+          <!-- What Holiday Guests Expect Section -->
+          <section class="space-y-8">
+            <div class="text-center space-y-4">
+              <h2 class="text-3xl font-bold text-foreground">Make Your Property Stand Out on Airbnb & Booking.com</h2>
+              <p class="text-muted-foreground max-w-3xl mx-auto">
+                Holiday guests expect hotel-quality interiors with Instagram-worthy aesthetics
+              </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+              <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-3xl">
+                  ⭐
+                </div>
+                <h3 class="font-semibold text-lg text-foreground">Instagram-Ready Aesthetics</h3>
+                <p class="text-muted-foreground">Spaces guests want to photograph and share, creating organic marketing</p>
+              </div>
+
+              <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-3xl">
+                  🏨
+                </div>
+                <h3 class="font-semibold text-lg text-foreground">Hotel-Quality Comfort</h3>
+                <p class="text-muted-foreground">Premium bedding, durable furniture, and smart amenities</p>
+              </div>
+
+              <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-3xl">
+                  ⚡
+                </div>
+                <h3 class="font-semibold text-lg text-foreground">Functional Luxury</h3>
+                <p class="text-muted-foreground">Smart storage, fast WiFi setup, intuitive lighting controls</p>
+              </div>
+            </div>
+
+            <div class="bg-muted/50 rounded-lg p-6">
+              <p class="text-center text-muted-foreground">
+                ✓ Neutral luxury palette that photographs beautifully ✓ Durable high-traffic finishes ✓ Balanced ambient + task lighting ✓ Marina-view optimized layouts
+              </p>
+            </div>
+
+            <p class="text-center text-sm text-muted-foreground italic">
+              Essential for properties in Marina Promenade, The Torch, Princess Tower, and Marina Gate — where competition is fierce
+            </p>
+          </section>
+
+          <!-- Design Style Section -->
+          <section class="space-y-6">
+            <h2 class="text-3xl font-bold text-foreground text-center">Modern Coastal Luxury Design</h2>
+            
+            <p class="text-center text-lg text-muted-foreground max-w-2xl mx-auto">
+              A sophisticated beige–ivory palette with champagne accents, organic textures, and soft coastal forms. Designed specifically for Dubai Marina's waterfront lifestyle and guest expectations.
+            </p>
+          </section>
+
+          <!-- Our Process Section -->
+          <section class="bg-accent/50 rounded-lg p-8 md:p-12 space-y-8">
+            <h2 class="text-3xl font-bold text-foreground text-center">Our Turnkey Process — 4 Simple Steps</h2>
+            
+            <div class="grid md:grid-cols-4 gap-6">
+              <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                  1
+                </div>
+                <h3 class="font-semibold text-lg text-foreground">ROI-Focused Design Proposal</h3>
+                <p class="text-muted-foreground text-sm">Custom design targeting your nightly rate goals</p>
+              </div>
+
+              <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                  2
+                </div>
+                <h3 class="font-semibold text-lg text-foreground">Procurement & Sourcing</h3>
+                <p class="text-muted-foreground text-sm">High-quality, durable furniture perfect for rentals</p>
+              </div>
+
+              <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                  3
+                </div>
+                <h3 class="font-semibold text-lg text-foreground">Installation & Styling</h3>
+                <p class="text-muted-foreground text-sm">Complete setup with professional photography guidance</p>
+              </div>
+
+              <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                  4
+                </div>
+                <h3 class="font-semibold text-lg text-foreground">Ready to List</h3>
+                <p class="text-muted-foreground text-sm">Handover with listing optimization tips</p>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <div class="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold">
+                ⚡ Completed within 10–15 business days
+              </div>
+            </div>
+          </section>
+
+          <!-- Why Invest With Us Section -->
+          <section class="space-y-6">
+            <h2 class="text-3xl font-bold text-foreground">Why Dubai Marina Investors Choose Us</h2>
+            
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <span class="text-primary text-xl">✓</span>
+                <div>
+                  <strong class="text-foreground">Revenue-Driven Design Strategy</strong>
+                  <p class="text-muted-foreground">Every choice targets higher rates and better reviews</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <span class="text-primary text-xl">✓</span>
+                <div>
+                  <strong class="text-foreground">Rental-Grade Durability</strong>
+                  <p class="text-muted-foreground">Materials that withstand high turnover with minimal maintenance</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <span class="text-primary text-xl">✓</span>
+                <div>
+                  <strong class="text-foreground">Trusted by Marina Landlords</strong>
+                  <p class="text-muted-foreground">Proven track record in Dubai's competitive holiday rental market</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <span class="text-primary text-xl">✓</span>
+                <div>
+                  <strong class="text-foreground">End-to-End Execution</strong>
+                  <p class="text-muted-foreground">Stress-free process from concept to guest-ready</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Final CTA Section -->
+          <section class="bg-gradient-to-br from-primary/5 to-accent/30 rounded-lg p-8 md:p-12 text-center space-y-6 border-t-4 border-primary">
+            <h2 class="text-4xl md:text-5xl font-bold text-foreground">Your Property Is in Dubai Marina.<br/>Your Nightly Rate Should Reflect It.</h2>
+            <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Let's transform your holiday home into a revenue-generating asset with strategic interior design.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg">
+                ➡️ Request Free Consultation
+              </a>
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border-2 border-primary bg-background px-10 py-4 text-base font-medium hover:bg-accent transition-colors shadow-lg">
+                📞 WhatsApp Our Team
+              </a>
+            </div>
+
+            <!-- Lead Capture Form -->
+            <div class="max-w-2xl mx-auto mt-8 bg-white rounded-lg p-6 shadow-xl">
+              <h3 class="text-xl font-bold text-foreground mb-4">Get Your Custom ROI Proposal</h3>
+              <form class="space-y-4" action="/contact" method="get">
+                <div class="grid md:grid-cols-2 gap-4">
+                  <input type="text" placeholder="Full Name" class="w-full px-4 py-2 rounded-md border border-input bg-background" required />
+                  <select class="w-full px-4 py-2 rounded-md border border-input bg-background" required>
+                    <option value="">Property Tower</option>
+                    <option value="marina-gate">Marina Gate</option>
+                    <option value="marina-promenade">Marina Promenade</option>
+                    <option value="silverene">Silverene Towers</option>
+                    <option value="torch">The Torch</option>
+                    <option value="princess">Princess Tower</option>
+                    <option value="other">Other Marina Tower</option>
+                  </select>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                  <select class="w-full px-4 py-2 rounded-md border border-input bg-background" required>
+                    <option value="">Unit Size</option>
+                    <option value="studio">Studio</option>
+                    <option value="1br">1 Bedroom</option>
+                    <option value="2br">2 Bedrooms</option>
+                    <option value="3br">3 Bedrooms</option>
+                  </select>
+                  <input type="date" placeholder="Target Listing Date" class="w-full px-4 py-2 rounded-md border border-input bg-background" />
+                </div>
+                
+                <input type="text" placeholder="Current Nightly Rate (Optional, e.g., 600 AED)" class="w-full px-4 py-2 rounded-md border border-input bg-background" />
+                
+                <button type="submit" class="w-full bg-primary text-primary-foreground px-8 py-3 rounded-md font-medium hover:bg-primary/90 transition-colors">
+                  Get Free Consultation
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      `
     }
   };
 
@@ -602,7 +939,9 @@ const BlogPost = () => {
     const imageMap: { [key: string]: string } = {
       "top-7-interior-design-agencies-dubai": "https://azizahomes.com/blog-top-agencies.jpg",
       "quick-efficient-ways-to-furnish-your-home": "https://azizahomes.com/blog-furnish-home.jpg",
-      "where-to-invest-dubai-best-roi-property-growth": "https://azizahomes.com/blog-dubai-investment.jpg"
+      "where-to-invest-dubai-best-roi-property-growth": "https://azizahomes.com/blog-dubai-investment.jpg",
+      "maximize-rental-roi-downtown-dubai": "https://azizahomes.com/blog-rental-roi-downtown.jpg",
+      "maximize-holiday-home-roi-dubai-marina": "https://azizahomes.com/blog-holiday-roi-marina.jpg"
     };
     return imageMap[slug] || "https://azizahomes.com/hero-image-new.jpg";
   };

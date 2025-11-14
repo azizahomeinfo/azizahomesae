@@ -9,6 +9,7 @@ import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
 import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
 import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
 import blogRentalRoi from "@/assets/blog-rental-roi-downtown.jpg";
+import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.jpg";
 
 const Blog = () => {
   const articles = [
@@ -19,6 +20,15 @@ const Blog = () => {
       image: blogRentalRoi,
       date: "November 14, 2025",
       readTime: "9 min read",
+      category: "Investment Guide"
+    },
+    {
+      id: "maximize-holiday-home-roi-dubai-marina",
+      title: "Maximize Your Holiday Home ROI in Dubai Marina",
+      excerpt: "Transform your Dubai Marina property into a high-performing holiday rental. Increase your nightly rates by 20–30% and achieve 70%+ occupancy with strategic interior design.",
+      image: blogHolidayRoi,
+      date: "November 14, 2025",
+      readTime: "8 min read",
       category: "Investment Guide"
     },
     {
