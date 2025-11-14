@@ -81,8 +81,8 @@ const BlogPost = () => {
         <div class="space-y-12">
           <!-- Hero Section -->
           <div class="text-center max-w-3xl mx-auto space-y-6">
-            <h1 class="text-4xl md:text-5xl font-bold text-foreground">Maximize Your Annual Rental ROI in Downtown Dubai</h1>
-            <p class="text-xl text-muted-foreground">Upgrade your interior. Increase your rental returns by 10–15% per year — without changing your location.</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-white">Maximize Your Annual Rental ROI in Downtown Dubai</h1>
+            <p class="text-xl text-white/90">Upgrade your interior. Increase your rental returns by 10–15% per year — without changing your location.</p>
             
             <div class="flex justify-center pt-4">
               <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
@@ -90,42 +90,42 @@ const BlogPost = () => {
               </a>
             </div>
             
-            <p class="text-sm text-muted-foreground pt-4">Perfect for apartments in <strong>Grande Signature Residence, Forte Tower, Act One | Act Two Towers, Burj Crown, and Burj Royale</strong></p>
+            <p class="text-sm text-white/80 pt-4">Perfect for apartments in <strong>Grande Signature Residence, Forte Tower, Act One | Act Two Towers, Burj Crown, and Burj Royale</strong></p>
           </div>
 
           <!-- Why Design = Higher Rent Section -->
           <section class="bg-accent/50 rounded-lg p-8 md:p-12">
             <div class="grid md:grid-cols-2 gap-8 items-center">
               <div class="space-y-6">
-                <h2 class="text-3xl font-bold text-foreground">Design That Pays for Itself in 12–18 Months</h2>
+                <h2 class="text-3xl font-bold text-white">Design That Pays for Itself in 12–18 Months</h2>
                 
                 <ul class="space-y-4">
                   <li class="flex items-start gap-3">
                     <span class="text-2xl">💎</span>
                     <div>
-                      <strong class="text-foreground">Higher annual rental income</strong>
-                      <p class="text-muted-foreground">+10–15% uplift</p>
+                      <strong class="text-white">Higher annual rental income</strong>
+                      <p class="text-white/80">+10–15% uplift</p>
                     </div>
                   </li>
                   <li class="flex items-start gap-3">
                     <span class="text-2xl">⚡</span>
                     <div>
-                      <strong class="text-foreground">Faster leasing with premium tenants</strong>
-                      <p class="text-muted-foreground">Reduced vacancy periods</p>
+                      <strong class="text-white">Faster leasing with premium tenants</strong>
+                      <p class="text-white/80">Reduced vacancy periods</p>
                     </div>
                   </li>
                   <li class="flex items-start gap-3">
                     <span class="text-2xl">🔄</span>
                     <div>
-                      <strong class="text-foreground">Better tenant retention</strong>
-                      <p class="text-muted-foreground">Stable yields year after year</p>
+                      <strong class="text-white">Better tenant retention</strong>
+                      <p class="text-white/80">Stable yields year after year</p>
                     </div>
                   </li>
                   <li class="flex items-start gap-3">
                     <span class="text-2xl">🏆</span>
                     <div>
-                      <strong class="text-foreground">Move-in-ready product</strong>
-                      <p class="text-muted-foreground">Tenants compete for your property</p>
+                      <strong class="text-white">Move-in-ready product</strong>
+                      <p class="text-white/80">Tenants compete for your property</p>
                     </div>
                   </li>
                 </ul>
@@ -1431,7 +1431,7 @@ const BlogPost = () => {
               </div>
 
               <div 
-                className="prose prose-lg max-w-none blog-content"
+                className="prose prose-lg max-w-none blog-content [&_*]:!text-white [&_h1]:!text-white [&_h2]:!text-white [&_h3]:!text-white [&_p]:!text-white [&_strong]:!text-white [&_li]:!text-white [&_span]:!text-white [&_a]:!text-white"
                 dangerouslySetInnerHTML={{ __html: article.content }}
               />
 
