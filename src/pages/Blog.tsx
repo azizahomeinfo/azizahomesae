@@ -10,6 +10,7 @@ import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
 import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
 import blogRentalRoi from "@/assets/blog-rental-roi-downtown.jpg";
 import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.jpg";
+import blogJvcFamily from "@/assets/blog-jvc-family-rentals.jpg";
 
 const Blog = () => {
   const articles = [
@@ -29,6 +30,15 @@ const Blog = () => {
       image: blogHolidayRoi,
       date: "November 14, 2025",
       readTime: "8 min read",
+      category: "Investment Guide"
+    },
+    {
+      id: "jvc-family-rental-furnishing-roi-guide",
+      title: "JVC Family Rental Furnishing: Maximize Your ROI with Long-Term Tenants",
+      excerpt: "Attract stable family tenants in Jumeirah Village Circle with strategic furnishing. Increase your rental income by 12–18% and reduce vacancy with family-friendly design.",
+      image: blogJvcFamily,
+      date: "November 14, 2025",
+      readTime: "7 min read",
       category: "Investment Guide"
     },
     {
