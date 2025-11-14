@@ -8,6 +8,7 @@ import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
 import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
 import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
+import blogRentalRoi from "@/assets/blog-rental-roi-downtown.jpg";
 
 const generateBlogStructuredData = (article: any, slug: string) => ({
   "@context": "https://schema.org",
@@ -41,6 +42,10 @@ const BlogPost = () => {
 
   // Related articles mapping
   const relatedArticles: Record<string, Array<{id: string; title: string; category: string}>> = {
+    "maximize-rental-roi-downtown-dubai": [
+      { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" },
+      { id: "quick-efficient-ways-to-furnish-your-home", title: "Quick & Efficient Ways to Furnish Your Home", category: "Home Furnishing" }
+    ],
     "top-7-interior-design-agencies-dubai": [
       { id: "quick-efficient-ways-to-furnish-your-home", title: "Quick & Efficient Ways to Furnish Your Home", category: "Home Furnishing" },
       { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" }
@@ -56,6 +61,311 @@ const BlogPost = () => {
   };
 
   const articles = {
+    "maximize-rental-roi-downtown-dubai": {
+      title: "Maximize Your Annual Rental ROI in Downtown Dubai",
+      image: blogRentalRoi,
+      date: "November 14, 2025",
+      readTime: "9 min read",
+      category: "Investment Guide",
+      content: `
+        <div class="space-y-12">
+          <!-- Hero Section -->
+          <div class="text-center max-w-3xl mx-auto space-y-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-foreground">Maximize Your Annual Rental ROI in Downtown Dubai</h1>
+            <p class="text-xl text-muted-foreground">Upgrade your interior. Increase your rental returns by 10–15% per year — without changing your location.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                🔹 Request Free Consultation
+              </a>
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                📞 WhatsApp Our Team
+              </a>
+            </div>
+            
+            <p class="text-sm text-muted-foreground pt-4">Perfect for apartments in <strong>Grande Signature Residence, Forte Tower, Act One | Act Two Towers, Burj Crown, and Burj Royale</strong></p>
+          </div>
+
+          <!-- Why Design = Higher Rent Section -->
+          <section class="bg-accent/50 rounded-lg p-8 md:p-12">
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+              <div class="space-y-6">
+                <h2 class="text-3xl font-bold text-foreground">Design That Pays for Itself in 12–18 Months</h2>
+                
+                <ul class="space-y-4">
+                  <li class="flex items-start gap-3">
+                    <span class="text-2xl">💎</span>
+                    <div>
+                      <strong class="text-foreground">Higher annual rental income</strong>
+                      <p class="text-muted-foreground">+10–15% uplift</p>
+                    </div>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <span class="text-2xl">⚡</span>
+                    <div>
+                      <strong class="text-foreground">Faster leasing with premium tenants</strong>
+                      <p class="text-muted-foreground">Reduced vacancy periods</p>
+                    </div>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <span class="text-2xl">🔄</span>
+                    <div>
+                      <strong class="text-foreground">Better tenant retention</strong>
+                      <p class="text-muted-foreground">Stable yields year after year</p>
+                    </div>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <span class="text-2xl">🏆</span>
+                    <div>
+                      <strong class="text-foreground">Move-in-ready product</strong>
+                      <p class="text-muted-foreground">Tenants compete for your property</p>
+                    </div>
+                  </li>
+                </ul>
+                
+                <div class="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+                  🎯 Smart investment for long-term rental properties
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                <img src="${blogRentalRoi}" alt="Luxury Downtown Dubai apartment interior" class="rounded-lg shadow-lg w-full" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Financial Case Studies -->
+          <section class="bg-[#F5F2ED] rounded-lg p-8 md:p-12">
+            <h2 class="text-3xl font-bold text-foreground text-center mb-8">Financial Case Study — Real Numbers from Downtown Dubai</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <!-- Case Study 1 -->
+              <div class="bg-white rounded-lg p-6 shadow-md space-y-4">
+                <h3 class="text-xl font-bold text-foreground">Act One | Act Two Towers</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-muted-foreground">Before:</span>
+                    <span class="text-lg font-semibold">180–200K AED/year</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-muted-foreground">After:</span>
+                    <span class="text-lg font-semibold text-primary">250K AED/year</span>
+                  </div>
+                  <div class="pt-2 border-t">
+                    <span class="text-2xl font-bold text-primary">≈ +25–30% uplift</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Case Study 2 -->
+              <div class="bg-white rounded-lg p-6 shadow-md space-y-4">
+                <h3 class="text-xl font-bold text-foreground">Burj Crown</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-muted-foreground">Before:</span>
+                    <span class="text-lg font-semibold">75–80K AED/year</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-muted-foreground">After:</span>
+                    <span class="text-lg font-semibold text-primary">105–115K AED/year</span>
+                  </div>
+                  <div class="pt-2 border-t">
+                    <p class="text-sm text-muted-foreground">Faster leasing, better tenants</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="text-center mt-8">
+              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                🔹 Request Your ROI Upgrade Proposal
+              </a>
+            </div>
+          </section>
+
+          <!-- What Premium Tenants Expect -->
+          <section class="space-y-8">
+            <h2 class="text-3xl font-bold text-foreground text-center">Make Your Apartment the First Choice for Executive Tenants</h2>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="text-center space-y-3">
+                <div class="text-4xl">🏨</div>
+                <h3 class="font-bold text-foreground">Hotel-level interiors</h3>
+                <p class="text-sm text-muted-foreground">Luxury finishes that impress from day one</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="text-4xl">🛡️</div>
+                <h3 class="font-bold text-foreground">Durable high-traffic finishes</h3>
+                <p class="text-sm text-muted-foreground">Long-lasting quality that reduces maintenance</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="text-4xl">📦</div>
+                <h3 class="font-bold text-foreground">Smart storage solutions</h3>
+                <p class="text-sm text-muted-foreground">Maximize functionality and appeal</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="text-4xl">💡</div>
+                <h3 class="font-bold text-foreground">Balanced lighting + ambiance</h3>
+                <p class="text-sm text-muted-foreground">Create the perfect atmosphere</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="text-4xl">🎨</div>
+                <h3 class="font-bold text-foreground">Neutral luxury color palette</h3>
+                <p class="text-sm text-muted-foreground">Timeless appeal for diverse tenants</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="text-4xl">📏</div>
+                <h3 class="font-bold text-foreground">Furniture sized for your floor plan</h3>
+                <p class="text-sm text-muted-foreground">Perfectly proportioned spaces</p>
+              </div>
+            </div>
+            
+            <p class="text-center text-sm text-muted-foreground max-w-3xl mx-auto">
+              This is essential for properties in <strong>Burj Royale, Grande Signature Residence, and Forte Tower</strong> — where expectations are high.
+            </p>
+          </section>
+
+          <!-- Design Style Moodboard -->
+          <section class="bg-accent/30 rounded-lg p-8 md:p-12 space-y-6">
+            <h2 class="text-3xl font-bold text-foreground text-center">A Modern Luxury Neutral Style</h2>
+            <p class="text-center text-muted-foreground max-w-2xl mx-auto">
+              Designed to attract high-quality long-term tenants with beige–ivory palette, champagne hardware, and soft forms
+            </p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <img src="${blogRentalRoi}" alt="Modern luxury design example" class="rounded-lg shadow-md w-full aspect-video object-cover" />
+              <img src="${blogRentalRoi}" alt="Neutral color palette" class="rounded-lg shadow-md w-full aspect-video object-cover" />
+              <img src="${blogRentalRoi}" alt="Premium finishes" class="rounded-lg shadow-md w-full aspect-video object-cover" />
+            </div>
+          </section>
+
+          <!-- Our Process -->
+          <section class="space-y-8">
+            <h2 class="text-3xl font-bold text-foreground text-center">Our Process — 4 Simple Steps</h2>
+            
+            <div class="grid md:grid-cols-4 gap-6">
+              <div class="text-center space-y-3">
+                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">1</div>
+                <h3 class="font-bold text-foreground">Design Proposal</h3>
+                <p class="text-sm text-muted-foreground">ROI-focused interior plan</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">2</div>
+                <h3 class="font-bold text-foreground">Material & Furniture Procurement</h3>
+                <p class="text-sm text-muted-foreground">Premium quality sourcing</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">3</div>
+                <h3 class="font-bold text-foreground">Full Installation & Styling</h3>
+                <p class="text-sm text-muted-foreground">Professional execution</p>
+              </div>
+              
+              <div class="text-center space-y-3">
+                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">4</div>
+                <h3 class="font-bold text-foreground">Handover</h3>
+                <p class="text-sm text-muted-foreground">Ready to rent immediately</p>
+              </div>
+            </div>
+            
+            <div class="text-center">
+              <span class="inline-block bg-primary/10 text-primary px-6 py-3 rounded-full font-medium">
+                ✅ Installed within 10–15 business days
+              </span>
+            </div>
+          </section>
+
+          <!-- Why Invest With Us -->
+          <section class="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <img src="${blogRentalRoi}" alt="Premium design expertise" class="rounded-lg shadow-lg w-full" />
+            </div>
+            
+            <div class="space-y-6">
+              <h2 class="text-3xl font-bold text-foreground">Premium Results Backed by Expertise</h2>
+              
+              <ul class="space-y-4">
+                <li class="flex items-start gap-3">
+                  <span class="text-primary text-xl">✓</span>
+                  <span class="text-muted-foreground">Data-driven design for max rental performance</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-primary text-xl">✓</span>
+                  <span class="text-muted-foreground">Durable solutions reduce maintenance cost</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-primary text-xl">✓</span>
+                  <span class="text-muted-foreground">Trusted by Downtown landlords & investors</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="text-primary text-xl">✓</span>
+                  <span class="text-muted-foreground">End-to-end execution — stress-free for you</span>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Final CTA Section -->
+          <section class="bg-gradient-to-br from-primary/5 to-accent/30 rounded-lg p-8 md:p-12 text-center space-y-6 border-t-4 border-primary">
+            <h2 class="text-4xl md:text-5xl font-bold text-foreground">Your Property Is in Downtown.<br/>Your Rent Should Be, Too.</h2>
+            <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Let's increase your rental income with a strategic interior upgrade.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <a href="/contact" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg">
+                ➡️ Request Free Consultation
+              </a>
+              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md border-2 border-primary bg-background px-10 py-4 text-base font-medium hover:bg-accent transition-colors shadow-lg">
+                📞 WhatsApp Our Team
+              </a>
+            </div>
+
+            <!-- Lead Capture Form -->
+            <div class="max-w-2xl mx-auto mt-8 bg-white rounded-lg p-6 shadow-xl">
+              <h3 class="text-xl font-bold text-foreground mb-4">Get Your Custom ROI Proposal</h3>
+              <form class="space-y-4" action="/contact" method="get">
+                <div class="grid md:grid-cols-2 gap-4">
+                  <input type="text" placeholder="Full Name" class="w-full px-4 py-2 rounded-md border border-input bg-background" required />
+                  <select class="w-full px-4 py-2 rounded-md border border-input bg-background" required>
+                    <option value="">Property Tower</option>
+                    <option value="act-one-two">Act One | Act Two Towers</option>
+                    <option value="forte">Forte Tower</option>
+                    <option value="burj-crown">Burj Crown</option>
+                    <option value="burj-royale">Burj Royale</option>
+                    <option value="grande-signature">Grande Signature Residence</option>
+                    <option value="other">Other Downtown Property</option>
+                  </select>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                  <select class="w-full px-4 py-2 rounded-md border border-input bg-background" required>
+                    <option value="">Unit Size</option>
+                    <option value="1b">1 Bedroom</option>
+                    <option value="2b">2 Bedrooms</option>
+                    <option value="3b">3 Bedrooms</option>
+                    <option value="studio">Studio</option>
+                  </select>
+                  <input type="text" placeholder="Target rental start date" class="w-full px-4 py-2 rounded-md border border-input bg-background" />
+                </div>
+                
+                <input type="text" placeholder="Current rent (optional)" class="w-full px-4 py-2 rounded-md border border-input bg-background" />
+                
+                <button type="submit" class="w-full bg-primary text-primary-foreground px-6 py-3 rounded-md font-medium hover:bg-primary/90 transition-colors">
+                  Submit Request
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      `
+    },
     "top-7-interior-design-agencies-dubai": {
       title: "Top 7 Interior Design Agencies in Dubai",
       image: blogTopAgencies,
