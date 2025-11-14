@@ -16,8 +16,8 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Helmet>
-        <title>Aziza Home - Premium Interior Design & Furnishing in Dubai</title>
-        <meta name="description" content="Transform your Dubai property with Aziza Home's expert interior design and furnishing services. Specializing in holiday homes, expat relocations, and investor packages with 20-25% rental income increase." />
+        <title>Apartment Furnishing Dubai Downtown Marina Creek Harbour | Aziza Home</title>
+        <meta name="description" content="Expert apartment furnishing in Dubai Downtown, Marina, and Creek Harbour. Transform your property with Aziza Home's premium interior design services. Increase rental income by 20-25%." />
         <meta name="keywords" content="Dubai interior design, home furnishing Dubai, holiday home packages, expat relocation Dubai, property investment furnishing, luxury interior design UAE" />
         <link rel="canonical" href="https://azizahomes.com/" />
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
