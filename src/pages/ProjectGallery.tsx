@@ -75,7 +75,9 @@ const ProjectGallery = () => {
         <title>Portfolio - Palace Emaar Beachfront Project | Aziza Home Dubai</title>
         <meta name="description" content="Explore Aziza Home's stunning Palace Emaar Beachfront project. A serene two-bedroom apartment featuring classic minimalist design blending Japandi warmth with sophisticated coastal elegance." />
         <meta name="keywords" content="Aziza Home portfolio, Palace Emaar Beachfront, Dubai interior design projects, Japandi design Dubai, luxury apartment design, coastal interior design Dubai" />
-        <link rel="canonical" href="https://azizahomes.com/projects" />
+        <link rel="canonical" href="https://azizahomes.com/portfolio" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />

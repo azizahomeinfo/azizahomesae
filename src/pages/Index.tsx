@@ -20,6 +20,8 @@ const Index = () => {
         <meta name="description" content="Transform your Dubai property with Aziza Home's expert interior design and furnishing services. Specializing in holiday homes, expat relocations, and investor packages with 20-25% rental income increase." />
         <meta name="keywords" content="Dubai interior design, home furnishing Dubai, holiday home packages, expat relocation Dubai, property investment furnishing, luxury interior design UAE" />
         <link rel="canonical" href="https://azizahomes.com/" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />

@@ -50,6 +50,8 @@ const Blog = () => {
         />
         <meta name="keywords" content="Dubai interior design blog, home furnishing tips, property investment Dubai, interior design agencies, expat relocation guide, holiday home furnishing" />
         <link rel="canonical" href="https://azizahomes.com/blog" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />

@@ -14,6 +14,8 @@ const AboutUs = () => {
         <meta name="description" content="Meet Veronica Xu and the Aziza Home team. Founded in 2022, we blend Japanese wabi-sabi with Scandinavian design to create timeless, tranquil spaces in Dubai." />
         <meta name="keywords" content="Aziza Home founder, Veronica Xu, Japandi design Dubai, interior design team Dubai, wabi-sabi interior design, Scandinavian design UAE" />
         <link rel="canonical" href="https://azizahomes.com/about" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />

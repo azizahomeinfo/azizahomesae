@@ -18,6 +18,8 @@ const ContactPage = () => {
         <meta name="description" content="Get a custom interior design consultation with Aziza Home. Share your vision and receive a personalized design proposal with mood boards, 3D rendering, timeline, and transparent pricing." />
         <meta name="keywords" content="contact Aziza Home, custom design consultation Dubai, interior design inquiry Dubai, WhatsApp consultation Dubai, personalized interior design" />
         <link rel="canonical" href="https://azizahomes.com/contact" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="website" />

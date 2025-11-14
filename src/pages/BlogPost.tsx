@@ -304,6 +304,8 @@ const BlogPost = () => {
         <meta name="description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
         <meta name="keywords" content={`${article.category}, Dubai interior design, home furnishing, property investment, Aziza Home`} />
         <link rel="canonical" href={`https://azizahomes.com/blog/${slug}`} />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="googlebot" content="index, follow" />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="article" />
