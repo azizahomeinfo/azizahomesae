@@ -97,7 +97,7 @@ const BlogPost = () => {
           <section class="bg-accent/50 rounded-lg p-8 md:p-12">
             <div class="grid md:grid-cols-2 gap-8 items-center">
               <div class="space-y-6">
-                <h2 class="text-3xl font-bold text-white">Design That Pays for Itself in 12–18 Months</h2>
+                <h2 class="text-2xl font-bold text-white mb-8">Design That Pays for Itself in 12–18 Months</h2>
                 
                 <ul class="space-y-4">
                   <li class="flex items-start gap-3">
@@ -143,7 +143,7 @@ const BlogPost = () => {
 
           <!-- Financial Case Studies -->
           <section class="bg-[#F5F2ED] rounded-lg p-8 md:p-12">
-            <h2 class="text-3xl font-bold text-foreground text-center mb-8">Financial Case Study — Real Numbers from Downtown Dubai</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Financial Case Study — Real Numbers from Downtown Dubai</h2>
             
             <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <!-- Case Study 1 -->
@@ -192,7 +192,7 @@ const BlogPost = () => {
 
           <!-- What Premium Tenants Expect -->
           <section class="space-y-8">
-            <h2 class="text-3xl font-bold text-foreground text-center">Make Your Apartment the First Choice for Executive Tenants</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Make Your Apartment the First Choice for Executive Tenants</h2>
             
             <div class="grid md:grid-cols-3 gap-6">
               <div class="text-center space-y-3">
@@ -239,7 +239,7 @@ const BlogPost = () => {
 
           <!-- Design Style Moodboard -->
           <section class="bg-accent/30 rounded-lg p-8 md:p-12 space-y-6">
-            <h2 class="text-3xl font-bold text-foreground text-center">A Modern Luxury Neutral Style</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">A Modern Luxury Neutral Style</h2>
             <p class="text-center text-muted-foreground max-w-2xl mx-auto">
               Designed to attract high-quality long-term tenants with beige–ivory palette, champagne hardware, and soft forms
             </p>
@@ -253,31 +253,31 @@ const BlogPost = () => {
 
           <!-- Our Process -->
           <section class="space-y-8">
-            <h2 class="text-3xl font-bold text-foreground text-center">Our Process — 4 Simple Steps</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Our Process — 4 Simple Steps</h2>
             
             <div class="grid md:grid-cols-4 gap-6">
               <div class="text-center space-y-3">
-                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">1</div>
-                <h3 class="font-bold text-foreground">Design Proposal</h3>
-                <p class="text-sm text-muted-foreground">ROI-focused interior plan</p>
+                <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold mx-auto">1</div>
+                <h3 class="font-bold text-white text-base">Design Proposal</h3>
+                <p class="text-sm text-white/80">ROI-focused interior plan</p>
               </div>
               
               <div class="text-center space-y-3">
-                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">2</div>
-                <h3 class="font-bold text-foreground">Material & Furniture Procurement</h3>
-                <p class="text-sm text-muted-foreground">Premium quality sourcing</p>
+                <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold mx-auto">2</div>
+                <h3 class="font-bold text-white text-base">Material & Furniture Procurement</h3>
+                <p class="text-sm text-white/80">Premium quality sourcing</p>
               </div>
               
               <div class="text-center space-y-3">
-                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">3</div>
-                <h3 class="font-bold text-foreground">Full Installation & Styling</h3>
-                <p class="text-sm text-muted-foreground">Professional execution</p>
+                <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold mx-auto">3</div>
+                <h3 class="font-bold text-white text-base">Full Installation & Styling</h3>
+                <p class="text-sm text-white/80">Professional execution</p>
               </div>
               
               <div class="text-center space-y-3">
-                <div class="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto">4</div>
-                <h3 class="font-bold text-foreground">Handover</h3>
-                <p class="text-sm text-muted-foreground">Ready to rent immediately</p>
+                <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold mx-auto">4</div>
+                <h3 class="font-bold text-white text-base">Handover</h3>
+                <p class="text-sm text-white/80">Ready to rent immediately</p>
               </div>
             </div>
             
@@ -295,7 +295,7 @@ const BlogPost = () => {
             </div>
             
             <div class="space-y-6">
-              <h2 class="text-3xl font-bold text-foreground">Premium Results Backed by Expertise</h2>
+              <h2 class="text-2xl font-bold text-white mb-8">Premium Results Backed by Expertise</h2>
               
               <ul class="space-y-4">
                 <li class="flex items-start gap-3">
@@ -606,7 +606,7 @@ const BlogPost = () => {
 
           <!-- Why Design = Higher Revenue Section -->
           <section class="bg-accent/50 rounded-lg p-8 md:p-12">
-            <h2 class="text-3xl font-bold text-foreground mb-8">Design That Pays Premium Nightly Rates</h2>
+            <h2 class="text-2xl font-bold text-white mb-8">Design That Pays Premium Nightly Rates</h2>
             
             <div class="grid md:grid-cols-2 gap-8">
               <div class="space-y-6">
@@ -656,7 +656,7 @@ const BlogPost = () => {
 
           <!-- Financial Case Study Section -->
           <section class="space-y-8">
-            <h2 class="text-3xl font-bold text-foreground text-center">Real ROI from Dubai Marina Properties</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Real ROI from Dubai Marina Properties</h2>
             
             <div class="grid md:grid-cols-2 gap-6">
               <div class="border-2 border-primary/20 rounded-lg p-6 space-y-4">
@@ -720,35 +720,35 @@ const BlogPost = () => {
           <!-- What Holiday Guests Expect Section -->
           <section class="space-y-8">
             <div class="text-center space-y-4">
-              <h2 class="text-3xl font-bold text-foreground">Make Your Property Stand Out on Airbnb & Booking.com</h2>
+              <h2 class="text-2xl font-bold text-white mb-8">Make Your Property Stand Out on Airbnb & Booking.com</h2>
               <p class="text-muted-foreground max-w-3xl mx-auto">
                 Holiday guests expect hotel-quality interiors with Instagram-worthy aesthetics
               </p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-3xl">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-2xl">
                   ⭐
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Instagram-Ready Aesthetics</h3>
-                <p class="text-muted-foreground">Spaces guests want to photograph and share, creating organic marketing</p>
+                <h3 class="font-semibold text-base text-white">Instagram-Ready Aesthetics</h3>
+                <p class="text-white/80 text-sm">Spaces guests want to photograph and share, creating organic marketing</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-3xl">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-2xl">
                   🏨
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Hotel-Quality Comfort</h3>
-                <p class="text-muted-foreground">Premium bedding, durable furniture, and smart amenities</p>
+                <h3 class="font-semibold text-base text-white">Hotel-Quality Comfort</h3>
+                <p class="text-white/80 text-sm">Premium bedding, durable furniture, and smart amenities</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-3xl">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-2xl">
                   ⚡
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Functional Luxury</h3>
-                <p class="text-muted-foreground">Smart storage, fast WiFi setup, intuitive lighting controls</p>
+                <h3 class="font-semibold text-base text-white">Functional Luxury</h3>
+                <p class="text-white/80 text-sm">Smart storage, fast WiFi setup, intuitive lighting controls</p>
               </div>
             </div>
 
@@ -765,7 +765,7 @@ const BlogPost = () => {
 
           <!-- Design Style Section -->
           <section class="space-y-6">
-            <h2 class="text-3xl font-bold text-foreground text-center">Modern Coastal Luxury Design</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Modern Coastal Luxury Design</h2>
             
             <p class="text-center text-lg text-muted-foreground max-w-2xl mx-auto">
               A sophisticated beige–ivory palette with champagne accents, organic textures, and soft coastal forms. Designed specifically for Dubai Marina's waterfront lifestyle and guest expectations.
@@ -819,7 +819,7 @@ const BlogPost = () => {
 
           <!-- Why Invest With Us Section -->
           <section class="space-y-6">
-            <h2 class="text-3xl font-bold text-foreground">Why Dubai Marina Investors Choose Us</h2>
+            <h2 class="text-2xl font-bold text-white mb-8">Why Dubai Marina Investors Choose Us</h2>
             
             <div class="space-y-4">
               <div class="flex items-start gap-3">
@@ -932,7 +932,7 @@ const BlogPost = () => {
 
           <!-- Why Family-Friendly Design = Better ROI Section -->
           <section class="bg-accent/50 rounded-lg p-8 md:p-12">
-            <h2 class="text-3xl font-bold text-foreground mb-8">Why Family Tenants Are Your Best Investment</h2>
+            <h2 class="text-2xl font-bold text-white mb-8">Why Family Tenants Are Your Best Investment</h2>
             
             <div class="grid md:grid-cols-2 gap-8">
               <div class="space-y-6">
@@ -985,7 +985,7 @@ const BlogPost = () => {
 
           <!-- Financial Case Study Section -->
           <section class="space-y-8">
-            <h2 class="text-3xl font-bold text-foreground text-center">Real ROI from JVC Family Rentals</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Real ROI from JVC Family Rentals</h2>
             
             <div class="grid md:grid-cols-2 gap-6">
               <div class="border-2 border-primary/20 rounded-lg p-6 space-y-4">
@@ -1049,19 +1049,19 @@ const BlogPost = () => {
           <!-- What Families Look For Section -->
           <section class="space-y-8">
             <div class="text-center space-y-4">
-              <h2 class="text-3xl font-bold text-foreground">What Family Tenants Expect in JVC</h2>
+              <h2 class="text-2xl font-bold text-white mb-8">What Family Tenants Expect in JVC</h2>
               <p class="text-muted-foreground max-w-3xl mx-auto">
                 Professional families with children prioritize safety, comfort, and practical living spaces
               </p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
-              <div class="space-y-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-3xl">
+              <div class="space-y-3">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-2xl">
                   🛡️
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Child-Safe Design</h3>
-                <ul class="space-y-2 text-muted-foreground text-sm">
+                <h3 class="font-semibold text-base text-white">Child-Safe Design</h3>
+                <ul class="space-y-2 text-white/80 text-sm">
                   <li>✓ Rounded furniture edges</li>
                   <li>✓ Secured heavy items</li>
                   <li>✓ Non-toxic materials</li>
@@ -1069,12 +1069,12 @@ const BlogPost = () => {
                 </ul>
               </div>
 
-              <div class="space-y-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-3xl">
+              <div class="space-y-3">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-2xl">
                   🏠
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Functional Spaces</h3>
-                <ul class="space-y-2 text-muted-foreground text-sm">
+                <h3 class="font-semibold text-base text-white">Functional Spaces</h3>
+                <ul class="space-y-2 text-white/80 text-sm">
                   <li>✓ Ample storage solutions</li>
                   <li>✓ Dedicated dining area</li>
                   <li>✓ Home office flexibility</li>
@@ -1082,12 +1082,12 @@ const BlogPost = () => {
                 </ul>
               </div>
 
-              <div class="space-y-4">
-                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-3xl">
+              <div class="space-y-3">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-2xl">
                   💪
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Durable Quality</h3>
-                <ul class="space-y-2 text-muted-foreground text-sm">
+                <h3 class="font-semibold text-base text-white">Durable Quality</h3>
+                <ul class="space-y-2 text-white/80 text-sm">
                   <li>✓ High-traffic flooring</li>
                   <li>✓ Washable surfaces</li>
                   <li>✓ Robust furniture construction</li>
@@ -1109,7 +1109,7 @@ const BlogPost = () => {
 
           <!-- Design Approach Section -->
           <section class="bg-accent/50 rounded-lg p-8 md:p-12 space-y-6">
-            <h2 class="text-3xl font-bold text-foreground text-center">Our Family-Focused Furnishing Approach</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Our Family-Focused Furnishing Approach</h2>
             
             <div class="grid md:grid-cols-2 gap-8">
               <div class="space-y-4">
@@ -1166,44 +1166,44 @@ const BlogPost = () => {
 
           <!-- Our Process Section -->
           <section class="space-y-8">
-            <h2 class="text-3xl font-bold text-foreground text-center">Turnkey Family Rental Setup — 4 Simple Steps</h2>
+            <h2 class="text-2xl font-bold text-white text-center mb-8">Turnkey Family Rental Setup — 4 Simple Steps</h2>
             
             <div class="grid md:grid-cols-4 gap-6">
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   1
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Family-Focused Design Plan</h3>
-                <p class="text-muted-foreground text-sm">Tailored to JVC family tenant expectations</p>
+                <h3 class="font-semibold text-base text-white">Family-Focused Design Plan</h3>
+                <p class="text-white/80 text-sm">Tailored to JVC family tenant expectations</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   2
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Durable Furniture Sourcing</h3>
-                <p class="text-muted-foreground text-sm">High-quality, family-grade materials</p>
+                <h3 class="font-semibold text-base text-white">Durable Furniture Sourcing</h3>
+                <p class="text-white/80 text-sm">High-quality, family-grade materials</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   3
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Complete Installation</h3>
-                <p class="text-muted-foreground text-sm">Professional setup with safety checks</p>
+                <h3 class="font-semibold text-base text-white">Complete Installation</h3>
+                <p class="text-white/80 text-sm">Professional setup with safety checks</p>
               </div>
 
-              <div class="text-center space-y-4">
-                <div class="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              <div class="text-center space-y-3">
+                <div class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto text-lg font-bold">
                   4
                 </div>
-                <h3 class="font-semibold text-lg text-foreground">Market-Ready Handover</h3>
-                <p class="text-muted-foreground text-sm">Photo-ready for premium family listings</p>
+                <h3 class="font-semibold text-base text-white">Market-Ready Handover</h3>
+                <p class="text-white/80 text-sm">Photo-ready for premium family listings</p>
               </div>
             </div>
 
             <div class="text-center">
-              <div class="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold">
+              <div class="inline-block bg-primary text-white px-6 py-3 rounded-full font-semibold text-sm">
                 ⚡ Completed within 12–18 business days
               </div>
             </div>
@@ -1211,7 +1211,7 @@ const BlogPost = () => {
 
           <!-- Why Choose Us Section -->
           <section class="space-y-6">
-            <h2 class="text-3xl font-bold text-foreground">Why JVC Landlords Partner With Us</h2>
+            <h2 class="text-2xl font-bold text-white mb-8">Why JVC Landlords Partner With Us</h2>
             
             <div class="grid md:grid-cols-2 gap-6">
               <div class="flex items-start gap-3">
