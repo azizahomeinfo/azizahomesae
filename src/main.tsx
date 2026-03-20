@@ -11,8 +11,8 @@ const app = (
   </BrowserRouter>
 );
 
-// Use hydration for SSR in production
-if (import.meta.env.PROD) {
+// Only hydrate if the root has pre-rendered content (SSR)
+if (import.meta.env.PROD && root.innerHTML.trim().length > 0) {
   hydrateRoot(root, app);
 } else {
   createRoot(root).render(app);
