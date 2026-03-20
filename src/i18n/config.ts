@@ -19,7 +19,6 @@ import itPages from './locales/pages/it.json';
 import ruPages from './locales/pages/ru.json';
 
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
@@ -31,6 +30,7 @@ i18n
       it: { translation: it, pages: itPages },
       ru: { translation: ru, pages: ruPages },
     },
+    lng: 'en',
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
