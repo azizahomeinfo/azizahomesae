@@ -1388,7 +1388,7 @@ const BlogPost = () => {
           <img 
             src={article.image} 
             alt={`${article.title} - ${slug === 'top-7-interior-design-agencies-dubai' ? 'Top Interior Design Agencies Dubai Comparison Guide Downtown Marina Business Bay' : slug === 'quick-efficient-ways-to-furnish-your-home' ? 'Quick Efficient Home Furnishing Guide Dubai Apartment Packages Downtown Marina Creek Harbour' : 'Dubai Property Investment ROI Guide Best Areas Downtown Marina Creek Harbour Business Bay Furnishing'}`}
-            loading="lazy"
+            fetchPriority="high"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />

@@ -75,6 +75,10 @@ export const MultilingualSEO = ({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
       
+      {/* Indexing directives */}
+      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+      <meta name="googlebot" content="index, follow" />
+      
       {/* Language-specific meta tags */}
       <meta httpEquiv="content-language" content={currentLang} />
     </Helmet>
