@@ -28,13 +28,13 @@ const BreadcrumbNav = ({ items }: BreadcrumbNavProps) => {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://azizahome.com"
+        "item": "https://azizahomes.com"
       },
       ...items.map((item, index) => ({
         "@type": "ListItem",
         "position": index + 2,
         "name": item.label,
-        ...(item.href ? { "item": `https://azizahome.com${item.href}` } : {})
+        ...(item.href ? { "item": `https://azizahomes.com${item.href}` } : {})
       }))
     ]
   };

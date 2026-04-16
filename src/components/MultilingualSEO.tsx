@@ -28,7 +28,7 @@ export const MultilingualSEO = ({
 }: MultilingualSEOProps) => {
   const { i18n } = useTranslation();
   const currentLang = i18n.language || 'en';
-  const baseUrl = "https://azizahome.com";
+  const baseUrl = "https://azizahomes.com";
   const fullUrl = `${baseUrl}${path}`;
 
   return (
