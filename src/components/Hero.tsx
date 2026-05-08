@@ -1,13 +1,19 @@
 import heroImage from "@/assets/hero-image-new.jpg";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const Hero = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const youtubeVideoId = "BnkV-TlYDJQ";
   const { t } = useTranslation();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
