@@ -29,7 +29,7 @@ const Hero = () => {
 
   return (
     <>
-      <header id="hero" className="relative h-screen flex items-center justify-center overflow-hidden">
+      <header id="hero" className="relative min-h-[520px] h-[75vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src={heroImage} 
@@ -58,37 +58,39 @@ const Hero = () => {
       </header>
 
       {/* YouTube Video Section */}
-      <section className="relative w-full h-[80vh] overflow-hidden bg-background" aria-label="Portfolio showcase video">
-        {!isVideoPlaying ? (
-          <div 
-            onClick={handlePlayClick}
-            className="relative w-full h-full cursor-pointer group"
-          >
-            <img 
-              src={heroImage} 
-              alt="Play Aziza Home portfolio showcase video"
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Play className="w-12 h-12 text-primary-foreground ml-1" fill="currentColor" />
+      {isMounted && (
+        <section className="relative w-full h-[50vh] overflow-hidden bg-background" aria-label="Portfolio showcase video">
+          {!isVideoPlaying ? (
+            <div 
+              onClick={handlePlayClick}
+              className="relative w-full h-full cursor-pointer group"
+            >
+              <img 
+                src={heroImage} 
+                alt="Play Aziza Home portfolio showcase video"
+                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Play className="w-10 h-10 text-primary-foreground ml-1" fill="currentColor" />
+                </div>
+              </div>
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-white text-sm animate-pulse">
+                Click to play video
               </div>
             </div>
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white text-sm animate-pulse">
-              Click to play video
-            </div>
-          </div>
-        ) : (
-          <iframe
-            className="w-full h-full"
-            src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
-            title="Aziza Home Portfolio Showcase"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        )}
-      </section>
+          ) : (
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+              title="Aziza Home Portfolio Showcase"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          )}
+        </section>
+      )}
     </>
   );
 };
