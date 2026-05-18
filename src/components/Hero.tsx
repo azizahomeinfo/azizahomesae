@@ -45,7 +45,9 @@ const Hero = () => {
 
         <div className="relative z-10 container mx-auto px-4 text-center">
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-heading font-semibold text-foreground mb-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 uppercase tracking-wide leading-tight">
-            {t('hero.title')}
+            {t('hero.title').split('|').map((line, i) => (
+              <span key={i} className="block">{line.trim()}</span>
+            ))}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
             {t('hero.subtitle')}
