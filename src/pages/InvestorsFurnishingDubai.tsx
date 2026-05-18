@@ -448,7 +448,14 @@ const InvestorsFurnishingDubai = () => {
 
       {/* Sticky mobile WhatsApp */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-background/95 backdrop-blur-md border-t border-border">
-        <a href={waLink("cta_sticky_mobile_whatsapp")} target="_blank" rel="noopener noreferrer" data-cta="cta_sticky_mobile_whatsapp">
+        <a
+          href={waLink("cta_sticky_mobile_whatsapp")}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-cta="cta_sticky_mobile_whatsapp"
+          onClick={() => trackWhatsAppClick("cta_sticky_mobile_whatsapp", "Get Package Guide")}
+          onAuxClick={() => trackWhatsAppClick("cta_sticky_mobile_whatsapp", "Get Package Guide")}
+        >
           <Button size="lg" className="w-full">
             <MessageCircle className="mr-2 h-5 w-5" />
             Get Package Guide
