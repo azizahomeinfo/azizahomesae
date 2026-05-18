@@ -31,6 +31,65 @@ const WA_BASE = "https://wa.me/971559779635";
 const WA_MSG = encodeURIComponent("Hi Aziza Home, I'm interested in the investor furnishing package guide.");
 const waLink = (tracking: string) => `${WA_BASE}?text=${WA_MSG}`;
 
+// Conversion tracking — fires to Google Ads / GA4 (gtag), GTM dataLayer,
+// Meta Pixel (fbq) if loaded, and a first-party log in ab_events.
+const trackWhatsAppClick = (tracking: string, label: string) => {
+  if (typeof window === "undefined") return;
+  const w = window as any;
+  const payload = {
+    cta_id: tracking,
+    cta_label: label,
+    page_path: PATH,
+    destination: "whatsapp",
+  };
+  try {
+    // Google Ads / GA4
+    if (typeof w.gtag === "function") {
+      w.gtag("event", "whatsapp_click", {
+        ...payload,
+        event_category: "engagement",
+        event_label: tracking,
+        transport_type: "beacon",
+      });
+      // Google Ads conversion — replace AW-XXXX/abcDEF with your conversion ID/label
+      if (w.GOOGLE_ADS_CONVERSION_ID) {
+        w.gtag("event", "conversion", {
+          send_to: w.GOOGLE_ADS_CONVERSION_ID,
+          event_callback: () => {},
+        });
+      }
+    }
+    // GTM dataLayer fallback
+    w.dataLayer = w.dataLayer || [];
+    w.dataLayer.push({ event: "whatsapp_click", ...payload });
+    // Meta Pixel (if present)
+    if (typeof w.fbq === "function") {
+      w.fbq("trackCustom", "WhatsAppClick", payload);
+    }
+  } catch (_) { /* never block navigation */ }
+
+  // First-party log (non-blocking, fire-and-forget)
+  try {
+    const sessionId =
+      w.sessionStorage?.getItem("aziza_session_id") ||
+      (() => {
+        const id = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+        try { w.sessionStorage?.setItem("aziza_session_id", id); } catch (_) {}
+        return id;
+      })();
+    void import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.from("ab_events").insert({
+        session_id: sessionId,
+        path: PATH,
+        experiment: "investors_lp",
+        variant: tracking,
+        event_type: "whatsapp_click",
+        language: typeof navigator !== "undefined" ? navigator.language : null,
+      });
+    });
+  } catch (_) { /* ignore */ }
+};
+
 const portfolio = [
   { src: g1, label: "Downtown Dubai 2BR" },
   { src: g2, label: "JVC 1BR" },
@@ -100,7 +159,15 @@ const faqs = [
 ];
 
 const CTA = ({ label, tracking, variant = "default", size = "lg", className = "" }: { label: string; tracking: string; variant?: "default" | "outline" | "secondary"; size?: "default" | "lg"; className?: string }) => (
-  <a href={waLink(tracking)} target="_blank" rel="noopener noreferrer" data-cta={tracking} aria-label={label}>
+  <a
+    href={waLink(tracking)}
+    target="_blank"
+    rel="noopener noreferrer"
+    data-cta={tracking}
+    aria-label={label}
+    onClick={() => trackWhatsAppClick(tracking, label)}
+    onAuxClick={() => trackWhatsAppClick(tracking, label)}
+  >
     <Button size={size} variant={variant} className={className}>
       <MessageCircle className="mr-2 h-4 w-4" />
       {label}
@@ -381,7 +448,14 @@ const InvestorsFurnishingDubai = () => {
 
       {/* Sticky mobile WhatsApp */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-background/95 backdrop-blur-md border-t border-border">
-        <a href={waLink("cta_sticky_mobile_whatsapp")} target="_blank" rel="noopener noreferrer" data-cta="cta_sticky_mobile_whatsapp">
+        <a
+          href={waLink("cta_sticky_mobile_whatsapp")}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-cta="cta_sticky_mobile_whatsapp"
+          onClick={() => trackWhatsAppClick("cta_sticky_mobile_whatsapp", "Get Package Guide")}
+          onAuxClick={() => trackWhatsAppClick("cta_sticky_mobile_whatsapp", "Get Package Guide")}
+        >
           <Button size="lg" className="w-full">
             <MessageCircle className="mr-2 h-5 w-5" />
             Get Package Guide
