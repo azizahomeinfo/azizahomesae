@@ -31,8 +31,8 @@ const Hero = () => {
 
   const titleKey = variant === "B" ? "hero.titleB" : "hero.title";
   const subtitleKey = variant === "B" ? "hero.subtitleB" : "hero.subtitle";
-  const ctaText = variant === "B" ? t("hero.ctaB") : t("common.viewMore");
-  const ctaTarget = variant === "B" ? "contact" : "portfolio";
+  const ctaText = variant === "B" ? t("hero.ctaB") : t("hero.cta");
+  const ctaTarget = "contact";
 
   const handleCtaClick = () => {
     trackClick();
