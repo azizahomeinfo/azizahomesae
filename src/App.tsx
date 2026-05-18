@@ -17,6 +17,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import SeoStatus from "./pages/SeoStatus";
 import MinimalistApartmentDubai from "./pages/MinimalistApartmentDubai";
+import InvestorsFurnishingDubai from "./pages/InvestorsFurnishingDubai";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/product/:handle" element={<ProductDetail />} />
           <Route path="/seo-status" element={<SeoStatus />} />
           <Route path="/minimalist-apartment-furnishing-dubai" element={<MinimalistApartmentDubai />} />
+          <Route path="/investors-furnishing-dubai" element={<InvestorsFurnishingDubai />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
