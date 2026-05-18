@@ -11,7 +11,10 @@
   "hero": {
     "title": "Möblieren Sie Ihre Immobilie in 5 Tagen",
     "subtitle": "Verwandeln Sie Ihre Anlageimmobilie mit unseren schlüsselfertigen Möblierungspaketen in ein vermietbares Zuhause. Maximieren Sie den ROI mit erstklassigen Möbeln und Expertendesign.",
-    "cta": "Kostenlose Beratung"
+    "cta": "Kostenlose Beratung",
+    "titleB": "Vermietbereit|in 5 Tagen",
+    "subtitleB": "Premium-Möblierungspakete für maximalen ROI Ihrer Dubai-Immobilie — schnelle Installation.",
+    "ctaB": "Angebot anfordern"
   },
   "about": {
     "title": "Über Aziza Home",
