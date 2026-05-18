@@ -13,6 +13,7 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const isInvestorsLandingPage = typeof window !== "undefined" && window.location.pathname === "/investors-furnishing-dubai";
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
@@ -62,24 +63,26 @@ const Navigation = () => {
             </Link>
             <LanguageSwitcher />
             <CartDrawer />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleAuthClick}
-              className="flex items-center gap-2"
-            >
-              {user ? (
-                <>
-                  <LogOut size={16} />
-                  Sign Out
-                </>
-              ) : (
-                <>
-                  <LogIn size={16} />
-                  Sign In
-                </>
-              )}
-            </Button>
+            {!isInvestorsLandingPage && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleAuthClick}
+                className="flex items-center gap-2"
+              >
+                {user ? (
+                  <>
+                    <LogOut size={16} />
+                    Sign Out
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={16} />
+                    Sign In
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button & Cart */}
@@ -115,24 +118,26 @@ const Navigation = () => {
             <div className="pt-2">
               <LanguageSwitcher />
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleAuthClick}
-              className="flex items-center gap-2 justify-start"
-            >
-              {user ? (
-                <>
-                  <LogOut size={16} />
-                  Sign Out
-                </>
-              ) : (
-                <>
-                  <LogIn size={16} />
-                  Sign In
-                </>
-              )}
-            </Button>
+            {!isInvestorsLandingPage && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleAuthClick}
+                className="flex items-center gap-2 justify-start"
+              >
+                {user ? (
+                  <>
+                    <LogOut size={16} />
+                    Sign Out
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={16} />
+                    Sign In
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </div>
