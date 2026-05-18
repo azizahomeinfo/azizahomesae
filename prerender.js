@@ -8,6 +8,15 @@ const toAbsolute = (p) => path.resolve(__dirname, p)
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
+function upsertHeadTag(html, tag, matcher) {
+  const headClose = '</head>'
+  if (!html.includes(headClose)) return html
+  if (matcher.test(html)) {
+    return html.replace(matcher, tag)
+  }
+  return html.replace(headClose, `${tag}\n${headClose}`)
+}
+
 // Sitemap configuration
 const SITE_URL = 'https://azizahomes.com'
 const routePriorities = {
@@ -118,13 +127,45 @@ async function submitSitemapToGoogle(sitemapUrl) {
     // Insert helmet tags if they exist
     if (helmet) {
       if (helmet.title) {
-        html = html.replace(/<title>.*?<\/title>/, helmet.title.toString())
+        html = html.replace(/<title[^>]*>.*?<\/title>/s, helmet.title.toString())
       }
       if (helmet.meta) {
-        html = html.replace('</head>', `${helmet.meta.toString()}</head>`)
+        const metaString = helmet.meta.toString()
+        const metaTags = metaString.match(/<meta[^>]*>/g) || []
+        for (const tag of metaTags) {
+          const nameMatch = tag.match(/\sname="([^"]+)"/i)
+          const propertyMatch = tag.match(/\sproperty="([^"]+)"/i)
+          const httpEquivMatch = tag.match(/\shttp-equiv="([^"]+)"/i)
+
+          if (nameMatch) {
+            const name = nameMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            html = upsertHeadTag(html, tag, new RegExp(`<meta[^>]*name="${name}"[^>]*>`, 'i'))
+          } else if (propertyMatch) {
+            const property = propertyMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            html = upsertHeadTag(html, tag, new RegExp(`<meta[^>]*property="${property}"[^>]*>`, 'i'))
+          } else if (httpEquivMatch) {
+            const httpEquiv = httpEquivMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            html = upsertHeadTag(html, tag, new RegExp(`<meta[^>]*http-equiv="${httpEquiv}"[^>]*>`, 'i'))
+          } else {
+            html = html.replace('</head>', `${tag}</head>`)
+          }
+        }
       }
       if (helmet.link) {
-        html = html.replace('</head>', `${helmet.link.toString()}</head>`)
+        const linkString = helmet.link.toString()
+        const linkTags = linkString.match(/<link[^>]*>/g) || []
+        for (const tag of linkTags) {
+          const relMatch = tag.match(/\srel="([^"]+)"/i)
+          const hrefLangMatch = tag.match(/\shreflang="([^"]+)"/i)
+          if (relMatch?.[1] === 'canonical') {
+            html = upsertHeadTag(html, tag, /<link[^>]*rel="canonical"[^>]*>/i)
+          } else if (relMatch?.[1] === 'alternate' && hrefLangMatch) {
+            const hrefLang = hrefLangMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            html = upsertHeadTag(html, tag, new RegExp(`<link[^>]*rel="alternate"[^>]*hreflang="${hrefLang}"[^>]*>`, 'i'))
+          } else {
+            html = html.replace('</head>', `${tag}</head>`)
+          }
+        }
       }
     }
 
