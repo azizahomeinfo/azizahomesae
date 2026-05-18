@@ -24,6 +24,19 @@ interface GscStatus {
   sitemaps?: { status: number; body?: { sitemap?: GscSitemap[] } };
 }
 
+interface AbRow {
+  experiment: string;
+  variant: "A" | "B";
+  event_type: "view" | "cta_click";
+}
+
+interface AbStat {
+  variant: "A" | "B";
+  views: number;
+  clicks: number;
+  cvr: number;
+}
+
 interface StatusCheck {
   name: string;
   status: "success" | "error" | "warning" | "checking";
@@ -44,6 +57,9 @@ const SeoStatus = () => {
   const [gscLoading, setGscLoading] = useState(false);
   const [gscError, setGscError] = useState<string | null>(null);
   const [resubmitting, setResubmitting] = useState(false);
+  const [abStats, setAbStats] = useState<AbStat[] | null>(null);
+  const [abLoading, setAbLoading] = useState(false);
+  const [abError, setAbError] = useState<string | null>(null);
 
   const SITE = "https://www.azizahomes.com/";
 
@@ -65,6 +81,39 @@ const SeoStatus = () => {
     });
     await loadGsc();
     setResubmitting(false);
+  };
+
+  const loadAbStats = async () => {
+    setAbLoading(true);
+    setAbError(null);
+    const { data, error } = await supabase
+      .from("ab_events")
+      .select("experiment,variant,event_type")
+      .eq("experiment", "hero_headline_v1")
+      .limit(10000);
+    if (error) {
+      setAbError(error.message);
+      setAbLoading(false);
+      return;
+    }
+    const rows = (data ?? []) as AbRow[];
+    const tally: Record<"A" | "B", { views: number; clicks: number }> = {
+      A: { views: 0, clicks: 0 },
+      B: { views: 0, clicks: 0 },
+    };
+    for (const r of rows) {
+      if (r.event_type === "view") tally[r.variant].views += 1;
+      else tally[r.variant].clicks += 1;
+    }
+    setAbStats(
+      (["A", "B"] as const).map((v) => ({
+        variant: v,
+        views: tally[v].views,
+        clicks: tally[v].clicks,
+        cvr: tally[v].views ? (tally[v].clicks / tally[v].views) * 100 : 0,
+      })),
+    );
+    setAbLoading(false);
   };
 
   const runChecks = async () => {
@@ -234,6 +283,7 @@ const SeoStatus = () => {
   useEffect(() => {
     runChecks();
     loadGsc();
+    loadAbStats();
   }, []);
 
   const getStatusIcon = (status: StatusCheck["status"]) => {
