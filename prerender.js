@@ -18,7 +18,7 @@ function upsertHeadTag(html, tag, matcher) {
 }
 
 // Sitemap configuration
-const SITE_URL = 'https://azizahomes.com'
+const SITE_URL = 'https://www.azizahomes.com'
 const routePriorities = {
   '/': { priority: '1.0', changefreq: 'daily' },
   '/about': { priority: '0.8', changefreq: 'monthly' },

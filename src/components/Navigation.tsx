@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Menu, X, LogOut, LogIn } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logo from "@/assets/aziza-logo.png";
 import { CartDrawer } from "./CartDrawer";
@@ -12,8 +12,9 @@ const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
-  const isInvestorsLandingPage = typeof window !== "undefined" && window.location.pathname === "/investors-furnishing-dubai";
+  const isInvestorsLandingPage = location.pathname === "/investors-furnishing-dubai";
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
