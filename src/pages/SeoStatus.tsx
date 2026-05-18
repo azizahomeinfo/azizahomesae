@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface GscSite { siteUrl: string; permissionLevel: string }
 interface GscSitemap {
@@ -45,6 +44,12 @@ interface StatusCheck {
   url?: string;
 }
 
+async function getSupabase() {
+  if (typeof window === "undefined") return null;
+  const { supabase } = await import("@/integrations/supabase/client");
+  return supabase;
+}
+
 const SeoStatus = () => {
   const [checks, setChecks] = useState<StatusCheck[]>([
     { name: "Sitemap.xml", status: "checking", message: "Checking..." },
@@ -64,6 +69,9 @@ const SeoStatus = () => {
   const SITE = "https://www.azizahomes.com/";
 
   const loadGsc = async () => {
+    const supabase = await getSupabase();
+    if (!supabase) return;
+
     setGscLoading(true);
     setGscError(null);
     const { data, error } = await supabase.functions.invoke("gsc-admin", {
@@ -75,6 +83,9 @@ const SeoStatus = () => {
   };
 
   const resubmitSitemap = async () => {
+    const supabase = await getSupabase();
+    if (!supabase) return;
+
     setResubmitting(true);
     await supabase.functions.invoke("gsc-admin", {
       body: { action: "submit_sitemap", site: SITE },
@@ -84,6 +95,9 @@ const SeoStatus = () => {
   };
 
   const loadAbStats = async () => {
+    const supabase = await getSupabase();
+    if (!supabase) return;
+
     setAbLoading(true);
     setAbError(null);
     const { data, error } = await supabase
