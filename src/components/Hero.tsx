@@ -34,7 +34,11 @@ const Hero = () => {
           <img 
             src={heroImage} 
             alt="Elegant Japandi interior design featuring minimalist furniture, natural materials, and serene aesthetic by Aziza Home" 
-            className="w-full h-full object-cover object-center scale-105" 
+            className="w-full h-full object-cover object-center scale-105"
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background/80" />
         </div>
