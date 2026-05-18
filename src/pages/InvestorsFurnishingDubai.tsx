@@ -383,7 +383,7 @@ const InvestorsFurnishingDubai = () => {
             </table>
           </div>
           <p className="text-xs text-muted-foreground mt-4 text-center italic">
-            Appliance packages are available for ready-to-rent and holiday-home setups.
+            Prices are exclusive of appliances and 5% VAT. Appliance packages are available as an add-on for ready-to-rent and holiday-home setups.
           </p>
           <div className="text-center mt-8">
             <CTA label="Get Full Package Guide on WhatsApp" tracking="cta_pricing_whatsapp" />
