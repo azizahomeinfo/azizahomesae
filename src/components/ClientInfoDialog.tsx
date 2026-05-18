@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { trackAbConversion } from "@/hooks/useABVariant";
 
 const formSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -81,6 +82,8 @@ const ClientInfoDialog = ({ delay = 5000, triggerOnPackageClick = false }: Clien
         toast.error("Sorry, there was an error. Please try again.");
         return;
       }
+
+      void trackAbConversion("hero_headline_v1");
 
       // Send email notification
       try {

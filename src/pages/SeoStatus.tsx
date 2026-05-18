@@ -26,7 +26,7 @@ interface GscStatus {
 interface AbRow {
   experiment: string;
   variant: "A" | "B";
-  event_type: "view" | "cta_click";
+  event_type: "view" | "cta_click" | "lead_submit";
 }
 
 interface AbStat {
@@ -34,6 +34,8 @@ interface AbStat {
   views: number;
   clicks: number;
   cvr: number;
+  leads: number;
+  leadCvr: number;
 }
 
 interface StatusCheck {
@@ -111,13 +113,14 @@ const SeoStatus = () => {
       return;
     }
     const rows = (data ?? []) as AbRow[];
-    const tally: Record<"A" | "B", { views: number; clicks: number }> = {
-      A: { views: 0, clicks: 0 },
-      B: { views: 0, clicks: 0 },
+    const tally: Record<"A" | "B", { views: number; clicks: number; leads: number }> = {
+      A: { views: 0, clicks: 0, leads: 0 },
+      B: { views: 0, clicks: 0, leads: 0 },
     };
     for (const r of rows) {
       if (r.event_type === "view") tally[r.variant].views += 1;
-      else tally[r.variant].clicks += 1;
+      else if (r.event_type === "cta_click") tally[r.variant].clicks += 1;
+      else if (r.event_type === "lead_submit") tally[r.variant].leads += 1;
     }
     setAbStats(
       (["A", "B"] as const).map((v) => ({
@@ -125,6 +128,8 @@ const SeoStatus = () => {
         views: tally[v].views,
         clicks: tally[v].clicks,
         cvr: tally[v].views ? (tally[v].clicks / tally[v].views) * 100 : 0,
+        leads: tally[v].leads,
+        leadCvr: tally[v].views ? (tally[v].leads / tally[v].views) * 100 : 0,
       })),
     );
     setAbLoading(false);
@@ -507,16 +512,28 @@ const SeoStatus = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {abStats.map((s) => {
                       const other = abStats.find((x) => x.variant !== s.variant);
-                      const winning = other && s.views > 0 && other.views > 0 && s.cvr > other.cvr;
+                      const winning = other && s.views > 0 && other.views > 0 && s.leadCvr > other.leadCvr;
                       return (
-                        <div key={s.variant} className="rounded-md border p-4 space-y-2">
+                        <div key={s.variant} className="rounded-md border p-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <div className="text-sm font-semibold">Variant {s.variant}</div>
                             {winning && <Badge>Leading</Badge>}
                           </div>
-                          <div className="text-2xl font-bold">{s.cvr.toFixed(1)}%</div>
-                          <div className="text-xs text-muted-foreground">
-                            {s.clicks} clicks / {s.views} views
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <div className="text-xs text-muted-foreground">Click CVR</div>
+                              <div className="text-xl font-bold">{s.cvr.toFixed(1)}%</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {s.clicks} / {s.views} views
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-muted-foreground">Lead CVR</div>
+                              <div className="text-xl font-bold">{s.leadCvr.toFixed(1)}%</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {s.leads} leads
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
