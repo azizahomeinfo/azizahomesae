@@ -14,7 +14,11 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://azizahomes.com/sitemap.xml
+Sitemap: https://www.azizahomes.com/sitemap.xml
+
+# Exclude private/utility routes
+User-agent: *
+Disallow: /auth
 
 # Crawl-delay
 Crawl-delay: 1
