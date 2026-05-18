@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Menu, X, LogOut, LogIn } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logo from "@/assets/aziza-logo.png";
 import { CartDrawer } from "./CartDrawer";
@@ -12,7 +12,9 @@ const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+  const isInvestorsLandingPage = location.pathname === "/investors-furnishing-dubai";
 
   const scrollToSection = (id: string) => {
     if (typeof window === 'undefined') return;
@@ -62,24 +64,26 @@ const Navigation = () => {
             </Link>
             <LanguageSwitcher />
             <CartDrawer />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleAuthClick}
-              className="flex items-center gap-2"
-            >
-              {user ? (
-                <>
-                  <LogOut size={16} />
-                  Sign Out
-                </>
-              ) : (
-                <>
-                  <LogIn size={16} />
-                  Sign In
-                </>
-              )}
-            </Button>
+            {!isInvestorsLandingPage && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleAuthClick}
+                className="flex items-center gap-2"
+              >
+                {user ? (
+                  <>
+                    <LogOut size={16} />
+                    Sign Out
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={16} />
+                    Sign In
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button & Cart */}
@@ -115,24 +119,26 @@ const Navigation = () => {
             <div className="pt-2">
               <LanguageSwitcher />
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleAuthClick}
-              className="flex items-center gap-2 justify-start"
-            >
-              {user ? (
-                <>
-                  <LogOut size={16} />
-                  Sign Out
-                </>
-              ) : (
-                <>
-                  <LogIn size={16} />
-                  Sign In
-                </>
-              )}
-            </Button>
+            {!isInvestorsLandingPage && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleAuthClick}
+                className="flex items-center gap-2 justify-start"
+              >
+                {user ? (
+                  <>
+                    <LogOut size={16} />
+                    Sign Out
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={16} />
+                    Sign In
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </div>

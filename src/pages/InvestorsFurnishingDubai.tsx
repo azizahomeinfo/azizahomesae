@@ -194,7 +194,7 @@ const InvestorsFurnishingDubai = () => {
       "@type": "LocalBusiness",
       name: "Aziza Home",
       areaServed: "Dubai, United Arab Emirates",
-      url: "https://azizahomes.com",
+      url: "https://www.azizahomes.com",
     },
     areaServed: "Dubai",
     description: DESCRIPTION,
@@ -211,8 +211,8 @@ const InvestorsFurnishingDubai = () => {
       <MultilingualSEO title={TITLE} description={DESCRIPTION} keywords={KEYWORDS} path={PATH} />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Investor Furnishing Dubai", url: `https://azizahomes.com${PATH}` },
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Investor Furnishing Dubai", url: `https://www.azizahomes.com${PATH}` },
         ]}
         pageTitle="Dubai Apartment Furnishing for Investors"
         pageDescription={DESCRIPTION}
