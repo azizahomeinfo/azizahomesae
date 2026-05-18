@@ -18,6 +18,7 @@ const routePriorities = {
   '/portfolio': { priority: '0.8', changefreq: 'weekly' },
   '/contact': { priority: '0.7', changefreq: 'monthly' },
   '/blog': { priority: '0.8', changefreq: 'weekly' },
+  '/minimalist-apartment-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
   '/seo-status': { priority: '0.3', changefreq: 'monthly' }
 }
 
@@ -73,6 +74,7 @@ const routesToPrerender = [
   '/blog/top-7-interior-design-agencies-dubai',
   '/blog/quick-efficient-ways-to-furnish-your-home',
   '/blog/where-to-invest-dubai-best-roi-property-growth',
+  '/minimalist-apartment-furnishing-dubai',
   '/seo-status'
   // Add specific product URLs here when you have them
   // Example: '/product/living-room-package',
