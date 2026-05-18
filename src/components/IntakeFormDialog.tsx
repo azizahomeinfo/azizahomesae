@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/lib/supabase-ssr";
 import { toast } from "sonner";
 import { z } from "zod";
+import { trackAbConversion } from "@/hooks/useABVariant";
 
 const intakeFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -98,6 +99,8 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
       });
 
       if (error) throw error;
+
+      void trackAbConversion("hero_headline_v1");
 
       // Send email notification
       try {
