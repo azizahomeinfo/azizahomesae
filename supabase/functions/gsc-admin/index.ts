@@ -54,6 +54,20 @@ serve(async (req) => {
       const r = await fetch(`${GATEWAY}/webmasters/v3/sites/${enc}/sitemaps/${sm}`, { method: "PUT", headers });
       return new Response(JSON.stringify({ status: r.status, ok: r.ok }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    if (action === "list_sitemaps") {
+      const enc = encodeURIComponent(identifier);
+      const r = await fetch(`${GATEWAY}/webmasters/v3/sites/${enc}/sitemaps`, { headers });
+      return passthrough(r);
+    }
+    if (action === "status") {
+      // Combined snapshot used by the SEO Status dashboard.
+      const sites = await fetch(`${GATEWAY}/webmasters/v3/sites`, { headers }).then((r) => r.json()).catch(() => null);
+      const enc = encodeURIComponent(identifier);
+      const sitemaps = await fetch(`${GATEWAY}/webmasters/v3/sites/${enc}/sitemaps`, { headers })
+        .then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) }))
+        .catch((e) => ({ status: 0, body: { error: String(e) } }));
+      return json({ identifier, sites, sitemaps });
+    }
     return json({ error: "unknown action" }, 400);
   } catch (e) {
     return json({ error: String(e) }, 500);
