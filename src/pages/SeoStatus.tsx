@@ -6,6 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface GscSite { siteUrl: string; permissionLevel: string }
+interface GscSitemap {
+  path: string;
+  lastSubmitted?: string;
+  lastDownloaded?: string;
+  isPending?: boolean;
+  errors?: string;
+  warnings?: string;
+  contents?: { submitted?: string; indexed?: string; type?: string }[];
+}
+interface GscStatus {
+  identifier: string;
+  sites?: { siteEntry?: GscSite[] };
+  sitemaps?: { status: number; body?: { sitemap?: GscSitemap[] } };
+}
 
 interface StatusCheck {
   name: string;
@@ -23,6 +40,32 @@ const SeoStatus = () => {
     { name: "SEO Headers", status: "checking", message: "Checking..." },
   ]);
   const [isChecking, setIsChecking] = useState(false);
+  const [gsc, setGsc] = useState<GscStatus | null>(null);
+  const [gscLoading, setGscLoading] = useState(false);
+  const [gscError, setGscError] = useState<string | null>(null);
+  const [resubmitting, setResubmitting] = useState(false);
+
+  const SITE = "https://www.azizahomes.com/";
+
+  const loadGsc = async () => {
+    setGscLoading(true);
+    setGscError(null);
+    const { data, error } = await supabase.functions.invoke("gsc-admin", {
+      body: { action: "status", site: SITE },
+    });
+    if (error) setGscError(error.message);
+    else setGsc(data as GscStatus);
+    setGscLoading(false);
+  };
+
+  const resubmitSitemap = async () => {
+    setResubmitting(true);
+    await supabase.functions.invoke("gsc-admin", {
+      body: { action: "submit_sitemap", site: SITE },
+    });
+    await loadGsc();
+    setResubmitting(false);
+  };
 
   const runChecks = async () => {
     setIsChecking(true);
@@ -190,6 +233,7 @@ const SeoStatus = () => {
 
   useEffect(() => {
     runChecks();
+    loadGsc();
   }, []);
 
   const getStatusIcon = (status: StatusCheck["status"]) => {
@@ -223,6 +267,11 @@ const SeoStatus = () => {
   const successCount = checks.filter(c => c.status === "success").length;
   const errorCount = checks.filter(c => c.status === "error").length;
   const warningCount = checks.filter(c => c.status === "warning").length;
+
+  const httpsVerified = gsc?.sites?.siteEntry?.some(
+    (s) => s.siteUrl === SITE && s.permissionLevel?.toLowerCase().includes("owner"),
+  );
+  const sitemap = gsc?.sitemaps?.body?.sitemap?.[0];
 
   return (
     <>
@@ -301,6 +350,79 @@ const SeoStatus = () => {
                 </Card>
               ))}
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  {gscLoading ? (
+                    <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : httpsVerified ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  ) : gscError ? (
+                    <XCircle className="h-5 w-5 text-red-600" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  )}
+                  <span>Google Search Console</span>
+                  <Badge variant="outline" className="ml-auto">{SITE}</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Verification status and latest sitemap submission for the HTTPS property.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {gscError && (
+                  <p className="text-sm text-red-600 font-mono">Error: {gscError}</p>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-md border p-3">
+                    <div className="text-xs uppercase text-muted-foreground mb-1">HTTPS verification</div>
+                    <div className="font-medium">
+                      {httpsVerified ? "Verified (siteOwner)" : gsc ? "Not verified" : "—"}
+                    </div>
+                    {gsc?.sites?.siteEntry?.length ? (
+                      <ul className="mt-2 text-xs text-muted-foreground space-y-1">
+                        {gsc.sites.siteEntry.map((s) => (
+                          <li key={s.siteUrl} className="font-mono break-all">
+                            {s.siteUrl} — {s.permissionLevel}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-md border p-3">
+                    <div className="text-xs uppercase text-muted-foreground mb-1">Latest sitemap submission</div>
+                    {sitemap ? (
+                      <div className="space-y-1 text-sm">
+                        <div className="font-mono break-all text-xs">{sitemap.path}</div>
+                        <div>Submitted: {sitemap.lastSubmitted ? new Date(sitemap.lastSubmitted).toLocaleString() : "—"}</div>
+                        <div>Downloaded: {sitemap.lastDownloaded ? new Date(sitemap.lastDownloaded).toLocaleString() : "—"}</div>
+                        <div>
+                          URLs submitted: {sitemap.contents?.[0]?.submitted ?? "0"} · indexed: {sitemap.contents?.[0]?.indexed ?? "0"}
+                        </div>
+                        <div>
+                          Errors: {sitemap.errors ?? "0"} · Warnings: {sitemap.warnings ?? "0"} · Pending: {sitemap.isPending ? "yes" : "no"}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">No sitemap submitted yet.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={loadGsc} variant="outline" size="sm" disabled={gscLoading}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${gscLoading ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                  <Button onClick={resubmitSitemap} size="sm" disabled={resubmitting || !httpsVerified}>
+                    {resubmitting ? "Resubmitting…" : "Resubmit sitemap.xml"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card className="bg-muted/50">
               <CardHeader>
