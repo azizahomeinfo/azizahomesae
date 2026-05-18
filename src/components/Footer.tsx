@@ -122,6 +122,15 @@ const Footer = () => {
                     Our Services
                   </a>
                 </li>
+                <li>
+                  <a
+                    href="/investors-furnishing-dubai"
+                    className="hover:opacity-100 transition-opacity"
+                    aria-label="Dubai apartment furnishing packages for investors and landlords"
+                  >
+                    Investor Furnishing Packages
+                  </a>
+                </li>
               </ul>
             </div>
 
