@@ -8,7 +8,7 @@ const SESSION_KEY = "ab_session_id";
 interface AbEventPayload {
   experiment: string;
   variant: Variant;
-  event_type: "view" | "cta_click";
+  event_type: "view" | "cta_click" | "lead_submit";
   session_id: string;
   language: string | null;
   path: string;
@@ -32,6 +32,20 @@ function getSessionId(): string {
     localStorage.setItem(SESSION_KEY, id);
   }
   return id;
+}
+
+export async function trackAbConversion(experiment: string) {
+  if (typeof window === "undefined") return;
+  const variant = localStorage.getItem(STORAGE_KEY + experiment);
+  if (variant !== "A" && variant !== "B") return;
+  await insertEvent({
+    experiment,
+    variant,
+    event_type: "lead_submit",
+    session_id: getSessionId(),
+    language: document.documentElement.lang || null,
+    path: window.location.pathname,
+  });
 }
 
 function assignVariant(experiment: string): Variant {
