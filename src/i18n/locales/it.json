@@ -11,7 +11,10 @@
   "hero": {
     "title": "Arreda la tua proprietà in 5 giorni",
     "subtitle": "Trasforma la tua proprietà d'investimento in una casa pronta per l'affitto con i nostri pacchetti di arredamento chiavi in mano. Massimizza il ROI con mobili premium e design esperto.",
-    "cta": "Consulenza gratuita"
+    "cta": "Consulenza gratuita",
+    "titleB": "Pronto per l'affitto|in 5 giorni",
+    "subtitleB": "Pacchetti di arredamento premium per massimizzare il ROI della tua proprietà a Dubai — installazione rapida.",
+    "ctaB": "Richiedi preventivo"
   },
   "about": {
     "title": "Su Aziza Home",

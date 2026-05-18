@@ -24,6 +24,19 @@ interface GscStatus {
   sitemaps?: { status: number; body?: { sitemap?: GscSitemap[] } };
 }
 
+interface AbRow {
+  experiment: string;
+  variant: "A" | "B";
+  event_type: "view" | "cta_click";
+}
+
+interface AbStat {
+  variant: "A" | "B";
+  views: number;
+  clicks: number;
+  cvr: number;
+}
+
 interface StatusCheck {
   name: string;
   status: "success" | "error" | "warning" | "checking";
@@ -44,6 +57,9 @@ const SeoStatus = () => {
   const [gscLoading, setGscLoading] = useState(false);
   const [gscError, setGscError] = useState<string | null>(null);
   const [resubmitting, setResubmitting] = useState(false);
+  const [abStats, setAbStats] = useState<AbStat[] | null>(null);
+  const [abLoading, setAbLoading] = useState(false);
+  const [abError, setAbError] = useState<string | null>(null);
 
   const SITE = "https://www.azizahomes.com/";
 
@@ -65,6 +81,39 @@ const SeoStatus = () => {
     });
     await loadGsc();
     setResubmitting(false);
+  };
+
+  const loadAbStats = async () => {
+    setAbLoading(true);
+    setAbError(null);
+    const { data, error } = await supabase
+      .from("ab_events")
+      .select("experiment,variant,event_type")
+      .eq("experiment", "hero_headline_v1")
+      .limit(10000);
+    if (error) {
+      setAbError(error.message);
+      setAbLoading(false);
+      return;
+    }
+    const rows = (data ?? []) as AbRow[];
+    const tally: Record<"A" | "B", { views: number; clicks: number }> = {
+      A: { views: 0, clicks: 0 },
+      B: { views: 0, clicks: 0 },
+    };
+    for (const r of rows) {
+      if (r.event_type === "view") tally[r.variant].views += 1;
+      else tally[r.variant].clicks += 1;
+    }
+    setAbStats(
+      (["A", "B"] as const).map((v) => ({
+        variant: v,
+        views: tally[v].views,
+        clicks: tally[v].clicks,
+        cvr: tally[v].views ? (tally[v].clicks / tally[v].views) * 100 : 0,
+      })),
+    );
+    setAbLoading(false);
   };
 
   const runChecks = async () => {
@@ -234,6 +283,7 @@ const SeoStatus = () => {
   useEffect(() => {
     runChecks();
     loadGsc();
+    loadAbStats();
   }, []);
 
   const getStatusIcon = (status: StatusCheck["status"]) => {
@@ -421,6 +471,48 @@ const SeoStatus = () => {
                     {resubmitting ? "Resubmitting…" : "Resubmit sitemap.xml"}
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <span>A/B Test — Hero Headline & CTA</span>
+                  <Badge variant="outline" className="ml-auto">hero_headline_v1</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Views and CTA clicks per variant across all languages. Force a variant for QA with <code>?ab=A</code> or <code>?ab=B</code>.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {abError && <p className="text-sm text-red-600 font-mono">Error: {abError}</p>}
+                {abLoading && !abStats && (
+                  <p className="text-sm text-muted-foreground">Loading…</p>
+                )}
+                {abStats && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {abStats.map((s) => {
+                      const other = abStats.find((x) => x.variant !== s.variant);
+                      const winning = other && s.views > 0 && other.views > 0 && s.cvr > other.cvr;
+                      return (
+                        <div key={s.variant} className="rounded-md border p-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-semibold">Variant {s.variant}</div>
+                            {winning && <Badge>Leading</Badge>}
+                          </div>
+                          <div className="text-2xl font-bold">{s.cvr.toFixed(1)}%</div>
+                          <div className="text-xs text-muted-foreground">
+                            {s.clicks} clicks / {s.views} views
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <Button onClick={loadAbStats} variant="outline" size="sm" disabled={abLoading}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${abLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
               </CardContent>
             </Card>
 

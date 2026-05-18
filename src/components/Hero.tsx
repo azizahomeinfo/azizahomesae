@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useABVariant } from "@/hooks/useABVariant";
 
 const Hero = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const youtubeVideoId = "BnkV-TlYDJQ";
   const { t } = useTranslation();
+  const { variant, ready, trackClick } = useABVariant("hero_headline_v1");
 
   useEffect(() => {
     setIsMounted(true);
@@ -27,9 +29,23 @@ const Hero = () => {
     setIsVideoPlaying(true);
   };
 
+  const titleKey = variant === "B" ? "hero.titleB" : "hero.title";
+  const subtitleKey = variant === "B" ? "hero.subtitleB" : "hero.subtitle";
+  const ctaText = variant === "B" ? t("hero.ctaB") : t("common.viewMore");
+  const ctaTarget = variant === "B" ? "contact" : "portfolio";
+
+  const handleCtaClick = () => {
+    trackClick();
+    scrollToSection(ctaTarget);
+  };
+
   return (
     <>
-      <header id="hero" className="relative min-h-[600px] h-[85vh] flex items-center justify-center overflow-hidden pt-24 md:pt-28">
+      <header
+        id="hero"
+        data-ab-variant={ready ? variant : undefined}
+        className="relative min-h-[600px] h-[85vh] flex items-center justify-center overflow-hidden pt-24 md:pt-28"
+      >
         <div className="absolute inset-0">
           <img 
             src={heroImage} 
@@ -45,16 +61,16 @@ const Hero = () => {
 
         <div className="relative z-10 container mx-auto px-4 text-center">
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-heading font-semibold text-foreground mb-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 uppercase tracking-wide leading-tight">
-            {t('hero.title').split('|').map((line, i) => (
+            {t(titleKey).split('|').map((line, i) => (
               <span key={i} className="block">{line.trim()}</span>
             ))}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-            {t('hero.subtitle')}
+            {t(subtitleKey)}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-            <Button onClick={() => scrollToSection("portfolio")} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              {t('common.viewMore')}
+            <Button onClick={handleCtaClick} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {ctaText}
             </Button>
             <Button onClick={() => scrollToSection("packages")} size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
               {t('nav.packages')}

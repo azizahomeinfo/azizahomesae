@@ -11,7 +11,10 @@
   "hero": {
     "title": "Meublez votre propriété en 5 jours",
     "subtitle": "Transformez votre bien d'investissement en maison prête à louer avec nos forfaits d'ameublement clés en main. Maximisez le ROI avec des meubles haut de gamme et un design expert.",
-    "cta": "Consultation gratuite"
+    "cta": "Consultation gratuite",
+    "titleB": "Prêt à louer|en 5 jours",
+    "subtitleB": "Forfaits d'ameublement premium pour maximiser le ROI de votre bien à Dubaï — installation rapide.",
+    "ctaB": "Obtenir un devis"
   },
   "about": {
     "title": "À propos d'Aziza Home",
