@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase-ssr";
 import { useState } from "react";
 import { z } from "zod";
+import { trackAbConversion } from "@/hooks/useABVariant";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -48,6 +49,8 @@ const Contact = () => {
         });
 
       if (error) throw error;
+
+      void trackAbConversion("hero_headline_v1");
 
       // Send email notification
       try {
