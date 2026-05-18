@@ -51,6 +51,9 @@ const Navigation = () => {
             <Link to="/packages" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               {t('nav.packages').toUpperCase()}
             </Link>
+            <Link to="/investors-furnishing-dubai" className="text-sm font-medium text-primary hover:opacity-80 transition-smooth">
+              INVESTORS
+            </Link>
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-primary transition-smooth">
               {t('nav.about').toUpperCase()}
             </Link>
@@ -99,6 +102,9 @@ const Navigation = () => {
             </Link>
             <Link to="/packages" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
               {t('nav.packages').toUpperCase()}
+            </Link>
+            <Link to="/investors-furnishing-dubai" className="text-sm font-medium text-primary hover:opacity-80 transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
+              INVESTORS
             </Link>
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-primary transition-smooth text-left" onClick={() => setIsMenuOpen(false)}>
               {t('nav.about').toUpperCase()}
