@@ -123,9 +123,17 @@ async function submitSitemapToGoogle(sitemapUrl) {
   for (const url of routesToPrerender) {
     const { html: appHtml, helmet } = render(url);
     let html = template.replace(`<!--app-html-->`, appHtml)
-    
-    // Insert helmet tags if they exist
-    if (helmet) {
+
+    // IMPORTANT: dist/index.html is served by Lovable hosting as the SPA
+    // fallback for ANY route that isn't an exact file match (including
+    // /investors-furnishing-dubai, /about, etc.). If we bake the homepage's
+    // Helmet tags into it, Google sees a homepage canonical/title for
+    // every URL → duplicate content → won't index. So for the "/" route,
+    // leave the head as the neutral source template (sitewide title +
+    // description from index.html). React-Helmet sets the correct
+    // homepage tags on hydration. Per-route files in subdirectories
+    // still get full Helmet injection.
+    if (helmet && url !== '/') {
       if (helmet.title) {
         html = html.replace(/<title[^>]*>.*?<\/title>/s, helmet.title.toString())
       }
