@@ -184,7 +184,7 @@ const MinimalistApartmentDubai = () => {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </a>
-              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/971559779635?text=Hi%20Aziza%20Home%2C%20I%27m%20interested%20in%20minimalist%20apartment%20furnishing%20in%20Dubai." target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline">Chat on WhatsApp</Button>
               </a>
             </div>

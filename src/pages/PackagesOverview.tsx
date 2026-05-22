@@ -175,7 +175,7 @@ const PackagesOverview = () => {
                       </div>
                     </div>
 
-                    <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" className="block">
+                    <a href={`https://wa.me/971559779635?text=${encodeURIComponent(`Hi Aziza Home, I'd like to consult about the ${pkg.name} package (${roomTypes.find((r) => r.value === selectedRoom)?.label}).`)}`} target="_blank" rel="noopener noreferrer" className="block">
                       <Button className="w-full" size="lg">
                         Consult on WhatsApp
                         <ArrowRight className="ml-2 h-4 w-4" />

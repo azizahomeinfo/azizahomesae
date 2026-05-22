@@ -166,7 +166,7 @@ const Footer = () => {
 
       {/* WhatsApp Floating Button */}
       <a
-        href="https://wa.me/971559779635"
+        href="https://wa.me/971559779635?text=Hi%20Aziza%20Home%2C%20I%27d%20like%20to%20learn%20more%20about%20your%20furnishing%20services."
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#20BA5A] rounded-full flex items-center justify-center shadow-lg transition-colors group"

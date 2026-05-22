@@ -112,7 +112,7 @@ const Services = () => {
                     <p className="text-muted-foreground text-lg leading-relaxed">
                       {service.description}
                     </p>
-                    <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer">
+                    <a href={`https://wa.me/971559779635?text=${encodeURIComponent(`Hi Aziza Home, I'd like to consult about: ${service.title}.`)}`} target="_blank" rel="noopener noreferrer">
                       <Button size="lg" className="mt-4">
                         Consult on WhatsApp
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -135,7 +135,7 @@ const Services = () => {
           <p className="text-lg text-muted-foreground mb-8">
             Contact us today to discuss your project and discover how we can bring your vision to life. Explore our <a href="/packages" className="text-primary hover:underline font-medium">furniture packages</a> or read our <a href="/blog" className="text-primary hover:underline font-medium">expert insights on interior design and property investment</a>.
           </p>
-          <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer">
+          <a href="https://wa.me/971559779635?text=Hi%20Aziza%20Home%2C%20I%27d%20like%20to%20discuss%20a%20new%20project." target="_blank" rel="noopener noreferrer">
             <Button size="lg" className="text-lg px-8">
               Get Started on WhatsApp
               <ArrowRight className="ml-2 h-5 w-5" />
