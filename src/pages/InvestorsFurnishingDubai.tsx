@@ -28,7 +28,7 @@ const KEYWORDS =
   "dubai apartment furnishing packages, apartment furnishing dubai, investor furnishing dubai, rental-ready apartment dubai, holiday home furnishing dubai, airbnb furnishing dubai, turnkey furnishing dubai, furniture packages dubai, long-term rental furnishing dubai";
 
 const WA_BASE = "https://wa.me/971559779635";
-const WA_MSG = encodeURIComponent("Hi Aziza Home, I'm interested in the investor furnishing package guide.");
+const WA_MSG = encodeURIComponent("Hi, I would like to know more about your furnishing packages!");
 const waLink = (tracking: string) => `${WA_BASE}?text=${WA_MSG}`;
 
 // Conversion tracking — fires to Google Ads / GA4 (gtag), GTM dataLayer,
