@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flowing Minimalism — Concept Mood Board | Aziza Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --plaster:#EFEAE2;
+    --warm-white:#F7F4EE;
+    --greige:#DDD9CC;
+    --khaki:#C2B280;
+    --sand:#F6B879;
+    --clay:#CC7450;
+    --coral:#F46A4E;
+    --teal:#1E7A7A;
+    --sky:#1054BD;
+    --navy:#0C2A76;
+    --ink:#2B2722;
+    --soft-ink:#6A645B;
+    --line:#E3DDD2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Montserrat',sans-serif;
+    color:var(--ink);
+    background:var(--warm-white);
+    line-height:1.7;
+    font-weight:300;
+  }
+  h1,h2,h3,h4,.serif{font-family:'Cormorant Garamond',serif;font-weight:500;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
+  .eyebrow{
+    font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    font-weight:500;color:var(--clay);
+  }
+
+  /* HERO */
+  .hero{
+    background:linear-gradient(135deg,var(--plaster) 0%,var(--greige) 100%);
+    padding:84px 0 72px;border-bottom:1px solid var(--line);
+  }
+  .hero .wrap{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px;}
+  .hero h1{font-size:58px;line-height:1.04;letter-spacing:.5px;margin:14px 0 0;}
+  .hero h1 em{font-style:italic;color:var(--clay);}
+  .hero p.lede{max-width:520px;margin-top:18px;color:var(--soft-ink);font-size:15px;}
+  .brandmark{text-align:right;}
+  .brandmark .name{font-family:'Cormorant Garamond',serif;font-size:26px;letter-spacing:6px;text-transform:uppercase;}
+  .brandmark .sub{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--soft-ink);}
+
+  section{padding:64px 0;}
+  section.alt{background:var(--plaster);}
+  .sec-head{max-width:680px;margin-bottom:38px;}
+  .sec-head h2{font-size:38px;margin-top:8px;letter-spacing:.5px;}
+  .sec-head p{color:var(--soft-ink);margin-top:12px;font-size:15px;}
+
+  /* BRIEF */
+  .brief{
+    background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);
+    padding:30px 34px;border-radius:4px;
+  }
+  .brief .q{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;line-height:1.5;color:var(--ink);}
+  .pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+  .pill{
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    background:var(--plaster);border:1px solid var(--line);color:var(--soft-ink);
+    padding:8px 14px;border-radius:30px;
+  }
+
+  /* INSPIRATION */
+  .insp-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .insp{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  .insp img{width:100%;height:340px;object-fit:cover;display:block;}
+  .insp .cap{padding:16px 20px;}
+  .insp .cap h4{font-size:20px;}
+  .insp .cap p{font-size:13px;color:var(--soft-ink);margin-top:4px;}
+
+  /* PALETTE */
+  .swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-radius:6px;overflow:hidden;border:1px solid var(--line);}
+  .sw{height:150px;position:relative;}
+  .sw span{
+    position:absolute;left:0;right:0;bottom:0;padding:8px 10px;
+    font-size:10px;letter-spacing:.06em;background:rgba(255,255,255,.86);
+    color:var(--ink);font-weight:500;
+  }
+  .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px;}
+  .role{border-top:2px solid var(--line);padding-top:14px;}
+  .role .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:middle;}
+  .role h4{font-size:18px;display:inline;}
+  .role p{font-size:13px;color:var(--soft-ink);margin-top:8px;}
+
+  /* ROOM CONCEPTS */
+  .room{display:grid;grid-template-columns:1fr 1fr;gap:46px;align-items:start;}
+  .room.flip .visual{order:2;}
+  .room .visual{
+    border-radius:8px;overflow:hidden;border:1px solid var(--line);
+    background:#fff;min-height:380px;
+  }
+  .room .visual img{width:100%;height:100%;object-fit:cover;display:block;}
+  .room h3{font-size:30px;margin:6px 0 14px;}
+  .room .note{font-size:14px;color:var(--soft-ink);margin-bottom:22px;}
+  .specs{list-style:none;}
+  .specs li{padding:13px 0;border-bottom:1px solid var(--line);display:flex;gap:14px;font-size:13.5px;}
+  .specs li:last-child{border-bottom:none;}
+  .specs .k{flex:0 0 116px;text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);font-weight:600;padding-top:2px;}
+  .specs .v{color:var(--ink);}
+  .miniswatch{display:inline-flex;gap:6px;margin-top:4px;}
+  .miniswatch i{width:22px;height:22px;border-radius:4px;border:1px solid rgba(0,0,0,.08);display:inline-block;}
+
+  /* MATERIALS */
+  .mats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+  .mat{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px;}
+  .mat .chip{height:64px;border-radius:5px;margin-bottom:14px;}
+  .mat h4{font-size:18px;}
+  .mat p{font-size:12.5px;color:var(--soft-ink);margin-top:6px;}
+
+  /* GREENERY */
+  .green-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .green{background:var(--warm-white);border:1px solid var(--line);border-radius:6px;padding:24px;}
+  .green .ic{font-size:26px;}
+  .green h4{font-size:19px;margin:10px 0 6px;}
+  .green p{font-size:13px;color:var(--soft-ink);}
+
+  /* PRINCIPLES */
+  .princ{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 40px;}
+  .princ .p{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--line);}
+  .princ .n{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--clay);line-height:1;flex:0 0 40px;}
+  .princ h4{font-size:17px;}
+  .princ p{font-size:13px;color:var(--soft-ink);margin-top:4px;}
+
+  footer{background:var(--ink);color:var(--plaster);padding:54px 0;text-align:center;}
+  footer .name{font-family:'Cormorant Garamond',serif;font-size:24px;letter-spacing:7px;text-transform:uppercase;}
+  footer p{font-size:12px;color:#b8b1a6;margin-top:10px;letter-spacing:.05em;}
+
+  @media (max-width:820px){
+    .hero h1{font-size:40px;}
+    .insp-grid,.room,.princ{grid-template-columns:1fr;}
+    .room.flip .visual{order:0;}
+    .swatches{grid-template-columns:repeat(2,1fr);}
+    .roles,.mats,.green-grid{grid-template-columns:1fr;}
+  }
+  @media print{
+    body{background:#fff;}
+    section{padding:34px 0;page-break-inside:avoid;}
+    .hero{padding:40px 0;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="wrap">
+      <div>
+        <div class="eyebrow">Concept Mood Board · Residential</div>
+        <h1>Flowing <em>Minimalism</em></h1>
+        <p class="lede">A calm, light-filled scheme for the living room &amp; bedroom — pared-back forms, breathing space, and a quiet earth-and-sky palette woven through with living greenery.</p>
+      </div>
+      <div class="brandmark">
+        <div class="name">Aziza Home</div>
+        <div class="sub">Interior Styling · Prepared by Veronica</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BRIEF -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">The Brief</div>
+        <h2>What you asked for</h2>
+      </div>
+      <div class="brief">
+        <p class="q">“We would like minimalism — no bulky or heavy-looking furniture. The energy should look flowing and give a spacious feeling, with space to accommodate pots and greens inside.”</p>
+        <div class="pills">
+          <span class="pill">Minimalist</span>
+          <span class="pill">Light &amp; airy forms</span>
+          <span class="pill">Flowing energy</span>
+          <span class="pill">Spacious feeling</span>
+          <span class="pill">Room for plants &amp; pots</span>
+          <span class="pill">Curated colour palette</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONCEPT -->
+  <section class="alt">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">The Concept</div>
+        <h2>Earth &amp; Sky</h2>
+        <p>Both palettes you shared share one quiet idea — a cool, calming blue/teal set against warm, sun-baked earth tones. We build on that: a soft neutral canvas of plaster, sand and linen keeps everything light and open, while clay, teal and a deep sky-blue are used sparingly as grounding accents. Greenery becomes the living layer that ties it together and brings the “flowing energy” you're after.</p>
+      </div>
+
+      <div class="insp-grid">
+        <figure class="insp">
+          <img src="assets/inspiration-bluebird.jpeg" alt="Bluebird palette inspiration" />
+          <figcaption class="cap">
+            <h4>Bluebird</h4>
+            <p>Sky blue + navy grounded by warm sand &amp; terracotta — the cool/warm balance at the heart of the scheme.</p>
+          </figcaption>
+        </figure>
+        <figure class="insp">
+          <img src="assets/inspiration-poppyfield.jpeg" alt="Poppy field palette inspiration" />
+          <figcaption class="cap">
+            <h4>Poppy Field</h4>
+            <p>Teal, coral &amp; soft khaki — adds the energetic warm “pop” and the natural greens of foliage.</p>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- PALETTE -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Curated Palette</div>
+        <h2>The colour story</h2>
+        <p>Roughly 70% calm neutrals, 20% earthy warmth, 10% cool accent — the ratio that keeps a minimalist room feeling spacious rather than busy.</p>
+      </div>
+
+      <div class="swatches">
+        <div class="sw" style="background:var(--plaster)"><span>Plaster · #EFEAE2</span></div>
+        <div class="sw" style="background:var(--khaki)"><span>Khaki Linen · #C2B280</span></div>
+        <div class="sw" style="background:var(--sand)"><span>Soft Sand · #F6B879</span></div>
+        <div class="sw" style="background:var(--clay)"><span>Clay · #CC7450</span></div>
+        <div class="sw" style="background:var(--teal)"><span>Teal · #1E7A7A</span></div>
+      </div>
+      <div class="swatches" style="margin-top:14px;">
+        <div class="sw" style="background:var(--warm-white)"><span>Warm White · #F7F4EE</span></div>
+        <div class="sw" style="background:var(--greige)"><span>Greige · #DDD9CC</span></div>
+        <div class="sw" style="background:var(--coral)"><span style="background:rgba(255,255,255,.9)">Coral Pop · #F46A4E</span></div>
+        <div class="sw" style="background:var(--sky)"><span style="background:rgba(255,255,255,.92)">Sky Blue · #1054BD</span></div>
+        <div class="sw" style="background:var(--navy)"><span style="background:rgba(255,255,255,.92)">Deep Navy · #0C2A76</span></div>
+      </div>
+
+      <div class="roles">
+        <div class="role">
+          <span class="dot" style="background:var(--plaster);border:1px solid var(--line)"></span><h4>Base — 70%</h4>
+          <p>Plaster, warm white, greige &amp; khaki on walls, large upholstery and flooring. Keeps the eye moving and the room feeling open.</p>
+        </div>
+        <div class="role">
+          <span class="dot" style="background:var(--clay)"></span><h4>Warmth — 20%</h4>
+          <p>Sand &amp; clay in timber, ceramics, a single textile or rug. Brings the sun-baked, lived-in warmth.</p>
+        </div>
+        <div class="role">
+          <span class="dot" style="background:var(--teal)"></span><h4>Accent — 10%</h4>
+          <p>Teal, sky blue &amp; a touch of coral in cushions, art and accessories only — easy to refresh seasonally.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVING ROOM -->
+  <section class="alt">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Room 01</div>
+        <h2>Living Room</h2>
+        <p>Open, low and airy — furniture that sits light on the floor so the space reads bigger and the energy flows from one zone to the next.</p>
+      </div>
+      <div class="room">
+        <div class="visual"><img src="../src/assets/portfolio-1.jpg" alt="Living room reference" /></div>
+        <div>
+          <div class="eyebrow">Light · Open · Grounded</div>
+          <h3>A room that breathes</h3>
+          <p class="note">No bulk: slim-arm seating, raised legs, glass and slender metal, and plenty of negative space between pieces.</p>
+          <ul class="specs">
+            <li><span class="k">Seating</span><span class="v">Low-profile sofa in warm white / greige bouclé with slim raised legs — feels light, not heavy.</span></li>
+            <li><span class="k">Tables</span><span class="v">Slim oak or travertine coffee table; airy glass or open-frame side tables that don't block sightlines.</span></li>
+            <li><span class="k">Storage</span><span class="v">Low, wall-hugging media unit + floating shelves — frees the floor and keeps surfaces calm.</span></li>
+            <li><span class="k">Softening</span><span class="v">Sheer linen drapes floor-to-ceiling; a flat-weave wool rug in sand to zone the seating.</span></li>
+            <li><span class="k">Accents</span><span class="v">Clay &amp; teal cushions, one coral throw, a deep-navy ceramic — the only saturated notes.</span>
+            </li>
+            <li><span class="k">Palette</span>
+              <span class="v">
+                <span class="miniswatch">
+                  <i style="background:var(--warm-white)"></i>
+                  <i style="background:var(--greige)"></i>
+                  <i style="background:var(--sand)"></i>
+                  <i style="background:var(--clay)"></i>
+                  <i style="background:var(--teal)"></i>
+                  <i style="background:var(--navy)"></i>
+                </span>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BEDROOM -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Room 02</div>
+        <h2>Bedroom</h2>
+        <p>A serene retreat — even lighter and quieter, with the palette dialled down to its softest, most restful tones.</p>
+      </div>
+      <div class="room flip">
+        <div class="visual"><img src="../src/assets/bedroom-new.jpg" alt="Bedroom reference" /></div>
+        <div>
+          <div class="eyebrow">Calm · Soft · Restful</div>
+          <h3>Still and spacious</h3>
+          <p class="note">A low platform bed and floating bedside surfaces keep everything grounded and uncluttered.</p>
+          <ul class="specs">
+            <li><span class="k">Bed</span><span class="v">Low upholstered platform bed in oat linen; slim headboard, no heavy frame.</span></li>
+            <li><span class="k">Bedside</span><span class="v">Wall-mounted floating nightstands — clear floor, soft shadow line, more visual space.</span></li>
+            <li><span class="k">Linens</span><span class="v">Layered washed-linen bedding in plaster &amp; sand, with one muted-teal throw at the foot.</span></li>
+            <li><span class="k">Lighting</span><span class="v">Warm 2700K wall sconces + a paper/linen pendant for a soft, diffused glow.</span></li>
+            <li><span class="k">Accents</span><span class="v">A single piece of calm abstract art picking up sky-blue; matte clay vessels.</span></li>
+            <li><span class="k">Palette</span>
+              <span class="v">
+                <span class="miniswatch">
+                  <i style="background:var(--plaster)"></i>
+                  <i style="background:var(--warm-white)"></i>
+                  <i style="background:var(--sand)"></i>
+                  <i style="background:var(--khaki)"></i>
+                  <i style="background:var(--teal)"></i>
+                  <i style="background:var(--sky)"></i>
+                </span>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MATERIALS -->
+  <section class="alt">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Materials &amp; Texture</div>
+        <h2>How it should feel</h2>
+        <p>Minimalism stays warm through natural, tactile materials — light timbers, soft weaves and matte stone rather than glossy or ornate finishes.</p>
+      </div>
+      <div class="mats">
+        <div class="mat">
+          <div class="chip" style="background:linear-gradient(135deg,#E7D3B0,#D8BE92)"></div>
+          <h4>Light Oak</h4>
+          <p>Pale, open-grain timber for tables &amp; shelving — airy, never dark or heavy.</p>
+        </div>
+        <div class="mat">
+          <div class="chip" style="background:linear-gradient(135deg,var(--warm-white),var(--greige))"></div>
+          <h4>Washed Linen</h4>
+          <p>Drapes, bedding &amp; upholstery with a soft, relaxed, breathable hand.</p>
+        </div>
+        <div class="mat">
+          <div class="chip" style="background:linear-gradient(135deg,#EDE9E1,#CFC8BB)"></div>
+          <h4>Matte Travertine</h4>
+          <p>Honed stone for a coffee or side table — quiet texture, calm tone.</p>
+        </div>
+        <div class="mat">
+          <div class="chip" style="background:linear-gradient(135deg,var(--clay),#B5613F)"></div>
+          <h4>Hand-Glazed Clay</h4>
+          <p>Planters, vases &amp; vessels that carry the earthy accent in small doses.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GREENERY -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Living Layer</div>
+        <h2>Plants &amp; pots, built in</h2>
+        <p>Greenery is part of the plan, not an afterthought — designated spots in both rooms so plants enhance the flow instead of cluttering it.</p>
+      </div>
+      <div class="green-grid">
+        <div class="green">
+          <div class="ic">🪴</div>
+          <h4>Floor statement</h4>
+          <p>One tall sculptural plant (olive, fiddle-leaf or bird-of-paradise) in a clay or matte-white floor pot to anchor a corner of the living room.</p>
+        </div>
+        <div class="green">
+          <div class="ic">🌿</div>
+          <h4>Shelf &amp; ledge greens</h4>
+          <p>Trailing pothos and small succulents on the floating shelves and media unit — softening hard lines at eye level.</p>
+        </div>
+        <div class="green">
+          <div class="ic">🍃</div>
+          <h4>Bedroom calm</h4>
+          <p>A low, air-purifying plant (snake plant / ZZ) on a slim plant stand by the window for restful, living texture.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRINCIPLES -->
+  <section class="alt">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Design Principles</div>
+        <h2>Keeping the flow</h2>
+      </div>
+      <div class="princ">
+        <div class="p"><div class="n">01</div><div><h4>Legs &amp; light bases</h4><p>Raised furniture lets the eye and floor run underneath — instantly more spacious.</p></div></div>
+        <div class="p"><div class="n">02</div><div><h4>Negative space is a feature</h4><p>Fewer, better pieces with breathing room between them. Empty space is intentional.</p></div></div>
+        <div class="p"><div class="n">03</div><div><h4>Low &amp; horizontal</h4><p>Low-slung silhouettes draw the ceiling up and keep sightlines open across the room.</p></div></div>
+        <div class="p"><div class="n">04</div><div><h4>Colour in small doses</h4><p>Saturated tones live in soft, swappable accessories — never in the big, permanent pieces.</p></div></div>
+        <div class="p"><div class="n">05</div><div><h4>Hidden, calm storage</h4><p>Concealed storage keeps surfaces clear so the room always reads serene.</p></div></div>
+        <div class="p"><div class="n">06</div><div><h4>Green as the through-line</h4><p>Living plants in both rooms carry the “flowing energy” and connect the spaces.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="name">Aziza Home</div>
+      <p>Concept Mood Board · Flowing Minimalism · Prepared by Veronica · 2026</p>
+    </div>
+  </footer>
+
+</body>
+</html>
