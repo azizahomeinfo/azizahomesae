@@ -122,10 +122,10 @@ const packages = [
 ];
 
 const pricing = [
-  { layout: "Studio", essential: "from AED 18.1K", premium: "from AED 24.0K", luxury: "from AED 27.2K" },
-  { layout: "1 Bedroom", essential: "from AED 23.7K", premium: "from AED 31.8K", luxury: "from AED 35.9K" },
-  { layout: "2 Bedroom", essential: "from AED 34.9K", premium: "from AED 45.9K", luxury: "from AED 50.5K" },
-  { layout: "3 Bedroom", essential: "from AED 43.3K", premium: "from AED 58.0K", luxury: "from AED 61.7K" },
+  { layout: "Studio", essential: "from AED 22,500", premium: "from AED 26,500", luxury: "from AED 30,500" },
+  { layout: "1 Bedroom", essential: "from AED 30,000", premium: "from AED 36,500", luxury: "from AED 46,000" },
+  { layout: "2 Bedroom", essential: "from AED 40,000", premium: "from AED 55,000", luxury: "from AED 65,500" },
+  { layout: "3 Bedroom", essential: "from AED 52,500", premium: "from AED 72,800", luxury: "from AED 88,600" },
 ];
 
 const steps = [
