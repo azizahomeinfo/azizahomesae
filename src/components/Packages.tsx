@@ -72,6 +72,9 @@ const Packages = ({ onPackageClick }: PackagesProps) => {
                   </div>
                 )}
                 <div className="relative aspect-[4/3] overflow-hidden bg-secondary/20">
+                  <div className="absolute top-4 left-4 z-10 bg-black/70 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+                    Studio
+                  </div>
                   <img
                     src={pkg.image}
                     alt={`${pkg.title} - Dubai ${roomLabel} Apartment Furnishing Package Downtown Dubai Marina Business Bay`}
