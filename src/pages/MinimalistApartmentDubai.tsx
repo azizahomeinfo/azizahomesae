@@ -149,8 +149,8 @@ const MinimalistApartmentDubai = () => {
       <MultilingualSEO title={TITLE} description={DESCRIPTION} keywords={KEYWORDS} path={PATH} />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Minimalist Apartment Furnishing Dubai", url: `https://azizahomes.com${PATH}` },
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Minimalist Apartment Furnishing Dubai", url: `https://www.azizahomes.com${PATH}` },
         ]}
         pageTitle="Minimalist Apartment Furnishing Dubai"
         pageDescription={DESCRIPTION}

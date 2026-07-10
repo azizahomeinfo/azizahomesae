@@ -14,7 +14,7 @@ interface StructuredDataProps {
 
 const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredDataProps = {}) => {
   const location = useLocation();
-  const baseUrl = "https://azizahomes.com";
+  const baseUrl = "https://www.azizahomes.com";
   // Organization Schema
   const organizationSchema = {
     "@context": "https://schema.org",

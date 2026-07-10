@@ -52,8 +52,8 @@ const Services = () => {
       />
       <StructuredData 
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Services", url: "https://azizahomes.com/services" }
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Services", url: "https://www.azizahomes.com/services" }
         ]}
         pageTitle="Services"
         pageDescription="Explore Aziza Home's comprehensive furnishing services in Dubai: Holiday Home Packages, Expat Relocation, Investor Packages with 20-25% ROI increase, and Custom Interior Design."

@@ -79,12 +79,12 @@ const ProjectGallery = () => {
         description={t('pages:portfolio.description')}
         keywords={t('pages:portfolio.keywords')}
         path="/portfolio"
-        image="https://azizahomes.com/portfolio-1-3.jpg"
+        image="https://www.azizahomes.com/portfolio-1-3.jpg"
       />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Portfolio", url: "https://azizahomes.com/portfolio" }
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Portfolio", url: "https://www.azizahomes.com/portfolio" }
         ]}
         pageTitle="Portfolio"
         pageDescription="Explore Aziza Home's stunning Palace Emaar Beachfront project. A serene two-bedroom apartment featuring classic minimalist design blending Japandi warmth with sophisticated coastal elegance."

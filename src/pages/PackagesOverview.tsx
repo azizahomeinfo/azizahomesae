@@ -88,12 +88,12 @@ const PackagesOverview = () => {
         description={t('pages:packages.description')}
         keywords={t('pages:packages.keywords')}
         path="/packages"
-        image="https://azizahomes.com/package-complete-new.jpg"
+        image="https://www.azizahomes.com/package-complete-new.jpg"
       />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Packages", url: "https://azizahomes.com/packages" }
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Packages", url: "https://www.azizahomes.com/packages" }
         ]}
         pageTitle="Packages"
         pageDescription="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 30,500 AED). Complete furniture packages for Dubai properties."

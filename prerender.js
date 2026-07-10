@@ -91,20 +91,11 @@ const routesToPrerender = [
   // Example: '/product/living-room-package',
 ]
 
-// Function to submit sitemap to Google Search Console
-async function submitSitemapToGoogle(sitemapUrl) {
-  try {
-    const pingUrl = `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
-    const response = await fetch(pingUrl)
-    if (response.ok) {
-      console.log('✓ Sitemap successfully submitted to Google Search Console')
-    } else {
-      console.log('⚠ Google sitemap ping returned status:', response.status)
-    }
-  } catch (error) {
-    console.log('⚠ Could not ping Google (this is normal in local builds):', error.message)
-  }
-}
+// NOTE: Google retired the sitemap ping endpoint
+// (google.com/ping?sitemap=) in 2023 and it is now a no-op. Bing deprecated
+// its equivalent too. Discovery now relies on the `Sitemap:` directive in
+// robots.txt plus a one-time manual submission in Google Search Console /
+// Bing Webmaster Tools, so there is no automated ping step here.
 
 ;(async () => {
   // Generate and write sitemap.xml
@@ -115,11 +106,7 @@ async function submitSitemapToGoogle(sitemapUrl) {
   // Also update the source sitemap for development
   fs.writeFileSync(toAbsolute('public/sitemap.xml'), sitemapContent)
   console.log('Updated public/sitemap.xml')
-  
-  // Submit sitemap to Google Search Console
-  const sitemapUrl = `${SITE_URL}/sitemap.xml`
-  await submitSitemapToGoogle(sitemapUrl)
-  
+
   for (const url of routesToPrerender) {
     const { html: appHtml, helmet } = render(url);
     let html = template.replace(`<!--app-html-->`, appHtml)

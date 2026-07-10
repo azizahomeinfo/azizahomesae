@@ -98,13 +98,13 @@ const ProductDetail = () => {
         <title>{product.title} - AED {productPrice} | Aziza Home Dubai Furnishing Packages</title>
         <meta name="description" content={productDescription} />
         <meta name="keywords" content={`${product.title}, Dubai furnishing package, furniture package Dubai, home furnishing Dubai, Aziza Home`} />
-        <link rel="canonical" href={`https://azizahomes.com/product/${handle}`} />
+        <link rel="canonical" href={`https://www.azizahomes.com/product/${handle}`} />
         
         {/* Open Graph Meta Tags */}
         <meta property="og:type" content="product" />
         <meta property="og:title" content={`${product.title} - AED ${productPrice}`} />
         <meta property="og:description" content={productDescription} />
-        <meta property="og:url" content={`https://azizahomes.com/product/${handle}`} />
+        <meta property="og:url" content={`https://www.azizahomes.com/product/${handle}`} />
         {product.images?.edges?.[0] && (
           <meta property="og:image" content={product.images.edges[0].node.url} />
         )}

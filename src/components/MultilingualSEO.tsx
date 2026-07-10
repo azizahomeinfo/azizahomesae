@@ -9,15 +9,17 @@ interface MultilingualSEOProps {
   image?: string;
 }
 
-const languages = [
-  { code: "en", name: "English" },
-  { code: "ar", name: "العربية" },
-  { code: "zh", name: "中文" },
-  { code: "de", name: "Deutsch" },
-  { code: "fr", name: "Français" },
-  { code: "it", name: "Italiano" },
-  { code: "ru", name: "Русский" },
-];
+// Valid BCP-47 / Open Graph locale codes per supported language.
+// (Previously generated invalid values like "zh_ZH", "de_DE", "ru_RU".)
+const OG_LOCALES: Record<string, string> = {
+  en: "en_US",
+  ar: "ar_AE",
+  zh: "zh_CN",
+  de: "de_DE",
+  fr: "fr_FR",
+  it: "it_IT",
+  ru: "ru_RU",
+};
 
 export const MultilingualSEO = ({ 
   title, 
@@ -28,6 +30,7 @@ export const MultilingualSEO = ({
 }: MultilingualSEOProps) => {
   const { i18n } = useTranslation();
   const currentLang = i18n.language || 'en';
+  const ogLocale = OG_LOCALES[currentLang] || OG_LOCALES.en;
   const baseUrl = "https://www.azizahomes.com";
   const fullUrl = `${baseUrl}${path}`;
 
@@ -39,29 +42,19 @@ export const MultilingualSEO = ({
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
       
-      {/* Canonical URL */}
+      {/* Canonical URL (self-referencing) */}
       <link rel="canonical" href={fullUrl} />
-      
-      {/* Hreflang Tags for Language Alternatives */}
-      {languages.map(lang => (
-        <link 
-          key={lang.code}
-          rel="alternate" 
-          hrefLang={lang.code} 
-          href={`${baseUrl}${path}?lang=${lang.code}`} 
-        />
-      ))}
-      <link rel="alternate" hrefLang="x-default" href={fullUrl} />
-      
-      {/* Open Graph Tags with Language */}
-      <meta property="og:locale" content={currentLang === 'en' ? 'en_US' : currentLang === 'ar' ? 'ar_AE' : `${currentLang}_${currentLang.toUpperCase()}`} />
-      {languages.filter(l => l.code !== currentLang).map(lang => (
-        <meta 
-          key={`og-${lang.code}`}
-          property="og:locale:alternate" 
-          content={lang.code === 'en' ? 'en_US' : lang.code === 'ar' ? 'ar_AE' : `${lang.code}_${lang.code.toUpperCase()}`} 
-        />
-      ))}
+
+      {/* NOTE: hreflang alternates are intentionally omitted. The language
+          switcher translates content client-side at the SAME URL (?lang=xx
+          does not produce distinct, separately-crawlable pages), so declaring
+          per-language hreflang alternates would violate Google's requirement
+          that each alternate be a unique, self-referencing URL and would
+          surface as hreflang errors in Search Console. Re-introduce these only
+          once real localized routes (e.g. /ar/..., /de/...) exist. */}
+
+      {/* Open Graph locale (single valid value for the current language) */}
+      <meta property="og:locale" content={ogLocale} />
       <meta property="og:type" content="website" />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />

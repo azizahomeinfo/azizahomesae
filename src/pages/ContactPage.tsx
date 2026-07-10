@@ -20,12 +20,12 @@ const ContactPage = () => {
         description={t('pages:contact.description')}
         keywords={t('pages:contact.keywords')}
         path="/contact"
-        image="https://azizahomes.com/team-photo.jpg"
+        image="https://www.azizahomes.com/team-photo.jpg"
       />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Contact", url: "https://azizahomes.com/contact" }
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Contact", url: "https://www.azizahomes.com/contact" }
         ]}
         pageTitle="Contact"
         pageDescription="Get a custom interior design consultation with Aziza Home. Share your vision and receive a personalized design proposal with mood boards, 3D rendering, timeline, and transparent pricing."

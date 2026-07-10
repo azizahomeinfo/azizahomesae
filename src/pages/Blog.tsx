@@ -80,7 +80,7 @@ const Blog = () => {
         description={t('pages:blog.description')}
         keywords={t('pages:blog.keywords')}
         path="/blog"
-        image="https://azizahomes.com/blog-top-agencies.jpg"
+        image="https://www.azizahomes.com/blog-top-agencies.jpg"
       />
 
       <Navigation />

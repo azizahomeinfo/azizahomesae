@@ -22,20 +22,20 @@ const generateBlogStructuredData = (article: any, slug: string) => ({
   "author": {
     "@type": "Organization",
     "name": "Aziza Home",
-    "url": "https://azizahomes.com"
+    "url": "https://www.azizahomes.com"
   },
   "publisher": {
     "@type": "Organization",
     "name": "Aziza Home",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://azizahomes.com/aziza-logo.png"
+      "url": "https://www.azizahomes.com/aziza-logo.png"
     }
   },
   "description": article.content.substring(0, 160).replace(/<[^>]*>/g, ''),
   "mainEntityOfPage": {
     "@type": "WebPage",
-    "@id": `https://azizahomes.com/blog/${slug}`
+    "@id": `https://www.azizahomes.com/blog/${slug}`
   }
 });
 
@@ -1339,14 +1339,14 @@ const BlogPost = () => {
   // Generate full image URL for social sharing
   const getImageUrl = (slug: string) => {
     const imageMap: { [key: string]: string } = {
-      "top-7-interior-design-agencies-dubai": "https://azizahomes.com/blog-top-agencies.jpg",
-      "quick-efficient-ways-to-furnish-your-home": "https://azizahomes.com/blog-furnish-home.jpg",
-      "where-to-invest-dubai-best-roi-property-growth": "https://azizahomes.com/blog-dubai-investment.jpg",
-      "maximize-rental-roi-downtown-dubai": "https://azizahomes.com/blog-rental-roi-downtown.jpg",
-      "maximize-holiday-home-roi-dubai-marina": "https://azizahomes.com/blog-holiday-roi-marina.jpg",
-      "jvc-family-rental-furnishing-roi-guide": "https://azizahomes.com/blog-jvc-family-rentals.jpg"
+      "top-7-interior-design-agencies-dubai": "https://www.azizahomes.com/blog-top-agencies.jpg",
+      "quick-efficient-ways-to-furnish-your-home": "https://www.azizahomes.com/blog-furnish-home.jpg",
+      "where-to-invest-dubai-best-roi-property-growth": "https://www.azizahomes.com/blog-dubai-investment.jpg",
+      "maximize-rental-roi-downtown-dubai": "https://www.azizahomes.com/blog-rental-roi-downtown.jpg",
+      "maximize-holiday-home-roi-dubai-marina": "https://www.azizahomes.com/blog-holiday-roi-marina.jpg",
+      "jvc-family-rental-furnishing-roi-guide": "https://www.azizahomes.com/blog-jvc-family-rentals.jpg"
     };
-    return imageMap[slug] || "https://azizahomes.com/hero-image-new.jpg";
+    return imageMap[slug] || "https://www.azizahomes.com/hero-image-new.jpg";
   };
 
   return (
@@ -1355,7 +1355,7 @@ const BlogPost = () => {
         <title>{article.title} - Aziza Home Blog | Interior Design & Real Estate Dubai</title>
         <meta name="description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
         <meta name="keywords" content={`${article.category}, Dubai interior design, home furnishing, property investment, Aziza Home`} />
-        <link rel="canonical" href={`https://azizahomes.com/blog/${slug}`} />
+        <link rel="canonical" href={`https://www.azizahomes.com/blog/${slug}`} />
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
         <meta name="googlebot" content="index, follow" />
         
@@ -1363,7 +1363,7 @@ const BlogPost = () => {
         <meta property="og:type" content="article" />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.content.substring(0, 160).replace(/<[^>]*>/g, '')} />
-        <meta property="og:url" content={`https://azizahomes.com/blog/${slug}`} />
+        <meta property="og:url" content={`https://www.azizahomes.com/blog/${slug}`} />
         <meta property="og:image" content={getImageUrl(slug || '')} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />

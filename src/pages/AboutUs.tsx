@@ -17,12 +17,12 @@ const AboutUs = () => {
         description={t('pages:about.description')}
         keywords={t('pages:about.keywords')}
         path="/about"
-        image="https://azizahomes.com/founder-veronica.jpg"
+        image="https://www.azizahomes.com/founder-veronica.jpg"
       />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "About Us", url: "https://azizahomes.com/about" }
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "About Us", url: "https://www.azizahomes.com/about" }
         ]}
         pageTitle="About Us"
         pageDescription="Meet Veronica Xu and the Aziza Home team. Founded in 2022, we blend Japanese wabi-sabi with Scandinavian design to create timeless, tranquil spaces in Dubai."
