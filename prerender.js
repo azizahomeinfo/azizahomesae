@@ -35,6 +35,7 @@ const routePriorities = {
   '/furnishing/jumeirah-village-circle': { priority: '0.9', changefreq: 'weekly' },
   '/furnishing/palm-jumeirah': { priority: '0.9', changefreq: 'weekly' },
   '/furnishing/dubai-hills-estate': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/city-walk': { priority: '0.9', changefreq: 'weekly' },
   '/seo-status': { priority: '0.3', changefreq: 'monthly' }
 }
 
@@ -99,6 +100,7 @@ const routesToPrerender = [
   '/furnishing/jumeirah-village-circle',
   '/furnishing/palm-jumeirah',
   '/furnishing/dubai-hills-estate',
+  '/furnishing/city-walk',
   '/seo-status'
   // Add specific product URLs here when you have them
   // Example: '/product/living-room-package',
