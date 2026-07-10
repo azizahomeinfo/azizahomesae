@@ -44,6 +44,7 @@ const routePriorities = {
   '/furnishing/jumeirah-lakes-towers': { priority: '0.9', changefreq: 'weekly' },
   '/holiday-home-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
   '/villa-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
+  '/portfolio/palace-emaar-beachfront': { priority: '0.8', changefreq: 'monthly' },
   '/seo-status': { priority: '0.3', changefreq: 'monthly' }
 }
 
@@ -118,6 +119,8 @@ const routesToPrerender = [
   '/furnishing/jumeirah-lakes-towers',
   '/holiday-home-furnishing-dubai',
   '/villa-furnishing-dubai',
+  // Case studies (src/data/caseStudies.ts) — keep in sync
+  '/portfolio/palace-emaar-beachfront',
   '/seo-status'
   // Add specific product URLs here when you have them
   // Example: '/product/living-room-package',
