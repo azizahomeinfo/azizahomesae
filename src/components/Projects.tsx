@@ -1,7 +1,7 @@
-import portfolio13New from "@/assets/portfolio-1-3.jpg";
-import diningNew from "@/assets/dining-new.jpg";
-import portfolio18 from "@/assets/portfolio-18.jpg";
-import bedroomNew from "@/assets/bedroom-new.jpg";
+import portfolio13New from "@/assets/portfolio-1-3.webp";
+import diningNew from "@/assets/dining-new.webp";
+import portfolio18 from "@/assets/portfolio-18.webp";
+import bedroomNew from "@/assets/bedroom-new.webp";
 
 const projects = [
   {

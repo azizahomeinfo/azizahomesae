@@ -1,7 +1,25 @@
-# Google Indexing Guide for azizahomes.com
+# Google Indexing Guide for www.azizahomes.com
+
+## ⚡ Action Checklist (July 2026 — after the canonical-domain fix)
+
+The codebase now consistently uses the **www** domain (`https://www.azizahomes.com`) in every canonical tag, schema URL, and og:url. To get Google to pick up the corrected signals quickly, do these once in [Google Search Console](https://search.google.com/search-console):
+
+1. **Make sure the property covers www** — use a *Domain* property (`azizahomes.com`, covers both hostnames) or add a *URL-prefix* property for `https://www.azizahomes.com` if you only have the non-www one.
+2. **Resubmit the sitemap** — Sitemaps → enter `sitemap.xml` → Submit (even if it was submitted before; this triggers a re-crawl with the new canonicals).
+3. **Request indexing for the money pages** — URL Inspection → paste each URL → "Request Indexing" (a few per day is the limit; spread over 2–3 days):
+   - `https://www.azizahomes.com/`
+   - `https://www.azizahomes.com/packages`
+   - `https://www.azizahomes.com/services`
+   - `https://www.azizahomes.com/investors-furnishing-dubai`
+   - `https://www.azizahomes.com/blog` and each blog post
+   - each new `/furnishing/...` location page (see sitemap)
+4. **Check the "Page indexing" report in ~1–2 weeks** — pages previously flagged "Duplicate without user-selected canonical" or "Alternate page with proper canonical tag" should move to Indexed as Google re-crawls.
+5. **Verify redirect** — confirm `https://azizahomes.com` (non-www) 301-redirects to `https://www.azizahomes.com`. If it doesn't, enable that redirect at your host/DNS level; a redirect is the strongest canonical signal.
+
+Note: the old automatic "sitemap ping to Google" was removed from the build — Google retired that endpoint in 2023. Manual submission in Search Console + the `Sitemap:` line in robots.txt is the supported path.
 
 ## Current Status
-All pages now have proper indexing directives and SEO optimization. The sitemap automatically submits to Google after each deployment.
+All pages have proper indexing directives and SEO optimization. The sitemap is regenerated automatically on each build.
 
 ## Why URLs May Not Be Indexed Yet
 
@@ -19,7 +37,7 @@ Google indexing can take time. Here are the main reasons:
 **This is the MOST IMPORTANT step.**
 
 1. Go to [Google Search Console](https://search.google.com/search-console)
-2. Click "Add Property" and enter: `https://azizahomes.com`
+2. Click "Add Property" and enter: `https://www.azizahomes.com`
 3. Choose verification method:
    - **DNS Verification** (Recommended) - Add a TXT record to your domain
    - **HTML Tag** - The verification tag is already in `/public/googlea25c2b334f9e40a1.html`
@@ -34,21 +52,21 @@ After verification:
 2. Enter: `sitemap.xml`
 3. Click "Submit"
 
-**Note:** The sitemap is now automatically submitted to Google after each deployment via the prerender.js script, but manual submission helps speed up the first indexing.
+**Note:** Google retired the automated sitemap-ping endpoint in 2023, so manual submission here (plus the `Sitemap:` directive in robots.txt) is the supported way for Google to discover the sitemap.
 
 ### 3. Request Indexing for Important Pages
 
 For priority pages:
 
 1. In Google Search Console, use "URL Inspection" tool
-2. Enter the full URL (e.g., `https://azizahomes.com/services`)
+2. Enter the full URL (e.g., `https://www.azizahomes.com/services`)
 3. Click "Request Indexing"
 4. Repeat for key pages:
-   - https://azizahomes.com/
-   - https://azizahomes.com/services
-   - https://azizahomes.com/packages
-   - https://azizahomes.com/portfolio
-   - https://azizahomes.com/blog
+   - https://www.azizahomes.com/
+   - https://www.azizahomes.com/services
+   - https://www.azizahomes.com/packages
+   - https://www.azizahomes.com/portfolio
+   - https://www.azizahomes.com/blog
 
 **Limit:** You can only request indexing for a few URLs per day.
 
@@ -84,7 +102,7 @@ Check indexing status:
 Common problems to verify:
 
 - ✅ Robots.txt allows crawling (configured correctly)
-- ✅ Sitemap.xml is accessible at https://azizahomes.com/sitemap.xml (configured correctly)
+- ✅ Sitemap.xml is accessible at https://www.azizahomes.com/sitemap.xml (configured correctly)
 - ✅ All pages have proper meta tags (configured correctly)
 - ✅ Site is mobile-friendly (verify in Google Search Console)
 - ✅ Page load speed is good (verify with PageSpeed Insights)
@@ -93,7 +111,7 @@ Common problems to verify:
 ## What's Already Optimized
 
 ✅ **Sitemap Generation** - Automatically syncs with prerendered routes
-✅ **Automatic Submission** - Sitemap submits to Google after each deployment
+✅ **Sitemap Discovery** - `Sitemap:` directive in robots.txt + manual Search Console submission
 ✅ **Robots.txt** - Configured to allow all crawlers
 ✅ **Meta Robots Tags** - All pages have explicit indexing directives
 ✅ **Canonical URLs** - Prevent duplicate content issues

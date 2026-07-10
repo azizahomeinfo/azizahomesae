@@ -6,12 +6,12 @@ import { MultilingualSEO } from "@/components/MultilingualSEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
-import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
-import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
-import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
-import blogRentalRoi from "@/assets/blog-rental-roi-downtown.jpg";
-import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.jpg";
-import blogJvcFamily from "@/assets/blog-jvc-family-rentals.jpg";
+import blogTopAgencies from "@/assets/blog-top-agencies.webp";
+import blogFurnishHome from "@/assets/blog-furnish-home.webp";
+import blogDubaiInvestment from "@/assets/blog-dubai-investment.webp";
+import blogRentalRoi from "@/assets/blog-rental-roi-downtown.webp";
+import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.webp";
+import blogJvcFamily from "@/assets/blog-jvc-family-rentals.webp";
 
 const Blog = () => {
   const { t } = useTranslation();

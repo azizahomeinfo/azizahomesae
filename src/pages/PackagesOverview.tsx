@@ -10,9 +10,9 @@ import { MultilingualSEO } from "@/components/MultilingualSEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
-import package1 from "@/assets/package-1.jpg";
-import package2 from "@/assets/package-2.jpg";
-import package3 from "@/assets/package-3.jpg";
+import package1 from "@/assets/package-1.webp";
+import package2 from "@/assets/package-2.webp";
+import package3 from "@/assets/package-3.webp";
 
 type RoomType = "studio" | "1b" | "2b" | "3b";
 

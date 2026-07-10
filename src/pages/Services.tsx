@@ -6,10 +6,10 @@ import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { MultilingualSEO } from "@/components/MultilingualSEO";
-import serviceHolidayHome from "@/assets/service-holiday-home-new.jpg";
-import serviceExpatRelocate from "@/assets/service-expat-generated.jpg";
-import serviceInvestor from "@/assets/service-investor.jpg";
-import serviceInteriorDesign from "@/assets/service-interior-design.jpg";
+import serviceHolidayHome from "@/assets/service-holiday-home-new.webp";
+import serviceExpatRelocate from "@/assets/service-expat-generated.webp";
+import serviceInvestor from "@/assets/service-investor.webp";
+import serviceInteriorDesign from "@/assets/service-interior-design.webp";
 
 const services = [
   {

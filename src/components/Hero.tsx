@@ -1,4 +1,4 @@
-import heroImage from "@/assets/hero-image-new.jpg";
+import heroImage from "@/assets/hero-image-new.webp";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Play } from "lucide-react";

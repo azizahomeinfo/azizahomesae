@@ -5,12 +5,12 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
-import blogTopAgencies from "@/assets/blog-top-agencies.jpg";
-import blogFurnishHome from "@/assets/blog-furnish-home.jpg";
-import blogDubaiInvestment from "@/assets/blog-dubai-investment.jpg";
-import blogRentalRoi from "@/assets/blog-rental-roi-downtown.jpg";
-import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.jpg";
-import blogJvcFamily from "@/assets/blog-jvc-family-rentals.jpg";
+import blogTopAgencies from "@/assets/blog-top-agencies.webp";
+import blogFurnishHome from "@/assets/blog-furnish-home.webp";
+import blogDubaiInvestment from "@/assets/blog-dubai-investment.webp";
+import blogRentalRoi from "@/assets/blog-rental-roi-downtown.webp";
+import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.webp";
+import blogJvcFamily from "@/assets/blog-jvc-family-rentals.webp";
 
 const generateBlogStructuredData = (article: any, slug: string) => ({
   "@context": "https://schema.org",

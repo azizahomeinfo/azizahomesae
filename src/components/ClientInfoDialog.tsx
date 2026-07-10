@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import popupImage from "@/assets/popup-image.jpg";
+import popupImage from "@/assets/popup-image.webp";
 import { supabase } from "@/lib/supabase-ssr";
 import {
   Dialog,

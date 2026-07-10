@@ -4,8 +4,8 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 import { MultilingualSEO } from "@/components/MultilingualSEO";
-import founderImage from "@/assets/founder-veronica.jpg";
-import teamImage from "@/assets/team-photo.jpg";
+import founderImage from "@/assets/founder-veronica.webp";
+import teamImage from "@/assets/team-photo.webp";
 
 const AboutUs = () => {
   const { t } = useTranslation();

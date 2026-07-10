@@ -12,6 +12,21 @@ interface StructuredDataProps {
   pageDescription?: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️ IMPORTANT: Keep these numbers in sync with the REAL reviews on your
+// Google Business Profile. Google's guidelines require that structured-data
+// ratings reflect genuine, verifiable reviews shown to users — inflating or
+// inventing them risks a manual action / rich-result removal.
+// Update ratingValue & reviewCount whenever your GBP reviews change.
+// ─────────────────────────────────────────────────────────────────────────────
+const AGGREGATE_RATING = {
+  "@type": "AggregateRating",
+  "ratingValue": "5.0",   // ← your current Google review average
+  "reviewCount": "12",    // ← your current Google review count
+  "bestRating": "5",
+  "worstRating": "1"
+};
+
 const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredDataProps = {}) => {
   const location = useLocation();
   const baseUrl = "https://www.azizahomes.com";
@@ -82,6 +97,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       "latitude": "25.0772",
       "longitude": "55.1335"
     },
+    "aggregateRating": AGGREGATE_RATING,
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",
       "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],

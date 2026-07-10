@@ -29,6 +29,12 @@ const routePriorities = {
   '/blog': { priority: '0.8', changefreq: 'weekly' },
   '/minimalist-apartment-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
   '/investors-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/dubai-marina': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/downtown-dubai': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/business-bay': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/jumeirah-village-circle': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/palm-jumeirah': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/dubai-hills-estate': { priority: '0.9', changefreq: 'weekly' },
   '/seo-status': { priority: '0.3', changefreq: 'monthly' }
 }
 
@@ -86,6 +92,13 @@ const routesToPrerender = [
   '/blog/where-to-invest-dubai-best-roi-property-growth',
   '/minimalist-apartment-furnishing-dubai',
   '/investors-furnishing-dubai',
+  // Location × intent landing pages (src/data/locationPages.ts) — keep in sync
+  '/furnishing/dubai-marina',
+  '/furnishing/downtown-dubai',
+  '/furnishing/business-bay',
+  '/furnishing/jumeirah-village-circle',
+  '/furnishing/palm-jumeirah',
+  '/furnishing/dubai-hills-estate',
   '/seo-status'
   // Add specific product URLs here when you have them
   // Example: '/product/living-room-package',
@@ -160,6 +173,16 @@ const routesToPrerender = [
           } else {
             html = html.replace('</head>', `${tag}</head>`)
           }
+        }
+      }
+      // Inject Helmet scripts (JSON-LD structured data) into the static HTML.
+      // Without this, Organization/LocalBusiness/FAQ/Service schemas only
+      // exist after client-side hydration and are invisible to crawlers
+      // that don't execute JavaScript.
+      if (helmet.script) {
+        const scriptString = helmet.script.toString()
+        if (scriptString) {
+          html = html.replace('</head>', `${scriptString}\n</head>`)
         }
       }
     }
