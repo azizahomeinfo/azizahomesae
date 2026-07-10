@@ -2,6 +2,7 @@ import logo from "@/assets/aziza-logo.png";
 import { Facebook, Instagram, Linkedin, MapPin, Phone, Mail, Clock, PinIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { useTranslation } from "react-i18next";
+import { locationPages } from "@/data/locationPages";
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -156,6 +157,34 @@ const Footer = () => {
                 </li>
               </ul>
             </div>
+          </div>
+
+          {/* Areas We Serve — internal links to location & intent landing pages */}
+          <div className="border-t border-primary-foreground/20 pt-10 mb-10">
+            <h3 className="font-semibold text-lg mb-5">Areas We Serve in Dubai</h3>
+            <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3 text-sm opacity-90">
+              {locationPages.map((p) => (
+                <li key={p.slug}>
+                  <a
+                    href={`/furnishing/${p.slug}`}
+                    className="hover:opacity-100 transition-opacity"
+                    aria-label={`Apartment furnishing in ${p.areaName}`}
+                  >
+                    {p.areaName.replace(" (JVC)", "")} Furnishing
+                  </a>
+                </li>
+              ))}
+              <li>
+                <a href="/holiday-home-furnishing-dubai" className="hover:opacity-100 transition-opacity" aria-label="Holiday home and Airbnb furnishing in Dubai">
+                  Holiday Home Furnishing
+                </a>
+              </li>
+              <li>
+                <a href="/villa-furnishing-dubai" className="hover:opacity-100 transition-opacity" aria-label="Villa furnishing in Dubai">
+                  Villa Furnishing
+                </a>
+              </li>
+            </ul>
           </div>
 
           <div className="border-t border-primary-foreground/20 pt-6 text-center text-sm opacity-80">

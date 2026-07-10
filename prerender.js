@@ -36,6 +36,14 @@ const routePriorities = {
   '/furnishing/palm-jumeirah': { priority: '0.9', changefreq: 'weekly' },
   '/furnishing/dubai-hills-estate': { priority: '0.9', changefreq: 'weekly' },
   '/furnishing/city-walk': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/jbr': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/dubai-creek-harbour': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/damac-hills': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/arabian-ranches': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/meydan': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/jumeirah-lakes-towers': { priority: '0.9', changefreq: 'weekly' },
+  '/holiday-home-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
+  '/villa-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
   '/seo-status': { priority: '0.3', changefreq: 'monthly' }
 }
 
@@ -91,6 +99,7 @@ const routesToPrerender = [
   '/blog/top-7-interior-design-agencies-dubai',
   '/blog/quick-efficient-ways-to-furnish-your-home',
   '/blog/where-to-invest-dubai-best-roi-property-growth',
+  '/blog/cost-to-furnish-apartment-dubai',
   '/minimalist-apartment-furnishing-dubai',
   '/investors-furnishing-dubai',
   // Location × intent landing pages (src/data/locationPages.ts) — keep in sync
@@ -101,6 +110,14 @@ const routesToPrerender = [
   '/furnishing/palm-jumeirah',
   '/furnishing/dubai-hills-estate',
   '/furnishing/city-walk',
+  '/furnishing/jbr',
+  '/furnishing/dubai-creek-harbour',
+  '/furnishing/damac-hills',
+  '/furnishing/arabian-ranches',
+  '/furnishing/meydan',
+  '/furnishing/jumeirah-lakes-towers',
+  '/holiday-home-furnishing-dubai',
+  '/villa-furnishing-dubai',
   '/seo-status'
   // Add specific product URLs here when you have them
   // Example: '/product/living-room-package',
