@@ -12,11 +12,21 @@ import blogDubaiInvestment from "@/assets/blog-dubai-investment.webp";
 import blogRentalRoi from "@/assets/blog-rental-roi-downtown.webp";
 import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.webp";
 import blogJvcFamily from "@/assets/blog-jvc-family-rentals.webp";
+import blogCostGuide from "@/assets/package-complete-new.webp";
 
 const Blog = () => {
   const { t } = useTranslation();
-  
+
   const articles = [
+    {
+      id: "cost-to-furnish-apartment-dubai",
+      title: "How Much Does It Cost to Furnish an Apartment in Dubai? (2026 Price Guide)",
+      excerpt: "Real numbers for studios to 3-bedroom apartments — package prices from AED 22,500, what's included in each tier, the hidden costs of DIY furnishing, and how to budget by rental strategy.",
+      image: blogCostGuide,
+      date: "July 10, 2026",
+      readTime: "8 min read",
+      category: "Home Furnishing"
+    },
     {
       id: "maximize-rental-roi-downtown-dubai",
       title: "Maximize Your Annual Rental ROI in Downtown Dubai",

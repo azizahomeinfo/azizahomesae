@@ -13,6 +13,12 @@ import heroJvc from "@/assets/portfolio-2.webp";
 import heroPalm from "@/assets/portfolio-15.webp";
 import heroHills from "@/assets/portfolio-18.webp";
 import heroCityWalk from "@/assets/portfolio-16.webp";
+import heroJbr from "@/assets/portfolio-13.webp";
+import heroCreek from "@/assets/portfolio-17.webp";
+import heroDamacHills from "@/assets/portfolio-19.webp";
+import heroRanches from "@/assets/portfolio-20.webp";
+import heroMeydan from "@/assets/portfolio-21.webp";
+import heroJlt from "@/assets/portfolio-22.webp";
 
 export interface LocationFaq {
   q: string;
@@ -497,6 +503,382 @@ export const locationPages: LocationPageData[] = [
     relatedBlog: {
       title: "Quick, Efficient Ways to Furnish Your Home",
       href: "/blog/quick-efficient-ways-to-furnish-your-home",
+    },
+  },
+  {
+    slug: "jbr",
+    areaName: "JBR (Jumeirah Beach Residence)",
+    title: "Apartment Furnishing in JBR | Beachfront Furniture Packages | Aziza Home",
+    metaDescription:
+      "Turnkey furniture packages for JBR apartments. Beach-ready holiday-home and rental furnishing for Rimal, Bahar, Sadaf, Amwaj, Murjan and Shams towers.",
+    keywords:
+      "jbr furnishing, furniture package jbr, furnish apartment jbr, jumeirah beach residence furnishing, beachfront apartment furnishing dubai, jbr airbnb furnishing, the walk jbr apartment",
+    heroImage: heroJbr,
+    heroAlt: "Furnished beachfront apartment in JBR, Dubai",
+    badge: "JBR Furnishing",
+    h1: "Apartment Furnishing in JBR",
+    subtitle:
+      "Beach-ready furniture packages for Jumeirah Beach Residence — built for Dubai's busiest beachfront holiday-let strip.",
+    intro: [
+      "JBR is where Dubai's beach tourism concentrates: The Walk, the public beach, and six residential clusters directly on the sand. For owners, that translates into one of the strongest short-stay markets in the city — and one of the most competitive. Hundreds of near-identical 1BRs and 2BRs face the same guests, and the styled listing wins the booking.",
+      "JBR's towers are older than Marina's, which cuts both ways: layouts are noticeably larger than new-build equivalents, but original fit-outs can feel dated. Smart furnishing turns that into an advantage — a fresh, coastal-modern interior inside a spacious JBR layout photographs better than a cramped new build, at a lower purchase price per square foot.",
+      "We furnish across all six clusters — Rimal, Bahar, Sadaf, Amwaj, Murjan and Shams — and handle the towers' delivery procedures, service-elevator bookings, and the peak-season time pressure owners face getting units ready before winter demand.",
+    ],
+    whyFurnish: [
+      {
+        title: "Beachfront Holiday-Let Demand",
+        desc: "Direct beach access keeps JBR occupancy among Dubai's highest — presentation decides who captures it.",
+      },
+      {
+        title: "Large Layouts, Dated Interiors",
+        desc: "JBR's generous floor plans shine with a modern refresh — furnishing modernises without renovation costs.",
+      },
+      {
+        title: "Season-Ready Scheduling",
+        desc: "We plan setups around the winter high season so your unit earns through peak months.",
+      },
+    ],
+    popularBuildings: ["Rimal", "Bahar", "Sadaf", "Amwaj", "Murjan", "Shams"],
+    faqs: [
+      {
+        q: "Which JBR clusters do you furnish?",
+        a: "All six — Rimal, Bahar, Sadaf, Amwaj, Murjan and Shams — plus the newer towers around the JBR strip. Delivery permits and service-elevator bookings are arranged with each building's management as part of the project.",
+      },
+      {
+        q: "What furnishing style works best for JBR holiday lets?",
+        a: "Coastal-modern performs strongest: light woods, warm neutrals, and styling that echoes the beach outside. It photographs brightly for listings and appeals to the leisure guests JBR attracts year-round.",
+      },
+      {
+        q: "Can you refresh a dated JBR apartment without renovation?",
+        a: "Yes — that's the most common JBR brief. Full furniture replacement, new curtains and lighting, and a feature wall transform an original-condition unit without touching kitchens or bathrooms, keeping cost and downtime low.",
+      },
+      {
+        q: "How fast can a JBR unit be ready for the high season?",
+        a: "Standard setups run 5–15 business days. If you're targeting the winter peak, contact us by early autumn — we schedule JBR projects so units are photographed and listed before demand spikes.",
+      },
+    ],
+    nearby: ["dubai-marina", "palm-jumeirah", "jumeirah-lakes-towers"],
+    relatedBlog: {
+      title: "How to Maximize Holiday Home ROI in Dubai Marina",
+      href: "/blog/maximize-holiday-home-roi-dubai-marina",
+    },
+  },
+  {
+    slug: "dubai-creek-harbour",
+    areaName: "Dubai Creek Harbour",
+    title: "Apartment Furnishing in Dubai Creek Harbour | Furniture Packages | Aziza Home",
+    metaDescription:
+      "Furniture packages for Dubai Creek Harbour apartments. Post-handover furnishing for Creek Horizon, Harbour Views, Address Harbour Point and more — ready in 5–15 days.",
+    keywords:
+      "dubai creek harbour furnishing, furniture package creek harbour, furnish apartment creek harbour, creek horizon furnishing, harbour views furnishing, emaar creek harbour handover furnishing",
+    heroImage: heroCreek,
+    heroAlt: "Furnished apartment in Dubai Creek Harbour with skyline view",
+    badge: "Creek Harbour Furnishing",
+    h1: "Apartment Furnishing in Dubai Creek Harbour",
+    subtitle:
+      "Post-handover furniture packages for Emaar's waterfront district — from bare handover to listed in two weeks.",
+    intro: [
+      "Dubai Creek Harbour is still in its handover era: towers keep completing, and most owners receive a completely bare apartment — no wardrobes styled, no curtains, builder-white walls. The gap between 'keys received' and 'earning rent' is exactly what our packages close, typically within two weeks of handover.",
+      "The district draws professionals who want Downtown's skyline without Downtown's prices, plus early investors positioning for the area's growth. Because so much inventory hands over at once, the units that lease first are the ones that look finished — furnished listings stand out sharply against the flood of bare-shell competition.",
+      "We work with Emaar's handover and community procedures across Creek Horizon, Harbour Views, 17 Icon Bay, Creek Palace and Address Harbour Point, timing delivery slots around the district's construction logistics.",
+    ],
+    whyFurnish: [
+      {
+        title: "Beat the Handover Flood",
+        desc: "When a whole tower hands over at once, furnished units lease first — bare shells wait months.",
+      },
+      {
+        title: "Keys-to-Income in ~2 Weeks",
+        desc: "We schedule around your Emaar handover date so the apartment earns almost immediately.",
+      },
+      {
+        title: "Skyline-Worthy Styling",
+        desc: "Interiors composed around Creek Harbour's Downtown-skyline and creek views.",
+      },
+    ],
+    popularBuildings: [
+      "Creek Horizon",
+      "Harbour Views",
+      "17 Icon Bay",
+      "Creek Palace",
+      "Address Harbour Point",
+      "Creek Gate",
+    ],
+    faqs: [
+      {
+        q: "I'm receiving handover in Creek Harbour soon — when should I contact you?",
+        a: "Two to four weeks before your handover date is ideal. We agree the package and design direction in advance, then deliver and install as soon as you have keys and building access — most units are rental-ready within two weeks of handover.",
+      },
+      {
+        q: "Do Creek Harbour rentals really need furnishing?",
+        a: "More than most areas. Because towers hand over in bulk, tenants compare many identical bare units at once. A furnished, styled apartment differentiates instantly and typically leases while unfurnished neighbours are still being viewed.",
+      },
+      {
+        q: "Which package tier fits Creek Harbour?",
+        a: "Premium is the most common choice — the district's finish level and skyline views reward styling beyond the Essential tier, and listing photos compete against a large volume of similar units.",
+      },
+      {
+        q: "Can you coordinate with Emaar's handover process?",
+        a: "Yes. We handle community access, delivery permits, and installation scheduling within Emaar's procedures, and we're familiar with the district's construction-phase logistics.",
+      },
+    ],
+    nearby: ["downtown-dubai", "business-bay", "meydan"],
+    relatedBlog: {
+      title: "Where to Invest in Dubai: Best ROI & Property Growth",
+      href: "/blog/where-to-invest-dubai-best-roi-property-growth",
+    },
+  },
+  {
+    slug: "damac-hills",
+    areaName: "Damac Hills",
+    title: "Villa & Apartment Furnishing in Damac Hills | Aziza Home",
+    metaDescription:
+      "Furniture packages for Damac Hills villas, townhouses and apartments. Family and golf-community furnishing around the Trump International Golf Club.",
+    keywords:
+      "damac hills furnishing, furnish villa damac hills, furniture package damac hills, damac hills townhouse furnishing, golf community furnishing dubai, artesia furnishing",
+    heroImage: heroDamacHills,
+    heroAlt: "Furnished villa living room in Damac Hills, Dubai",
+    badge: "Damac Hills Furnishing",
+    h1: "Furnishing in Damac Hills",
+    subtitle:
+      "Family and golf-community furnishing — villas, townhouses and apartments around the fairways.",
+    intro: [
+      "Damac Hills is a golf-course community first: villas and townhouses arranged around the Trump International Golf Club, with apartment clusters like Artesia and Golf Promenade serving professionals and smaller households. Its tenants choose the area for space, greenery, and a quieter pace than the city core.",
+      "Furnishing briefs here split in two. Villa and townhouse owners want complete family homes — living and dining, all bedrooms, kids' rooms, and increasingly outdoor seating that makes use of golf-course views. Apartment owners in the community's towers want efficient rental-ready packages closer to our standard tiers.",
+      "The community's gated access and villa-district logistics are straightforward but need planning; we schedule gate passes and multi-day phased installations for larger homes so a full villa comes together in one coordinated project rather than months of piecemeal deliveries.",
+    ],
+    whyFurnish: [
+      {
+        title: "Family Homes, Complete",
+        desc: "Full villa and townhouse projects — living, bedrooms, kids' rooms, and garden seating in one plan.",
+      },
+      {
+        title: "Golf-View Outdoor Living",
+        desc: "Terrace and garden furnishing that turns fairway views into usable living space.",
+      },
+      {
+        title: "Long-Tenancy Market",
+        desc: "Damac Hills tenants stay years — durable, liveable interiors protect rent levels and reduce turnover.",
+      },
+    ],
+    popularBuildings: [
+      "Artesia",
+      "Golf Promenade",
+      "Golf Town",
+      "Loreto",
+      "The Park Villas",
+      "Trump Estates",
+    ],
+    faqs: [
+      {
+        q: "Do you furnish full villas in Damac Hills?",
+        a: "Yes — complete villa projects are the core of our Damac Hills work, covering living and dining areas, all bedrooms, kids' rooms, and outdoor furniture. Villas are quoted individually after a design consultation.",
+      },
+      {
+        q: "How long does a Damac Hills villa take to furnish?",
+        a: "Townhouses typically complete in one to two weeks; larger villas run two to four weeks as phased installations. Apartments in the community's towers follow our standard 5–15 business-day window.",
+      },
+      {
+        q: "Can you include garden and terrace furniture?",
+        a: "Yes. Outdoor living is one of Damac Hills' main attractions, and we scope weather-appropriate outdoor seating and dining into villa and townhouse projects on request.",
+      },
+      {
+        q: "Is furnishing worth it for a Damac Hills rental?",
+        a: "For family rentals, move-in-ready homes win viewings — relocating families rarely want to buy a house of furniture before moving in. Furnished units also photograph far better on the portals where family tenants search.",
+      },
+    ],
+    nearby: ["arabian-ranches", "jumeirah-village-circle", "dubai-hills-estate"],
+    relatedBlog: {
+      title: "JVC Family Rental Furnishing: ROI Guide",
+      href: "/blog/jvc-family-rental-furnishing-roi-guide",
+    },
+  },
+  {
+    slug: "arabian-ranches",
+    areaName: "Arabian Ranches",
+    title: "Villa Furnishing in Arabian Ranches | Aziza Home",
+    metaDescription:
+      "Complete villa furnishing for Arabian Ranches — Saheel, Savannah, Mirador, Azalea, Samara and more. Family-focused turnkey furniture packages by Aziza Home.",
+    keywords:
+      "arabian ranches furnishing, furnish villa arabian ranches, villa furniture package dubai, arabian ranches interior design, family villa furnishing dubai, emaar villa furnishing",
+    heroImage: heroRanches,
+    heroAlt: "Furnished family villa in Arabian Ranches, Dubai",
+    badge: "Arabian Ranches Furnishing",
+    h1: "Villa Furnishing in Arabian Ranches",
+    subtitle:
+      "Complete, family-first villa furnishing for one of Dubai's most established communities.",
+    intro: [
+      "Arabian Ranches is one of Dubai's original villa communities, and it shows in the best way: mature landscaping, established schools, and families who settle for the long term. Homes here are large — three to six bedrooms across two floors — and furnishing one is a genuinely different project from fitting out an apartment.",
+      "Our Ranches projects are scoped room by room: formal and family living areas, dining, all bedrooms, kids' and study rooms, and the garden and patio spaces that Ranches life revolves around. The design direction leans warm and timeless rather than trend-driven — these are homes families live in for five or ten years, not listings chasing a season.",
+      "Villa projects run as phased installations over two to four weeks, coordinated with community gate access. Many of our Ranches clients are families arriving from abroad; we regularly complete homes before the family lands so they move straight in.",
+    ],
+    whyFurnish: [
+      {
+        title: "Whole-Home Projects",
+        desc: "Three to six bedrooms, living, dining, study and outdoor areas — planned and installed as one project.",
+      },
+      {
+        title: "Move-In Before You Land",
+        desc: "Relocating families arrive to a fully made home — beds made, curtains hung, kitchen stocked-ready.",
+      },
+      {
+        title: "Timeless Over Trendy",
+        desc: "Durable, warm interiors designed for years of family life, not one season of photos.",
+      },
+    ],
+    popularBuildings: ["Saheel", "Savannah", "Mirador", "Alvorada", "Azalea (AR2)", "Samara (AR2)"],
+    faqs: [
+      {
+        q: "What does it cost to furnish an Arabian Ranches villa?",
+        a: "Villas are quoted individually because sizes range widely — a 3BR townhouse-style villa and a 6BR Saheel home are very different projects. As a reference point, our apartment packages start from AED 52,500 for a 3-bedroom layout; villa projects are scoped after a consultation.",
+      },
+      {
+        q: "How long does a full villa take?",
+        a: "Two to four weeks for most Ranches villas, run as a phased installation — typically bedrooms and living areas first, then dining, study, and outdoor spaces. We sequence around your move-in date.",
+      },
+      {
+        q: "Can you furnish the villa before we arrive in Dubai?",
+        a: "Yes — this is one of our most common Ranches requests. We finalise the design remotely, complete installation while you're abroad, and hand over a ready home with photo documentation before your flight lands.",
+      },
+      {
+        q: "Do you handle outdoor and garden furniture?",
+        a: "Yes. Gardens are central to Ranches living, and villa projects can include outdoor dining, lounge seating, and shade-appropriate pieces selected for Dubai's climate.",
+      },
+    ],
+    nearby: ["damac-hills", "dubai-hills-estate", "meydan"],
+    relatedBlog: {
+      title: "Quick, Efficient Ways to Furnish Your Home",
+      href: "/blog/quick-efficient-ways-to-furnish-your-home",
+    },
+  },
+  {
+    slug: "meydan",
+    areaName: "Meydan & MBR City",
+    title: "Apartment Furnishing in Meydan & MBR City | Aziza Home",
+    metaDescription:
+      "Furniture packages for Meydan and MBR City apartments — Sobha Hartland, Azizi Riviera, District One. Post-handover and rental-ready furnishing in 5–15 days.",
+    keywords:
+      "meydan furnishing, mbr city furnishing, sobha hartland furnishing, azizi riviera furnishing, district one furnishing, furniture package meydan, furnish apartment mbr city",
+    heroImage: heroMeydan,
+    heroAlt: "Furnished modern apartment in Meydan, MBR City, Dubai",
+    badge: "Meydan & MBR City Furnishing",
+    h1: "Apartment Furnishing in Meydan & MBR City",
+    subtitle:
+      "Post-handover and rental-ready furniture packages for Dubai's fastest-growing central district.",
+    intro: [
+      "Meydan and the wider MBR City district sit minutes from Downtown but hand over at prices well below it — which is exactly why investor activity here is intense. Sobha Hartland, Azizi Riviera, and District One deliver thousands of new units, and nearly all of them arrive bare.",
+      "The rental audience is a blend: professionals commuting to Downtown and DIFC who want newer buildings for less, and a growing short-stay market around the Meydan Racecourse events calendar and the district's lagoon attractions. Both segments filter by photos, and in a district full of same-year buildings, interiors are the only real differentiator.",
+      "Most of our Meydan work is post-handover: owners contact us with a handover date, we prepare the package in advance, and the apartment goes from bare shell to photographed listing within about two weeks of keys — often while neighbouring units are still empty concrete.",
+    ],
+    whyFurnish: [
+      {
+        title: "Investor-Dense, Bare-Handover Market",
+        desc: "Thousands of identical new units hand over bare — furnished ones lease first and price stronger.",
+      },
+      {
+        title: "Downtown Demand, Meydan Prices",
+        desc: "Tenants priced out of Downtown expect Downtown-level presentation — deliver it and win them.",
+      },
+      {
+        title: "Handover-Synced Setup",
+        desc: "Package agreed pre-handover, installed the week you get keys, listed within ~two weeks.",
+      },
+    ],
+    popularBuildings: [
+      "Sobha Hartland (Hartland Greens, Waves)",
+      "Sobha Creek Vistas",
+      "Azizi Riviera",
+      "District One Residences",
+      "Wilton Terraces",
+      "The Polo Residence",
+    ],
+    faqs: [
+      {
+        q: "Do you furnish Azizi Riviera and Sobha Hartland handover units?",
+        a: "Yes — these are among our most frequent projects. Both communities hand over in large phases, so we recommend booking two to four weeks before your handover date to have the package ready when you receive keys.",
+      },
+      {
+        q: "Which package tier suits a Meydan rental?",
+        a: "Premium is the sweet spot for most MBR City units: the district's tenants compare against Downtown alternatives, and the styling uplift over Essential pays for itself in listing performance. Studios aimed at short stays often justify Luxury.",
+      },
+      {
+        q: "Is Meydan good for short-term rentals?",
+        a: "The market is growing — racecourse events, the lagoon districts, and proximity to Downtown support short-stay demand, at friendlier entry prices than Downtown itself. Styled interiors are essential since the area's short-stay inventory is new and competitive.",
+      },
+      {
+        q: "How long does furnishing take in MBR City?",
+        a: "The standard 5–15 business days after payment and access. During large handover phases we book delivery slots early, so earlier contact means faster turnaround.",
+      },
+    ],
+    nearby: ["downtown-dubai", "dubai-creek-harbour", "business-bay"],
+    relatedBlog: {
+      title: "Where to Invest in Dubai: Best ROI & Property Growth",
+      href: "/blog/where-to-invest-dubai-best-roi-property-growth",
+    },
+  },
+  {
+    slug: "jumeirah-lakes-towers",
+    areaName: "JLT (Jumeirah Lakes Towers)",
+    title: "Apartment Furnishing in JLT | Furniture Packages | Aziza Home",
+    metaDescription:
+      "Furniture packages for JLT apartments. Rental-ready furnishing for Jumeirah Lakes Towers' clusters — Marina quality at JLT prices, ready in 5–15 days.",
+    keywords:
+      "jlt furnishing, furniture package jlt, furnish apartment jlt, jumeirah lakes towers furnishing, dmcc apartment furnishing, lake view apartment furnishing dubai",
+    heroImage: heroJlt,
+    heroAlt: "Furnished lake-view apartment in JLT, Dubai",
+    badge: "JLT Furnishing",
+    h1: "Apartment Furnishing in JLT",
+    subtitle:
+      "Rental-ready furniture packages for Jumeirah Lakes Towers — Marina-grade presentation at JLT economics.",
+    intro: [
+      "JLT is the value play directly across Sheikh Zayed Road from Dubai Marina: similar commutes, lake and skyline views, and rents meaningfully lower. Its tenant base is anchored by the DMCC free zone — one of the world's largest — which keeps a steady stream of professionals looking for well-priced apartments within walking distance of their office.",
+      "Because JLT competes on value, most landlords under-invest in presentation — which makes furnishing unusually effective here. A professionally styled JLT apartment photographs like a Marina listing at a lower rent, and captures tenants comparing across both districts.",
+      "JLT's 26 clusters vary widely in age and finish, and we calibrate accordingly: newer towers take our standard packages directly, while older-cluster units often pair furnishing with lighting and curtain upgrades that modernise the space without renovation.",
+    ],
+    whyFurnish: [
+      {
+        title: "DMCC Tenant Pipeline",
+        desc: "The free zone's professionals want walkable, move-in-ready homes — furnished units capture them first.",
+      },
+      {
+        title: "Outshine the Cluster",
+        desc: "Most JLT landlords don't invest in presentation — styling puts your listing in a different league.",
+      },
+      {
+        title: "Old or New Cluster",
+        desc: "Packages calibrated per tower age — including lighting and curtain refreshes for older clusters.",
+      },
+    ],
+    popularBuildings: [
+      "Cluster A–Z towers",
+      "Lake Terrace",
+      "Goldcrest Views",
+      "Al Seef Towers",
+      "Green Lakes",
+      "MBL Residence",
+    ],
+    faqs: [
+      {
+        q: "Is furnishing worth it in a value area like JLT?",
+        a: "Yes — precisely because the bar is low. Most JLT listings are unfurnished or minimally presented, so a professionally styled unit stands out immediately, rents faster, and can position at the top of its cluster's range.",
+      },
+      {
+        q: "Can you modernise an older JLT apartment?",
+        a: "Yes. For older clusters we pair the furniture package with new curtains, rugs, and lighting — the three elements that most date an interior — which modernises the unit without renovation cost or downtime.",
+      },
+      {
+        q: "Do you furnish for DMCC corporate tenants?",
+        a: "We furnish units that landlords then lease to DMCC professionals and companies seeking staff housing. Move-in-ready presentation is a strong differentiator for corporate lets, which value zero setup time.",
+      },
+      {
+        q: "How long does a JLT setup take?",
+        a: "The standard 5–15 business days. JLT towers have well-established delivery procedures, and we handle the service-elevator bookings and permits with each cluster's management.",
+      },
+    ],
+    nearby: ["dubai-marina", "jbr", "jumeirah-village-circle"],
+    relatedBlog: {
+      title: "How to Maximize Rental ROI in Downtown Dubai",
+      href: "/blog/maximize-rental-roi-downtown-dubai",
     },
   },
 ];

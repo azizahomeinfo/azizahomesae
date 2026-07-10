@@ -11,6 +11,7 @@ import blogDubaiInvestment from "@/assets/blog-dubai-investment.webp";
 import blogRentalRoi from "@/assets/blog-rental-roi-downtown.webp";
 import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.webp";
 import blogJvcFamily from "@/assets/blog-jvc-family-rentals.webp";
+import blogCostGuide from "@/assets/package-complete-new.webp";
 
 const generateBlogStructuredData = (article: any, slug: string) => ({
   "@context": "https://schema.org",
@@ -46,7 +47,11 @@ const BlogPost = () => {
   const relatedArticles: Record<string, Array<{id: string; title: string; category: string}>> = {
     "maximize-rental-roi-downtown-dubai": [
       { id: "maximize-holiday-home-roi-dubai-marina", title: "Maximize Your Holiday Home ROI in Dubai Marina", category: "Investment Guide" },
-      { id: "where-to-invest-dubai-best-roi-property-growth", title: "Where to Invest in Dubai for the Best ROI", category: "Investment Guide" }
+      { id: "cost-to-furnish-apartment-dubai", title: "How Much Does It Cost to Furnish an Apartment in Dubai?", category: "Home Furnishing" }
+    ],
+    "cost-to-furnish-apartment-dubai": [
+      { id: "quick-efficient-ways-to-furnish-your-home", title: "Quick & Efficient Ways to Furnish Your Home", category: "Home Furnishing" },
+      { id: "maximize-rental-roi-downtown-dubai", title: "Maximize Your Annual Rental ROI in Downtown Dubai", category: "Investment Guide" }
     ],
     "maximize-holiday-home-roi-dubai-marina": [
       { id: "maximize-rental-roi-downtown-dubai", title: "Maximize Your Annual Rental ROI in Downtown Dubai", category: "Investment Guide" },
@@ -908,6 +913,155 @@ const BlogPost = () => {
         </div>
       `
     },
+    "cost-to-furnish-apartment-dubai": {
+      title: "How Much Does It Cost to Furnish an Apartment in Dubai? (2026 Price Guide)",
+      image: blogCostGuide,
+      date: "July 10, 2026",
+      readTime: "8 min read",
+      category: "Home Furnishing",
+      content: `
+        <div class="space-y-12">
+          <!-- Hero Section -->
+          <div class="text-center max-w-3xl mx-auto space-y-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-foreground">How Much Does It Cost to Furnish an Apartment in Dubai? (2026 Price Guide)</h1>
+            <p class="text-xl text-muted-foreground">Real numbers for studios to 3-bedroom apartments — package prices, what's included, the hidden costs of DIY furnishing, and how to budget by rental strategy.</p>
+
+            <div class="flex justify-center pt-4">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
+                🔹 Get a Personalised Quote on WhatsApp
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick Answer -->
+          <section class="bg-secondary/30 border border-border rounded-lg p-8 max-w-3xl mx-auto">
+            <h2 class="text-2xl font-bold text-foreground mb-4">The Short Answer</h2>
+            <p class="text-muted-foreground mb-4">In 2026, professionally furnishing an apartment in Dubai with a turnkey package costs approximately:</p>
+            <ul class="space-y-2 text-muted-foreground">
+              <li><strong class="text-foreground">Studio:</strong> from AED 22,500 to AED 30,500+</li>
+              <li><strong class="text-foreground">1 Bedroom:</strong> from AED 30,000 to AED 46,000+</li>
+              <li><strong class="text-foreground">2 Bedroom:</strong> from AED 40,000 to AED 65,500+</li>
+              <li><strong class="text-foreground">3 Bedroom:</strong> from AED 52,500 to AED 88,600+</li>
+            </ul>
+            <p class="text-muted-foreground mt-4 text-sm italic">Ranges span Essential to Luxury tiers, excluding appliances and 5% VAT. Villas and townhouses are quoted per project.</p>
+          </section>
+
+          <!-- Full pricing table -->
+          <section class="max-w-3xl mx-auto space-y-6">
+            <h2 class="text-3xl font-bold text-foreground">Furnishing Package Prices by Layout and Tier</h2>
+            <p class="text-muted-foreground">Turnkey packages bundle design, furniture, curtains, rugs, décor, delivery, and installation into one price. Here is our current price matrix:</p>
+            <div class="overflow-x-auto rounded-lg border border-border">
+              <table class="w-full text-sm">
+                <thead class="bg-secondary/50">
+                  <tr>
+                    <th class="text-left p-4 font-semibold text-foreground">Layout</th>
+                    <th class="text-left p-4 font-semibold text-foreground">Essential</th>
+                    <th class="text-left p-4 font-semibold text-foreground">Premium</th>
+                    <th class="text-left p-4 font-semibold text-foreground">Luxury</th>
+                  </tr>
+                </thead>
+                <tbody class="text-muted-foreground">
+                  <tr><td class="p-4 font-medium text-foreground">Studio</td><td class="p-4">from AED 22,500</td><td class="p-4">from AED 26,500</td><td class="p-4">from AED 30,500</td></tr>
+                  <tr><td class="p-4 font-medium text-foreground">1 Bedroom</td><td class="p-4">from AED 30,000</td><td class="p-4">from AED 36,500</td><td class="p-4">from AED 46,000</td></tr>
+                  <tr><td class="p-4 font-medium text-foreground">2 Bedroom</td><td class="p-4">from AED 40,000</td><td class="p-4">from AED 55,000</td><td class="p-4">from AED 65,500</td></tr>
+                  <tr><td class="p-4 font-medium text-foreground">3 Bedroom</td><td class="p-4">from AED 52,500</td><td class="p-4">from AED 72,800</td><td class="p-4">from AED 88,600</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-sm text-muted-foreground italic">Prices exclude appliances and 5% VAT. Appliance packages are available as an add-on for rental and holiday-home setups.</p>
+          </section>
+
+          <!-- What the tiers mean -->
+          <section class="max-w-3xl mx-auto space-y-6">
+            <h2 class="text-3xl font-bold text-foreground">What Do Essential, Premium, and Luxury Actually Mean?</h2>
+            <div class="space-y-4 text-muted-foreground">
+              <p><strong class="text-foreground">Essential</strong> delivers a complete, clean, rental-ready home: all furniture, curtains, rugs, basic décor, delivery and installation. It suits long-term rentals in value-focused areas like JVC or JLT, where tenants prioritise move-in readiness over showpiece styling.</p>
+              <p><strong class="text-foreground">Premium</strong> — the most popular tier — adds enhanced styling and a feature wall. The visual difference shows up directly in listing photos, which is why ROI-focused investors in areas like Business Bay, Meydan, and Creek Harbour usually pick it.</p>
+              <p><strong class="text-foreground">Luxury</strong> upgrades wall design, materials, and styling depth. It's the default for holiday homes in Marina, JBR, and Palm Jumeirah, and for Downtown units where interiors must match the address to justify the rent.</p>
+            </div>
+          </section>
+
+          <!-- Cost factors -->
+          <section class="max-w-3xl mx-auto space-y-6">
+            <h2 class="text-3xl font-bold text-foreground">Five Factors That Move Your Final Price</h2>
+            <div class="space-y-4">
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">1. Layout and size</h3>
+                <p class="text-muted-foreground text-sm">The biggest driver. Each additional bedroom adds a bed, wardrobe styling, curtains, lighting, and décor — roughly AED 8,000–20,000 per room depending on tier.</p>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">2. Appliances</h3>
+                <p class="text-muted-foreground text-sm">Many Dubai apartments hand over without a washing machine, fridge, or oven. A full appliance package typically adds AED 8,000–15,000 depending on brands and unit size.</p>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">3. Rental strategy</h3>
+                <p class="text-muted-foreground text-sm">Holiday homes need linen-ready bedrooms, guest-proof materials, and photo-first styling — pushing them toward Premium/Luxury. Long-term rentals can perform well on Essential.</p>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">4. Building logistics</h3>
+                <p class="text-muted-foreground text-sm">Tower delivery permits, service-elevator rules, and gated-community access affect scheduling. Good providers absorb this coordination into the package rather than billing surprises.</p>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">5. Wall design and styling depth</h3>
+                <p class="text-muted-foreground text-sm">Feature walls and upgraded wall treatments are the main separators between tiers — and the elements that most transform listing photos.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- DIY comparison -->
+          <section class="max-w-3xl mx-auto space-y-6">
+            <h2 class="text-3xl font-bold text-foreground">Package vs. Furnishing It Yourself</h2>
+            <p class="text-muted-foreground">Buying piece by piece from retail stores looks cheaper on paper, but the comparison usually flips once you count everything:</p>
+            <ul class="space-y-3 text-muted-foreground">
+              <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Time:</strong> DIY furnishing a 1BR typically takes 4–8 weeks of showroom visits, delivery windows, and assembly bookings. A package takes 5–15 business days — for a rental, each extra empty month costs you a month of rent.</span></li>
+              <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Coherence:</strong> Retail pieces bought separately rarely photograph as a designed whole — and listings compete on photos.</span></li>
+              <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Hidden costs:</strong> Delivery fees, assembly charges, curtain tailoring and installation, and returns add 10–20% to DIY budgets.</span></li>
+              <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Overseas owners:</strong> DIY is effectively impossible remotely; packages are designed for it.</span></li>
+            </ul>
+          </section>
+
+          <!-- Budgeting by strategy -->
+          <section class="max-w-3xl mx-auto space-y-6">
+            <h2 class="text-3xl font-bold text-foreground">How to Budget by Rental Strategy</h2>
+            <div class="space-y-4 text-muted-foreground">
+              <p><strong class="text-foreground">Long-term rental:</strong> Essential or Premium. Based on selected previous projects, professional furnishing may support around 15–20% stronger rental positioning depending on location and market conditions — meaning a Premium 1BR package can recover its cost within the first tenancy.</p>
+              <p><strong class="text-foreground">Holiday home / Airbnb:</strong> Premium or Luxury plus the appliance package. Interiors drive click-through, nightly rate, and reviews — the three levers of short-stay revenue. See our <a href="/holiday-home-furnishing-dubai" class="text-primary underline">holiday home furnishing guide</a>.</p>
+              <p><strong class="text-foreground">Personal home:</strong> Any tier, tailored to taste. Relocating families often furnish remotely before arrival — see our <a href="/villa-furnishing-dubai" class="text-primary underline">villa furnishing service</a> for larger homes.</p>
+            </div>
+          </section>
+
+          <!-- FAQ -->
+          <section class="max-w-3xl mx-auto space-y-6">
+            <h2 class="text-3xl font-bold text-foreground">Common Questions</h2>
+            <div class="space-y-4">
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">Is furnishing cheaper in some areas of Dubai?</h3>
+                <p class="text-muted-foreground text-sm">Package prices are the same city-wide — what changes by area is the recommended tier. A JLT long-term rental performs well on Essential; a Palm Jumeirah holiday home needs Luxury to compete.</p>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">How long does furnishing take?</h3>
+                <p class="text-muted-foreground text-sm">Standard apartment setups complete in 5–15 business days after payment and building access. Villas run two to four weeks as phased installations.</p>
+              </div>
+              <div class="bg-card border border-border rounded-lg p-6">
+                <h3 class="font-semibold text-foreground mb-2">Can I furnish my apartment while living abroad?</h3>
+                <p class="text-muted-foreground text-sm">Yes — remote coordination is standard: design sign-off, progress updates, installation, and photo-documented handover all happen without you flying in.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- CTA -->
+          <section class="bg-secondary/30 border border-border rounded-lg p-8 max-w-3xl mx-auto text-center space-y-4">
+            <h2 class="text-2xl font-bold text-foreground">Get an Exact Price for Your Apartment</h2>
+            <p class="text-muted-foreground">Send us your building, layout, and rental goal on WhatsApp — we'll recommend the right tier and share the full package guide with detailed inclusions.</p>
+            <div class="flex justify-center pt-2">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
+                🔹 Get My Quote on WhatsApp
+              </a>
+            </div>
+          </section>
+        </div>
+      `
+    },
     "jvc-family-rental-furnishing-roi-guide": {
       title: "JVC Family Rental Furnishing: Maximize Your ROI with Long-Term Tenants",
       image: blogJvcFamily,
@@ -1344,7 +1498,8 @@ const BlogPost = () => {
       "where-to-invest-dubai-best-roi-property-growth": "https://www.azizahomes.com/blog-dubai-investment.jpg",
       "maximize-rental-roi-downtown-dubai": "https://www.azizahomes.com/blog-rental-roi-downtown.jpg",
       "maximize-holiday-home-roi-dubai-marina": "https://www.azizahomes.com/blog-holiday-roi-marina.jpg",
-      "jvc-family-rental-furnishing-roi-guide": "https://www.azizahomes.com/blog-jvc-family-rentals.jpg"
+      "jvc-family-rental-furnishing-roi-guide": "https://www.azizahomes.com/blog-jvc-family-rentals.jpg",
+      "cost-to-furnish-apartment-dubai": "https://www.azizahomes.com/package-complete-new.jpg"
     };
     return imageMap[slug] || "https://www.azizahomes.com/hero-image-new.jpg";
   };

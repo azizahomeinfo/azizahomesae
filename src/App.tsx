@@ -18,6 +18,7 @@ import SeoStatus from "./pages/SeoStatus";
 import MinimalistApartmentDubai from "./pages/MinimalistApartmentDubai";
 import InvestorsFurnishingDubai from "./pages/InvestorsFurnishingDubai";
 import LocationFurnishing from "./pages/LocationFurnishing";
+import IntentFurnishing from "./pages/IntentFurnishing";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,8 @@ const App = () => (
         <Route path="/minimalist-apartment-furnishing-dubai" element={<MinimalistApartmentDubai />} />
         <Route path="/investors-furnishing-dubai" element={<InvestorsFurnishingDubai />} />
         <Route path="/furnishing/:slug" element={<LocationFurnishing />} />
+        <Route path="/holiday-home-furnishing-dubai" element={<IntentFurnishing />} />
+        <Route path="/villa-furnishing-dubai" element={<IntentFurnishing />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
