@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import package1 from "@/assets/package-1.jpg";
-import package2 from "@/assets/package-2.jpg";
-import package3 from "@/assets/package-3.jpg";
+import package1 from "@/assets/package-1.webp";
+import package2 from "@/assets/package-2.webp";
+import package3 from "@/assets/package-3.webp";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 

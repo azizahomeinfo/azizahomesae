@@ -6,10 +6,10 @@ import Footer from "@/components/Footer";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
 import { MultilingualSEO } from "@/components/MultilingualSEO";
-import serviceHolidayHome from "@/assets/service-holiday-home-new.jpg";
-import serviceExpatRelocate from "@/assets/service-expat-generated.jpg";
-import serviceInvestor from "@/assets/service-investor.jpg";
-import serviceInteriorDesign from "@/assets/service-interior-design.jpg";
+import serviceHolidayHome from "@/assets/service-holiday-home-new.webp";
+import serviceExpatRelocate from "@/assets/service-expat-generated.webp";
+import serviceInvestor from "@/assets/service-investor.webp";
+import serviceInteriorDesign from "@/assets/service-interior-design.webp";
 
 const services = [
   {
@@ -52,8 +52,8 @@ const Services = () => {
       />
       <StructuredData 
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Services", url: "https://azizahomes.com/services" }
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Services", url: "https://www.azizahomes.com/services" }
         ]}
         pageTitle="Services"
         pageDescription="Explore Aziza Home's comprehensive furnishing services in Dubai: Holiday Home Packages, Expat Relocation, Investor Packages with 20-25% ROI increase, and Custom Interior Design."

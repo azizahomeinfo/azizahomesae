@@ -10,9 +10,9 @@ import { MultilingualSEO } from "@/components/MultilingualSEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
-import package1 from "@/assets/package-1.jpg";
-import package2 from "@/assets/package-2.jpg";
-import package3 from "@/assets/package-3.jpg";
+import package1 from "@/assets/package-1.webp";
+import package2 from "@/assets/package-2.webp";
+import package3 from "@/assets/package-3.webp";
 
 type RoomType = "studio" | "1b" | "2b" | "3b";
 
@@ -88,12 +88,12 @@ const PackagesOverview = () => {
         description={t('pages:packages.description')}
         keywords={t('pages:packages.keywords')}
         path="/packages"
-        image="https://azizahomes.com/package-complete-new.jpg"
+        image="https://www.azizahomes.com/package-complete-new.jpg"
       />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Packages", url: "https://azizahomes.com/packages" }
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Packages", url: "https://www.azizahomes.com/packages" }
         ]}
         pageTitle="Packages"
         pageDescription="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 30,500 AED). Complete furniture packages for Dubai properties."

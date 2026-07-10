@@ -18,13 +18,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { supabase } from "@/lib/supabase-ssr";
-import hero from "@/assets/minimalist-dubai-hero.jpg";
-import g1 from "@/assets/portfolio-1.jpg";
-import g2 from "@/assets/portfolio-2.jpeg";
-import g3 from "@/assets/portfolio-10.jpeg";
-import g4 from "@/assets/portfolio-12.jpeg";
-import g5 from "@/assets/portfolio-15.jpg";
-import g6 from "@/assets/portfolio-18.jpg";
+import hero from "@/assets/minimalist-dubai-hero.webp";
+import g1 from "@/assets/portfolio-1.webp";
+import g2 from "@/assets/portfolio-2.webp";
+import g3 from "@/assets/portfolio-10.webp";
+import g4 from "@/assets/portfolio-12.webp";
+import g5 from "@/assets/portfolio-15.webp";
+import g6 from "@/assets/portfolio-18.webp";
 
 const PATH = "/minimalist-apartment-furnishing-dubai";
 const TITLE = "Minimalist Apartment Furnishing Dubai | Aziza Home";
@@ -149,8 +149,8 @@ const MinimalistApartmentDubai = () => {
       <MultilingualSEO title={TITLE} description={DESCRIPTION} keywords={KEYWORDS} path={PATH} />
       <StructuredData
         breadcrumbs={[
-          { name: "Home", url: "https://azizahomes.com" },
-          { name: "Minimalist Apartment Furnishing Dubai", url: `https://azizahomes.com${PATH}` },
+          { name: "Home", url: "https://www.azizahomes.com" },
+          { name: "Minimalist Apartment Furnishing Dubai", url: `https://www.azizahomes.com${PATH}` },
         ]}
         pageTitle="Minimalist Apartment Furnishing Dubai"
         pageDescription={DESCRIPTION}

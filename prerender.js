@@ -29,6 +29,12 @@ const routePriorities = {
   '/blog': { priority: '0.8', changefreq: 'weekly' },
   '/minimalist-apartment-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
   '/investors-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/dubai-marina': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/downtown-dubai': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/business-bay': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/jumeirah-village-circle': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/palm-jumeirah': { priority: '0.9', changefreq: 'weekly' },
+  '/furnishing/dubai-hills-estate': { priority: '0.9', changefreq: 'weekly' },
   '/seo-status': { priority: '0.3', changefreq: 'monthly' }
 }
 
@@ -86,25 +92,23 @@ const routesToPrerender = [
   '/blog/where-to-invest-dubai-best-roi-property-growth',
   '/minimalist-apartment-furnishing-dubai',
   '/investors-furnishing-dubai',
+  // Location × intent landing pages (src/data/locationPages.ts) — keep in sync
+  '/furnishing/dubai-marina',
+  '/furnishing/downtown-dubai',
+  '/furnishing/business-bay',
+  '/furnishing/jumeirah-village-circle',
+  '/furnishing/palm-jumeirah',
+  '/furnishing/dubai-hills-estate',
   '/seo-status'
   // Add specific product URLs here when you have them
   // Example: '/product/living-room-package',
 ]
 
-// Function to submit sitemap to Google Search Console
-async function submitSitemapToGoogle(sitemapUrl) {
-  try {
-    const pingUrl = `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
-    const response = await fetch(pingUrl)
-    if (response.ok) {
-      console.log('✓ Sitemap successfully submitted to Google Search Console')
-    } else {
-      console.log('⚠ Google sitemap ping returned status:', response.status)
-    }
-  } catch (error) {
-    console.log('⚠ Could not ping Google (this is normal in local builds):', error.message)
-  }
-}
+// NOTE: Google retired the sitemap ping endpoint
+// (google.com/ping?sitemap=) in 2023 and it is now a no-op. Bing deprecated
+// its equivalent too. Discovery now relies on the `Sitemap:` directive in
+// robots.txt plus a one-time manual submission in Google Search Console /
+// Bing Webmaster Tools, so there is no automated ping step here.
 
 ;(async () => {
   // Generate and write sitemap.xml
@@ -115,11 +119,7 @@ async function submitSitemapToGoogle(sitemapUrl) {
   // Also update the source sitemap for development
   fs.writeFileSync(toAbsolute('public/sitemap.xml'), sitemapContent)
   console.log('Updated public/sitemap.xml')
-  
-  // Submit sitemap to Google Search Console
-  const sitemapUrl = `${SITE_URL}/sitemap.xml`
-  await submitSitemapToGoogle(sitemapUrl)
-  
+
   for (const url of routesToPrerender) {
     const { html: appHtml, helmet } = render(url);
     let html = template.replace(`<!--app-html-->`, appHtml)
@@ -173,6 +173,16 @@ async function submitSitemapToGoogle(sitemapUrl) {
           } else {
             html = html.replace('</head>', `${tag}</head>`)
           }
+        }
+      }
+      // Inject Helmet scripts (JSON-LD structured data) into the static HTML.
+      // Without this, Organization/LocalBusiness/FAQ/Service schemas only
+      // exist after client-side hydration and are invisible to crawlers
+      // that don't execute JavaScript.
+      if (helmet.script) {
+        const scriptString = helmet.script.toString()
+        if (scriptString) {
+          html = html.replace('</head>', `${scriptString}\n</head>`)
         }
       }
     }
