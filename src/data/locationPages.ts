@@ -12,6 +12,7 @@ import heroBusinessBay from "@/assets/portfolio-10.webp";
 import heroJvc from "@/assets/portfolio-2.webp";
 import heroPalm from "@/assets/portfolio-15.webp";
 import heroHills from "@/assets/portfolio-18.webp";
+import heroCityWalk from "@/assets/portfolio-16.webp";
 
 export interface LocationFaq {
   q: string;
@@ -167,7 +168,7 @@ export const locationPages: LocationPageData[] = [
         a: "Typically 5–15 business days from confirmation and access. Fast-track options may be available depending on stock and tower access rules.",
       },
     ],
-    nearby: ["business-bay", "dubai-marina", "dubai-hills-estate"],
+    nearby: ["business-bay", "city-walk", "dubai-marina"],
     relatedBlog: {
       title: "How to Maximize Rental ROI in Downtown Dubai",
       href: "/blog/maximize-rental-roi-downtown-dubai",
@@ -431,6 +432,71 @@ export const locationPages: LocationPageData[] = [
     relatedBlog: {
       title: "Where to Invest in Dubai: Best ROI & Property Growth",
       href: "/blog/where-to-invest-dubai-best-roi-property-growth",
+    },
+  },
+  {
+    slug: "city-walk",
+    areaName: "City Walk",
+    title: "Apartment Furnishing in City Walk Dubai | Furniture Packages | Aziza Home",
+    metaDescription:
+      "Design-led furniture packages for City Walk apartments. Turnkey furnishing for Dubai's premium urban lifestyle district — residences and Central Park at City Walk.",
+    keywords:
+      "city walk furnishing, furniture package city walk dubai, furnish apartment city walk, central park city walk furnishing, city walk residences furnishing, meraas city walk interior design",
+    heroImage: heroCityWalk,
+    heroAlt: "Furnished designer apartment in City Walk, Dubai",
+    badge: "City Walk Furnishing",
+    h1: "Apartment Furnishing in City Walk",
+    subtitle:
+      "Design-led furniture packages for Dubai's boutique urban district — interiors that match City Walk's gallery-street aesthetic.",
+    intro: [
+      "City Walk is Dubai's design district in the most literal sense — residents step out of their lobby onto curated retail boulevards, street art, and some of the city's best cafés. Tenants who choose City Walk are buying into an aesthetic, and they notice immediately when an apartment's interior doesn't live up to the neighbourhood outside the window.",
+      "The district's low-rise Meraas residences and the newer Central Park towers attract a distinct tenant mix: affluent professionals and small families who want walkable urban living without a high-rise, plus a strong short-stay market driven by Coca-Cola Arena events and the area's dining scene. Both audiences pay a premium — and both choose from photos.",
+      "Our City Walk setups lean contemporary: cleaner lines and gallery-inspired styling that echo the district's architecture, in the Premium and Luxury tiers most owners here select. Deliveries and installations are coordinated with Meraas community management, including boulevard access windows and service routes.",
+    ],
+    whyFurnish: [
+      {
+        title: "Design-Conscious Tenants",
+        desc: "City Walk residents choose the district for its aesthetic — interiors must match the standard of the streets outside.",
+      },
+      {
+        title: "Event-Driven Short Stays",
+        desc: "Coca-Cola Arena and the dining scene feed a premium short-stay market that books on photos.",
+      },
+      {
+        title: "Meraas Logistics Handled",
+        desc: "We coordinate boulevard access, delivery windows, and installation with community management.",
+      },
+    ],
+    popularBuildings: [
+      "City Walk Residences (Buildings 1–24)",
+      "Central Park at City Walk",
+      "Celadon",
+      "Laurel",
+      "Erin",
+      "Myrtle",
+    ],
+    faqs: [
+      {
+        q: "Which furnishing style suits a City Walk apartment?",
+        a: "Contemporary and warm-minimal directions perform best — clean lines, natural materials, and gallery-inspired styling that mirror the district's architecture. Most City Walk owners choose our Premium or Luxury tiers to match the neighbourhood's standard.",
+      },
+      {
+        q: "Do you furnish Central Park at City Walk handover units?",
+        a: "Yes — post-handover furnishing in Central Park's towers is a frequent request. Send us your handover date and layout, and we schedule design and installation so the apartment is ready shortly after you receive keys.",
+      },
+      {
+        q: "Is City Walk good for short-term rental furnishing?",
+        a: "Yes. City Walk's dining scene and Coca-Cola Arena events support a premium short-stay market. Styled interiors materially affect nightly rates here, so holiday-home owners typically choose Premium or Luxury styling aimed at listing photography.",
+      },
+      {
+        q: "How long does a City Walk furnishing project take?",
+        a: "Standard apartments complete in 5–15 business days after confirmation and access. We arrange Meraas community delivery permits and service-route bookings as part of the project, so access rules don't add delays.",
+      },
+    ],
+    nearby: ["downtown-dubai", "business-bay", "palm-jumeirah"],
+    relatedBlog: {
+      title: "Quick, Efficient Ways to Furnish Your Home",
+      href: "/blog/quick-efficient-ways-to-furnish-your-home",
     },
   },
 ];
