@@ -12,6 +12,7 @@ import palace2 from "@/assets/case-palace-emaar-beachfront-2.webp";
 import palace3 from "@/assets/case-palace-emaar-beachfront-3.webp";
 import palace4 from "@/assets/case-palace-emaar-beachfront-4.webp";
 import palace5 from "@/assets/case-palace-emaar-beachfront-5.webp";
+import palace6 from "@/assets/case-palace-emaar-beachfront-6.webp";
 
 export interface CaseStudyImage {
   src: string;
@@ -115,6 +116,11 @@ export const caseStudies: CaseStudyData[] = [
         src: palace5,
         alt: "Media feature wall with recessed TV, floating walnut console and LED lighting in Palace Emaar Beachfront",
         caption: "Custom media wall with floating walnut console and backlit shelving",
+      },
+      {
+        src: palace6,
+        alt: "Entrance vignette in Palace Emaar Beachfront with sculptural plaster mirror, abstract art and walnut-top console",
+        caption: "Entrance vignette — sculptural mirror and curated art set the tone at the door",
       },
     ],
     heroIndex: 0,
