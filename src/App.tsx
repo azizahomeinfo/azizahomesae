@@ -19,6 +19,7 @@ import MinimalistApartmentDubai from "./pages/MinimalistApartmentDubai";
 import InvestorsFurnishingDubai from "./pages/InvestorsFurnishingDubai";
 import LocationFurnishing from "./pages/LocationFurnishing";
 import IntentFurnishing from "./pages/IntentFurnishing";
+import CaseStudy from "./pages/CaseStudy";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/portfolio" element={<ProjectGallery />} />
+        <Route path="/portfolio/:slug" element={<CaseStudy />} />
         <Route path="/packages" element={<PackagesOverview />} />
         <Route path="/product/:handle" element={<ProductDetail />} />
         <Route path="/seo-status" element={<SeoStatus />} />
