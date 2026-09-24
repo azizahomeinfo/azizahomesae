@@ -69,8 +69,8 @@ export const BriefActionBar = ({
   const run = async (a: BriefAction, extra?: { designerId?: string; note?: string }) => {
     try {
       await beforeAction?.();
-      if (a.kind === "claim" || a.kind === "assign") {
-        const d = a.kind === "claim" ? me : extra?.designerId;
+      if (a.kind === "assign") {
+        const d = extra?.designerId;
         if (!d) return toast.error("Choose a designer");
         await assign.mutateAsync({
           id: brief.id, leadId: brief.leadId, designerId: d,

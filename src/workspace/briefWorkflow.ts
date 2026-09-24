@@ -35,7 +35,6 @@ export const editRights = (status: BriefStatus, a: Actor) => {
 
 export type BriefAction =
   | { kind: "submit"; label: string; to: "Submitted" }
-  | { kind: "claim"; label: string; to: "Assigned" }
   | { kind: "assign"; label: string; to: "Assigned" }
   | { kind: "start"; label: string; to: "In Design" }
   | { kind: "ready"; label: string; to: "Design Ready" }
@@ -51,7 +50,6 @@ export const availableActions = (status: BriefStatus, a: Actor): BriefAction[] =
       if (isSalesSide(a)) out.push({ kind: "submit", label: "Submit to design", to: "Submitted" });
       break;
     case "Submitted":
-      if (a.role === "designer") out.push({ kind: "claim", label: "Assign to me", to: "Assigned" });
       if (a.role === "gm") out.push({ kind: "assign", label: "Assign designer", to: "Assigned" });
       break;
     case "Assigned":

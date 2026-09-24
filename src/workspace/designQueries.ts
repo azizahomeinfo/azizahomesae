@@ -7,7 +7,7 @@ import { JPEG_QUALITY, MAX_EDGE, SIGNED_URL_TTL, kindForArea } from "./designSch
 type T = Database["public"]["Tables"];
 export type DesignRow = Pick<
   T["designs"]["Row"],
-  "id" | "lead_id" | "version" | "designer_id" | "status" | "notes" | "feedback" | "reject_reason" | "submitted_at" | "decided_at" | "decided_by" | "created_at"
+  "id" | "lead_id" | "version" | "designer_id" | "status" | "notes" | "feedback" | "reject_reason" | "submitted_at" | "decided_at" | "decided_by" | "created_at" | "updated_at"
 >;
 export type DesignImage = Pick<
   T["design_images"]["Row"],
@@ -15,7 +15,7 @@ export type DesignImage = Pick<
 >;
 export type BriefStatusValue = T["requirement_briefs"]["Row"]["status"];
 
-const DESIGN_COLS = "id, lead_id, version, designer_id, status, notes, feedback, reject_reason, submitted_at, decided_at, decided_by, created_at";
+const DESIGN_COLS = "id, lead_id, version, designer_id, status, notes, feedback, reject_reason, submitted_at, decided_at, decided_by, created_at, updated_at";
 const IMAGE_COLS = "id, design_id, storage_path, caption, room, sort_order, kind, file_name, width, height";
 const BUCKET = "workspace";
 
@@ -243,6 +243,40 @@ export const useSaveDesignNotes = () =>
       fail(error);
     },
   });
+
+/** Renames an area by rewriting `room` on every row in the group, so it stays one group. Matching another name merges them. */
+export const useRenameArea = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { designId: string; ids: string[]; to: string }) => {
+      if (!v.ids.length) return v;
+      const { error } = await supabase.from("design_images").update({ room: v.to, kind: kindForArea(v.to) }).in("id", v.ids);
+      fail(error);
+      return v;
+    },
+    onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: designKeys.images(v.designId) }),
+  });
+};
+
+const NOTIFY_WINDOW_MS = 10 * 60 * 1000;
+const lastNotified = new Map<string, number>();
+
+/**
+ * After a designer changes a Submitted package: bump designs.updated_at (the touch trigger
+ * sets it) so reviewers see it, and notify sales + GMs at most once per package per 10 minutes.
+ * The debounce is per browser tab (memory + localStorage), not global.
+ */
+export const touchSubmittedDesign = async (v: { designId: string; leadId: string; notify: NotifyTarget[] }) => {
+  const { error } = await supabase.from("designs").update({ updated_at: new Date().toISOString() }).eq("id", v.designId);
+  fail(error);
+  const key = `ws-design-notified:${v.designId}`;
+  let last = lastNotified.get(v.designId) ?? 0;
+  try { last = Math.max(last, Number(window.localStorage.getItem(key)) || 0); } catch { /* storage unavailable */ }
+  if (Date.now() - last < NOTIFY_WINDOW_MS) return;
+  lastNotified.set(v.designId, Date.now());
+  try { window.localStorage.setItem(key, String(Date.now())); } catch { /* storage unavailable */ }
+  await notify(v.notify);
+};
 
 /* ---------------- workflow ---------------- */
 

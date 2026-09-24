@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, FileText, Loader2, Trash2, Upload, X } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ChevronLeft, ChevronRight, FileText, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { useBrief, useLead, useMembers, type NotifyTarget } from "./queries";
 import {
   isPdf, useDecideDesign, useDeleteImage, useDesignImages, useDesigns, useReorderImages, useSaveDesignNotes,
-  useSignedUrls, useStartDesign, useSubmitDesign, useUpdateImage, useUploadDesignFile,
+  touchSubmittedDesign, useRenameArea, useSignedUrls, useStartDesign, useSubmitDesign, useUpdateImage, useUploadDesignFile,
   type DesignImage, type DesignRow, type UploadStage,
 } from "./designQueries";
 import { DESIGN_AREAS, REJECT_REASONS, type DesignStatus } from "./designSchema";
@@ -31,10 +32,8 @@ interface Props {
 }
 
 const areaOf = (i: DesignImage) => i.room || "Other";
-const areaRank = (a: string) => {
-  const i = (DESIGN_AREAS as readonly string[]).indexOf(a);
-  return i < 0 ? DESIGN_AREAS.length : i;
-};
+const CUSTOM = "__custom__";
+const STD_RANK = new Map((DESIGN_AREAS as readonly string[]).map((a, i) => [a.toLowerCase(), i]));
 const errMsg = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
 /* ---------------- debounced autosave ---------------- */
@@ -54,9 +53,9 @@ function useAutosave(value: string, initial: string, enabled: boolean, save: (v:
 /* ---------------- thumbnail ---------------- */
 
 const Thumb = ({
-  img, url, editable, onOpen, onMove, canLeft, canRight, onDragStartId, onDropOn,
+  img, url, editable, onOpen, onMove, canLeft, canRight, onDragStartId, onDropOn, onChanged,
 }: {
-  img: DesignImage; url?: string; editable: boolean; onOpen: () => void;
+  img: DesignImage; url?: string; editable: boolean; onOpen: () => void; onChanged: () => void;
   onMove: (dir: -1 | 1) => void; canLeft: boolean; canRight: boolean;
   onDragStartId: (id: string) => void; onDropOn: (id: string) => void;
 }) => {
@@ -74,6 +73,7 @@ const Thumb = ({
   const remove = async () => {
     try {
       await del.mutateAsync(img);
+      onChanged();
     } catch (e) {
       toast.error(errMsg(e, "Could not remove the file"));
     }
@@ -222,15 +222,23 @@ const RejectDialog = ({
 interface QueueItem { key: string; name: string; area: string; stage: UploadStage | "error" }
 
 const AreaSection = ({
-  area, images, urls, editable, uploads, onFiles, onOpen, onReorder,
+  area, images, urls, editable, uploads, onFiles, onOpen, onReorder, onRename, onChanged,
 }: {
   area: string; images: DesignImage[]; urls: Map<string, string>; editable: boolean; uploads: QueueItem[];
+  onRename: (from: string, to: string) => void; onChanged: () => void;
   onFiles: (area: string, files: File[]) => void; onOpen: (img: DesignImage) => void;
   onReorder: (area: string, ordered: string[]) => void;
 }) => {
   const input = useRef<HTMLInputElement>(null);
   const dragId = useRef<string | null>(null);
   const [over, setOver] = useState(false);
+  const [name, setName] = useState(area);
+  useEffect(() => setName(area), [area]);
+  const commitName = () => {
+    const to = name.trim().slice(0, 60);
+    if (!to) return setName(area); // empty names are not allowed; revert
+    if (to !== area) onRename(area, to);
+  };
   const ids = images.map((i) => i.id);
 
   const move = (id: string, dir: -1 | 1) => {
@@ -262,7 +270,22 @@ const AreaSection = ({
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-heading uppercase text-lg tracking-wide">{area} <span className="text-muted-foreground text-sm">({images.length})</span></h3>
+        {editable ? (
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Input
+              value={name} aria-label="Area name" placeholder="Area name"
+              className="h-9 max-w-xs font-heading uppercase tracking-wide"
+              onChange={(e) => setName(e.target.value)} onBlur={commitName}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+                if (e.key === "Escape") setName(area);
+              }}
+            />
+            <span className="shrink-0 text-muted-foreground text-sm">({images.length})</span>
+          </div>
+        ) : (
+          <h3 className="font-heading uppercase text-lg tracking-wide">{area} <span className="text-muted-foreground text-sm">({images.length})</span></h3>
+        )}
         {editable && (
           <>
             <Button size="sm" variant="outline" onClick={() => input.current?.click()}>
@@ -280,7 +303,7 @@ const AreaSection = ({
           <Thumb
             key={img.id} img={img} url={urls.get(img.storage_path)} editable={editable}
             onOpen={() => onOpen(img)} onMove={(d) => move(img.id, d)} canLeft={i > 0} canRight={i < images.length - 1}
-            onDragStartId={(id) => { dragId.current = id; }} onDropOn={dropOn}
+            onDragStartId={(id) => { dragId.current = id; }} onDropOn={dropOn} onChanged={onChanged}
           />
         ))}
         {uploads.map((u) => (
@@ -308,20 +331,23 @@ const AreaSection = ({
 /* ---------------- version body ---------------- */
 
 const VersionView = ({
-  design, previous, editable, leadId,
-}: { design: DesignRow; previous: DesignRow | undefined; editable: boolean; leadId: string }) => {
+  design, previous, editable, leadId, onChanged,
+}: { design: DesignRow; previous: DesignRow | undefined; editable: boolean; leadId: string; onChanged: () => void }) => {
   const { data: images = [], isLoading, error } = useDesignImages(design.id);
   const { data: urls = new Map<string, string>() } = useSignedUrls(images.map((i) => i.storage_path));
   const upload = useUploadDesignFile();
   const reorder = useReorderImages();
   const saveNotes = useSaveDesignNotes();
+  const rename = useRenameArea();
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customName, setCustomName] = useState("");
   const [notes, setNotes] = useState(design.notes ?? "");
   const [extraAreas, setExtraAreas] = useState<string[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [lightbox, setLightbox] = useState<number | null>(null);
 
   useEffect(() => { setNotes(design.notes ?? ""); setExtraAreas([]); setQueue([]); }, [design.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const persistNotes = useCallback(async (v: string) => { await saveNotes.mutateAsync({ id: design.id, notes: v }); }, [design.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const persistNotes = useCallback(async (v: string) => { await saveNotes.mutateAsync({ id: design.id, notes: v }); onChanged(); }, [design.id, onChanged]); // eslint-disable-line react-hooks/exhaustive-deps
   useAutosave(notes, design.notes ?? "", editable, persistNotes);
 
   const byArea = useMemo(() => {
@@ -329,10 +355,31 @@ const VersionView = ({
     for (const i of images) m.set(areaOf(i), [...(m.get(areaOf(i)) ?? []), i]);
     for (const a of extraAreas) if (!m.has(a)) m.set(a, []);
     for (const q of queue) if (!m.has(q.area)) m.set(q.area, []);
-    return [...m.entries()].sort((a, b) => areaRank(a[0]) - areaRank(b[0]));
+    // Standard areas in canonical order; custom ones after, in the order they were added
+    // (first file's sort_order is a global running counter; empty new areas go last in click order).
+    const rank = (area: string, list: DesignImage[]) => {
+      const std = STD_RANK.get(area.toLowerCase());
+      if (std !== undefined) return std;
+      if (list.length) return DESIGN_AREAS.length + Math.min(...list.map((i) => i.sort_order));
+      return 1e9 + Math.max(0, extraAreas.indexOf(area));
+    };
+    return [...m.entries()].sort((a, b) => rank(a[0], a[1]) - rank(b[0], b[1]));
   }, [images, extraAreas, queue]);
+  const findArea = (n: string) => byArea.find(([k]) => k.toLowerCase() === n.toLowerCase())?.[0];
+  const addArea = (raw: string) => {
+    const n = raw.trim().slice(0, 60);
+    if (!n) return;
+    if (!findArea(n)) setExtraAreas((x) => [...x, n]);
+    setCustomOpen(false); setCustomName("");
+  };
+  const onRename = (from: string, raw: string) => {
+    const to = findArea(raw) && findArea(raw) !== from ? findArea(raw)! : raw; // same name as another group → merge into it
+    const ids = images.filter((i) => areaOf(i) === from).map((i) => i.id);
+    setExtraAreas((x) => [...new Set(x.map((a) => (a === from ? to : a)))]);
+    if (ids.length) rename.mutate({ designId: design.id, ids, to }, { onError: (e) => toast.error(errMsg(e, "Could not rename the area")) });
+  };
   const viewable = byArea.flatMap(([, list]) => list).filter((i) => !isPdf(i));
-  const unused = DESIGN_AREAS.filter((a) => !byArea.some(([k]) => k === a));
+  const unused = DESIGN_AREAS.filter((a) => !findArea(a));
 
   const onFiles = async (area: string, files: File[]) => {
     let next = images.reduce((m, i) => Math.max(m, i.sort_order), 0) + 1;
@@ -343,6 +390,7 @@ const VersionView = ({
       try {
         await upload.mutateAsync({ leadId, designId: design.id, area, file: it.file, sortOrder: it.order, onStage: (s) => setStage(it.key, s) });
         setQueue((q) => q.filter((x) => x.key !== it.key));
+        onChanged();
       } catch (e) {
         toast.error(errMsg(e, `${it.name}: upload failed`));
         setStage(it.key, "error");
@@ -389,19 +437,36 @@ const VersionView = ({
             <AreaSection
               key={area} area={area} images={list} urls={urls} editable={editable}
               uploads={queue.filter((q) => q.area === area)} onFiles={onFiles} onReorder={onReorder}
+              onRename={onRename} onChanged={onChanged}
               onOpen={(img) => setLightbox(viewable.findIndex((v) => v.id === img.id))}
             />
           ))}
-          {editable && unused.length > 0 && (
+          {editable && (customOpen ? (
+            <div className="flex max-w-md flex-col gap-2 sm:flex-row">
+              <Input
+                autoFocus value={customName} placeholder="Area name, e.g. Study" aria-label="Custom area name"
+                onChange={(e) => setCustomName(e.target.value.slice(0, 60))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); addArea(customName); }
+                  if (e.key === "Escape") { setCustomOpen(false); setCustomName(""); }
+                }}
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => addArea(customName)} disabled={!customName.trim()}>Add</Button>
+                <Button size="sm" variant="ghost" onClick={() => { setCustomOpen(false); setCustomName(""); }}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
             <div className="max-w-xs">
-              <Select value="" onValueChange={(a) => setExtraAreas((x) => [...x, a])}>
+              <Select value="" onValueChange={(a) => (a === CUSTOM ? setCustomOpen(true) : addArea(a))}>
                 <SelectTrigger><SelectValue placeholder="+ Add area" /></SelectTrigger>
                 <SelectContent>
                   {unused.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  <SelectItem value={CUSTOM}><span className="inline-flex items-center gap-1"><Plus className="h-3.5 w-3.5" /> Add custom area…</span></SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
+          ))}
         </>
       )}
 
@@ -435,7 +500,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const isGm = member?.role === "gm";
   const isAssignedDesigner = !!me && (brief?.designer_id === me || lead?.designer_id === me);
   const isLatest = !!selected && selected.id === latest?.id;
-  const editable = !viewOnly && isLatest && selected.status === "Draft" && !!me && (selected.designer_id === me || isAssignedDesigner);
+  // Draft and Submitted stay editable for the designer; Accepted is locked because the proposal is built from it.
+  const editable = !viewOnly && isLatest && (selected.status === "Draft" || selected.status === "Submitted")
+    && !!me && (selected.designer_id === me || isAssignedDesigner);
   const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
   const canStartFirst = !viewOnly && !latest && isAssignedDesigner && !!brief && ["Assigned", "In Design", "Revision Requested"].includes(brief.status);
@@ -490,6 +557,22 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     }
   };
 
+  const onChanged = useCallback(() => {
+    if (!selected || selected.status !== "Submitted" || !lead || !member) return;
+    const targets = new Set<string>(members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id));
+    if (lead.sales_id) targets.add(lead.sales_id);
+    targets.delete(member.user_id);
+    const title = `${member.full_name} updated design V${selected.version} for ${lead.name}`;
+    touchSubmittedDesign({
+      designId: selected.id, leadId,
+      notify: [...targets].map((user_id) => ({ user_id, kind: "design", title, lead_id: lead.id })),
+    }).catch((e) => toast.error(errMsg(e, "Change saved, but sales could not be notified")));
+  }, [selected, lead, member, members, leadId]);
+
+  // 60s slack: submitted_at is the browser clock, updated_at the server's.
+  const updatedAfterSubmit = !!selected && selected.status === "Submitted" && !!selected.submitted_at
+    && new Date(selected.updated_at).getTime() - new Date(selected.submitted_at).getTime() > 60_000;
+
   const zeroFiles = currentImages.length === 0;
   const close = () => onOpenChange(false);
 
@@ -542,7 +625,15 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
               {selected.status === "Accepted" && selected.decided_by && (
                 <p className="text-sm text-muted-foreground">Accepted by {nameOf(selected.decided_by)}.</p>
               )}
-              <VersionView key={selected.id} design={selected} previous={previous} editable={editable} leadId={leadId} />
+              {selected.status === "Accepted" && isLatest && !viewOnly && (isAssignedDesigner || selected.designer_id === me) && (
+                <p className="text-sm text-muted-foreground">This design is approved. Start a new version to change it.</p>
+              )}
+              {updatedAfterSubmit && !editable && (
+                <p className="text-sm text-muted-foreground">
+                  Updated by the designer after submitting — {formatDistanceToNow(new Date(selected.updated_at), { addSuffix: true })}.
+                </p>
+              )}
+              <VersionView key={selected.id} design={selected} previous={previous} editable={editable} leadId={leadId} onChanged={onChanged} />
             </>
           )}
         </div>
@@ -550,7 +641,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
 
       {(editable || canReview || canStartNext) && (
         <footer className="border-t border-border px-4 py-3 md:px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          {editable && (
+          {editable && selected?.status === "Draft" && (
             <>
               {zeroFiles && <span className="text-xs text-muted-foreground sm:mr-auto">Add at least one file before submitting.</span>}
               <Button onClick={doSubmit} disabled={zeroFiles || submit.isPending}>Submit to sales</Button>
