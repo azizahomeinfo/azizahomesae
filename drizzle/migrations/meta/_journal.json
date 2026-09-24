@@ -127,6 +127,13 @@
       "when": 1790286151524,
       "tag": "0017_suppliers_designer_maintain",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790286721738,
+      "tag": "0018_design_and_costing_guards",
+      "breakpoints": true
     }
   ]
 }
