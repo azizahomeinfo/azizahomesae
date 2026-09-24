@@ -80,11 +80,11 @@ const DesignerView = () => {
 
   return (
     <div className="space-y-8">
-      <Group title="Available to pick up" empty="No briefs waiting." count={queue.length}>
+      <Group title="Waiting for the GM to assign" empty="No briefs waiting." count={queue.length}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {queue.map((q) => (
             <div key={q.brief_id} className="space-y-2">
-              {/* The lead only becomes visible to a designer once assigned, so the card itself is not a link. */}
+              {/* Read-only: only the GM assigns. The lead becomes visible to a designer once assigned, so this is not a link. */}
               <div className="rounded-[var(--radius)] border border-border bg-card p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-foreground min-w-0 truncate">{q.name}</p>
@@ -95,10 +95,6 @@ const DesignerView = () => {
                   <span>{aed(q.budget)}</span>
                   <span className="text-muted-foreground">Target {shortDate(q.target_date)}</span>
                 </div>
-                <BriefActionBar
-                  size="sm"
-                  brief={{ id: q.brief_id, leadId: q.lead_id, leadName: q.name, status: q.status as BriefStatus, designerId: null, salesId: null }}
-                />
               </div>
             </div>
           ))}
