@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
@@ -7,6 +7,28 @@ import { BRIEF_LABEL, BRIEF_STATUSES, type BriefStatus } from "../briefWorkflow"
 import { BriefActionBar } from "../useBriefActions";
 import BriefStatusPill from "../BriefStatusPill";
 import { aed, shortDate } from "../format";
+import { Button } from "@/components/ui/button";
+import DesignPackage from "../DesignPackage";
+import DesignStatusPill from "../DesignStatusPill";
+import { useDesignStatuses } from "../designQueries";
+import type { DesignStatus } from "../designSchema";
+
+const DESIGN_STAGES: BriefStatus[] = ["Assigned", "In Design", "Revision Requested", "Design Ready", "Design Approved"];
+
+/** Design status chip + button that opens the design package for a lead. */
+const DesignLink = ({ leadId, briefStatus }: { leadId: string; briefStatus: BriefStatus }) => {
+  const { data: statuses } = useDesignStatuses();
+  const [open, setOpen] = useState(false);
+  if (!DESIGN_STAGES.includes(briefStatus)) return null;
+  const d = statuses?.get(leadId);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {d ? <DesignStatusPill status={d.status as DesignStatus} version={d.version} /> : <span className="text-xs text-muted-foreground">No design yet</span>}
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>Design package</Button>
+      <DesignPackage leadId={leadId} open={open} onOpenChange={setOpen} />
+    </div>
+  );
+};
 
 interface CardData {
   leadId: string; name: string; property: string | null; unitType: string | null;
@@ -84,7 +106,12 @@ const DesignerView = () => {
       </Group>
       <Group title="My briefs" empty="Nothing assigned to you." count={mine.length}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {mine.map((b) => <BriefCard key={b.id} d={fromRow(b)} />)}
+          {mine.map((b) => (
+            <div key={b.id} className="space-y-2">
+              <BriefCard d={fromRow(b)} />
+              <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
+            </div>
+          ))}
         </div>
       </Group>
     </div>
@@ -130,6 +157,7 @@ const GmView = () => {
                       <TableCell className="whitespace-nowrap">{(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"}</TableCell>
                       <TableCell className="whitespace-nowrap">{(b.designer_id && nameOf.get(b.designer_id)) || "—"}</TableCell>
                       <TableCell className="text-right">
+                        <div className="flex justify-end"><DesignLink leadId={b.lead_id} briefStatus={st} /></div>
                         {st === "Submitted" && (
                           <BriefActionBar
                             size="sm"
@@ -146,6 +174,7 @@ const GmView = () => {
               {rows.map((b) => (
                 <div key={b.id} className="space-y-2">
                   <BriefCard d={fromRow(b)} />
+                  <DesignLink leadId={b.lead_id} briefStatus={st} />
                   <p className="px-1 text-xs text-muted-foreground">
                     Owner: {(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"} · Designer: {(b.designer_id && nameOf.get(b.designer_id)) || "—"}
                   </p>

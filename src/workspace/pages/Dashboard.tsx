@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useLeads } from "../queries";
+import { useBriefList, useLeads } from "../queries";
+import { useDesignStatuses } from "../designQueries";
 import { isClosed } from "../constants";
 import { isDue, shortDate } from "../format";
 import StatusPill from "../StatusPill";
@@ -10,6 +11,12 @@ const Dashboard = () => {
   const { member } = useWorkspace();
   const first = member?.full_name.split(" ")[0] ?? "";
   const { data: leads = [], isLoading } = useLeads();
+
+  const { data: designStatuses } = useDesignStatuses();
+  const { data: briefs = [] } = useBriefList();
+  const role = member?.role;
+  const awaitingReview = [...(designStatuses?.values() ?? [])].filter((d) => d.status === "Submitted").length;
+  const inDesign = briefs.filter((b) => b.designer_id === member?.user_id && (b.status === "Assigned" || b.status === "In Design")).length;
 
   const now = new Date();
   const active = leads.filter((l) => !isClosed(l.status));
@@ -28,6 +35,8 @@ const Dashboard = () => {
     { label: "Won this month", value: wonThisMonth.length },
     { label: "Live projects", value: 0, caption: "from the next release" },
   ];
+  if (role === "gm" || role === "sales") stats.splice(2, 0, { label: "Awaiting your review", value: awaitingReview, caption: "submitted designs", alert: awaitingReview > 0 });
+  if (role === "designer") stats.splice(2, 0, { label: "In design", value: inDesign, caption: "briefs assigned to you" });
 
   return (
     <div className="space-y-6">
