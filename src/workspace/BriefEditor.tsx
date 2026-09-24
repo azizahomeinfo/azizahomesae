@@ -121,6 +121,8 @@ interface Props {
   onOpenChange: (o: boolean) => void;
   lead: Lead;
   brief: BriefRow;
+  /** Read-only: nothing editable and no workflow buttons. */
+  viewOnly?: boolean;
 }
 
 const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Props) => {
@@ -202,11 +204,11 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
         <span className="text-xs text-muted-foreground min-w-[80px]">
           {save.isPending ? "Saving…" : dirty ? "Unsaved" : savedAt ? `Saved ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : canSave ? "" : "Read only"}
         </span>
-        <BriefActionBar
+        {!viewOnly && <BriefActionBar
           size="sm"
           beforeAction={flush}
           brief={{ id: brief.id, leadId: lead.id, leadName: lead.name, status, designerId: brief.designer_id, salesId: lead.sales_id }}
-        />
+        />}
         <Button variant="ghost" size="icon" aria-label="Close brief" onClick={() => close(false)}><X /></Button>
       </div>
 
