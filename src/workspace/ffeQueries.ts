@@ -12,8 +12,8 @@ export type Supplier = Pick<
 >;
 export type FfeRow = Pick<
   T["ffe_items"]["Row"],
-  | "id" | "project_id" | "lead_id" | "ref" | "room" | "category" | "item" | "sku" | "dims" | "finish" | "spec" | "qty" | "unit"
-  | "supplier_id" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order"
+  | "id" | "project_id" | "lead_id" | "ref" | "room" | "category" | "item" | "dims" | "spec" | "qty" | "unit"
+  | "supplier_id" | "supplier_name" | "supplier_contact" | "product_url" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order"
 > & { unit_cost?: number | null };
 export type ProcStage = T["ffe_items"]["Row"]["stage"];
 export type CostingStatus = T["ffe_costings"]["Row"]["status"];
@@ -30,7 +30,7 @@ export type Snag = Pick<
 const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, payment_terms, rating, status, notes";
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
-  "id, project_id, lead_id, ref, room, category, item, sku, dims, finish, spec, qty, unit, supplier_id, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
+  "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
 const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, options";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
 
@@ -187,7 +187,7 @@ export const useSeedFfe = () => {
           rows.push({
             [v.owner.col]: v.owner.id, room, item: i.item.trim(), ref,
             qty: qtyOf(i.required) ?? qtyOf(i.std) ?? 1,
-            finish: i.notes?.trim() || null, category: categoryForRoom(room), sort_order: rows.length,
+            notes: i.notes?.trim() || null, category: categoryForRoom(room), sort_order: rows.length,
           });
         }
       }
@@ -204,13 +204,13 @@ export const useAddFfeItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { owner: FfeOwner; room: string; existing: FfeRow[] }) => {
-      const { error } = await supabase.from("ffe_items").insert({
+      const { data, error } = await supabase.from("ffe_items").insert({
         [v.owner.col]: v.owner.id, room: v.room, item: "New item", category: categoryForRoom(v.room),
         ref: nextRef(v.room, v.existing.map((r) => r.ref)),
         sort_order: v.existing.reduce((m, r) => Math.max(m, r.sort_order), -1) + 1,
-      });
+      }).select("id").single();
       fail(error);
-      return v;
+      return data!.id as string;
     },
     onSettled: () => invalidateFfe(qc),
   });
@@ -247,8 +247,10 @@ export const useUpdateFfeItems = () => {
 export const useDeleteFfeItem = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { owner: FfeOwner; id: string }) => {
-      const { error } = await supabase.from("ffe_items").delete().eq("id", v.id);
+    mutationFn: async (v: { owner: FfeOwner; id?: string; ids?: string[] }) => {
+      const ids = v.ids ?? (v.id ? [v.id] : []);
+      if (!ids.length) return v;
+      const { error } = await supabase.from("ffe_items").delete().in("id", ids);
       fail(error);
       await recomputeIfProject(v.owner);
       return v;
