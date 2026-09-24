@@ -276,7 +276,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       .map((user_id) => ({ user_id, kind: "costing", lead_id: ctx.leadId, project_id: ctx.projectId, title }));
 
   const run = (values: Parameters<typeof transition.mutate>[0]["values"], notify: ReturnType<typeof notifyTo>, ok: string, done?: () => void) =>
-    transition.mutate({ owner: ctx.owner, exists: !!costing, values, notify }, {
+    transition.mutate({ owner: ctx.owner, costingId: costing?.id, values, notify }, {
       onSuccess: () => { toast.success(ok); done?.(); }, onError: (e) => toast.error(errMsg(e, "Failed")),
     });
 

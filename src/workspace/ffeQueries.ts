@@ -20,19 +20,10 @@ export type CostingStatus = T["ffe_costings"]["Row"]["status"];
 export interface QuoteOption { label: string; desc: string; amount: number }
 export type Costing = Pick<
   T["ffe_costings"]["Row"],
-  "id" | "project_id" | "lead_id" | "status" | "version" | "gm_notes" | "return_note" | "submitted_at" | "quoted_at"
-> & { markup_pct?: number; options: QuoteOption[] };
-export type Snag = Pick<
-  T["snags"]["Row"],
-  "id" | "project_id" | "ref" | "ref_seq" | "area" | "description" | "owner_id" | "status" | "photo_path" | "fixed_on" | "created_at"
->;
-
-const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, payment_terms, rating, status, notes";
-// Sales never receive cost price: the column is not even requested for them.
-const FFE_BASE =
-  "id, project_id, lead_id, ref, room, category, item, sku, dims, finish, spec, qty, unit, supplier_id, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
-const COSTING_BASE = "id, project_id, lead_id, status, version, gm_notes, return_note, submitted_at, quoted_at, options";
-const costingCols = (withCost: boolean) => (withCost ? `${COSTING_BASE}, markup_pct` : COSTING_BASE);
+  "id" | "project_id" | "lead_id" | "status" | "version" | "submitted_at" | "quoted_at"
+> & { markup_pct?: number; gm_notes?: string | null; return_note?: string | null; options: QuoteOption[] };
+...
+const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, options";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
 
 /**
@@ -263,32 +254,58 @@ export const useDeleteFfeItem = () => {
 
 /* ---------------- costing ---------------- */
 
+/**
+ * Markup and GM/return notes live in ffe_costing_private, which RLS hides from sales:
+ * markup beside the client-facing option amount would reveal the cost price.
+ */
 export const useCosting = (owner: FfeOwner | undefined, withCost: boolean) =>
   useQuery({
     queryKey: [...fKeys.costing(ownerKey(owner)), withCost],
     enabled: !!owner?.id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("ffe_costings").select(costingCols(withCost)).eq(owner!.col, owner!.id).maybeSingle();
+      const { data, error } = await supabase.from("ffe_costings").select(COSTING_BASE).eq(owner!.col, owner!.id).maybeSingle();
       fail(error);
       if (!data) return null;
       const d = data as unknown as Costing & { options: Json };
-      return { ...d, options: Array.isArray(d.options) ? (d.options as unknown as QuoteOption[]) : [] } as Costing;
+      const out = { ...d, options: Array.isArray(d.options) ? (d.options as unknown as QuoteOption[]) : [] } as Costing;
+      if (!withCost) return out;
+      const { data: p, error: pErr } = await supabase.from("ffe_costing_private")
+        .select("markup_pct, gm_notes, return_note").eq("costing_id", d.id).maybeSingle();
+      fail(pErr);
+      return { ...out, markup_pct: p?.markup_pct ?? undefined, gm_notes: p?.gm_notes ?? null, return_note: p?.return_note ?? null };
     },
   });
+
+export type CostingValues = Pick<T["ffe_costings"]["Update"], "status" | "options" | "version" | "submitted_at" | "quoted_at"> &
+  Pick<T["ffe_costing_private"]["Update"], "markup_pct" | "gm_notes" | "return_note">;
 
 export const useCostingTransition = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: {
       owner: FfeOwner;
-      exists: boolean;
-      values: T["ffe_costings"]["Update"];
+      costingId?: string;
+      values: CostingValues;
       notify?: T["notifications"]["Insert"][];
     }) => {
-      const { error } = v.exists
-        ? await supabase.from("ffe_costings").update(v.values).eq(v.owner.col, v.owner.id)
-        : await supabase.from("ffe_costings").insert({ ...(v.values as T["ffe_costings"]["Insert"]), [v.owner.col]: v.owner.id });
-      fail(error);
+      const { markup_pct, gm_notes, return_note, ...pub } = v.values;
+      const priv = Object.fromEntries(
+        Object.entries({ markup_pct, gm_notes, return_note }).filter(([, x]) => x !== undefined),
+      ) as T["ffe_costing_private"]["Update"];
+      let id = v.costingId;
+      if (id) {
+        const { error } = await supabase.from("ffe_costings").update(pub).eq("id", id);
+        fail(error);
+      } else {
+        id = crypto.randomUUID();
+        const { error } = await supabase.from("ffe_costings").insert({ ...pub, id, [v.owner.col]: v.owner.id });
+        fail(error);
+      }
+      // Every costing gets its private row; sales never reach this path (no costing controls).
+      if (!v.costingId || Object.keys(priv).length) {
+        const { error } = await supabase.from("ffe_costing_private").upsert({ ...priv, costing_id: id });
+        fail(error);
+      }
       await notify(v.notify ?? []);
       return v;
     },
