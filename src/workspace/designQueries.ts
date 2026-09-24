@@ -127,25 +127,41 @@ export const downscale = async (file: File) => {
 
 export type UploadStage = "compressing" | "uploading" | "saving";
 
+/**
+ * Shared upload to the private workspace bucket: images are downscaled to JPEG,
+ * PDFs are stored as-is. Path is `<prefix>/<uuid>.<ext>` — never the raw filename.
+ */
+export const uploadToWorkspace = async (prefix: string, file: File, onStage?: (s: UploadStage) => void) => {
+  const pdf = file.type === "application/pdf";
+  if (!pdf && !file.type.startsWith("image/")) throw new Error(`${file.name}: only images and PDFs are accepted`);
+  let body: Blob = file, width: number | null = null, height: number | null = null;
+  if (!pdf) {
+    onStage?.("compressing");
+    const r = await downscale(file);
+    body = r.blob; width = r.width; height = r.height;
+  }
+  const path = `${prefix}/${crypto.randomUUID()}.${pdf ? "pdf" : "jpg"}`;
+  onStage?.("uploading");
+  const { error } = await supabase.storage.from(BUCKET).upload(path, body, {
+    contentType: pdf ? "application/pdf" : "image/jpeg",
+    upsert: false,
+  });
+  fail(error);
+  return { path, width, height };
+};
+
+/** Remove a storage object; storage returns an empty list (no error) when RLS blocks it. */
+export const removeWorkspaceObject = async (path: string) => {
+  const { data, error } = await supabase.storage.from(BUCKET).remove([path]);
+  fail(error);
+  if (!data?.length) throw new Error("You don't have permission to delete this file");
+};
+
 export const useUploadDesignFile = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { leadId: string; designId: string; area: string; file: File; sortOrder: number; onStage?: (s: UploadStage) => void }) => {
-      const pdf = v.file.type === "application/pdf";
-      if (!pdf && !v.file.type.startsWith("image/")) throw new Error(`${v.file.name}: only images and PDFs are accepted`);
-      let body: Blob = v.file, width: number | null = null, height: number | null = null;
-      if (!pdf) {
-        v.onStage?.("compressing");
-        const r = await downscale(v.file);
-        body = r.blob; width = r.width; height = r.height;
-      }
-      const path = `designs/${v.leadId}/${v.designId}/${crypto.randomUUID()}.${pdf ? "pdf" : "jpg"}`;
-      v.onStage?.("uploading");
-      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, body, {
-        contentType: pdf ? "application/pdf" : "image/jpeg",
-        upsert: false,
-      });
-      fail(upErr);
+      const { path, width, height } = await uploadToWorkspace(`designs/${v.leadId}/${v.designId}`, v.file, v.onStage);
       v.onStage?.("saving");
       const { error } = await supabase.from("design_images").insert({
         design_id: v.designId, storage_path: path, room: v.area, kind: kindForArea(v.area),
