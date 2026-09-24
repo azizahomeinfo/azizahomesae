@@ -32,6 +32,7 @@ interface Props {
 }
 
 const areaOf = (i: DesignImage) => i.room || "Other";
+const CUSTOM = "__custom__";
 const STD_RANK = new Map((DESIGN_AREAS as readonly string[]).map((a, i) => [a.toLowerCase(), i]));
 const errMsg = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
@@ -378,7 +379,7 @@ const VersionView = ({
     if (ids.length) rename.mutate({ designId: design.id, ids, to }, { onError: (e) => toast.error(errMsg(e, "Could not rename the area")) });
   };
   const viewable = byArea.flatMap(([, list]) => list).filter((i) => !isPdf(i));
-  const unused = DESIGN_AREAS.filter((a) => !byArea.some(([k]) => k === a));
+  const unused = DESIGN_AREAS.filter((a) => !findArea(a));
 
   const onFiles = async (area: string, files: File[]) => {
     let next = images.reduce((m, i) => Math.max(m, i.sort_order), 0) + 1;
@@ -499,7 +500,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const isGm = member?.role === "gm";
   const isAssignedDesigner = !!me && (brief?.designer_id === me || lead?.designer_id === me);
   const isLatest = !!selected && selected.id === latest?.id;
-  const editable = !viewOnly && isLatest && selected.status === "Draft" && !!me && (selected.designer_id === me || isAssignedDesigner);
+  // Draft and Submitted stay editable for the designer; Accepted is locked because the proposal is built from it.
+  const editable = !viewOnly && isLatest && (selected.status === "Draft" || selected.status === "Submitted")
+    && !!me && (selected.designer_id === me || isAssignedDesigner);
   const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
   const canStartFirst = !viewOnly && !latest && isAssignedDesigner && !!brief && ["Assigned", "In Design", "Revision Requested"].includes(brief.status);
@@ -554,6 +557,22 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     }
   };
 
+  const onChanged = useCallback(() => {
+    if (!selected || selected.status !== "Submitted" || !lead || !member) return;
+    const targets = new Set<string>(members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id));
+    if (lead.sales_id) targets.add(lead.sales_id);
+    targets.delete(member.user_id);
+    const title = `${member.full_name} updated design V${selected.version} for ${lead.name}`;
+    touchSubmittedDesign({
+      designId: selected.id, leadId,
+      notify: [...targets].map((user_id) => ({ user_id, kind: "design", title, lead_id: lead.id })),
+    }).catch((e) => toast.error(errMsg(e, "Change saved, but sales could not be notified")));
+  }, [selected, lead, member, members, leadId]);
+
+  // 60s slack: submitted_at is the browser clock, updated_at the server's.
+  const updatedAfterSubmit = !!selected && selected.status === "Submitted" && !!selected.submitted_at
+    && new Date(selected.updated_at).getTime() - new Date(selected.submitted_at).getTime() > 60_000;
+
   const zeroFiles = currentImages.length === 0;
   const close = () => onOpenChange(false);
 
@@ -606,7 +625,15 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
               {selected.status === "Accepted" && selected.decided_by && (
                 <p className="text-sm text-muted-foreground">Accepted by {nameOf(selected.decided_by)}.</p>
               )}
-              <VersionView key={selected.id} design={selected} previous={previous} editable={editable} leadId={leadId} />
+              {selected.status === "Accepted" && isLatest && !viewOnly && (isAssignedDesigner || selected.designer_id === me) && (
+                <p className="text-sm text-muted-foreground">This design is approved. Start a new version to change it.</p>
+              )}
+              {updatedAfterSubmit && !editable && (
+                <p className="text-sm text-muted-foreground">
+                  Updated by the designer after submitting — {formatDistanceToNow(new Date(selected.updated_at), { addSuffix: true })}.
+                </p>
+              )}
+              <VersionView key={selected.id} design={selected} previous={previous} editable={editable} leadId={leadId} onChanged={onChanged} />
             </>
           )}
         </div>
@@ -614,7 +641,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
 
       {(editable || canReview || canStartNext) && (
         <footer className="border-t border-border px-4 py-3 md:px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          {editable && (
+          {editable && selected?.status === "Draft" && (
             <>
               {zeroFiles && <span className="text-xs text-muted-foreground sm:mr-auto">Add at least one file before submitting.</span>}
               <Button onClick={doSubmit} disabled={zeroFiles || submit.isPending}>Submit to sales</Button>
