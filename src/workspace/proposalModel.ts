@@ -172,7 +172,11 @@ export const investEyebrow = (n: number) => (n > 1 ? `${n} options` : "One compl
 /* ---------------- pagination ---------------- */
 
 export const ITEM_PAGE_CAP = 114;
-const groupWeight = (g: ItemGroup) => 1.6 + g.items.length;
+/** ~30 characters fit on one line of a 3-column item list; a longer name wraps and costs another row. */
+const ITEM_CHARS_PER_LINE = 30;
+const itemRows = (item: string) => Math.max(1, Math.ceil(item.length / ITEM_CHARS_PER_LINE));
+/** Spec weight is 1.6 + items.length; wrapped names count once per line so a page can never overflow. */
+const groupWeight = (g: ItemGroup) => 1.6 + g.items.reduce((s, i) => s + itemRows(i.item), 0);
 
 export const paginateItems = (groups: ItemGroup[]) => {
   const pages: ItemGroup[][] = [];

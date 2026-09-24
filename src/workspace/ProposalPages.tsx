@@ -33,7 +33,7 @@ export const PROPOSAL_CSS = `
 .ppd-group { break-inside: avoid; page-break-inside: avoid; margin-bottom: 14px; }
 .ppd-group h4 { font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-olive);
   margin: 0 0 4px; padding-bottom: 5px; border-bottom: 1px solid var(--pp-line); }
-.ppd-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; line-height: 1.3; padding: 4px 0; }
+.ppd-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; line-height: 1.3; padding: 3px 0; }
 .ppd-row b { font-weight: 600; }
 .ppd-card { background: var(--pp-card); border: 1px solid var(--pp-line); padding: 24px 26px; }
 .ppd-line { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 5px 0; color: var(--pp-muted); }
