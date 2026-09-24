@@ -409,7 +409,9 @@ export type Database = {
           category: string | null
           created_at: string
           delivered_on: string | null
+          dims: string | null
           eta: string | null
+          finish: string | null
           id: string
           installed_on: string | null
           item: string
@@ -420,6 +422,7 @@ export type Database = {
           qty: number
           ref: string | null
           room: string
+          sku: string | null
           sort_order: number
           spec: string | null
           stage: Database["public"]["Enums"]["proc_stage"]
@@ -432,7 +435,9 @@ export type Database = {
           category?: string | null
           created_at?: string
           delivered_on?: string | null
+          dims?: string | null
           eta?: string | null
+          finish?: string | null
           id?: string
           installed_on?: string | null
           item: string
@@ -443,6 +448,7 @@ export type Database = {
           qty?: number
           ref?: string | null
           room: string
+          sku?: string | null
           sort_order?: number
           spec?: string | null
           stage?: Database["public"]["Enums"]["proc_stage"]
@@ -455,7 +461,9 @@ export type Database = {
           category?: string | null
           created_at?: string
           delivered_on?: string | null
+          dims?: string | null
           eta?: string | null
+          finish?: string | null
           id?: string
           installed_on?: string | null
           item?: string
@@ -466,6 +474,7 @@ export type Database = {
           qty?: number
           ref?: string | null
           room?: string
+          sku?: string | null
           sort_order?: number
           spec?: string | null
           stage?: Database["public"]["Enums"]["proc_stage"]
@@ -1210,6 +1219,7 @@ export type Database = {
           photo_path: string | null
           project_id: string
           ref: string | null
+          ref_seq: number | null
           status: Database["public"]["Enums"]["snag_status"]
           updated_at: string
         }
@@ -1223,6 +1233,7 @@ export type Database = {
           photo_path?: string | null
           project_id: string
           ref?: string | null
+          ref_seq?: number | null
           status?: Database["public"]["Enums"]["snag_status"]
           updated_at?: string
         }
@@ -1236,6 +1247,7 @@ export type Database = {
           photo_path?: string | null
           project_id?: string
           ref?: string | null
+          ref_seq?: number | null
           status?: Database["public"]["Enums"]["snag_status"]
           updated_at?: string
         }

@@ -29,6 +29,13 @@
       "when": 1790275921089,
       "tag": "0003_stage5_projects_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790277245915,
+      "tag": "0004_stage6_ffe_snags",
+      "breakpoints": true
     }
   ]
 }
