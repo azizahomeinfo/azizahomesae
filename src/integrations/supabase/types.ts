@@ -1619,6 +1619,10 @@ export type Database = {
         Args: { _project: string; _uid: string }
         Returns: boolean
       }
+      can_touch_workspace_object: {
+        Args: { _name: string; _uid: string }
+        Returns: boolean
+      }
       is_gm: { Args: { _uid: string }; Returns: boolean }
       is_ws_member: { Args: { _uid: string }; Returns: boolean }
       ws_assign_brief: {
