@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-react";
+import { BookPlus, Check, ChevronsUpDown, ExternalLink, Link2, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,8 +60,8 @@ const byRoom = (rows: FfeRow[]) => {
 
 /** Text/number cell that saves 800ms after typing stops. */
 const EditCell = ({
-  value, onSave, disabled, type = "text", className, label,
-}: { value: string | number | null; onSave: (v: string) => void; disabled?: boolean; type?: string; className?: string; label: string }) => {
+  value, onSave, disabled, type = "text", className, label, placeholder, autoFocus,
+}: { value: string | number | null; onSave: (v: string) => void; disabled?: boolean; type?: string; className?: string; label: string; placeholder?: string; autoFocus?: boolean }) => {
   const [v, setV] = useState(value == null ? "" : String(value));
   const timer = useRef<number>();
   const focused = useRef(false);
@@ -66,8 +69,8 @@ const EditCell = ({
   useEffect(() => () => window.clearTimeout(timer.current), []);
   if (disabled) return <span className={cn("text-sm break-words", className)}>{v || "—"}</span>;
   return (
-    <Input aria-label={label} type={type} value={v} className={cn("h-8 text-sm", className)}
-      onFocus={() => { focused.current = true; }}
+    <Input aria-label={label} type={type} value={v} placeholder={placeholder} autoFocus={autoFocus} className={cn("h-8 text-sm", className)}
+      onFocus={(e) => { focused.current = true; if (autoFocus) e.currentTarget.select(); }}
       onBlur={() => { focused.current = false; }}
       onChange={(e) => {
         const next = e.target.value;
@@ -78,54 +81,130 @@ const EditCell = ({
   );
 };
 
-const SupplierPicker = ({ value, onChange, disabled, canAdd }: { value: string | null; onChange: (id: string | null) => void; disabled?: boolean; canAdd: boolean }) => {
+const F = ({ label, className, children }: { label: string; className?: string; children: ReactNode }) => (
+  <div className={cn("min-w-0 space-y-0.5", className)}><span className="block text-[10px] text-muted-foreground md:sr-only">{label}</span>{children}</div>
+);
+
+const URL_OK = /^https?:\/\/\S+$/i;
+
+/** Product/supplier page. Icon opens it in a new tab; empty shows "Add link". Bad input shows an inline error and is not saved. */
+const LinkCell = ({ value, onSave, disabled }: { value: string | null; onSave: (v: string | null) => void; disabled?: boolean }) => {
+  const [editing, setEditing] = useState(false);
+  const [v, setV] = useState(value ?? "");
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { if (!editing) setV(value ?? ""); }, [value, editing]);
+  const open = value ? (
+    <Button asChild variant="ghost" size="icon" className="h-7 w-7">
+      <a href={value} target="_blank" rel="noopener noreferrer" aria-label="Open product link" title={value}><ExternalLink className="h-3.5 w-3.5" /></a>
+    </Button>
+  ) : null;
+  if (disabled) return open ?? <span className="text-xs text-muted-foreground">—</span>;
+  const commit = () => {
+    const t = v.trim();
+    if (t && !URL_OK.test(t)) { setErr("Link must start with http:// or https://"); return; }
+    setErr(null); setEditing(false);
+    if ((t || null) !== value) onSave(t || null);
+  };
+  if (editing) return (
+    <div className="space-y-1">
+      <Input autoFocus aria-label="Product link" aria-invalid={!!err} placeholder="https://…" value={v}
+        className={cn("h-7 text-xs", err && "border-destructive")}
+        onChange={(e) => { setV(e.target.value); if (err) setErr(null); }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") { setV(value ?? ""); setErr(null); setEditing(false); }
+        }} />
+      {err && <p className="text-[11px] text-destructive">{err}</p>}
+    </div>
+  );
+  return (
+    <div className="flex items-center">
+      {open}
+      <Button variant="ghost" size="sm" className="h-7 px-1.5 text-xs text-muted-foreground" onClick={() => setEditing(true)}>
+        {value ? <Pencil className="h-3 w-3" aria-label="Edit link" /> : <><Link2 className="h-3.5 w-3.5" /> Add link</>}
+      </Button>
+    </div>
+  );
+};
+
+type SupplierPatch = Pick<Partial<FfeRow>, "supplier_id" | "supplier_name" | "supplier_contact">;
+
+/** Pick from the supplier book, or type a name that is kept as-is (supplier_id stays null). */
+const SupplierCombo = ({ row, onChange, disabled, canAdd }: { row: FfeRow; onChange: (p: SupplierPatch) => void; disabled?: boolean; canAdd: boolean }) => {
   const { data: suppliers = [] } = useSuppliers();
   const save = useSaveSupplier();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const current = suppliers.find((s) => s.id === value);
-  if (disabled) return <span className="text-sm">{current?.name ?? "—"}</span>;
-  const add = async () => {
-    const name = q.trim();
-    if (!name) return;
+  const booked = suppliers.find((s) => s.id === row.supplier_id);
+  // Rows from before supplier_name existed only carry supplier_id.
+  const label = row.supplier_name ?? booked?.name ?? null;
+  if (disabled) return <span className="text-xs break-words">{label ?? "—"}</span>;
+  const typed = q.trim();
+  const exact = suppliers.find((s) => s.name.toLowerCase() === typed.toLowerCase());
+  const pick = (s: (typeof suppliers)[number]) => {
+    onChange({ supplier_id: s.id, supplier_name: s.name, ...(!row.supplier_contact?.trim() && s.contact ? { supplier_contact: s.contact } : {}) });
+    setOpen(false); setQ("");
+  };
+  const addToBook = async () => {
+    if (!row.supplier_name) return;
     try {
-      const id = await save.mutateAsync({ values: { name } });
-      onChange(id);
-      setOpen(false);
-      setQ("");
+      const id = await save.mutateAsync({ values: { name: row.supplier_name, contact: row.supplier_contact || null } });
+      onChange({ supplier_id: id as string });
+      toast.success(`${row.supplier_name} added to the supplier book`);
     } catch (e) { toast.error(errMsg(e, "Could not add supplier")); }
   };
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" role="combobox" aria-label="Supplier" className="h-8 w-full justify-between font-normal">
-          <span className="truncate">{current?.name ?? "Choose…"}</span><ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+    <div className="flex min-w-0 items-center gap-1">
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(""); }}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" role="combobox" aria-label="Supplier" className="h-7 min-w-0 flex-1 justify-between px-2 text-xs font-normal">
+            <span className={cn("truncate", !label && "text-muted-foreground")}>{label ?? "Supplier…"}</span><ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Type or search suppliers" value={q} onValueChange={setQ} />
+            <CommandList>
+              <CommandEmpty>{typed ? "Not in the book." : "No suppliers yet."}</CommandEmpty>
+              <CommandGroup>
+                {typed && !exact && (
+                  <CommandItem value={`__use ${typed}`} onSelect={() => { onChange({ supplier_id: null, supplier_name: typed }); setOpen(false); setQ(""); }}>
+                    <Plus className="mr-2 h-4 w-4" /> Use "{typed}"
+                  </CommandItem>
+                )}
+                {label && <CommandItem value="__clear" onSelect={() => { onChange({ supplier_id: null, supplier_name: null }); setOpen(false); }}>No supplier</CommandItem>}
+                {suppliers.map((s) => (
+                  <CommandItem key={s.id} value={s.name} onSelect={() => pick(s)}>
+                    <Check className={cn("mr-2 h-4 w-4", s.id === row.supplier_id ? "opacity-100" : "opacity-0")} />{s.name}
+                    {s.status === "Blocked" && <span className="ml-auto text-xs text-destructive">Blocked</span>}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {canAdd && row.supplier_name && !row.supplier_id && (
+        <Button variant="ghost" size="sm" className="h-7 shrink-0 px-1.5 text-[11px] text-muted-foreground" disabled={save.isPending} onClick={addToBook}
+          title="Add to supplier book">
+          <BookPlus className="h-3.5 w-3.5" /><span className="hidden lg:inline">Add to book</span>
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-64 p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search suppliers" value={q} onValueChange={setQ} />
-          <CommandList>
-            <CommandEmpty>No match.</CommandEmpty>
-            <CommandGroup>
-              {value && <CommandItem value="__clear" onSelect={() => { onChange(null); setOpen(false); }}>No supplier</CommandItem>}
-              {suppliers.map((s) => (
-                <CommandItem key={s.id} value={s.name} onSelect={() => { onChange(s.id); setOpen(false); }}>
-                  <Check className={cn("mr-2 h-4 w-4", s.id === value ? "opacity-100" : "opacity-0")} />{s.name}
-                  {s.status === "Blocked" && <span className="ml-auto text-xs text-destructive">Blocked</span>}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-          {canAdd && q.trim() && !suppliers.some((s) => s.name.toLowerCase() === q.trim().toLowerCase()) && (
-            <button type="button" onClick={add} disabled={save.isPending}
-              className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm hover:bg-muted/20">
-              <Plus className="h-4 w-4" /> Add new supplier "{q.trim()}"
-            </button>
-          )}
-        </Command>
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
+  );
+};
+
+/** Editable room heading. Renaming moves every item in the group; a name matching another group merges into it. */
+const RoomHeading = ({ room, canEdit, onRename }: { room: string; canEdit: boolean; onRename: (to: string) => void }) => {
+  const [v, setV] = useState(room);
+  useEffect(() => setV(room), [room]);
+  if (!canEdit) return <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">{room}</h3>;
+  const commit = () => { const t = v.trim(); if (!t) setV(room); else if (t !== room) onRename(t); };
+  return (
+    <Input aria-label="Section name" value={v} onChange={(e) => setV(e.target.value)} onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") { setV(room); } }}
+      className="h-8 max-w-xs border-transparent bg-transparent px-1 text-xs uppercase tracking-[0.2em] text-muted-foreground hover:border-border focus:border-border" />
   );
 };
 
@@ -255,6 +334,9 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const del = useDeleteFfeItem();
   const transition = useCostingTransition();
   const [newRoom, setNewRoom] = useState("");
+  const [addingRoom, setAddingRoom] = useState(false);
+  const [delRoom, setDelRoom] = useState<string | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnNote, setReturnNote] = useState("");
   const [quoteOpen, setQuoteOpen] = useState(false);
@@ -283,27 +365,84 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (!rows.length) return <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />;
 
-  const cells = (r: FfeRow) => ({
-    item: <EditCell label="Item" value={r.item} disabled={!canEdit} onSave={(v) => v.trim() && save(r.id, { item: v.trim() })} />,
-    sku: <EditCell label="SKU" value={r.sku} disabled={!canEdit} onSave={(v) => save(r.id, { sku: v || null })} />,
-    supplier: <SupplierPicker value={r.supplier_id} disabled={!canEdit} canAdd={isGm || role === "coordinator"} onChange={(id) => save(r.id, { supplier_id: id })} />,
-    qty: <EditCell label="Qty" type="number" value={r.qty} disabled={!canEdit} className="w-20" onSave={(v) => save(r.id, { qty: num(v) ?? 1 })} />,
-    dims: <EditCell label="Dims" value={r.dims} disabled={!canEdit} onSave={(v) => save(r.id, { dims: v || null })} />,
-    finish: <EditCell label="Finish" value={r.finish} disabled={!canEdit} onSave={(v) => save(r.id, { finish: v || null })} />,
-    cost: <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} disabled={!canEdit} className="w-28" onSave={(v) => save(r.id, { unit_cost: num(v) })} />,
-    room: canEdit ? (
-      <Select value={r.room} onValueChange={(room) => room !== r.room && save(r.id, { room })}>
-        <SelectTrigger className="h-8 w-36" aria-label="Room"><SelectValue /></SelectTrigger>
-        <SelectContent>{groups.map(([g]) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-      </Select>
-    ) : null,
-    del: canEdit ? (
-      <Button variant="ghost" size="icon" aria-label={`Delete ${r.item}`}
-        onClick={() => del.mutate({ owner: ctx.owner, id: r.id }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
-    ) : null,
-  });
+  const canAddSupplier = isGm || role === "coordinator";
+  const addItem = (room: string) =>
+    add.mutate({ owner: ctx.owner, room, existing: rows }, { onSuccess: (id) => setFocusId(id), onError: (e) => toast.error(errMsg(e, "Failed")) });
+  const addRoom = () => {
+    const t = newRoom.trim();
+    if (!t) return;
+    const hit = groups.find(([g]) => g.toLowerCase() === t.toLowerCase());
+    if (hit) { toast.info(`${hit[0]} already exists`); return; }
+    add.mutate({ owner: ctx.owner, room: t, existing: rows }, {
+      onSuccess: (id) => { setNewRoom(""); setAddingRoom(false); setFocusId(id); }, onError: (e) => toast.error(errMsg(e, "Failed")),
+    });
+  };
+  const renameRoom = (from: string, to: string) => {
+    const target = groups.find(([g]) => g !== from && g.trim().toLowerCase() === to.trim().toLowerCase())?.[0] ?? to.trim();
+    const ids = rows.filter((r) => r.room === from).map((r) => r.id);
+    update.mutate({ owner: ctx.owner, ids, values: { room: target } }, {
+      onSuccess: () => { if (target !== to.trim() || groups.some(([g]) => g === target)) toast.success(`Merged into ${target}`); },
+      onError: (e) => toast.error(errMsg(e, "Could not rename")),
+    });
+  };
+
+  // md+: one grid template per tier so columns align down the page. Under md: stacked card with labels.
+  const primaryCols = withCost
+    ? "grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-[minmax(0,1fr)_4.5rem_7rem_8rem_2.25rem]"
+    : "grid-cols-[1fr_auto] md:grid-cols-[minmax(0,1fr)_4.5rem_2.25rem]";
+  const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)]";
+
+  const itemRow = (r: FfeRow) => (
+    <li key={r.id} className="space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2">
+      <div className={cn("grid items-start gap-2", primaryCols)}>
+        <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
+          <span className="block text-[10px] text-muted-foreground">{r.ref}</span>
+          <EditCell label="Item" value={r.item} disabled={!canEdit} autoFocus={focusId === r.id}
+            onSave={(v) => v.trim() && save(r.id, { item: v.trim() })} />
+        </F>
+        <div className={cn("flex justify-end md:order-last", withCost ? "col-start-4 row-start-1 md:col-start-auto md:row-start-auto" : "col-start-2 row-start-1 md:col-start-auto md:row-start-auto")}>
+          {canEdit && (
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Delete ${r.item}`}
+              onClick={() => del.mutate({ owner: ctx.owner, id: r.id }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <F label="Qty" className="md:pt-[15px]">
+          <EditCell label="Qty" type="number" value={r.qty} disabled={!canEdit} className="tabular-nums" onSave={(v) => save(r.id, { qty: num(v) ?? 1 })} />
+        </F>
+        {withCost && (
+          <F label="Unit cost" className="md:pt-[15px]">
+            <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} disabled={!canEdit} className="tabular-nums" onSave={(v) => save(r.id, { unit_cost: num(v) })} />
+          </F>
+        )}
+        {withCost && (
+          <F label="Line total" className="text-right md:pt-[15px]">
+            <p className="flex h-8 items-center justify-end whitespace-nowrap text-sm tabular-nums">{aed(lineTotal(r))}</p>
+          </F>
+        )}
+      </div>
+      <div className={cn("grid items-start gap-2 text-xs text-muted-foreground", secondaryCols)}>
+        <F label="Supplier" className="col-span-2 md:col-span-1">
+          <SupplierCombo row={r} disabled={!canEdit} canAdd={canAddSupplier} onChange={(p) => save(r.id, p)} />
+        </F>
+        <F label="Contact" className="col-span-2 md:col-span-1">
+          <EditCell label="Supplier contact" value={r.supplier_contact} disabled={!canEdit} className="h-7 text-xs" placeholder="Contact"
+            onSave={(v) => save(r.id, { supplier_contact: v.trim() || null })} />
+        </F>
+        <F label="Dims">
+          <EditCell label="Dims" value={r.dims} disabled={!canEdit} className="h-7 text-xs" placeholder="Dims" onSave={(v) => save(r.id, { dims: v.trim() || null })} />
+        </F>
+        <F label="Link">
+          <LinkCell value={r.product_url} disabled={!canEdit} onSave={(v) => save(r.id, { product_url: v })} />
+        </F>
+        <F label="Notes" className="col-span-2 md:col-span-1">
+          <EditCell label="Notes" value={r.notes} disabled={!canEdit} className="h-7 text-xs" placeholder="Notes, finish, colour…"
+            onSave={(v) => save(r.id, { notes: v.trim() || null })} />
+        </F>
+      </div>
+    </li>
+  );
 
   return (
     <div className="space-y-4">
@@ -346,76 +485,62 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       {groups.map(([room, items]) => {
         const sub = items.reduce((s, r) => s + lineTotal(r), 0);
         return (
-          <Section key={room} title={room} right={
-            <div className="flex items-center gap-2">
-              {withCost && <span className="text-sm">{aed(sub)}</span>}
-              {canEdit && (
-                <Button size="sm" variant="outline" disabled={add.isPending}
-                  onClick={() => add.mutate({ owner: ctx.owner, room, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
-                  <Plus className="h-4 w-4" /> Row
-                </Button>
-              )}
+          <section key={room} className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <RoomHeading room={room} canEdit={canEdit} onRename={(to) => renameRoom(room, to)} />
+              <div className="flex items-center gap-2">
+                {withCost && <span className="text-sm tabular-nums">{aed(sub)}</span>}
+                {canEdit && (
+                  <>
+                    <Button size="sm" variant="outline" disabled={add.isPending} onClick={() => addItem(room)}><Plus className="h-4 w-4" /> Item</Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Delete section ${room}`} onClick={() => setDelRoom(room)}><Trash2 className="h-4 w-4" /></Button>
+                  </>
+                )}
+              </div>
             </div>
-          }>
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-xs text-muted-foreground">
-                  <tr>
-                    <th className="p-1">Item</th><th className="p-1">SKU</th><th className="p-1">Supplier</th><th className="p-1">Qty</th>
-                    <th className="p-1">Dims</th><th className="p-1">Finish</th>
-                    {withCost && <><th className="p-1">Unit cost</th><th className="p-1 text-right">Line total</th></>}
-                    {canEdit && <><th className="p-1">Room</th><th /></>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((r) => {
-                    const c = cells(r);
-                    return (
-                      <tr key={r.id} className="border-t border-border align-top">
-                        <td className="p-1 min-w-40"><span className="block text-[10px] text-muted-foreground">{r.ref}</span>{c.item}</td>
-                        <td className="p-1 min-w-24">{c.sku}</td><td className="p-1 min-w-36">{c.supplier}</td><td className="p-1">{c.qty}</td>
-                        <td className="p-1 min-w-24">{c.dims}</td><td className="p-1 min-w-28">{c.finish}</td>
-                        {withCost && <><td className="p-1">{c.cost}</td><td className="p-1 text-right whitespace-nowrap">{aed(lineTotal(r))}</td></>}
-                        {canEdit && <><td className="p-1">{c.room}</td><td className="p-1">{c.del}</td></>}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className={cn("hidden gap-2 text-[10px] uppercase tracking-wider text-muted-foreground md:grid", primaryCols)}>
+              <span>Item</span><span>Qty</span>{withCost && <><span>Unit cost</span><span className="text-right">Line total</span></>}<span />
             </div>
-            <ul className="space-y-3 md:hidden">
-              {items.map((r) => {
-                const c = cells(r);
-                return (
-                  <li key={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
-                    <div className="flex items-start gap-2"><div className="flex-1"><span className="text-[10px] text-muted-foreground">{r.ref}</span>{c.item}</div>{c.del}</div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <label className="space-y-1"><span className="text-muted-foreground">SKU</span>{c.sku}</label>
-                      <label className="space-y-1"><span className="text-muted-foreground">Qty</span>{c.qty}</label>
-                      <label className="col-span-2 space-y-1"><span className="text-muted-foreground">Supplier</span>{c.supplier}</label>
-                      <label className="space-y-1"><span className="text-muted-foreground">Dims</span>{c.dims}</label>
-                      <label className="space-y-1"><span className="text-muted-foreground">Finish</span>{c.finish}</label>
-                      {withCost && <label className="space-y-1"><span className="text-muted-foreground">Unit cost</span>{c.cost}</label>}
-                      {withCost && <div className="space-y-1"><span className="text-muted-foreground">Line total</span><p className="text-sm">{aed(lineTotal(r))}</p></div>}
-                      {canEdit && <label className="col-span-2 space-y-1"><span className="text-muted-foreground">Room</span>{c.room}</label>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </Section>
+            <ul className="space-y-3 md:space-y-0">{items.map(itemRow)}</ul>
+            {withCost && (
+              <div className="flex justify-end border-t border-border pt-2 text-sm">
+                <span className="text-muted-foreground">Subtotal&nbsp;</span><span className="tabular-nums font-medium">{aed(sub)}</span>
+              </div>
+            )}
+          </section>
         );
       })}
 
-      {canEdit && (
+      {canEdit && (addingRoom ? (
         <div className="flex gap-2">
-          <Input placeholder="New room, e.g. Balcony" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} className="sm:w-64" aria-label="New room" />
-          <Button variant="outline" disabled={!newRoom.trim() || add.isPending}
-            onClick={() => add.mutate({ owner: ctx.owner, room: newRoom.trim(), existing: rows }, { onSuccess: () => setNewRoom(""), onError: (e) => toast.error(errMsg(e, "Failed")) })}>
-            Add room
-          </Button>
+          <Input autoFocus placeholder="New section, e.g. Balcony" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} className="sm:w-64" aria-label="New section"
+            onKeyDown={(e) => { if (e.key === "Enter") addRoom(); if (e.key === "Escape") { setNewRoom(""); setAddingRoom(false); } }} />
+          <Button variant="outline" disabled={!newRoom.trim() || add.isPending} onClick={addRoom}>Add</Button>
+          <Button variant="ghost" onClick={() => { setNewRoom(""); setAddingRoom(false); }}>Cancel</Button>
         </div>
-      )}
+      ) : (
+        <Button variant="outline" onClick={() => setAddingRoom(true)}><Plus className="h-4 w-4" /> Add section</Button>
+      ))}
+
+      <AlertDialog open={!!delRoom} onOpenChange={(o) => !o && setDelRoom(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {delRoom}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => { const n = rows.filter((r) => r.room === delRoom).length; return `This deletes the section and its ${n} item${n === 1 ? "" : "s"}, including their costs. This cannot be undone.`; })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                const ids = rows.filter((r) => r.room === delRoom).map((r) => r.id);
+                del.mutate({ owner: ctx.owner, ids }, { onError: (e) => toast.error(errMsg(e, "Failed")) });
+                setDelRoom(null);
+              }}>Delete section</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={returnOpen} onOpenChange={setReturnOpen}>
         <DialogContent>
