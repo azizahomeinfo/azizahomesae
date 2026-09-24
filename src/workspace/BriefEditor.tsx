@@ -182,7 +182,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
     const cols: BriefDocColumns = rights.full
       ? {
           header: d.header as never, style: d.style as never, colours: d.colours as never, ffe: d.ffe as never,
-          bedrooms: d.bedrooms as never, lists: d.lists as never, attachments: d.attachments as never,
+          lists: d.lists as never, attachments: d.attachments as never,
         }
       : { colours: d.colours as never, ffe: d.ffe as never };
     const sending = rev.current;

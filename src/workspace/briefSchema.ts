@@ -147,7 +147,7 @@ export interface BriefAttachments { floorPlan: boolean; siteVisit: boolean }
 
 export interface BriefDoc {
   header: BriefHeader; style: BriefStyle; colours: ColourRow[]; ffe: FfeSection[];
-  bedrooms: BedroomRow[]; lists: BriefLists; attachments: BriefAttachments;
+  lists: BriefLists; attachments: BriefAttachments;
 }
 
 interface LeadLike {
