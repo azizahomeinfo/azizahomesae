@@ -36,6 +36,13 @@
       "when": 1790277245915,
       "tag": "0004_stage6_ffe_snags",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790278119444,
+      "tag": "0005_stage7_ffe_item_costs",
+      "breakpoints": true
     }
   ]
 }
