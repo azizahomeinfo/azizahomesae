@@ -9,6 +9,7 @@ import Login from "./Login";
 import WorkspaceLayout from "./WorkspaceLayout";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
+import LeadDetail from "./pages/LeadDetail";
 import Briefs from "./pages/Briefs";
 import Proposals from "./pages/Proposals";
 import Projects from "./pages/Projects";
@@ -42,6 +43,7 @@ const Gate = () => {
       <Route element={<WorkspaceLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="leads" element={<Guard page="leads" role={role}><Leads /></Guard>} />
+        <Route path="leads/:id" element={<Guard page="leads" role={role}><LeadDetail /></Guard>} />
         <Route path="briefs" element={<Guard page="briefs" role={role}><Briefs /></Guard>} />
         <Route path="proposals" element={<Guard page="proposals" role={role}><Proposals /></Guard>} />
         <Route path="projects" element={<Guard page="projects" role={role}><Projects /></Guard>} />

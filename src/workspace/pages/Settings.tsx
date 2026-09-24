@@ -42,8 +42,8 @@ const Settings = () => {
 
   const load = useCallback(async () => {
     const [m, i] = await Promise.all([
-      supabase.from("workspace_members").select("*").order("full_name"),
-      supabase.from("workspace_invites").select("*").order("created_at", { ascending: false }),
+      supabase.from("workspace_members").select("user_id, email, full_name, role, title, active, is_demo, created_at").order("full_name"),
+      supabase.from("workspace_invites").select("email, full_name, role, title, invited_by, created_at").order("created_at", { ascending: false }),
     ]);
     if (m.error) toast.error(m.error.message); else setMembers(m.data);
     if (i.error) toast.error(i.error.message); else setInvites(i.data);
