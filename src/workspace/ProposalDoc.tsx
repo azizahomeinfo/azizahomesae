@@ -75,7 +75,7 @@ const Document = ({ row, canEdit, onChange }: { row: ProposalRow; canEdit: boole
           ))}
         </div>
       )}
-      <p className="text-xs text-muted-foreground">{doc.itemSource === "project" ? "From the project FF&E list." : "From the client brief checklist."}</p>
+      <p className="text-xs text-muted-foreground">{doc.itemSource === "project" ? "From the designer’s FF&E list." : "From the client brief checklist."}</p>
     </section>
   );
 
