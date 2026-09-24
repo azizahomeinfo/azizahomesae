@@ -1,5 +1,173 @@
-import Placeholder from "./Placeholder";
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useWorkspace } from "../WorkspaceProvider";
+import { useBriefList, useBriefQueue, useMembers, type BriefListRow } from "../queries";
+import { BRIEF_LABEL, BRIEF_STATUSES, type BriefStatus } from "../briefWorkflow";
+import { BriefActionBar } from "../useBriefActions";
+import BriefStatusPill from "../BriefStatusPill";
+import { aed, shortDate } from "../format";
 
-const Briefs = () => <Placeholder title="Briefs" />;
+interface CardData {
+  leadId: string; name: string; property: string | null; unitType: string | null;
+  budget: number | null; targetDate: string | null; status: BriefStatus;
+}
+
+const BriefCard = ({ d }: { d: CardData }) => (
+  <Link
+    to={`/workspace/leads/${d.leadId}`}
+    className="block rounded-[var(--radius)] border border-border bg-card p-4 space-y-2 hover:border-primary/50"
+  >
+    <div className="flex items-start justify-between gap-2">
+      <p className="text-foreground min-w-0 truncate">{d.name}</p>
+      <BriefStatusPill status={d.status} />
+    </div>
+    <p className="text-sm text-muted-foreground truncate">{[d.property, d.unitType].filter(Boolean).join(" · ") || "—"}</p>
+    <div className="flex justify-between text-sm">
+      <span>{aed(d.budget)}</span>
+      <span className="text-muted-foreground">Target {shortDate(d.targetDate)}</span>
+    </div>
+  </Link>
+);
+
+const Group = ({ title, empty, children, count }: { title: string; empty: string; children: React.ReactNode; count: number }) => (
+  <section className="space-y-3">
+    <h2 className="font-heading uppercase text-xl tracking-wide">{title} <span className="text-muted-foreground text-base">({count})</span></h2>
+    {count === 0 ? (
+      <div className="rounded-[var(--radius)] border border-border p-8 text-center text-muted-foreground">{empty}</div>
+    ) : (
+      children
+    )}
+  </section>
+);
+
+const fromRow = (b: BriefListRow): CardData => ({
+  leadId: b.lead_id, name: b.leads?.name ?? "—", property: b.leads?.property ?? null, unitType: b.leads?.unit_type ?? null,
+  budget: b.leads?.budget ?? null, targetDate: b.leads?.target_date ?? null, status: b.status as BriefStatus,
+});
+
+const DesignerView = () => {
+  const { member } = useWorkspace();
+  const { data: queue = [], isLoading: qLoading, error: qErr } = useBriefQueue();
+  const { data: list = [], isLoading: lLoading, error: lErr } = useBriefList();
+  const mine = list.filter((b) => b.designer_id === member?.user_id && b.status !== "Design Approved");
+  const err = (qErr || lErr) as Error | null;
+
+  if (err) return <p className="text-destructive">{err.message}</p>;
+  if (qLoading || lLoading) return <p className="text-muted-foreground">Loading…</p>;
+
+  return (
+    <div className="space-y-8">
+      <Group title="Available to pick up" empty="No briefs waiting." count={queue.length}>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {queue.map((q) => (
+            <div key={q.brief_id} className="space-y-2">
+              {/* The lead only becomes visible to a designer once assigned, so the card itself is not a link. */}
+              <div className="rounded-[var(--radius)] border border-border bg-card p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-foreground min-w-0 truncate">{q.name}</p>
+                  <BriefStatusPill status={q.status as BriefStatus} />
+                </div>
+                <p className="text-sm text-muted-foreground truncate">{[q.property, q.unit_type].filter(Boolean).join(" · ") || "—"}</p>
+                <div className="flex justify-between text-sm">
+                  <span>{aed(q.budget)}</span>
+                  <span className="text-muted-foreground">Target {shortDate(q.target_date)}</span>
+                </div>
+                <BriefActionBar
+                  size="sm"
+                  brief={{ id: q.brief_id, leadId: q.lead_id, leadName: q.name, status: q.status as BriefStatus, designerId: null, salesId: null }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Group>
+      <Group title="My briefs" empty="Nothing assigned to you." count={mine.length}>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {mine.map((b) => <BriefCard key={b.id} d={fromRow(b)} />)}
+        </div>
+      </Group>
+    </div>
+  );
+};
+
+const GmView = () => {
+  const { data: list = [], isLoading, error } = useBriefList();
+  const { data: members = [] } = useMembers();
+  const nameOf = useMemo(() => new Map(members.map((m) => [m.user_id, m.full_name])), [members]);
+
+  if (error) return <p className="text-destructive">{(error as Error).message}</p>;
+  if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
+  if (list.length === 0) {
+    return <div className="rounded-[var(--radius)] border border-border p-8 text-center text-muted-foreground">No briefs waiting.</div>;
+  }
+
+  return (
+    <div className="space-y-8">
+      {BRIEF_STATUSES.map((st) => {
+        const rows = list.filter((b) => b.status === st);
+        if (!rows.length) return null;
+        return (
+          <section key={st} className="space-y-3">
+            <h2 className="font-heading uppercase text-xl tracking-wide">{BRIEF_LABEL[st]} <span className="text-muted-foreground text-base">({rows.length})</span></h2>
+            <div className="hidden md:block rounded-[var(--radius)] border border-border bg-card overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Client</TableHead><TableHead>Property</TableHead><TableHead>Budget</TableHead>
+                    <TableHead>Target</TableHead><TableHead>Owner</TableHead><TableHead>Designer</TableHead><TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((b) => (
+                    <TableRow key={b.id}>
+                      <TableCell className="whitespace-nowrap">
+                        <Link to={`/workspace/leads/${b.lead_id}`} className="hover:text-primary">{b.leads?.name ?? "—"}</Link>
+                      </TableCell>
+                      <TableCell>{[b.leads?.property, b.leads?.unit_type].filter(Boolean).join(" · ") || "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap">{aed(b.leads?.budget)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{shortDate(b.leads?.target_date)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap">{(b.designer_id && nameOf.get(b.designer_id)) || "—"}</TableCell>
+                      <TableCell className="text-right">
+                        {st === "Submitted" && (
+                          <BriefActionBar
+                            size="sm"
+                            brief={{ id: b.id, leadId: b.lead_id, leadName: b.leads?.name ?? "", status: st, designerId: b.designer_id, salesId: b.leads?.sales_id ?? null }}
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="md:hidden space-y-3">
+              {rows.map((b) => (
+                <div key={b.id} className="space-y-2">
+                  <BriefCard d={fromRow(b)} />
+                  <p className="px-1 text-xs text-muted-foreground">
+                    Owner: {(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"} · Designer: {(b.designer_id && nameOf.get(b.designer_id)) || "—"}
+                  </p>
+                  {st === "Submitted" && (
+                    <BriefActionBar
+                      size="sm"
+                      brief={{ id: b.id, leadId: b.lead_id, leadName: b.leads?.name ?? "", status: st, designerId: b.designer_id, salesId: b.leads?.sales_id ?? null }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+};
+
+const Briefs = () => {
+  const { member } = useWorkspace();
+  return member?.role === "gm" ? <GmView /> : <DesignerView />;
+};
 
 export default Briefs;
