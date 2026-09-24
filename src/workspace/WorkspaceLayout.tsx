@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/aziza-logo.png";
 import { useWorkspace } from "./WorkspaceProvider";
 import { PAGES_BY_ROLE, PAGE_META, ROLE_LABEL, type WorkspacePage, type WorkspaceRole } from "./access";
+import NotificationBell from "./NotificationBell";
 
 const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
@@ -76,20 +77,28 @@ const WorkspaceLayout = () => {
       <div className="flex-1 min-w-0">
         <div className="md:hidden flex items-center justify-between border-b border-border bg-card px-4 py-3">
           <img src={logo} alt="Aziza Home" className="h-8 w-auto" />
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu"><Menu /></Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[232px] p-0 bg-card">
-              <SidebarBody onNavigate={() => setOpen(false)} />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open menu"><Menu /></Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[232px] p-0 bg-card">
+                <SidebarBody onNavigate={() => setOpen(false)} />
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
         <main className="p-4 md:p-8 space-y-6">
-          <header className="space-y-1">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Aziza Workspace</p>
-            <h1 className="font-heading uppercase text-3xl tracking-wide">{meta.label}</h1>
-            <p className="text-sm text-muted-foreground">{meta.description}</p>
+          <header className="flex items-start justify-between gap-4">
+            <div className="space-y-1 min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Aziza Workspace</p>
+              <h1 className="font-heading uppercase text-3xl tracking-wide">{meta.label}</h1>
+              <p className="text-sm text-muted-foreground">{meta.description}</p>
+            </div>
+            <div className="hidden md:block">
+              <NotificationBell />
+            </div>
           </header>
           <Outlet />
         </main>
