@@ -185,10 +185,14 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
           bedrooms: d.bedrooms as never, lists: d.lists as never, attachments: d.attachments as never,
         }
       : { colours: d.colours as never, ffe: d.ffe as never };
+    const sending = rev.current;
     try {
       await save.mutateAsync({ id: brief.id, leadId: brief.lead_id, doc: cols });
-      setDirty(false);
-      setSavedAt(new Date());
+      savedRev.current = sending;
+      // Anything edited while the request was in flight is still unsaved — leave the
+      // flag up so the autosave effect schedules another pass. Clearing it here
+      // unconditionally silently drops that edit and tells the user it was saved.
+      if (rev.current === sending) { setDirty(false); setSavedAt(new Date()); }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save the brief");
     }
@@ -201,7 +205,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [doc, dirty, canSave, persist]);
 
-  const flush = async () => { if (dirty) await persist(); };
+  const flush = async () => { if (rev.current !== savedRev.current) await persist(); };
   const close = async (o: boolean) => {
     if (!o) await flush();
     onOpenChange(o);
@@ -216,7 +220,11 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
     document.getElementById(focusRef.current)?.focus();
     focusRef.current = null;
   });
-  const upd = (fn: (d: BriefDoc) => BriefDoc) => { setDoc((d) => fn(structuredClone(d))); setDirty(true); };
+  const upd = (fn: (d: BriefDoc) => BriefDoc) => {
+    rev.current += 1;
+    setDoc((d) => fn(structuredClone(d)));
+    setDirty(true);
+  };
   const roFull = !rights.full;
   const roFfe = !rights.ffeAndColours;
   const h = doc.header;
