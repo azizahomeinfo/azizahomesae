@@ -530,7 +530,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
 
   const apply = (ids: string[], values: Partial<FfeRow>, ok?: string) =>
-    update.mutate({ owner: ctx.owner, ids, values }, {
+    update.mutate({ owner: projectOwner(project.id), ids, values }, {
       onSuccess: () => ok && toast.success(ok), onError: (e) => toast.error(errMsg(e, "Could not save")),
     });
   const toggle = (id: string, on: boolean) => { const n = new Set(sel); if (on) n.add(id); else n.delete(id); setSel(n); };
