@@ -125,7 +125,7 @@ const SeedSheet = ({ project, canEdit }: { project: Project; canEdit: boolean })
   const seed = useSeedFfe();
   const add = useAddFfeItem();
   const ffe = (brief?.ffe as unknown as FfeSection[] | null) ?? [];
-  const included = ffe.reduce((n, s) => n + (s.items ?? []).filter((i) => i.included === "inc").length, 0);
+  const included = ffe.reduce((n, s) => n + (s.items ?? []).filter((i) => i.included === "inc" && i.item?.trim()).length, 0);
   if (isLoading && project.lead_id) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!canEdit) return <p className="text-sm text-muted-foreground">No FF&E items yet.</p>;
   return (

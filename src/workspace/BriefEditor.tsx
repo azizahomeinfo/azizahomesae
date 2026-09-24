@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, Plus, X } from "lucide-react";
+import { ChevronDown, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
-  ACCENTS, CONTRACT_STATES, OUTPUTS, PROJECT_TYPES, STYLES, normaliseBrief,
+  ACCENTS, CONTRACT_STATES, OUTPUTS, PROJECT_TYPES, STYLES, normaliseBrief, blankFfeItem, blankFfeSection, restoreStandardFfe,
   type BriefDoc, type FfeItem, type Included,
 } from "./briefSchema";
 import { editRights, type BriefStatus } from "./briefWorkflow";
@@ -181,6 +185,15 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
     onOpenChange(o);
   };
 
+  const focusRef = useRef<string | null>(null);
+  const [newSection, setNewSection] = useState("");
+  const [addingSection, setAddingSection] = useState(false);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  useEffect(() => {
+    if (!focusRef.current) return;
+    document.getElementById(focusRef.current)?.focus();
+    focusRef.current = null;
+  });
   const upd = (fn: (d: BriefDoc) => BriefDoc) => { setDoc((d) => fn(structuredClone(d))); setDirty(true); };
   const roFull = !rights.full;
   const roFfe = !rights.ffeAndColours;
@@ -190,6 +203,26 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   const setS = (k: keyof BriefDoc["style"]) => (v: string | string[]) => upd((d) => ({ ...d, style: { ...d.style, [k]: v } }));
   const setItem = (si: number, ii: number, patch: Partial<FfeItem>) =>
     upd((d) => { Object.assign(d.ffe[si].items[ii], patch); return d; });
+  const renameItem = (si: number, ii: number, name: string) =>
+    upd((d) => {
+      const it = d.ffe[si].items[ii];
+      if (!it.custom && it.origin === undefined) it.origin = it.item; // remember checklist name for Restore
+      it.item = name;
+      return d;
+    });
+  const removeItem = (si: number, ii: number) => upd((d) => { d.ffe[si].items.splice(ii, 1); return d; });
+  const addItem = (si: number) => {
+    upd((d) => { d.ffe[si].items.push(blankFfeItem()); return d; });
+    focusRef.current = `ffe-name-${si}-${doc.ffe[si].items.length}`;
+  };
+  const addSection = () => {
+    const t = newSection.trim();
+    if (!t) return;
+    upd((d) => { d.ffe.push(blankFfeSection(t)); return d; });
+    focusRef.current = `ffe-name-${doc.ffe.length}-0`;
+    setNewSection(""); setAddingSection(false);
+  };
+  const removeSection = (si: number) => upd((d) => { d.ffe.splice(si, 1); return d; });
 
   const scrollTo = (i: number) => document.getElementById(secId(i))?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -311,13 +344,20 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
 
           <Section i={4}>
             <div className="space-y-3">
+              {!roFull && (
+                <div className="flex justify-end">
+                  <button type="button" onClick={() => setRestoreOpen(true)} className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+                    Restore standard checklist
+                  </button>
+                </div>
+              )}
               {doc.ffe.map((sec, si) => {
                 const inc = sec.items.filter((i) => i.included === "inc").length;
                 return (
-                  <Collapsible key={sec.code} defaultOpen={sec.code === "5.1" || sec.code === "5.2"} className="rounded-[var(--radius)] border border-border">
+                  <Collapsible key={si} defaultOpen={sec.code === "5.1" || sec.code === "5.2" || !!sec.custom} className="rounded-[var(--radius)] border border-border">
                     <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 p-3 text-left">
                       <span className="min-w-0">
-                        <span className="text-primary mr-2">{sec.code}</span>
+                        {sec.code && <span className="text-primary mr-2">{sec.code}</span>}
                         <span className="text-foreground">{sec.title}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
@@ -326,17 +366,29 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
                       </span>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="hidden md:grid grid-cols-[minmax(0,2fr)_auto_auto_90px_minmax(0,2fr)] gap-3 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-                        <span>Item</span><span>Standard</span><span>Status</span><span>Required</span><span>{sec.notesLabel}</span>
+                      <div className="hidden md:grid grid-cols-[minmax(0,2fr)_auto_auto_90px_minmax(0,2fr)_auto] gap-3 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                        <span>Item</span><span>Standard</span><span>Status</span><span>Required</span><span>{sec.notesLabel}</span><span className="sr-only">Remove</span>
                       </div>
                       <ul className="divide-y divide-border border-t border-border">
                         {sec.items.map((it, ii) => (
-                          <li key={it.item} className="grid gap-2 p-3 md:grid-cols-[minmax(0,2fr)_auto_auto_90px_minmax(0,2fr)] md:items-center md:gap-3">
-                            <div className="flex items-baseline justify-between gap-2 md:block">
-                              <span className="text-sm text-foreground">{it.item}</span>
-                              <span className="text-xs text-muted-foreground md:hidden">Std: {it.std}</span>
-                            </div>
-                            <span className="hidden md:block text-xs text-muted-foreground">{it.std}</span>
+                          <li key={ii} className="grid gap-2 p-3 md:grid-cols-[minmax(0,2fr)_auto_auto_90px_minmax(0,2fr)_auto] md:items-center md:gap-3">
+                            {roFull ? (
+                              <>
+                                <div className="flex items-baseline justify-between gap-2 md:block">
+                                  <span className="text-sm text-foreground">{it.item}</span>
+                                  <span className="text-xs text-muted-foreground md:hidden">Std: {it.std}</span>
+                                </div>
+                                <span className="hidden md:block text-xs text-muted-foreground">{it.std}</span>
+                              </>
+                            ) : (
+                              <div className="grid grid-cols-[minmax(0,1fr)_64px_auto] gap-2 md:contents">
+                                <Input id={`ffe-name-${si}-${ii}`} aria-label="Item name" placeholder="Item name" value={it.item} onChange={(e) => renameItem(si, ii, e.target.value)} />
+                                <Input aria-label={`${it.item || "item"} standard quantity`} placeholder="Std" className="md:w-16" value={it.std} onChange={(e) => setItem(si, ii, { std: e.target.value })} />
+                                <Button type="button" variant="ghost" size="icon" className="md:hidden" aria-label={`Remove ${it.item || "item"}`} onClick={() => removeItem(si, ii)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
                             {roFfe ? (
                               <span className="text-xs">{INCLUDED.find((o) => o.v === it.included)?.label}</span>
                             ) : (
@@ -366,14 +418,62 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
                                 <Input aria-label={`${it.item} ${sec.notesLabel}`} placeholder={sec.notesLabel} value={it.notes} onChange={(e) => setItem(si, ii, { notes: e.target.value })} />
                               )}
                             </div>
+                            {roFull ? <span className="hidden md:block" /> : (
+                              <Button type="button" variant="ghost" size="icon" className="hidden md:inline-flex" aria-label={`Remove ${it.item || "item"}`} onClick={() => removeItem(si, ii)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </li>
                         ))}
                       </ul>
+                      {!roFull && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-2">
+                          <Button type="button" variant="ghost" size="sm" onClick={() => addItem(si)}>
+                            <Plus className="mr-1 h-4 w-4" /> Add item
+                          </Button>
+                          {sec.custom && (
+                            <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeSection(si)}>
+                              <Trash2 className="mr-1 h-4 w-4" /> Delete section
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </CollapsibleContent>
                   </Collapsible>
                 );
               })}
+              {!roFull && (addingSection ? (
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    autoFocus aria-label="New section title" placeholder="Section title, e.g. Study" value={newSection}
+                    onChange={(e) => setNewSection(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSection(); } if (e.key === "Escape") setAddingSection(false); }}
+                  />
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" onClick={addSection} disabled={!newSection.trim()}>Add</Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => { setAddingSection(false); setNewSection(""); }}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" size="sm" onClick={() => setAddingSection(true)}>
+                  <Plus className="mr-1 h-4 w-4" /> Add section
+                </Button>
+              ))}
             </div>
+            <AlertDialog open={restoreOpen} onOpenChange={setRestoreOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Restore standard checklist?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Adds back any standard items you removed. Your own items and everything you have filled in are kept.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => upd((d) => ({ ...d, ffe: restoreStandardFfe(d.ffe) }))}>Restore</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </Section>
 
           <Section i={5}>

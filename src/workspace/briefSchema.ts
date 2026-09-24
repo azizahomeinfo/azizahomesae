@@ -75,8 +75,39 @@ export interface BriefStyle {
   accentNotes: string; refs: string; dislikes: string; outputs: string[];
 }
 export interface ColourRow { zone: string; base: string; accent: string; saturation: string; notes: string }
-export interface FfeItem { item: string; std: string; included: Included; required: string; notes: string }
-export interface FfeSection { code: string; title: string; notesLabel: string; items: FfeItem[] }
+export interface FfeItem {
+  item: string; std: string; included: Included; required: string; notes: string;
+  /** Set on anything a user added; standard checklist items leave it unset. */
+  custom?: boolean;
+  /** Original checklist name of a standard item that has been renamed, so "Restore" does not re-add it. */
+  origin?: string;
+}
+export interface FfeSection { code: string; title: string; notesLabel: string; items: FfeItem[]; custom?: boolean }
+
+export const blankFfeItem = (): FfeItem => ({ item: "", std: "", included: "inc", required: "", notes: "", custom: true });
+export const blankFfeSection = (title: string): FfeSection => ({
+  code: "", title, notesLabel: ALT, items: [blankFfeItem()], custom: true,
+});
+
+const norm = (v: string) => v.trim().toLowerCase();
+
+/** Re-add any standard checklist item missing from the document. Never touches existing or custom items. */
+export const restoreStandardFfe = (ffe: FfeSection[]): FfeSection[] => {
+  const out = ffe.map((s) => ({ ...s, items: [...s.items] }));
+  for (const std of FFE_CHECKLIST) {
+    let sec = out.find((s) => !s.custom && s.code === std.code);
+    if (!sec) {
+      sec = { code: std.code, title: std.title, notesLabel: std.notesLabel, items: [] };
+      const at = out.findIndex((s) => s.custom || s.code > std.code);
+      out.splice(at === -1 ? out.length : at, 0, sec);
+    }
+    const present = new Set(sec.items.filter((i) => !i.custom).flatMap((i) => [norm(i.item), norm(i.origin ?? "")]));
+    for (const i of std.items) {
+      if (!present.has(norm(i.item))) sec.items.push({ ...i, required: "", notes: "" });
+    }
+  }
+  return out;
+};
 export interface BedroomRow { bedroom: string; size: string; headboard: string; lighting: string; notes: string }
 export interface BriefLists { existing: string[]; issues: string[]; queries: string[] }
 export interface BriefAttachments { floorPlan: boolean; siteVisit: boolean }

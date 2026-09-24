@@ -168,11 +168,11 @@ export const useSeedFfe = () => {
       for (const s of v.ffe ?? []) {
         const room = cleanRoom(s.title);
         for (const i of s.items ?? []) {
-          if (i.included !== "inc") continue;
+          if (i.included !== "inc" || !i.item?.trim()) continue;
           const ref = nextRef(room, refs);
           refs.push(ref);
           rows.push({
-            project_id: v.projectId, room, item: i.item, ref,
+            project_id: v.projectId, room, item: i.item.trim(), ref,
             qty: qtyOf(i.required) ?? qtyOf(i.std) ?? 1,
             finish: i.notes?.trim() || null, category: categoryForRoom(room), sort_order: rows.length,
           });
