@@ -1,6 +1,9 @@
 {
   "rewrites": [
-    { "source": "/((?!sitemap\\.xml|robots\\.txt|llms\\.txt|_headers|favicon|assets).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!sitemap\\.xml|robots\\.txt|llms\\.txt|_headers|favicon|assets).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
@@ -31,6 +34,15 @@
         {
           "key": "Content-Type",
           "value": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/workspace/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
     }
