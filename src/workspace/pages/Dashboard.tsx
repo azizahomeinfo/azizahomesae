@@ -6,6 +6,8 @@ import { useDesignStatuses } from "../designQueries";
 import { isClosed } from "../constants";
 import { isDue, shortDate } from "../format";
 import StatusPill from "../StatusPill";
+import { useMyTasks, useProjects } from "../projectQueries";
+import { dueTaskCount } from "../TaskList";
 
 const Dashboard = () => {
   const { member } = useWorkspace();
@@ -15,6 +17,10 @@ const Dashboard = () => {
   const { data: designStatuses } = useDesignStatuses();
   const { data: briefs = [] } = useBriefList();
   const role = member?.role;
+  const { data: projects = [] } = useProjects();
+  const { data: myTasks = [] } = useMyTasks(member?.user_id);
+  const tasksDue = dueTaskCount(myTasks);
+  const atRisk = projects.filter((p) => p.stage !== "Closed" && p.risk === "Red").length;
   const awaitingReview = [...(designStatuses?.values() ?? [])].filter((d) => d.status === "Submitted").length;
   const inDesign = briefs.filter((b) => b.designer_id === member?.user_id && (b.status === "Assigned" || b.status === "In Design")).length;
 
@@ -33,9 +39,11 @@ const Dashboard = () => {
     { label: "Active leads", value: active.length },
     { label: "Follow-up due", value: due.length, alert: due.length > 0 },
     { label: "Won this month", value: wonThisMonth.length },
-    { label: "Live projects", value: 0, caption: "from the next release" },
+    { label: "Live projects", value: projects.filter((p) => p.stage !== "Closed").length },
+    { label: "Tasks due", value: tasksDue, caption: "assigned to you", alert: tasksDue > 0 },
   ];
   if (role === "gm" || role === "sales") stats.splice(2, 0, { label: "Awaiting your review", value: awaitingReview, caption: "submitted designs", alert: awaitingReview > 0 });
+  if (role === "gm") stats.push({ label: "At risk", value: atRisk, caption: "red projects", alert: atRisk > 0 });
   if (role === "designer") stats.splice(2, 0, { label: "In design", value: inDesign, caption: "briefs assigned to you" });
 
   return (

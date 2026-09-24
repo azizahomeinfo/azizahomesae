@@ -14,6 +14,7 @@ import Briefs from "./pages/Briefs";
 import Proposals from "./pages/Proposals";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
+import ProjectDetail from "./pages/ProjectDetail";
 import Settings from "./pages/Settings";
 
 const Guard = ({ page, role, children }: { page: WorkspacePage; role: WorkspaceRole; children: ReactElement }) =>
@@ -47,6 +48,7 @@ const Gate = () => {
         <Route path="briefs" element={<Guard page="briefs" role={role}><Briefs /></Guard>} />
         <Route path="proposals" element={<Guard page="proposals" role={role}><Proposals /></Guard>} />
         <Route path="projects" element={<Guard page="projects" role={role}><Projects /></Guard>} />
+        <Route path="projects/:code" element={<Guard page="projects" role={role}><ProjectDetail /></Guard>} />
         <Route path="tasks" element={<Guard page="tasks" role={role}><Tasks /></Guard>} />
         <Route path="settings" element={<Guard page="settings" role={role}><Settings /></Guard>} />
         <Route path="*" element={<Navigate to="/workspace" replace />} />

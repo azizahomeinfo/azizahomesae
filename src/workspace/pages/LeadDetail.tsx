@@ -22,6 +22,8 @@ import StatusPill from "../StatusPill";
 import LeadForm from "../LeadForm";
 import CommentThread from "../CommentThread";
 import { FollowUp } from "./Leads";
+import ConvertProject from "../ConvertProject";
+import { useProjectCode } from "../projectQueries";
 
 const PIPE = LEAD_STATUSES.filter((s) => s !== "Lost");
 
@@ -52,6 +54,8 @@ const LeadDetail = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [lostReason, setLostReason] = useState("");
+  const [convertOpen, setConvertOpen] = useState(false);
+  const { data: projectCode } = useProjectCode(lead?.converted_project_id);
 
   const back = (
     <Link to="/workspace/leads" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -88,6 +92,7 @@ const LeadDetail = () => {
   };
 
   const briefStage = status === "Qualified" || status === "Proposal Sent" || status === "Won";
+  const canConvert = member?.role === "gm" || member?.role === "sales";
   const canStartBrief = member?.role === "gm" || (!!member && lead.sales_id === member.user_id);
 
   const startBrief = async () => {
@@ -197,11 +202,18 @@ const LeadDetail = () => {
         )}
         {status === "Won" && (
           <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-foreground">Convert to project</p>
-            <div className="flex flex-col items-start sm:items-end gap-1">
-              <Button disabled>Convert to project</Button>
-              <span className="text-xs text-muted-foreground">Coming in the next release</span>
-            </div>
+            <p className="text-foreground">{lead.converted_project_id ? "Project" : "Convert to project"}</p>
+            {lead.converted_project_id ? (
+              projectCode ? (
+                <Button asChild variant="outline"><Link to={`/workspace/projects/${projectCode}`}>Open project {projectCode}</Link></Button>
+              ) : (
+                <span className="text-sm text-muted-foreground">Already converted.</span>
+              )
+            ) : canConvert ? (
+              <Button onClick={() => setConvertOpen(true)}>Convert to project</Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">GM or sales converts won leads.</span>
+            )}
           </div>
         )}
       </section>
@@ -240,7 +252,11 @@ const LeadDetail = () => {
         />
       </section>
 
-      <CommentThread leadId={lead.id} leadName={lead.name} />
+      <CommentThread leadId={lead.id} parentName={lead.name} />
+
+      {status === "Won" && !lead.converted_project_id && (
+        <ConvertProject lead={lead} open={convertOpen} onOpenChange={setConvertOpen} />
+      )}
 
       <LeadForm open={editOpen} onOpenChange={setEditOpen} lead={lead} />
 

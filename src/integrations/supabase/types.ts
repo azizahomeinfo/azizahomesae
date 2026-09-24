@@ -47,6 +47,72 @@ export type Database = {
         }
         Relationships: []
       }
+      change_requests: {
+        Row: {
+          cost_delta: number
+          created_at: string
+          days_delta: number
+          decided_at: string | null
+          decided_by: string | null
+          detail: string | null
+          id: string
+          project_id: string
+          raised_on: string
+          ref: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["cr_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cost_delta?: number
+          created_at?: string
+          days_delta?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          detail?: string | null
+          id?: string
+          project_id: string
+          raised_on?: string
+          ref?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["cr_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cost_delta?: number
+          created_at?: string
+          days_delta?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          detail?: string | null
+          id?: string
+          project_id?: string
+          raised_on?: string
+          ref?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["cr_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "change_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_submissions: {
         Row: {
           created_at: string
@@ -285,6 +351,191 @@ export type Database = {
           },
         ]
       }
+      ffe_costings: {
+        Row: {
+          created_at: string
+          gm_notes: string | null
+          id: string
+          markup_pct: number
+          options: Json
+          project_id: string
+          quoted_at: string | null
+          return_note: string | null
+          status: Database["public"]["Enums"]["costing_status"]
+          submitted_at: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          gm_notes?: string | null
+          id?: string
+          markup_pct?: number
+          options?: Json
+          project_id: string
+          quoted_at?: string | null
+          return_note?: string | null
+          status?: Database["public"]["Enums"]["costing_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          gm_notes?: string | null
+          id?: string
+          markup_pct?: number
+          options?: Json
+          project_id?: string
+          quoted_at?: string | null
+          return_note?: string | null
+          status?: Database["public"]["Enums"]["costing_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffe_costings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ffe_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          delivered_on: string | null
+          eta: string | null
+          id: string
+          installed_on: string | null
+          item: string
+          notes: string | null
+          ordered_on: string | null
+          po_ref: string | null
+          project_id: string
+          qty: number
+          ref: string | null
+          room: string
+          sort_order: number
+          spec: string | null
+          stage: Database["public"]["Enums"]["proc_stage"]
+          supplier_id: string | null
+          unit: string | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          delivered_on?: string | null
+          eta?: string | null
+          id?: string
+          installed_on?: string | null
+          item: string
+          notes?: string | null
+          ordered_on?: string | null
+          po_ref?: string | null
+          project_id: string
+          qty?: number
+          ref?: string | null
+          room: string
+          sort_order?: number
+          spec?: string | null
+          stage?: Database["public"]["Enums"]["proc_stage"]
+          supplier_id?: string | null
+          unit?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          delivered_on?: string | null
+          eta?: string | null
+          id?: string
+          installed_on?: string | null
+          item?: string
+          notes?: string | null
+          ordered_on?: string | null
+          po_ref?: string | null
+          project_id?: string
+          qty?: number
+          ref?: string | null
+          room?: string
+          sort_order?: number
+          spec?: string | null
+          stage?: Database["public"]["Enums"]["proc_stage"]
+          supplier_id?: string | null
+          unit?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffe_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ffe_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handover_items: {
+        Row: {
+          done: boolean
+          done_at: string | null
+          done_by: string | null
+          id: string
+          label: string
+          project_id: string
+          sort_order: number
+        }
+        Insert: {
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          label: string
+          project_id: string
+          sort_order: number
+        }
+        Update: {
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          label?: string
+          project_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_items_done_by_fkey"
+            columns: ["done_by"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "handover_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intake_forms: {
         Row: {
           budget_range: string
@@ -344,6 +595,66 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      issues: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          owner_id: string | null
+          project_id: string
+          raised_on: string
+          ref: string | null
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["issue_severity"]
+          status: Database["public"]["Enums"]["issue_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          owner_id?: string | null
+          project_id: string
+          raised_on?: string
+          ref?: string | null
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["issue_severity"]
+          status?: Database["public"]["Enums"]["issue_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          owner_id?: string | null
+          project_id?: string
+          raised_on?: string
+          ref?: string | null
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["issue_severity"]
+          status?: Database["public"]["Enums"]["issue_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "issues_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
@@ -520,6 +831,54 @@ export type Database = {
           {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      project_files: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_name: string
+          id: string
+          project_id: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_name: string
+          id?: string
+          project_id: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_name?: string
+          id?: string
+          project_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "workspace_members"
             referencedColumns: ["user_id"]
@@ -840,6 +1199,111 @@ export type Database = {
           },
         ]
       }
+      snags: {
+        Row: {
+          area: string
+          created_at: string
+          description: string
+          fixed_on: string | null
+          id: string
+          owner_id: string | null
+          photo_path: string | null
+          project_id: string
+          ref: string | null
+          status: Database["public"]["Enums"]["snag_status"]
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          created_at?: string
+          description: string
+          fixed_on?: string | null
+          id?: string
+          owner_id?: string | null
+          photo_path?: string | null
+          project_id: string
+          ref?: string | null
+          status?: Database["public"]["Enums"]["snag_status"]
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          description?: string
+          fixed_on?: string | null
+          id?: string
+          owner_id?: string | null
+          photo_path?: string | null
+          project_id?: string
+          ref?: string | null
+          status?: Database["public"]["Enums"]["snag_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snags_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "snags_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          category: string | null
+          contact: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lead_time: string | null
+          name: string
+          notes: string | null
+          payment_terms: string | null
+          phone: string | null
+          rating: number | null
+          status: Database["public"]["Enums"]["supplier_status"]
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_time?: string | null
+          name: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["supplier_status"]
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          contact?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_time?: string | null
+          name?: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["supplier_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assignee_id: string | null
@@ -1036,7 +1500,11 @@ export type Database = {
         | "Design Ready"
         | "Design Approved"
         | "Revision Requested"
+      costing_status: "Draft" | "Submitted" | "Returned" | "Quoted"
+      cr_status: "Pending Approval" | "Approved" | "Rejected"
       design_status: "Draft" | "Submitted" | "Accepted" | "Rejected"
+      issue_severity: "Low" | "Medium" | "High"
+      issue_status: "Open" | "Escalated" | "Resolved"
       lead_status:
         | "New Lead"
         | "Contacted"
@@ -1045,6 +1513,22 @@ export type Database = {
         | "Won"
         | "Lost"
       pay_status: "Not Due" | "Pending" | "Partially Paid" | "Paid" | "Overdue"
+      proc_stage:
+        | "Awaiting Quote"
+        | "Quote Received"
+        | "Negotiation"
+        | "Awaiting Approval"
+        | "Payment Required"
+        | "Ordered"
+        | "Supplier Confirmed"
+        | "In Production"
+        | "Ready for Delivery"
+        | "Delivery Scheduled"
+        | "Delivered"
+        | "Installation Pending"
+        | "Installed"
+        | "Issue / Replacement"
+        | "Closed"
       project_stage:
         | "Contract / Deposit"
         | "Site Survey"
@@ -1058,6 +1542,8 @@ export type Database = {
         | "Closed"
       proposal_status: "Draft" | "Sent" | "Accepted" | "Rejected"
       risk_level: "Green" | "Yellow" | "Red"
+      snag_status: "Open" | "Fixed" | "Verified"
+      supplier_status: "Preferred" | "Approved" | "On Watch" | "Blocked"
       task_priority: "Low" | "Medium" | "High"
       workspace_role: "gm" | "sales" | "designer" | "coordinator"
     }
@@ -1197,7 +1683,11 @@ export const Constants = {
         "Design Approved",
         "Revision Requested",
       ],
+      costing_status: ["Draft", "Submitted", "Returned", "Quoted"],
+      cr_status: ["Pending Approval", "Approved", "Rejected"],
       design_status: ["Draft", "Submitted", "Accepted", "Rejected"],
+      issue_severity: ["Low", "Medium", "High"],
+      issue_status: ["Open", "Escalated", "Resolved"],
       lead_status: [
         "New Lead",
         "Contacted",
@@ -1207,6 +1697,23 @@ export const Constants = {
         "Lost",
       ],
       pay_status: ["Not Due", "Pending", "Partially Paid", "Paid", "Overdue"],
+      proc_stage: [
+        "Awaiting Quote",
+        "Quote Received",
+        "Negotiation",
+        "Awaiting Approval",
+        "Payment Required",
+        "Ordered",
+        "Supplier Confirmed",
+        "In Production",
+        "Ready for Delivery",
+        "Delivery Scheduled",
+        "Delivered",
+        "Installation Pending",
+        "Installed",
+        "Issue / Replacement",
+        "Closed",
+      ],
       project_stage: [
         "Contract / Deposit",
         "Site Survey",
@@ -1221,6 +1728,8 @@ export const Constants = {
       ],
       proposal_status: ["Draft", "Sent", "Accepted", "Rejected"],
       risk_level: ["Green", "Yellow", "Red"],
+      snag_status: ["Open", "Fixed", "Verified"],
+      supplier_status: ["Preferred", "Approved", "On Watch", "Blocked"],
       task_priority: ["Low", "Medium", "High"],
       workspace_role: ["gm", "sales", "designer", "coordinator"],
     },

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "./WorkspaceProvider";
-import { keys, useComments, useMembers, usePostComment, type MemberLite } from "./queries";
+import { keys, useComments, useMembers, usePostComment, type CommentParent, type MemberLite } from "./queries";
 import { initials } from "./format";
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -26,10 +26,16 @@ const renderBody = (body: string, mentioned: MemberLite[]): ReactNode => {
   );
 };
 
-const CommentThread = ({ leadId, leadName }: { leadId: string; leadName: string }) => {
+type ThreadProps =
+  | { leadId: string; projectId?: never; parentName: string }
+  | { projectId: string; leadId?: never; parentName: string };
+
+const CommentThread = ({ leadId, projectId, parentName }: ThreadProps) => {
+  const parent: CommentParent = leadId ? { kind: "lead", id: leadId } : { kind: "project", id: projectId! };
+  const parentKey = `${parent.kind}:${parent.id}`;
   const qc = useQueryClient();
   const { member } = useWorkspace();
-  const { data: comments = [], isLoading } = useComments(leadId);
+  const { data: comments = [], isLoading } = useComments(parent);
   const { data: members = [] } = useMembers();
   const post = usePostComment();
   const [body, setBody] = useState("");
@@ -42,17 +48,17 @@ const CommentThread = ({ leadId, leadName }: { leadId: string; leadName: string 
 
   useEffect(() => {
     const channel = supabase
-      .channel(`ws-comments-${leadId}`)
+      .channel(`ws-comments-${parentKey}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "comments", filter: `lead_id=eq.${leadId}` },
-        () => qc.invalidateQueries({ queryKey: keys.comments(leadId) }),
+        { event: "*", schema: "public", table: "comments", filter: `${parent.kind}_id=eq.${parent.id}` },
+        () => qc.invalidateQueries({ queryKey: keys.comments(parentKey) }),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [leadId, qc]);
+  }, [parentKey, qc]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const options = useMemo(() => {
     if (query === null) return [];
@@ -85,7 +91,7 @@ const CommentThread = ({ leadId, leadName }: { leadId: string; leadName: string 
     if (!text || !member) return;
     const mentions = picked.filter((m) => text.includes(`@${m.full_name}`)).map((m) => m.user_id);
     try {
-      await post.mutateAsync({ leadId, leadName, authorId: member.user_id, authorName: member.full_name, body: text, mentions });
+      await post.mutateAsync({ parent, parentName, authorId: member.user_id, authorName: member.full_name, body: text, mentions });
       setBody("");
       setPicked([]);
     } catch (e) {
