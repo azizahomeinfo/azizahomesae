@@ -31,7 +31,6 @@ const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, pay
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
   "id, project_id, ref, room, category, item, sku, dims, finish, spec, qty, unit, supplier_id, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
-const ffeCols = (withCost: boolean) => (withCost ? `${FFE_BASE}, unit_cost` : FFE_BASE);
 const COSTING_BASE = "id, project_id, status, version, gm_notes, return_note, submitted_at, quoted_at, options";
 const costingCols = (withCost: boolean) => (withCost ? `${COSTING_BASE}, markup_pct` : COSTING_BASE);
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
@@ -134,9 +133,15 @@ export const useFfeItems = (projectId: string | undefined, withCost: boolean) =>
     queryKey: [...fKeys.ffe(projectId ?? ""), withCost],
     enabled: !!projectId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("ffe_items").select(ffeCols(withCost)).eq("project_id", projectId!).order("sort_order");
+      const { data, error } = await supabase.from("ffe_items").select(FFE_BASE).eq("project_id", projectId!).order("sort_order");
       fail(error);
-      return (data ?? []) as unknown as FfeRow[];
+      const rows = (data ?? []) as unknown as FfeRow[];
+      // Cost price lives in ffe_item_costs, which RLS hides from sales entirely.
+      if (!withCost || !rows.length) return rows;
+      const { data: costs, error: cErr } = await supabase.from("ffe_item_costs").select("item_id, unit_cost").in("item_id", rows.map((r) => r.id));
+      fail(cErr);
+      const m = new Map((costs ?? []).map((c) => [c.item_id, c.unit_cost]));
+      return rows.map((r) => ({ ...r, unit_cost: m.get(r.id) ?? null }));
     },
   });
 
@@ -201,9 +206,14 @@ export const useAddFfeItem = () => {
 export const useUpdateFfeItems = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { projectId: string; ids: string[]; values: T["ffe_items"]["Update"]; existing?: FfeRow[] }) => {
+    mutationFn: async (v: { projectId: string; ids: string[]; values: Omit<T["ffe_items"]["Update"], "unit_cost"> & { unit_cost?: number | null }; existing?: FfeRow[] }) => {
       if (!v.ids.length) return v;
-      const values = { ...v.values };
+      const { unit_cost, ...values } = v.values;
+      if (unit_cost !== undefined) {
+        const { error } = await supabase.from("ffe_item_costs").upsert(v.ids.map((item_id) => ({ item_id, unit_cost })));
+        fail(error);
+        if (!Object.keys(values).length) return v;
+      }
       // Moving a single row to another room re-issues its ref under that room's prefix.
       if (values.room && v.ids.length === 1 && v.existing) values.ref = nextRef(values.room, v.existing.map((r) => r.ref));
       const { error } = await supabase.from("ffe_items").update(values).in("id", v.ids);
