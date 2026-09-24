@@ -17,6 +17,8 @@ import Tasks from "./pages/Tasks";
 import ProjectDetail from "./pages/ProjectDetail";
 import Settings from "./pages/Settings";
 import Suppliers from "./pages/Suppliers";
+import Reports from "./pages/Reports";
+import ProposalDoc from "./ProposalDoc";
 
 const Guard = ({ page, role, children }: { page: WorkspacePage; role: WorkspaceRole; children: ReactElement }) =>
   canSee(role, page) ? children : <Navigate to="/workspace" replace />;
@@ -48,6 +50,8 @@ const Gate = () => {
         <Route path="leads/:id" element={<Guard page="leads" role={role}><LeadDetail /></Guard>} />
         <Route path="briefs" element={<Guard page="briefs" role={role}><Briefs /></Guard>} />
         <Route path="proposals" element={<Guard page="proposals" role={role}><Proposals /></Guard>} />
+        <Route path="proposals/:leadId" element={<Guard page="proposals" role={role}><ProposalDoc /></Guard>} />
+        <Route path="reports" element={<Guard page="reports" role={role}><Reports /></Guard>} />
         <Route path="projects" element={<Guard page="projects" role={role}><Projects /></Guard>} />
         <Route path="projects/:code" element={<Guard page="projects" role={role}><ProjectDetail /></Guard>} />
         <Route path="tasks" element={<Guard page="tasks" role={role}><Tasks /></Guard>} />
