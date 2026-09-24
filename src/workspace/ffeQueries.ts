@@ -195,7 +195,7 @@ export const useSeedFfe = () => {
       fail(error);
       return rows.length;
     },
-    onSettled: (_d, _e, v) => invalidateFfe(qc),
+    onSettled: () => invalidateFfe(qc),
   });
 };
 
@@ -211,7 +211,7 @@ export const useAddFfeItem = () => {
       fail(error);
       return v;
     },
-    onSettled: (_d, _e, v) => invalidateFfe(qc),
+    onSettled: () => invalidateFfe(qc),
   });
 };
 
