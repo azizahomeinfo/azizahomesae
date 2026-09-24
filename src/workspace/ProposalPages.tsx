@@ -37,6 +37,8 @@ export const PROPOSAL_CSS = `
 .ppd-row b { font-weight: 600; }
 .ppd-card { background: var(--pp-card); border: 1px solid var(--pp-line); padding: 24px 26px; }
 .ppd-line { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 5px 0; color: var(--pp-muted); }
+.ppd-line span:last-child { white-space: nowrap; }
+.ppd-table .r { white-space: nowrap; }
 .ppd-line.total { font-size: 14px; font-weight: 600; color: var(--pp-ink); border-top: 1px solid var(--pp-line-strong); margin-top: 6px; padding-top: 10px; }
 .ppd-table { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); column-gap: 12px; }
 .ppd-table > div { padding: 8px 0; border-bottom: 1px solid var(--pp-line-soft); font-size: 11px; }
