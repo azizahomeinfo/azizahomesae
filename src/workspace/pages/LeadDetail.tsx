@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { canSee, type WorkspaceRole } from "../access";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -186,6 +187,9 @@ const LeadDetail = () => {
             <div className="space-y-1">
               <p className="text-foreground">Design package</p>
               {brief.status === "Design Approved" && <p className="text-sm text-primary">Design approved</p>}
+              {brief.status === "Design Approved" && canSee(member?.role as WorkspaceRole, "proposals") && (
+                <Button asChild variant="outline"><Link to={`/workspace/proposals/${lead.id}`}>Open proposal</Link></Button>
+              )}
               {brief.status === "Design Ready" && <p className="text-sm text-muted-foreground">Submitted for review.</p>}
             </div>
             <Button

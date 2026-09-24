@@ -404,6 +404,32 @@ export type Database = {
           },
         ]
       }
+      ffe_item_costs: {
+        Row: {
+          item_id: string
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          item_id: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          item_id?: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffe_item_costs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "ffe_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ffe_items: {
         Row: {
           category: string | null
@@ -1472,6 +1498,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_see_costs: {
+        Args: { _project: string; _uid: string }
+        Returns: boolean
+      }
       can_see_lead: { Args: { _lead: string; _uid: string }; Returns: boolean }
       can_see_project: {
         Args: { _project: string; _uid: string }
