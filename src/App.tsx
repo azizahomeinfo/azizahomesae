@@ -20,6 +20,9 @@ import InvestorsFurnishingDubai from "./pages/InvestorsFurnishingDubai";
 import LocationFurnishing from "./pages/LocationFurnishing";
 import IntentFurnishing from "./pages/IntentFurnishing";
 import CaseStudy from "./pages/CaseStudy";
+import { lazy, Suspense } from "react";
+
+const Workspace = lazy(() => import("./workspace/WorkspaceApp"));
 
 const queryClient = new QueryClient();
 
@@ -46,6 +49,9 @@ const App = () => (
         <Route path="/furnishing/:slug" element={<LocationFurnishing />} />
         <Route path="/holiday-home-furnishing-dubai" element={<IntentFurnishing />} />
         <Route path="/villa-furnishing-dubai" element={<IntentFurnishing />} />
+        <Route path="/workspace/*" element={
+          <Suspense fallback={null}><Workspace /></Suspense>
+        } />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

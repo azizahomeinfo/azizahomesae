@@ -7,3 +7,6 @@
 
 /llms.txt
   Content-Type: text/plain
+
+/workspace/*
+  X-Robots-Tag: noindex, nofollow
