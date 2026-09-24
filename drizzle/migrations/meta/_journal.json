@@ -106,6 +106,13 @@
       "when": 1790285855185,
       "tag": "0014_workspace_storage_scoped",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790285957223,
+      "tag": "0015_ffe_items_supplier_link",
+      "breakpoints": true
     }
   ]
 }
