@@ -14,11 +14,15 @@ const LEAD_COLS =
 const COMMENT_COLS = "id, lead_id, author_id, body, mentions, created_at";
 const MEMBER_COLS = "user_id, full_name, role, title, active";
 
-export const keys: Record<string, any> = {
+export const keys = {
   leads: ["ws", "leads"] as const,
   lead: (id: string) => ["ws", "lead", id] as const,
   comments: (leadId: string) => ["ws", "comments", leadId] as const,
   members: ["ws", "members"] as const,
+  brief: (leadId: string) => ["ws", "brief", leadId] as const,
+  briefs: ["ws", "briefs"] as const,
+  queue: ["ws", "brief-queue"] as const,
+  notifications: (uid: string) => ["ws", "notifications", uid] as const,
 };
 
 const fail = (e: { message: string } | null) => {
@@ -162,18 +166,7 @@ export type QueueRow = Database["public"]["Functions"]["ws_brief_queue"]["Return
 
 export interface NotifyTarget { user_id: string; title: string; body?: string | null; lead_id: string; kind: string }
 
-keys.brief = (leadId: string) => ["ws", "brief", leadId] as const;
-Object.assign(keys, {
-  briefs: ["ws", "briefs"] as const,
-  queue: ["ws", "brief-queue"] as const,
-  notifications: (uid: string) => ["ws", "notifications", uid] as const,
-});
-const K = keys as typeof keys & {
-  brief: (leadId: string) => readonly unknown[];
-  briefs: readonly unknown[];
-  queue: readonly unknown[];
-  notifications: (uid: string) => readonly unknown[];
-};
+const K = keys;
 
 /** Insert notifications without .select(): the author cannot read rows addressed to others. */
 const notify = async (targets: NotifyTarget[]) => {
