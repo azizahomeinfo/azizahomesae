@@ -284,7 +284,7 @@ type BriefRef = { id: string; status: BriefStatusValue };
 
 /** Walks the brief to In Design using only transitions the database guard allows. */
 const briefToInDesign = async (b: BriefRef) => {
-  if (b.status === "Assigned" || b.status === "Revision Requested") {
+  if (b.status === "Assigned" || b.status === "Revision Requested" || b.status === "Design Approved") {
     const { error } = await supabase.from("requirement_briefs").update({ status: "In Design" }).eq("id", b.id);
     fail(error);
   }

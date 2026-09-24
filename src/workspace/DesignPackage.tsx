@@ -9,6 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -506,13 +510,19 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
   const canStartFirst = !viewOnly && !latest && isAssignedDesigner && !!brief && ["Assigned", "In Design", "Revision Requested"].includes(brief.status);
-  const canStartNext = !viewOnly && isAssignedDesigner && latest?.status === "Rejected" && !!brief;
+  const canStartNext = !viewOnly && !!brief && (
+    (latest?.status === "Rejected" && isAssignedDesigner)
+    || (latest?.status === "Accepted" && (isGm || isAssignedDesigner || (!!lead && lead.sales_id === me)))
+  );
+  const [reopenOpen, setReopenOpen] = useState(false);
   const nameOf = (id: string | null | undefined) => members.find((m) => m.user_id === id)?.full_name ?? "Someone";
 
   const doStart = async () => {
     if (!me || !brief) return;
     try {
-      await start.mutateAsync({ leadId, designerId: me, brief: { id: brief.id, status: brief.status }, previous: latest ?? null });
+      // The new version belongs to the designer, even when sales or the GM reopens it.
+      const designerId = brief.designer_id ?? latest?.designer_id ?? me;
+      await start.mutateAsync({ leadId, designerId, brief: { id: brief.id, status: brief.status }, previous: latest ?? null });
     } catch (e) {
       toast.error(errMsg(e, "Could not start the design"));
     }
@@ -625,8 +635,10 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
               {selected.status === "Accepted" && selected.decided_by && (
                 <p className="text-sm text-muted-foreground">Accepted by {nameOf(selected.decided_by)}.</p>
               )}
-              {selected.status === "Accepted" && isLatest && !viewOnly && (isAssignedDesigner || selected.designer_id === me) && (
-                <p className="text-sm text-muted-foreground">This design is approved. Start a new version to change it.</p>
+              {selected.status === "Accepted" && isLatest && (
+                <p className="text-sm text-muted-foreground">
+                  {canStartNext ? "This design is approved. Start a new version if the client wants changes." : "This design is approved and cannot be changed."}
+                </p>
               )}
               {updatedAfterSubmit && !editable && (
                 <p className="text-sm text-muted-foreground">
@@ -654,10 +666,27 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
             </>
           )}
           {canStartNext && isLatest && (
-            <Button onClick={doStart} disabled={start.isPending}>Start V{(latest?.version ?? 0) + 1}</Button>
+            <Button onClick={() => (latest?.status === "Accepted" ? setReopenOpen(true) : doStart())} disabled={start.isPending}>
+              Start V{(latest?.version ?? 0) + 1}
+            </Button>
           )}
         </footer>
       )}
+
+      <AlertDialog open={reopenOpen} onOpenChange={setReopenOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reopen the approved design?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A proposal may already use these renders. Starting a new version reopens the design — the approved version stays as a record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setReopenOpen(false); doStart(); }}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <RejectDialog open={rejectOpen} onOpenChange={setRejectOpen} pending={decide.isPending} onConfirm={(r, f) => doDecide(false, r, f)} />
     </div>
