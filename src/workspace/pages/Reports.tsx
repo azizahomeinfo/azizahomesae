@@ -50,11 +50,14 @@ const Reports = () => {
   });
   const maxN = Math.max(...pipe.map((p) => p.n), 0);
 
-  // No won/lost timestamp exists, so the last update on a closed lead stands in for the close date.
+  // closed_at is stamped by the database the moment a lead is won or lost; leads closed before
+  // that shipped have a null closed_at and are excluded rather than counted as day zero.
+  const closedAll = leads.filter((l) => l.status === "Won" || l.status === "Lost");
+  const unstamped = closedAll.filter((l) => !l.closed_at).length;
   const since = Date.now() - 90 * DAY;
-  const closed = leads.filter((l) => (l.status === "Won" || l.status === "Lost") && new Date(l.updated_at).getTime() >= since);
+  const closed = closedAll.filter((l) => l.closed_at && new Date(l.closed_at).getTime() >= since);
   const won = closed.filter((l) => l.status === "Won");
-  const avgDays = won.length ? Math.round(won.reduce((t, l) => t + (new Date(l.updated_at).getTime() - new Date(l.created_at).getTime()) / DAY, 0) / won.length) : null;
+  const avgDays = won.length ? Math.round(won.reduce((t, l) => t + (new Date(l.closed_at!).getTime() - new Date(l.created_at).getTime()) / DAY, 0) / won.length) : null;
 
   const byStage = PROJECT_STAGES.map((s) => ({ s, n: projects.filter((p) => p.stage === s).length }));
   const maxStage = Math.max(...byStage.map((b) => b.n), 0);
@@ -79,6 +82,9 @@ const Reports = () => {
             <Stat k="Won / lost" v={`${won.length} / ${closed.length - won.length}`} />
             <Stat k="Avg days lead → won" v={avgDays ?? "—"} />
           </div>
+        )}
+        {unstamped > 0 && (
+          <p className="text-xs text-muted-foreground">Leads closed before 24 September 2026 are not included — their close date was not recorded.</p>
         )}
       </Block>
       <Block title="Delivery · all projects">
