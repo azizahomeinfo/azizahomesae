@@ -158,12 +158,19 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   const docRef = useRef(doc);
   docRef.current = doc;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Revision counters guard the dirty flag against the save-in-flight race: an
+  // edit made while persist() awaits the server must NOT be wiped when the older
+  // response lands, or that edit is silently dropped while the header says "Saved".
+  const rev = useRef(0);
+  const savedRev = useRef(0);
 
   // Reload from server when opened or when the brief changes status underneath us.
   useEffect(() => {
     if (open) {
       setDoc(normaliseBrief(brief, lead));
       setDirty(false);
+      rev.current = 0;
+      savedRev.current = 0;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, brief.id, brief.status]);
