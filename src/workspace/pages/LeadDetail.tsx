@@ -9,7 +9,12 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useLead, useMembers, useUpdateLead } from "../queries";
+import { useBrief, useCreateBrief, useLead, useMembers, useUpdateLead } from "../queries";
+import { useWorkspace } from "../WorkspaceProvider";
+import { blankBrief } from "../briefSchema";
+import type { BriefStatus } from "../briefWorkflow";
+import BriefStatusPill from "../BriefStatusPill";
+import BriefEditor from "../BriefEditor";
 import { LEAD_STATUSES, LEAD_STATUS_HELP, type LeadStatus } from "../constants";
 import { aed, shortDate } from "../format";
 import StatusPill from "../StatusPill";
@@ -38,6 +43,10 @@ const LeadDetail = () => {
   const { data: lead, isLoading, error } = useLead(id);
   const { data: members = [] } = useMembers();
   const update = useUpdateLead();
+  const { member } = useWorkspace();
+  const { data: brief } = useBrief(id);
+  const createBrief = useCreateBrief();
+  const [briefOpen, setBriefOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [lostReason, setLostReason] = useState("");
@@ -76,8 +85,26 @@ const LeadDetail = () => {
     setLostReason("");
   };
 
-  const nextStep =
-    status === "Qualified" ? { label: "Complete the requirement brief" } : status === "Won" ? { label: "Convert to project" } : null;
+  const briefStage = status === "Qualified" || status === "Proposal Sent" || status === "Won";
+  const canStartBrief = member?.role === "gm" || (!!member && lead.sales_id === member.user_id);
+
+  const startBrief = async () => {
+    if (!member) return;
+    try {
+      const d = blankBrief(lead);
+      await createBrief.mutateAsync({
+        leadId: lead.id,
+        createdBy: member.user_id,
+        doc: {
+          header: d.header as never, style: d.style as never, colours: d.colours as never, ffe: d.ffe as never,
+          bedrooms: d.bedrooms as never, lists: d.lists as never, attachments: d.attachments as never,
+        },
+      });
+      setBriefOpen(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start the brief");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -126,18 +153,35 @@ const LeadDetail = () => {
         </div>
       </section>
 
-      <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6 space-y-2">
+      <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6 space-y-4">
         <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Next step</p>
-        {nextStep ? (
+        {brief || briefStage ? (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-foreground">{nextStep.label}</p>
-            <div className="flex flex-col items-start sm:items-end gap-1">
-              <Button disabled>{nextStep.label}</Button>
-              <span className="text-xs text-muted-foreground">Coming in the next release</span>
+            <div className="space-y-1">
+              <p className="text-foreground">Requirement brief</p>
+              {brief ? <BriefStatusPill status={brief.status as BriefStatus} /> : <p className="text-sm text-muted-foreground">Not started yet.</p>}
             </div>
+            {brief ? (
+              <Button onClick={() => setBriefOpen(true)}>
+                {brief.status === "Draft" && canStartBrief ? "Complete the requirement brief" : "Open requirement brief"}
+              </Button>
+            ) : canStartBrief ? (
+              <Button onClick={startBrief} disabled={createBrief.isPending}>Complete the requirement brief</Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">The sales owner starts the brief.</span>
+            )}
           </div>
         ) : (
           <p className="text-sm text-foreground">{LEAD_STATUS_HELP[status]}</p>
+        )}
+        {status === "Won" && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-foreground">Convert to project</p>
+            <div className="flex flex-col items-start sm:items-end gap-1">
+              <Button disabled>Convert to project</Button>
+              <span className="text-xs text-muted-foreground">Coming in the next release</span>
+            </div>
+          </div>
         )}
       </section>
 
