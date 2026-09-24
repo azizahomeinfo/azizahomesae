@@ -71,6 +71,13 @@
       "when": 1790283328284,
       "tag": "0009_ffe_belongs_to_lead",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790283549928,
+      "tag": "0010_ffe_items_lead_column_grants",
+      "breakpoints": true
     }
   ]
 }
