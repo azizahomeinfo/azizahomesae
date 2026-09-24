@@ -41,7 +41,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <h2 className="font-heading text-2xl">Welcome, {first}</h2>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {stats.map((s) => (
           <div key={s.label} className="rounded-[var(--radius)] border border-border bg-card p-5">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">{s.label}</p>
