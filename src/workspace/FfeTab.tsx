@@ -405,13 +405,11 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const [addingRoom, setAddingRoom] = useState(false);
   const [delRoom, setDelRoom] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
-  const [returnOpen, setReturnOpen] = useState(false);
-  const [returnNote, setReturnNote] = useState("");
-  const [quoteOpen, setQuoteOpen] = useState(false);
 
   const status: CostingStatus = costing?.status ?? "Draft";
   const isGm = role === "gm";
-  const canEdit = !readOnly && role !== "sales" && (status === "Draft" || status === "Returned");
+  // Locked only while it sits with the GM. After a quote the designer may edit and resubmit for a new one.
+  const canEdit = !readOnly && role !== "sales" && status !== "Submitted";
   const canSubmit = (isGm || role === "designer") && canEdit && rows.length > 0;
   const grand = rows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
@@ -516,43 +514,69 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
     </li>
   );
 
+  const hasQuote = !!costing?.quoted_at;
+  const quotedLine = costing && hasQuote
+    ? `Final quotation set by ${members.find((m) => m.user_id === costing.quoted_by)?.full_name ?? "the GM"} on ${shortDate(costing.quoted_at)} — `
+      + costing.options.map((o) => `${o.label} ${aed(o.amount)}`).join(" · ")
+    : "";
+
   return (
     <div className="space-y-4">
-      <Section title={`Costing · ${COSTING_LABEL[status]}`} right={
-        <div className="flex flex-wrap gap-2">
+      <Section title="Costing" right={
+        <div className="flex flex-wrap items-center gap-2">
+          <CostingPill status={status} version={hasQuote ? costing?.version : null} />
           {canSubmit && (
             <Button size="sm" disabled={transition.isPending}
               onClick={() => run({ status: "Submitted", submitted_at: new Date().toISOString() },
-                notifyTo(gms, `${name} submitted the FF&E list for ${ctx.name} — quotation needed`), "Sent to GM for quotation")}>
-              Submit for quotation
+                notifyTo(gms, `${name} ${hasQuote ? "resubmitted" : "submitted"} the FF&E list for ${ctx.name} — quotation needed`), "Sent to GM for quotation")}>
+              {hasQuote ? "Resubmit to GM" : "Submit to GM"}
             </Button>
-          )}
-          {isGm && !readOnly && status === "Submitted" && (
-            <>
-              <Button size="sm" variant="outline" onClick={() => { setReturnNote(""); setReturnOpen(true); }}>Return to designer</Button>
-              <Button size="sm" onClick={() => setQuoteOpen(true)}>Set quotation</Button>
-            </>
           )}
         </div>
       }>
-        {status === "Returned" && costing?.return_note && (
-          <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm"><span className="font-medium">Returned by GM:</span> {costing.return_note}</p>
+        {role === "designer" && (status === "Draft" || status === "Returned") && (
+          <p className="text-sm text-muted-foreground">Specify every item for this design — supplier, purchase link, quantity, dimensions and unit cost. Submit to the GM to set the final quotation.</p>
         )}
-        {withCost && <p className="text-sm">Grand total (cost): <span className="font-medium">{aed(grand)}</span> · {rows.length} items</p>}
-        {!withCost && <p className="text-sm">{rows.length} items</p>}
-        {status === "Quoted" && costing && (
+        {status === "Returned" && costing?.return_note && (
+          <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Returned by GM: {costing.return_note}</p>
+        )}
+        {status === "Quoted" && quotedLine && (
+          <p className="rounded-[var(--radius)] border border-success/40 bg-success/10 p-3 text-sm tabular-nums">
+            {quotedLine}
+            {role === "designer" && <> Editing and resubmitting will ask the GM for a new quotation.</>}
+          </p>
+        )}
+        {status === "Quoted" && costing && !withCost && (
           <div className="grid gap-2 sm:grid-cols-2">
             {costing.options.map((o, i) => (
               <div key={i} className="rounded-[var(--radius)] border border-border p-3">
-                <p className="text-sm font-medium">{o.label} · <span className="text-primary">{aed(o.amount)}</span></p>
+                <p className="text-sm font-medium">{o.label} · <span className="text-primary tabular-nums">{aed(o.amount)}</span></p>
                 {o.desc && <p className="text-xs text-muted-foreground">{o.desc}</p>}
               </div>
             ))}
-            {costing.quoted_at && <p className="text-xs text-muted-foreground sm:col-span-2">Quotation set {shortDate(costing.quoted_at)}{withCost && costing.markup_pct != null ? ` · ${costing.markup_pct}% markup` : ""}</p>}
-            {isGm && costing.gm_notes && <p className="text-xs text-muted-foreground sm:col-span-2">GM notes: {costing.gm_notes}</p>}
           </div>
         )}
+        {withCost && <p className="text-sm">Grand total (cost): <span className="font-medium tabular-nums">{aed(grand)}</span> · {rows.length} items</p>}
+        {!withCost && <p className="text-sm">{rows.length} items</p>}
       </Section>
+
+      {isGm && !readOnly && (status === "Submitted" || status === "Quoted") && (
+        <QuotePanel key={`${costing?.id}-${costing?.version}-${status}`} cost={grand} hasQuote={hasQuote} version={costing?.version ?? 1}
+          pending={transition.isPending}
+          initial={{ markup: Number(costing?.markup_pct ?? 35), options: costing?.options ?? [], notes: costing?.gm_notes ?? "" }}
+          onSet={(v) => run(
+            {
+              status: "Quoted", quoted_at: new Date().toISOString(), quoted_by: member?.user_id ?? null,
+              version: hasQuote ? (costing?.version ?? 1) + 1 : (costing?.version ?? 1),
+              markup_pct: v.markup, options: v.options as unknown as never, gm_notes: v.notes || null,
+            },
+            // The hand-back: sales builds the proposal from this quote.
+            notifyTo([ctx.salesId], `Quotation ready for ${ctx.name} — ${quoteSummary(v.options)}`),
+            "Quotation set",
+          )}
+          onReturn={(note) => run({ status: "Returned", return_note: note || null },
+            notifyTo([ctx.designerId], `${name} returned the FF&E list for ${ctx.name}`), "Returned to designer")} />
+      )}
 
       {groups.map(([room, items]) => {
         const sub = items.reduce((s, r) => s + lineTotal(r), 0);
@@ -614,33 +638,6 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={returnOpen} onOpenChange={setReturnOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Return to designer</DialogTitle></DialogHeader>
-          <Label htmlFor="ret-note">What needs changing?</Label>
-          <Textarea id="ret-note" value={returnNote} onChange={(e) => setReturnNote(e.target.value)} />
-          <DialogFooter>
-            <Button disabled={!returnNote.trim() || transition.isPending}
-              onClick={() => run({ status: "Returned", return_note: returnNote.trim() },
-                notifyTo([ctx.designerId], `${name} returned the FF&E list for ${ctx.name}`), "Returned to designer", () => setReturnOpen(false))}>
-              Return
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {isGm && (
-        <QuoteDialog open={quoteOpen} onOpenChange={setQuoteOpen} cost={grand} pending={transition.isPending}
-          initial={{ markup: Number(costing?.markup_pct ?? 35), options: costing?.options ?? [], notes: costing?.gm_notes ?? "" }}
-          onSave={(v) => run(
-            { status: "Quoted", quoted_at: new Date().toISOString(), markup_pct: v.markup, options: v.options as unknown as never, gm_notes: v.notes || null },
-            [
-              // The hand-back: sales builds the proposal from this quote.
-              ...notifyTo([ctx.salesId], `Quotation ready for ${ctx.name} — ${quoteSummary(v.options)}`),
-              ...notifyTo([ctx.designerId].filter((d) => d !== ctx.salesId), `Quotation set for ${ctx.name}`),
-            ], "Quotation set", () => setQuoteOpen(false),
-          )} />
-      )}
     </div>
   );
 };
