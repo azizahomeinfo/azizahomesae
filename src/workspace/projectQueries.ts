@@ -7,7 +7,7 @@ import { PROJECT_STAGES, type ProjectStage } from "./projectConstants";
 type T = Database["public"]["Tables"];
 export type Project = Pick<
   T["projects"]["Row"],
-  | "id" | "code" | "lead_id" | "name" | "client" | "property" | "unit" | "unit_type" | "location"
+  | "id" | "code" | "lead_id" | "name" | "client" | "property" | "unit" | "unit_type" | "location" | "drive_url"
   | "sales_id" | "designer_id" | "coordinator_id" | "start_date" | "handover_date" | "actual_handover"
   | "stage" | "risk" | "overall_pct" | "proc_pct" | "value" | "est_proc" | "est_ops" | "received"
   | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at"
