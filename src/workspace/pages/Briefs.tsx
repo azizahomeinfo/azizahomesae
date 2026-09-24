@@ -161,7 +161,7 @@ const GmView = () => {
                         {st === "Submitted" && (
                           <BriefActionBar
                             size="sm"
-                            brief={{ id: b.id, leadId: b.lead_id, leadName: b.leads?.name ?? "", status: st, designerId: b.designer_id, salesId: b.leads?.sales_id ?? null }}
+                            brief={{ id: b.id, leadId: b.lead_id, leadName: b.leads?.name ?? "", status: st, designerId: b.designer_id, salesId: b.leads?.sales_id ?? null, driveUrl: b.leads?.drive_url ?? null }}
                           />
                         )}
                       </TableCell>
@@ -181,7 +181,7 @@ const GmView = () => {
                   {st === "Submitted" && (
                     <BriefActionBar
                       size="sm"
-                      brief={{ id: b.id, leadId: b.lead_id, leadName: b.leads?.name ?? "", status: st, designerId: b.designer_id, salesId: b.leads?.sales_id ?? null }}
+                      brief={{ id: b.id, leadId: b.lead_id, leadName: b.leads?.name ?? "", status: st, designerId: b.designer_id, salesId: b.leads?.sales_id ?? null, driveUrl: b.leads?.drive_url ?? null }}
                     />
                   )}
                 </div>

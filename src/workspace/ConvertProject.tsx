@@ -59,7 +59,7 @@ const ConvertProject = ({ lead, open, onOpenChange }: { lead: Lead; open: boolea
         actorName: member.full_name,
         values: {
           name: lead.name, client: lead.name, property: lead.property, unit: lead.building,
-          unit_type: lead.unit_type, location: lead.location,
+          unit_type: lead.unit_type, location: lead.location, drive_url: lead.drive_url,
           start_date: start || null, handover_date: handover || null, value: v,
           sales_id: sales || null, designer_id: designer || null, coordinator_id: coordinator || null,
           created_by: member.user_id,

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { checkDriveUrl } from "./DriveLink";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ const NONE = "__none";
 const FIELDS = [
   "name", "phone", "email", "property", "building", "location", "unit_type", "size", "handover_status",
   "exp_handover", "use_type", "budget", "target_date", "scope", "style", "refs", "floor_plan", "source",
-  "status", "last_contact", "next_follow", "notes", "sales_id",
+  "status", "last_contact", "next_follow", "notes", "sales_id", "drive_url",
 ] as const;
 type Field = (typeof FIELDS)[number];
 type FormState = Record<Field, string>;
@@ -95,6 +96,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
     e.preventDefault();
     const r = schema.safeParse(f);
     if (!r.success) return toast.error(r.error.errors[0].message);
+    if (drive.error) return toast.error(drive.error);
     const n = (v: string) => (v.trim() === "" ? null : v.trim());
     const values = {
       name: f.name.trim(),
@@ -104,7 +106,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
       use_type: n(f.use_type), budget: f.budget === "" ? null : Number(f.budget), target_date: n(f.target_date),
       scope: n(f.scope), style: n(f.style), refs: n(f.refs), floor_plan: n(f.floor_plan), source: n(f.source),
       status: (f.status || "New Lead") as LeadStatus, last_contact: n(f.last_contact), next_follow: n(f.next_follow),
-      notes: n(f.notes),
+      notes: n(f.notes), drive_url: drive.value,
     };
     try {
       let saved: Lead;
@@ -123,6 +125,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
     }
   };
 
+  const drive = checkDriveUrl(f.drive_url);
   const busy = create.isPending || update.isPending;
   const owners = members.filter((m) => m.active && (m.role === "sales" || m.role === "gm")).map((m) => ({ value: m.user_id, label: m.full_name }));
   const title = lead ? `Edit ${lead.ref}` : "New lead";
@@ -135,6 +138,11 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
           {text("name", "Name *", "text", { autoFocus: !lead })}
           {text("phone", "Phone", "tel")}
           {text("email", "Email", "email")}
+          <div className="space-y-1.5 sm:col-span-3">
+            <Label htmlFor="lf-drive_url">Google Drive folder</Label>
+            <Input id="lf-drive_url" type="url" inputMode="url" placeholder="https://drive.google.com/…" aria-invalid={!!drive.error} {...inp("drive_url")} />
+            {drive.error ? <p className="text-xs text-destructive">{drive.error}</p> : drive.hint ? <p className="text-xs text-muted-foreground">{drive.hint}</p> : null}
+          </div>
         </div>
       </fieldset>
       <fieldset>
