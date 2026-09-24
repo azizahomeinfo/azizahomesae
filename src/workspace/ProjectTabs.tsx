@@ -26,6 +26,8 @@ import DesignPackage from "./DesignPackage";
 import DesignStatusPill from "./DesignStatusPill";
 import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
+import { useSnags } from "./ffeQueries";
+import { SnagList } from "./SnagList";
 
 const Card = ({ title, children, className }: { title: string; children: ReactNode; className?: string }) => (
   <section className={cn("rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3", className)}>
@@ -341,31 +343,43 @@ export const ChangesTab = ({ project }: { project: Project }) => {
 export const SnaggingTab = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const { data: items = [], isLoading } = useHandover(project.id);
+  const { data: snags = [] } = useSnags(project.id);
   const { data: members = [] } = useMembers();
   const tick = useTickHandover();
-  const done = items.filter((i) => i.done).length;
+  // "Snag list closed" is satisfied automatically once there is at least one snag and all are verified.
+  const snagsClosed = snags.length > 0 && snags.every((s) => s.status === "Verified");
+  const isAuto = (label: string) => label === "Snag list closed" && snagsClosed;
+  const done = items.filter((i) => i.done || isAuto(i.label)).length;
   return (
-    <Card title={`Handover checklist · ${done} of ${items.length}`}>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : (
-        <ul className="divide-y divide-border">
-          {items.map((i) => (
-            <li key={i.id} className="flex items-start gap-3 py-3">
-              <Checkbox id={`ho-${i.id}`} className="mt-0.5" checked={i.done} disabled={!member}
-                onCheckedChange={(c) => member && tick.mutate({ id: i.id, projectId: project.id, done: c === true, by: member.user_id }, { onError: (e) => toast.error(errMsg(e, "Failed")) })} />
-              <label htmlFor={`ho-${i.id}`} className="min-w-0 flex-1 text-sm">
-                <span className={cn(i.done && "text-muted-foreground line-through")}>{i.label}</span>
-                {i.done && i.done_at && (
-                  <span className="block text-xs text-muted-foreground">
-                    {members.find((m) => m.user_id === i.done_by)?.full_name ?? "Someone"} · {shortDate(i.done_at)}
-                  </span>
-                )}
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
-      <p className="text-xs text-muted-foreground">The snag list arrives in the next release.</p>
-    </Card>
+    <div className="space-y-4">
+      <SnagList project={project} snags={snags} />
+      <Card title={`Handover checklist · ${done} of ${items.length}`}>
+        {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : (
+          <ul className="divide-y divide-border">
+            {items.map((i) => {
+              const auto = isAuto(i.label);
+              const checked = i.done || auto;
+              return (
+                <li key={i.id} className="flex items-start gap-3 py-3">
+                  <Checkbox id={`ho-${i.id}`} className="mt-0.5" checked={checked} disabled={!member || auto}
+                    onCheckedChange={(c) => member && tick.mutate({ id: i.id, projectId: project.id, done: c === true, by: member.user_id }, { onError: (e) => toast.error(errMsg(e, "Failed")) })} />
+                  <label htmlFor={`ho-${i.id}`} className="min-w-0 flex-1 text-sm">
+                    <span className={cn(checked && "text-muted-foreground line-through")}>{i.label}</span>
+                    {auto && !i.done ? (
+                      <span className="block text-xs text-muted-foreground">Automatically satisfied — every snag is verified</span>
+                    ) : i.done && i.done_at && (
+                      <span className="block text-xs text-muted-foreground">
+                        {members.find((m) => m.user_id === i.done_by)?.full_name ?? "Someone"} · {shortDate(i.done_at)}
+                      </span>
+                    )}
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+    </div>
   );
 };
 

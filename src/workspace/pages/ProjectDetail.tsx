@@ -14,6 +14,7 @@ import {
   BriefTab, ChangesTab, ComingSoon, DesignTab, FilesTab, IssuesTab, OverviewTab, SnaggingTab, TasksTab, TimelineTab,
 } from "../ProjectTabs";
 import { Team } from "./Projects";
+import { FfeTab, ProcurementTab } from "../FfeTab";
 
 const ProjectDetail = () => {
   const { code } = useParams();
@@ -65,6 +66,8 @@ const ProjectDetail = () => {
       case "overview": return <OverviewTab project={project} />;
       case "brief": return <BriefTab project={project} />;
       case "design": return <DesignTab project={project} />;
+      case "ffe": return <FfeTab project={project} />;
+      case "procurement": return <ProcurementTab project={project} />;
       case "timeline": return <TimelineTab project={project} />;
       case "tasks": return <TasksTab project={project} />;
       case "issues": return <IssuesTab project={project} />;
