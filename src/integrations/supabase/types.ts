@@ -393,6 +393,7 @@ export type Database = {
           options: Json
           project_id: string | null
           quoted_at: string | null
+          quoted_by: string | null
           return_note: string | null
           status: Database["public"]["Enums"]["costing_status"]
           submitted_at: string | null
@@ -408,6 +409,7 @@ export type Database = {
           options?: Json
           project_id?: string | null
           quoted_at?: string | null
+          quoted_by?: string | null
           return_note?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
           submitted_at?: string | null
@@ -423,6 +425,7 @@ export type Database = {
           options?: Json
           project_id?: string | null
           quoted_at?: string | null
+          quoted_by?: string | null
           return_note?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
           submitted_at?: string | null
@@ -443,6 +446,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ffe_costings_quoted_by_fkey"
+            columns: ["quoted_by"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
           },
         ]
       }
