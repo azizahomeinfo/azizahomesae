@@ -43,6 +43,13 @@
       "when": 1790278119444,
       "tag": "0005_stage7_ffe_item_costs",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790279521186,
+      "tag": "0006_leads_closed_at",
+      "breakpoints": true
     }
   ]
 }

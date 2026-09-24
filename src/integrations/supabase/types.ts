@@ -695,6 +695,7 @@ export type Database = {
         Row: {
           budget: number | null
           building: string | null
+          closed_at: string | null
           converted_project_id: string | null
           created_at: string
           created_by: string | null
@@ -729,6 +730,7 @@ export type Database = {
         Insert: {
           budget?: number | null
           building?: string | null
+          closed_at?: string | null
           converted_project_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -763,6 +765,7 @@ export type Database = {
         Update: {
           budget?: number | null
           building?: string | null
+          closed_at?: string | null
           converted_project_id?: string | null
           created_at?: string
           created_by?: string | null
