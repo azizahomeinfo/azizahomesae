@@ -74,7 +74,7 @@ const Login = () => {
   return (
     <div className="min-h-screen grid md:grid-cols-2 bg-background font-body">
       <div className="bg-primary text-primary-foreground flex flex-col justify-center gap-8 p-10 md:p-16">
-        <img src={logo} alt="Aziza Home" className="h-14 w-auto self-start" />
+        <img src={logo} alt="Aziza Home" className="h-14 w-auto self-start" style={{ filter: "brightness(0) invert(1)" }} />
         <p className="font-heading uppercase tracking-[0.2em] text-2xl md:text-3xl leading-snug">
           From lead to handover. One workspace.
         </p>

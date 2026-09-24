@@ -223,6 +223,10 @@ const LeadDetail = () => {
 
       <LeadForm open={editOpen} onOpenChange={setEditOpen} lead={lead} />
 
+      {brief && (
+        <BriefEditor open={briefOpen} onOpenChange={setBriefOpen} lead={lead} brief={brief} />
+      )}
+
       <Dialog open={lostOpen} onOpenChange={setLostOpen}>
         <DialogContent>
           <DialogHeader>
