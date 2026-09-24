@@ -288,64 +288,95 @@ const SeedSheet = ({ ctx, canEdit }: { ctx: FfeContext; canEdit: boolean }) => {
   );
 };
 
-/* ---------------- quotation dialog (GM) ---------------- */
+/* ---------------- final quotation panel (GM only) ---------------- */
 
-const QuoteDialog = ({ open, onOpenChange, cost, initial, onSave, pending }: {
-  open: boolean; onOpenChange: (o: boolean) => void; cost: number;
+const COSTING_TONE: Record<CostingStatus, string> = {
+  Draft: "bg-muted text-muted-foreground",
+  Submitted: "bg-warning/15 text-warning",
+  Returned: "bg-destructive/15 text-destructive",
+  Quoted: "bg-success/15 text-success",
+};
+
+export const CostingPill = ({ status, version }: { status: CostingStatus; version?: number | null }) => (
+  <span className={cn("inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium", COSTING_TONE[status])}>
+    {COSTING_LABEL[status]}{version ? ` · V${version}` : ""}
+  </span>
+);
+
+/** Round up to the nearest AED 500. */
+const suggestedPrice = (cost: number, markup: number) => Math.ceil((cost * (1 + markup / 100)) / 500) * 500;
+const marginPct = (price: number, cost: number) => (price ? ((price - cost) / price) * 100 : null);
+const DEFAULT_OPTION: QuoteOption = { label: "Option A", desc: "Full furnishing, appliances & styling", amount: 0 };
+
+const QuotePanel = ({ cost, initial, hasQuote, version, pending, onSet, onReturn }: {
+  cost: number; hasQuote: boolean; version: number; pending: boolean;
   initial: { markup: number; options: QuoteOption[]; notes: string };
-  onSave: (v: { markup: number; options: QuoteOption[]; notes: string }) => void; pending: boolean;
+  onSet: (v: { markup: number; options: QuoteOption[]; notes: string }) => void;
+  onReturn: (note: string) => void;
 }) => {
   const [markup, setMarkup] = useState(initial.markup);
-  const [options, setOptions] = useState<QuoteOption[]>(initial.options);
+  const [options, setOptions] = useState<QuoteOption[]>(initial.options.length ? initial.options : [DEFAULT_OPTION]);
   const [notes, setNotes] = useState(initial.notes);
-  const sell = Math.round(cost * (1 + markup / 100));
-  useEffect(() => {
-    if (!open) return;
-    setMarkup(initial.markup);
-    setNotes(initial.notes);
-    setOptions(initial.options.length ? initial.options : [{ label: "Option A", desc: "Full furnishing, appliances & styling", amount: Math.round(cost * (1 + initial.markup / 100)) }]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  const [err, setErr] = useState<string | null>(null);
+  const suggested = suggestedPrice(cost, markup);
   const setOpt = (i: number, patch: Partial<QuoteOption>) => setOptions(options.map((o, j) => (j === i ? { ...o, ...patch } : o)));
+  const useSuggested = () => setOptions(options.length ? options.map((o, i) => (i === 0 ? { ...o, amount: suggested } : o)) : [{ ...DEFAULT_OPTION, amount: suggested }]);
+  const submit = () => {
+    const priced = options.filter((o) => Number(o.amount) > 0);
+    if (!priced.length) { setErr("Enter a price for at least one option."); return; }
+    setErr(null);
+    onSet({ markup, options: priced.map((o) => ({ ...o, amount: Number(o.amount) })), notes });
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader><DialogTitle>Set quotation</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="markup">Markup %</Label>
-            <Input id="markup" type="number" min={0} value={markup} onChange={(e) => setMarkup(Number(e.target.value) || 0)} />
-          </div>
-          <div className="grid grid-cols-3 gap-2 rounded-[var(--radius)] border border-border p-3 text-sm">
-            <div><p className="text-xs text-muted-foreground">Total cost</p><p>{aed(cost)}</p></div>
-            <div><p className="text-xs text-muted-foreground">Markup</p><p>{aed(sell - cost)}</p></div>
-            <div><p className="text-xs text-muted-foreground">Sell price</p><p className="text-primary">{aed(sell)}</p></div>
-          </div>
-          <div className="space-y-2">
-            <Label>Client options</Label>
-            {options.map((o, i) => (
-              <div key={i} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
-                <div className="flex gap-2">
-                  <Input aria-label="Option label" value={o.label} onChange={(e) => setOpt(i, { label: e.target.value })} />
-                  <Input aria-label="Amount" type="number" className="w-32" value={o.amount} onChange={(e) => setOpt(i, { amount: Number(e.target.value) || 0 })} />
-                  <Button variant="ghost" size="icon" aria-label="Remove option" onClick={() => setOptions(options.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-                <Input aria-label="Description" value={o.desc} onChange={(e) => setOpt(i, { desc: e.target.value })} />
-              </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={() => setOptions([...options, { label: `Option ${String.fromCharCode(65 + options.length)}`, desc: "", amount: sell }])}>
-              <Plus className="h-4 w-4" /> Add option
-            </Button>
-          </div>
-          <div className="space-y-1"><Label htmlFor="gm-notes">GM notes</Label><Textarea id="gm-notes" value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+    <section className="space-y-4 rounded-[var(--radius)] border border-border bg-card p-4 md:p-6">
+      <div>
+        <h3 className="font-medium">Final quotation</h3>
+        <p className="text-sm text-muted-foreground tabular-nums">
+          Cost {aed(cost)} + {markup}% markup → suggested {aed(suggested)} excl. VAT
+        </p>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="markup">Markup %</Label>
+          <Input id="markup" type="number" min={0} className="w-24 tabular-nums" value={markup} onChange={(e) => setMarkup(Number(e.target.value) || 0)} />
         </div>
-        <DialogFooter>
-          <Button disabled={pending || !options.length || options.some((o) => !o.label.trim())} onClick={() => onSave({ markup, options, notes })}>
-            {pending ? "Saving…" : "Set quotation"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <Button variant="outline" size="sm" onClick={useSuggested}>Use suggested price for Option A</Button>
+      </div>
+
+      <div className="space-y-2">
+        <div className="hidden gap-2 text-[10px] uppercase tracking-wider text-muted-foreground md:grid md:grid-cols-[7rem_minmax(0,1fr)_9rem_4rem_2.25rem]">
+          <span>Option</span><span>Description</span><span>Price (AED, excl. VAT)</span><span className="text-right">Margin</span><span />
+        </div>
+        {options.map((o, i) => {
+          const m = marginPct(Number(o.amount) || 0, cost);
+          return (
+            <div key={i} className="grid grid-cols-[1fr_auto] gap-2 rounded-[var(--radius)] border border-border p-2 md:grid-cols-[7rem_minmax(0,1fr)_9rem_4rem_2.25rem] md:items-center md:border-0 md:p-0">
+              <Input aria-label="Option" value={o.label} onChange={(e) => setOpt(i, { label: e.target.value })} />
+              <Button variant="ghost" size="icon" className="h-9 w-9 md:order-last" aria-label={`Remove ${o.label}`} onClick={() => setOptions(options.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+              <Input aria-label="Description" className="col-span-2 md:col-span-1" value={o.desc} onChange={(e) => setOpt(i, { desc: e.target.value })} />
+              <Input aria-label="Price (AED, excl. VAT)" type="number" min={0} className="tabular-nums" value={o.amount || ""} onChange={(e) => setOpt(i, { amount: Number(e.target.value) || 0 })} />
+              <span className={cn("self-center text-right text-sm font-medium tabular-nums", m != null && m < 20 ? "text-destructive" : "text-success")}>
+                {m == null ? "—" : `${Math.round(m)}%`}
+              </span>
+            </div>
+          );
+        })}
+        <Button variant="outline" size="sm" onClick={() => setOptions([...options, { label: `Option ${String.fromCharCode(65 + options.length)}`, desc: "", amount: 0 }])}>
+          <Plus className="h-4 w-4" /> Add option
+        </Button>
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="gm-notes">Note to designer / sales</Label>
+        <Textarea id="gm-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+      </div>
+      {err && <p className="text-sm text-destructive">{err}</p>}
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <Button variant="outline" disabled={pending} onClick={() => onReturn(notes.trim())}>Return to designer</Button>
+        <Button disabled={pending} onClick={submit}>{hasQuote ? `Update quotation (V${version + 1})` : "Set final quotation"}</Button>
+      </div>
+    </section>
   );
 };
 
