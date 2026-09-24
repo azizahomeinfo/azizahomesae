@@ -700,6 +700,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           designer_id: string | null
+          drive_url: string | null
           email: string | null
           exp_handover: string | null
           floor_plan: string | null
@@ -735,6 +736,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           designer_id?: string | null
+          drive_url?: string | null
           email?: string | null
           exp_handover?: string | null
           floor_plan?: string | null
@@ -770,6 +772,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           designer_id?: string | null
+          drive_url?: string | null
           email?: string | null
           exp_handover?: string | null
           floor_plan?: string | null
@@ -934,6 +937,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           designer_id: string | null
+          drive_url: string | null
           est_ops: number | null
           est_proc: number | null
           handover_date: string | null
@@ -969,6 +973,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           designer_id?: string | null
+          drive_url?: string | null
           est_ops?: number | null
           est_proc?: number | null
           handover_date?: string | null
@@ -1004,6 +1009,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           designer_id?: string | null
+          drive_url?: string | null
           est_ops?: number | null
           est_proc?: number | null
           handover_date?: string | null
