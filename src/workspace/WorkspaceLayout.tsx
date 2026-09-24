@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { supabase } from "@/lib/supabase-ssr";
+import { signOut } from "./signOut";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/aziza-logo.png";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -51,7 +51,7 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
             <p className="text-xs text-muted-foreground truncate">{member.title || ROLE_LABEL[role]}</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="w-full" onClick={() => supabase.auth.signOut()}>
+        <Button variant="outline" size="sm" className="w-full" onClick={signOut}>
           Sign out
         </Button>
       </div>

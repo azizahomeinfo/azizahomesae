@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import type { ReactElement } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase-ssr";
+import { signOut } from "./signOut";
 import { WorkspaceProvider, useWorkspace } from "./WorkspaceProvider";
 import { canSee, type WorkspacePage, type WorkspaceRole } from "./access";
 import Login from "./Login";
@@ -35,7 +35,7 @@ const Gate = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="w-full max-w-sm rounded-[var(--radius)] border border-border bg-card p-8 text-center space-y-6">
           <p className="font-body text-foreground">This account has no workspace access.</p>
-          <Button onClick={() => supabase.auth.signOut()}>Sign out</Button>
+          <Button onClick={signOut}>Sign out</Button>
         </div>
       </div>
     );

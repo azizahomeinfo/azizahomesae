@@ -351,6 +351,38 @@ export type Database = {
           },
         ]
       }
+      ffe_costing_private: {
+        Row: {
+          costing_id: string
+          gm_notes: string | null
+          markup_pct: number
+          return_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          costing_id: string
+          gm_notes?: string | null
+          markup_pct?: number
+          return_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          costing_id?: string
+          gm_notes?: string | null
+          markup_pct?: number
+          return_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffe_costing_private_costing_id_fkey"
+            columns: ["costing_id"]
+            isOneToOne: true
+            referencedRelation: "ffe_costings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ffe_costings: {
         Row: {
           created_at: string
@@ -1527,6 +1559,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_see_costing_private: {
+        Args: { _costing: string; _uid: string }
+        Returns: boolean
+      }
       can_see_costs: {
         Args: { _project: string; _uid: string }
         Returns: boolean
