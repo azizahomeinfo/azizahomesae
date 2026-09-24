@@ -58,7 +58,7 @@ const LeadDetail = () => {
   const idx = PIPE.indexOf(status as (typeof PIPE)[number]);
   const next = idx >= 0 && idx < PIPE.length - 1 ? PIPE[idx + 1] : null;
 
-  const setStatus = async (s: LeadStatus, extra: { lost_reason?: string } = {}) => {
+  const setStatus = async (s: LeadStatus, extra: { lost_reason?: string | null } = {}) => {
     try {
       await update.mutateAsync({ id: lead.id, values: { status: s, ...extra } });
       toast.success(`Moved to ${s}`);
@@ -119,7 +119,7 @@ const LeadDetail = () => {
             <Button variant="outline" onClick={() => setLostOpen(true)} disabled={update.isPending}>Mark as lost</Button>
           )}
           {status === "Lost" && (
-            <Button variant="outline" onClick={() => setStatus("Contacted", { lost_reason: undefined })} disabled={update.isPending}>
+            <Button variant="outline" onClick={() => setStatus("Contacted", { lost_reason: null })} disabled={update.isPending}>
               Reopen lead
             </Button>
           )}
