@@ -240,7 +240,7 @@ const LeadDetail = () => {
         />
       </section>
 
-      <CommentThread leadId={lead.id} leadName={lead.name} />
+      <CommentThread leadId={lead.id} parentName={lead.name} />
 
       <LeadForm open={editOpen} onOpenChange={setEditOpen} lead={lead} />
 

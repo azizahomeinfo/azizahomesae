@@ -26,6 +26,8 @@ interface Props {
   leadId: string;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  /** Read-only: no uploads, review or version actions. */
+  viewOnly?: boolean;
 }
 
 const areaOf = (i: DesignImage) => i.room || "Other";
@@ -410,7 +412,7 @@ const VersionView = ({
 
 /* ---------------- package shell ---------------- */
 
-const DesignPackage = ({ leadId, open, onOpenChange }: Props) => {
+const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) => {
   const isMobile = useIsMobile();
   const { member } = useWorkspace();
   const { data: lead } = useLead(open ? leadId : undefined);
@@ -433,11 +435,11 @@ const DesignPackage = ({ leadId, open, onOpenChange }: Props) => {
   const isGm = member?.role === "gm";
   const isAssignedDesigner = !!me && (brief?.designer_id === me || lead?.designer_id === me);
   const isLatest = !!selected && selected.id === latest?.id;
-  const editable = isLatest && selected.status === "Draft" && !!me && (selected.designer_id === me || isAssignedDesigner);
-  const canReview =
+  const editable = !viewOnly && isLatest && selected.status === "Draft" && !!me && (selected.designer_id === me || isAssignedDesigner);
+  const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
-  const canStartFirst = !latest && isAssignedDesigner && !!brief && ["Assigned", "In Design", "Revision Requested"].includes(brief.status);
-  const canStartNext = isAssignedDesigner && latest?.status === "Rejected" && !!brief;
+  const canStartFirst = !viewOnly && !latest && isAssignedDesigner && !!brief && ["Assigned", "In Design", "Revision Requested"].includes(brief.status);
+  const canStartNext = !viewOnly && isAssignedDesigner && latest?.status === "Rejected" && !!brief;
   const nameOf = (id: string | null | undefined) => members.find((m) => m.user_id === id)?.full_name ?? "Someone";
 
   const doStart = async () => {

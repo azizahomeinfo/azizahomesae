@@ -123,11 +123,11 @@ interface Props {
   brief: BriefRow;
 }
 
-const BriefEditor = ({ open, onOpenChange, lead, brief }: Props) => {
+const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Props) => {
   const isMobile = useIsMobile();
   const status = brief.status as BriefStatus;
   const actor = useActor(lead.sales_id, brief.designer_id);
-  const rights = actor ? editRights(status, actor) : { full: false, ffeAndColours: false };
+  const rights = actor && !viewOnly ? editRights(status, actor) : { full: false, ffeAndColours: false };
   const canSave = rights.full || rights.ffeAndColours;
   const save = useSaveBrief();
 

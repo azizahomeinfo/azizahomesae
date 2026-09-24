@@ -6,18 +6,18 @@ type T = Database["public"]["Tables"];
 export type Lead = T["leads"]["Row"];
 export type LeadInsert = T["leads"]["Insert"];
 export type LeadUpdate = T["leads"]["Update"];
-export type Comment = Pick<T["comments"]["Row"], "id" | "lead_id" | "author_id" | "body" | "mentions" | "created_at">;
+export type Comment = Pick<T["comments"]["Row"], "id" | "lead_id" | "project_id" | "author_id" | "body" | "mentions" | "created_at">;
 export type MemberLite = Pick<T["workspace_members"]["Row"], "user_id" | "full_name" | "role" | "title" | "active">;
 
 const LEAD_COLS =
   "id, ref, name, phone, email, property, building, location, unit_type, size, handover_status, exp_handover, use_type, budget, target_date, scope, style, refs, floor_plan, source, sales_id, designer_id, status, last_contact, next_follow, notes, lost_reason, converted_project_id, is_demo, created_by, created_at, updated_at";
-const COMMENT_COLS = "id, lead_id, author_id, body, mentions, created_at";
+const COMMENT_COLS = "id, lead_id, project_id, author_id, body, mentions, created_at";
 const MEMBER_COLS = "user_id, full_name, role, title, active";
 
 export const keys = {
   leads: ["ws", "leads"] as const,
   lead: (id: string) => ["ws", "lead", id] as const,
-  comments: (leadId: string) => ["ws", "comments", leadId] as const,
+  comments: (parentKey: string) => ["ws", "comments", parentKey] as const,
   members: ["ws", "members"] as const,
   brief: (leadId: string) => ["ws", "brief", leadId] as const,
   briefs: ["ws", "briefs"] as const,
@@ -87,15 +87,18 @@ export const useUpdateLead = () => {
   });
 };
 
-export const useComments = (leadId: string | undefined) =>
+export type CommentParent = { kind: "lead" | "project"; id: string };
+const parentCol = (p: CommentParent) => (p.kind === "lead" ? "lead_id" : "project_id");
+
+export const useComments = (parent: CommentParent | undefined) =>
   useQuery({
-    queryKey: keys.comments(leadId ?? ""),
-    enabled: !!leadId,
+    queryKey: keys.comments(parent ? `${parent.kind}:${parent.id}` : ""),
+    enabled: !!parent?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("comments")
         .select(COMMENT_COLS)
-        .eq("lead_id", leadId!)
+        .eq(parentCol(parent!), parent!.id)
         .order("created_at", { ascending: true });
       fail(error);
       return (data ?? []) as Comment[];
@@ -106,16 +109,17 @@ export const usePostComment = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: {
-      leadId: string;
-      leadName: string;
+      parent: CommentParent;
+      parentName: string;
       authorId: string;
       authorName: string;
       body: string;
       mentions: string[];
     }) => {
+      const ref = v.parent.kind === "lead" ? { lead_id: v.parent.id } : { project_id: v.parent.id };
       const { data, error } = await supabase
         .from("comments")
-        .insert({ lead_id: v.leadId, author_id: v.authorId, body: v.body, mentions: v.mentions })
+        .insert({ ...ref, author_id: v.authorId, body: v.body, mentions: v.mentions })
         .select(COMMENT_COLS)
         .single();
       fail(error);
@@ -125,16 +129,16 @@ export const usePostComment = () => {
           targets.map((user_id) => ({
             user_id,
             kind: "mention",
-            title: `${v.authorName} mentioned you on ${v.leadName}`,
+            title: `${v.authorName} mentioned you on ${v.parentName}`,
             body: v.body.slice(0, 140),
-            lead_id: v.leadId,
+            ...ref,
           })),
         );
         fail(nErr);
       }
       return data as Comment;
     },
-    onSuccess: (_c, v) => qc.invalidateQueries({ queryKey: keys.comments(v.leadId) }),
+    onSuccess: (_c, v) => qc.invalidateQueries({ queryKey: keys.comments(`${v.parent.kind}:${v.parent.id}`) }),
   });
 };
 
