@@ -440,16 +440,32 @@ const VersionView = ({
               onOpen={(img) => setLightbox(viewable.findIndex((v) => v.id === img.id))}
             />
           ))}
-          {editable && unused.length > 0 && (
+          {editable && (customOpen ? (
+            <div className="flex max-w-md flex-col gap-2 sm:flex-row">
+              <Input
+                autoFocus value={customName} placeholder="Area name, e.g. Study" aria-label="Custom area name"
+                onChange={(e) => setCustomName(e.target.value.slice(0, 60))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); addArea(customName); }
+                  if (e.key === "Escape") { setCustomOpen(false); setCustomName(""); }
+                }}
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => addArea(customName)} disabled={!customName.trim()}>Add</Button>
+                <Button size="sm" variant="ghost" onClick={() => { setCustomOpen(false); setCustomName(""); }}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
             <div className="max-w-xs">
-              <Select value="" onValueChange={(a) => setExtraAreas((x) => [...x, a])}>
+              <Select value="" onValueChange={(a) => (a === CUSTOM ? setCustomOpen(true) : addArea(a))}>
                 <SelectTrigger><SelectValue placeholder="+ Add area" /></SelectTrigger>
                 <SelectContent>
                   {unused.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  <SelectItem value={CUSTOM}><span className="inline-flex items-center gap-1"><Plus className="h-3.5 w-3.5" /> Add custom area…</span></SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
+          ))}
         </>
       )}
 
