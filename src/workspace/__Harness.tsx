@@ -18,7 +18,7 @@ const doc = buildDocument({
     { storage_path: imgs[1], caption: null, room: "Master Bedroom", kind: "3D render", file_name: null },
     { storage_path: imgs[2], caption: null, room: "Mood Board", kind: "Mood board", file_name: null },
   ] },
-  quote: { version: 1, options }, groups: Number(new URLSearchParams(location.search).get("small")) ? groups.slice(0, 3) : groups,
+  quote: { version: 1, options }, groups: Number(new URLSearchParams(location.search).get("small")) ? groups.slice(0, Number(new URLSearchParams(location.search).get("small"))) : groups,
 });
 const Harness = () => (<><style>{PROPOSAL_CSS}</style><ProposalPages doc={doc} url={(p) => p ?? undefined} /></>);
 export default Harness;
