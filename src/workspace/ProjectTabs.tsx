@@ -174,7 +174,6 @@ const NONE = "__none";
 
 const IssueDialog = ({ projectId, issue, open, onOpenChange }: { projectId: string; issue: Issue | null; open: boolean; onOpenChange: (o: boolean) => void }) => {
   const save = useSaveIssue();
-  const { data: members = [] } = useMembers();
   const [title, setTitle] = useState(issue?.title ?? "");
   const [detail, setDetail] = useState(issue?.detail ?? "");
   const submit = async () => {
@@ -185,7 +184,6 @@ const IssueDialog = ({ projectId, issue, open, onOpenChange }: { projectId: stri
       onOpenChange(false);
     } catch (e) { toast.error(errMsg(e, "Could not save")); }
   };
-  void members;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
