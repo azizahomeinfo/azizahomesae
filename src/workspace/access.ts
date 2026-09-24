@@ -14,7 +14,7 @@ export type WorkspacePage =
 export const PAGES_BY_ROLE: Record<WorkspaceRole, WorkspacePage[]> = {
   gm: ["dashboard", "leads", "briefs", "proposals", "projects", "tasks", "suppliers", "reports", "settings"],
   sales: ["dashboard", "leads", "proposals", "projects", "reports"],
-  designer: ["dashboard", "briefs", "projects", "tasks", "suppliers"],
+  designer: ["dashboard", "briefs", "proposals", "projects", "tasks", "suppliers"],
   coordinator: ["dashboard", "projects", "tasks", "suppliers"],
 };
 
