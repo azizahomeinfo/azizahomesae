@@ -194,7 +194,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   const scrollTo = (i: number) => document.getElementById(secId(i))?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const body = (
-    <div className="flex h-full flex-col font-body">
+    <div className="flex min-h-0 flex-1 flex-col font-body">
       <div className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-3 md:px-6">
         <div className="min-w-0 flex-1">
           <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Requirement brief</p>
@@ -464,7 +464,8 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={close}>
-        <SheetContent side="bottom" className="h-[100dvh] p-0 bg-background [&>button]:hidden">
+        {/* Flex and overflow containment keep the inner form bounded and scrollable. */}
+        <SheetContent side="bottom" className="h-[100dvh] p-0 bg-background [&>button]:hidden flex flex-col overflow-hidden">
           <SheetTitle className="sr-only">Requirement brief</SheetTitle>
           {body}
         </SheetContent>
@@ -473,7 +474,8 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   }
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 gap-0 sm:rounded-none bg-background [&>button]:hidden">
+      {/* Flex and overflow containment override DialogContent's grid so the form can scroll. */}
+      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 gap-0 sm:rounded-none bg-background [&>button]:hidden flex flex-col overflow-hidden">
         <DialogTitle className="sr-only">Requirement brief</DialogTitle>
         {body}
       </DialogContent>
