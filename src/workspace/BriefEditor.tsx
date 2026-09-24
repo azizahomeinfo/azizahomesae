@@ -21,7 +21,8 @@ import {
   type BriefDoc, type FfeItem, type Included,
 } from "./briefSchema";
 import { editRights, type BriefStatus } from "./briefWorkflow";
-import { useSaveBrief, type BriefDocColumns, type BriefRow, type Lead } from "./queries";
+import { checkDriveUrl, DriveLink } from "./DriveLink";
+import { useSaveBrief, useUpdateLead, type BriefDocColumns, type BriefRow, type Lead } from "./queries";
 import { BriefActionBar, useActor } from "./useBriefActions";
 import BriefStatusPill from "./BriefStatusPill";
 import { aed } from "./format";
@@ -136,6 +137,20 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   const rights = actor && !viewOnly ? editRights(status, actor) : { full: false, ffeAndColours: false };
   const canSave = rights.full || rights.ffeAndColours;
   const save = useSaveBrief();
+  const updateLead = useUpdateLead();
+  // The Drive link lives on the lead (needed before the brief exists and carried into the project),
+  // so it saves straight to the lead on blur rather than through the brief autosave.
+  const [driveDraft, setDriveDraft] = useState(lead.drive_url ?? "");
+  useEffect(() => { setDriveDraft(lead.drive_url ?? ""); }, [lead.drive_url]);
+  const driveCheck = checkDriveUrl(driveDraft);
+  const saveDrive = () => {
+    if (driveCheck.error || driveCheck.value === (lead.drive_url ?? null)) return;
+    setDriveDraft(driveCheck.value ?? "");
+    updateLead.mutate(
+      { id: lead.id, values: { drive_url: driveCheck.value } },
+      { onError: (e) => toast.error(e instanceof Error ? e.message : "Could not save the Drive link") },
+    );
+  };
 
   const [doc, setDoc] = useState<BriefDoc>(() => normaliseBrief(brief, lead));
   const [dirty, setDirty] = useState(false);
@@ -240,7 +255,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
         {!viewOnly && <BriefActionBar
           size="sm"
           beforeAction={flush}
-          brief={{ id: brief.id, leadId: lead.id, leadName: lead.name, status, designerId: brief.designer_id, salesId: lead.sales_id }}
+          brief={{ id: brief.id, leadId: lead.id, leadName: lead.name, status, designerId: brief.designer_id, salesId: lead.sales_id, driveUrl: lead.drive_url }}
         />}
         <Button variant="ghost" size="icon" aria-label="Close brief" onClick={() => close(false)}><X /></Button>
       </div>
@@ -265,6 +280,31 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
         </nav>
 
         <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 space-y-6">
+          <section className="space-y-2 rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6">
+            <Label htmlFor="brief-drive-url" className="font-heading uppercase text-lg tracking-wide">Google Drive folder</Label>
+            <p className="text-xs text-muted-foreground">Floor plan, site photos and client references live here. The designer needs it.</p>
+            {rights.full ? (
+              <>
+                <Input
+                  id="brief-drive-url" type="url" inputMode="url" placeholder="https://drive.google.com/…"
+                  value={driveDraft} aria-invalid={!!driveCheck.error}
+                  onChange={(e) => setDriveDraft(e.target.value)}
+                  onBlur={saveDrive}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveDrive(); } }}
+                />
+                {driveCheck.error ? (
+                  <p className="text-xs text-destructive">{driveCheck.error}</p>
+                ) : driveCheck.hint ? (
+                  <p className="text-xs text-muted-foreground">{driveCheck.hint}</p>
+                ) : null}
+                {updateLead.isPending && <p className="text-xs text-muted-foreground">Saving…</p>}
+              </>
+            ) : lead.drive_url ? (
+              <DriveLink url={lead.drive_url} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Not added yet.</p>
+            )}
+          </section>
           <Section i={0} note={rights.ffeAndColours && !rights.full ? "Set by sales — read only for design." : undefined}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <TextF label="Account" value={h.account} onChange={setH("account")} ro={roFull} />
