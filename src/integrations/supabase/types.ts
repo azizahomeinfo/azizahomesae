@@ -709,20 +709,27 @@ export type Database = {
           access_notes: string | null
           approved_at: string | null
           assigned_at: string | null
+          attachments: Json
           avoid: string | null
+          bedrooms: Json
           budget_notes: string | null
           colour_notes: string | null
+          colours: Json
           created_at: string
           created_by: string | null
           designer_id: string | null
           extra: Json
+          ffe: Json
+          header: Json
           id: string
           lead_id: string
+          lists: Json
           must_haves: string | null
           ready_at: string | null
           revision_note: string | null
           rooms: Json
           status: Database["public"]["Enums"]["brief_status"]
+          style: Json
           submitted_at: string | null
           updated_at: string
         }
@@ -730,20 +737,27 @@ export type Database = {
           access_notes?: string | null
           approved_at?: string | null
           assigned_at?: string | null
+          attachments?: Json
           avoid?: string | null
+          bedrooms?: Json
           budget_notes?: string | null
           colour_notes?: string | null
+          colours?: Json
           created_at?: string
           created_by?: string | null
           designer_id?: string | null
           extra?: Json
+          ffe?: Json
+          header?: Json
           id?: string
           lead_id: string
+          lists?: Json
           must_haves?: string | null
           ready_at?: string | null
           revision_note?: string | null
           rooms?: Json
           status?: Database["public"]["Enums"]["brief_status"]
+          style?: Json
           submitted_at?: string | null
           updated_at?: string
         }
@@ -751,20 +765,27 @@ export type Database = {
           access_notes?: string | null
           approved_at?: string | null
           assigned_at?: string | null
+          attachments?: Json
           avoid?: string | null
+          bedrooms?: Json
           budget_notes?: string | null
           colour_notes?: string | null
+          colours?: Json
           created_at?: string
           created_by?: string | null
           designer_id?: string | null
           extra?: Json
+          ffe?: Json
+          header?: Json
           id?: string
           lead_id?: string
+          lists?: Json
           must_haves?: string | null
           ready_at?: string | null
           revision_note?: string | null
           rooms?: Json
           status?: Database["public"]["Enums"]["brief_status"]
+          style?: Json
           submitted_at?: string | null
           updated_at?: string
         }
@@ -948,6 +969,24 @@ export type Database = {
       }
       is_gm: { Args: { _uid: string }; Returns: boolean }
       is_ws_member: { Args: { _uid: string }; Returns: boolean }
+      ws_assign_brief: {
+        Args: { _brief: string; _designer: string }
+        Returns: undefined
+      }
+      ws_brief_queue: {
+        Args: never
+        Returns: {
+          brief_id: string
+          budget: number
+          lead_id: string
+          name: string
+          property: string
+          status: Database["public"]["Enums"]["brief_status"]
+          submitted_at: string
+          target_date: string
+          unit_type: string
+        }[]
+      }
       ws_role: {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]

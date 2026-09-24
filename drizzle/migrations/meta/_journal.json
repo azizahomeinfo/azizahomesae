@@ -8,6 +8,13 @@
       "when": 1790262614394,
       "tag": "0000_workspace_phase1",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790263698776,
+      "tag": "0001_brief_document_and_workflow",
+      "breakpoints": true
     }
   ]
 }
