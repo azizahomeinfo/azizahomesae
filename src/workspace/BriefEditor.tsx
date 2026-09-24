@@ -603,6 +603,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
           </Section>
         </div>
       </div>
+      {rights.full && <LeadForm open={leadEditOpen} onOpenChange={setLeadEditOpen} lead={lead} />}
     </div>
   );
 
