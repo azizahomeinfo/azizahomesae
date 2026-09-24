@@ -294,6 +294,14 @@ export const useCostingTransition = () => {
   });
 };
 
+/** On conversion the project inherits the lead's FF&E: the same rows get project_id stamped, nothing is copied. */
+export const inheritLeadFfe = async (leadId: string, projectId: string) => {
+  const { error } = await supabase.from("ffe_items").update({ project_id: projectId }).eq("lead_id", leadId).is("project_id", null);
+  fail(error);
+  const { error: cErr } = await supabase.from("ffe_costings").update({ project_id: projectId }).eq("lead_id", leadId).is("project_id", null);
+  fail(cErr);
+};
+
 /* ---------------- snags ---------------- */
 
 export const useSnags = (projectId: string | undefined) =>
