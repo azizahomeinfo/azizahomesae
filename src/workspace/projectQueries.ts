@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-ssr";
 import type { Database } from "@/integrations/supabase/types";
-import { keys, type NotifyTarget } from "./queries";
+import { keys } from "./queries";
 import { PROJECT_STAGES, type ProjectStage } from "./projectConstants";
 
 type T = Database["public"]["Tables"];
@@ -53,9 +53,9 @@ export const pKeys = {
 const fail = (e: { message: string } | null) => {
   if (e) throw new Error(e.message);
 };
-const notify = async (targets: NotifyTarget[] | Omit<NotifyTarget, "lead_id">[]) => {
+const notify = async (targets: T["notifications"]["Insert"][]) => {
   if (!targets.length) return;
-  const { error } = await supabase.from("notifications").insert(targets as T["notifications"]["Insert"][]);
+  const { error } = await supabase.from("notifications").insert(targets);
   fail(error);
 };
 
