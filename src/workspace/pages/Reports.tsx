@@ -83,6 +83,9 @@ const Reports = () => {
             <Stat k="Avg days lead → won" v={avgDays ?? "—"} />
           </div>
         )}
+        {unstamped > 0 && (
+          <p className="text-xs text-muted-foreground">Leads closed before 24 September 2026 are not included — their close date was not recorded.</p>
+        )}
       </Block>
       <Block title="Delivery · all projects">
         {projects.length === 0 ? <Empty /> : (
