@@ -173,11 +173,6 @@ export const blankBrief = (lead: LeadLike): BriefDoc => ({
   attachments: { floorPlan: false, siteVisit: false },
 });
 
-// Drop lead-duplicate keys from historic briefs so they are never written back.
-const pickHeader = (h: BriefHeader): BriefHeader => ({
-  outdoor: h.outdoor, projectType: h.projectType, projectTypeOther: h.projectTypeOther, urgency: h.urgency, contract: h.contract,
-});
-
 /** Merge a stored (possibly partial) document over the blank one so old/empty rows never crash the editor. */
 export const normaliseBrief = (
   stored: Partial<Record<keyof BriefDoc, unknown>>,
@@ -191,7 +186,7 @@ export const normaliseBrief = (
   const l = obj(stored.lists);
   const a = obj(stored.attachments);
   return {
-    header: h && Object.keys(h).length ? pickHeader({ ...b.header, ...h }) : b.header,
+    header: h && Object.keys(h).length ? { ...b.header, ...h } : b.header,
     style: s ? { ...b.style, ...s } : b.style,
     colours: (arr(stored.colours) as ColourRow[]) ?? b.colours,
     ffe: (arr(stored.ffe) as FfeSection[]) ?? b.ffe,
