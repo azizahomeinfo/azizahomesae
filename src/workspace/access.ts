@@ -6,14 +6,15 @@ export type WorkspacePage =
   | "proposals"
   | "projects"
   | "tasks"
+  | "suppliers"
   | "settings";
 
 // Convenience only — database RLS is the real access boundary.
 export const PAGES_BY_ROLE: Record<WorkspaceRole, WorkspacePage[]> = {
-  gm: ["dashboard", "leads", "briefs", "proposals", "projects", "tasks", "settings"],
+  gm: ["dashboard", "leads", "briefs", "proposals", "projects", "tasks", "suppliers", "settings"],
   sales: ["dashboard", "leads", "proposals", "projects"],
-  designer: ["dashboard", "briefs", "projects", "tasks"],
-  coordinator: ["dashboard", "projects", "tasks"],
+  designer: ["dashboard", "briefs", "projects", "tasks", "suppliers"],
+  coordinator: ["dashboard", "projects", "tasks", "suppliers"],
 };
 
 export const canSee = (role: WorkspaceRole | null | undefined, page: WorkspacePage) =>
@@ -26,6 +27,7 @@ export const PAGE_META: Record<WorkspacePage, { label: string; path: string; des
   proposals: { label: "Proposals", path: "/workspace/proposals", description: "Quotes sent to clients and their outcome." },
   projects: { label: "Projects", path: "/workspace/projects", description: "Live jobs from deposit to handover." },
   tasks: { label: "Tasks", path: "/workspace/tasks", description: "What needs doing, by whom, and when." },
+  suppliers: { label: "Suppliers", path: "/workspace/suppliers", description: "Who we buy from, their terms and how they perform." },
   settings: { label: "Settings", path: "/workspace/settings", description: "Team roster, roles and invitations." },
 };
 
