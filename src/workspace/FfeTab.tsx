@@ -237,7 +237,7 @@ const QuoteDialog = ({ open, onOpenChange, cost, initial, onSave, pending }: {
 
 export const FfeTab = ({ project }: { project: Project }) => (
   <FfeSheet ctx={{
-    owner: projectOwner(project.id), leadId: project.lead_id, owner: ctx.owner, name: project.name,
+    owner: projectOwner(project.id), leadId: project.lead_id, projectId: project.id, name: project.name,
     designerId: project.designer_id, salesId: project.sales_id,
   }} />
 );
