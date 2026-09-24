@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -320,7 +319,7 @@ const QuotePanel = ({ cost, initial, hasQuote, version, pending, onSet, onReturn
   const [err, setErr] = useState<string | null>(null);
   const suggested = suggestedPrice(cost, markup);
   const setOpt = (i: number, patch: Partial<QuoteOption>) => setOptions(options.map((o, j) => (j === i ? { ...o, ...patch } : o)));
-  const useSuggested = () => setOptions(options.length ? options.map((o, i) => (i === 0 ? { ...o, amount: suggested } : o)) : [{ ...DEFAULT_OPTION, amount: suggested }]);
+  const applySuggested = () => setOptions(options.length ? options.map((o, i) => (i === 0 ? { ...o, amount: suggested } : o)) : [{ ...DEFAULT_OPTION, amount: suggested }]);
   const submit = () => {
     const priced = options.filter((o) => Number(o.amount) > 0);
     if (!priced.length) { setErr("Enter a price for at least one option."); return; }
@@ -341,7 +340,7 @@ const QuotePanel = ({ cost, initial, hasQuote, version, pending, onSet, onReturn
           <Label htmlFor="markup">Markup %</Label>
           <Input id="markup" type="number" min={0} className="w-24 tabular-nums" value={markup} onChange={(e) => setMarkup(Number(e.target.value) || 0)} />
         </div>
-        <Button variant="outline" size="sm" onClick={useSuggested}>Use suggested price for Option A</Button>
+        <Button variant="outline" size="sm" onClick={applySuggested}>Use suggested price for Option A</Button>
       </div>
 
       <div className="space-y-2">
