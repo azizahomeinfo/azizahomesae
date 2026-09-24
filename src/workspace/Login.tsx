@@ -8,9 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logo from "@/assets/aziza-logo.png";
 
-const schema = z.object({
-  email: z.string().trim().email("Please enter a valid email").max(320),
-  password: z.string().min(8, "Password must be at least 8 characters").max(128),
+const emailField = z.string().trim().email("Please enter a valid email").max(320);
+
+// Sign-in must NOT enforce a length rule. The server is the authority on whether
+// a password is right, and any account created before a rule changed would be
+// locked out of the UI by a client-side minimum it can never satisfy.
+const signInSchema = z.object({
+  email: emailField,
+  password: z.string().min(1, "Enter your password").max(128),
+});
+
+// Length is a rule about choosing a NEW password, so it belongs here only.
+const signUpSchema = z.object({
+  email: emailField,
+  password: z.string().min(8, "Choose a password of at least 8 characters").max(128),
 });
 
 const Login = () => {
@@ -18,7 +29,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const validate = () => {
+  const validate = (schema: typeof signInSchema | typeof signUpSchema) => {
     const r = schema.safeParse({ email, password });
     if (!r.success) {
       toast.error(r.error.errors[0].message);
@@ -29,7 +40,7 @@ const Login = () => {
 
   const signIn = async (e: FormEvent) => {
     e.preventDefault();
-    const v = validate();
+    const v = validate(signInSchema);
     if (!v) return;
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: v.email, password: v.password });
@@ -39,7 +50,7 @@ const Login = () => {
 
   const signUp = async (e: FormEvent) => {
     e.preventDefault();
-    const v = validate();
+    const v = validate(signUpSchema);
     if (!v) return;
     setBusy(true);
     const { error } = await supabase.auth.signUp({
