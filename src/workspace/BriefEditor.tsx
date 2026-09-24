@@ -25,10 +25,12 @@ import { checkDriveUrl, DriveLink } from "./DriveLink";
 import { useSaveBrief, useUpdateLead, type BriefDocColumns, type BriefRow, type Lead } from "./queries";
 import { BriefActionBar, useActor } from "./useBriefActions";
 import BriefStatusPill from "./BriefStatusPill";
-import { aed } from "./format";
+import { aed, shortDate } from "./format";
+import DefGrid from "./DefGrid";
+import LeadForm from "./LeadForm";
 
 const SECTIONS = [
-  "Project header", "Vision", "Style", "Colour direction", "FF&E requirements",
+  "Lead details", "Vision", "Style", "Colour direction", "FF&E requirements",
   "Existing items, issues, open queries", "Attachments",
 ];
 const secId = (i: number) => `brief-sec-${i + 1}`;
@@ -154,6 +156,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
 
   const [doc, setDoc] = useState<BriefDoc>(() => normaliseBrief(brief, lead));
   const [layoutNoteHidden, setLayoutNoteHidden] = useState(false);
+  const [leadEditOpen, setLeadEditOpen] = useState(false);
   useEffect(() => { setLayoutNoteHidden(false); }, [lead.unit_type]);
   const [dirty, setDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
@@ -300,48 +303,48 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
         </nav>
 
         <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 space-y-6">
-          <section className="space-y-2 rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6">
-            <Label htmlFor="brief-drive-url" className="font-heading uppercase text-lg tracking-wide">Google Drive folder</Label>
-            <p className="text-xs text-muted-foreground">Floor plan, site photos and client references live here. The designer needs it.</p>
-            {rights.full ? (
-              <>
-                <Input
-                  id="brief-drive-url" type="url" inputMode="url" placeholder="https://drive.google.com/…"
-                  value={driveDraft} aria-invalid={!!driveCheck.error}
-                  onChange={(e) => setDriveDraft(e.target.value)}
-                  onBlur={saveDrive}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveDrive(); } }}
-                />
-                {driveCheck.error ? (
-                  <p className="text-xs text-destructive">{driveCheck.error}</p>
-                ) : driveCheck.hint ? (
-                  <p className="text-xs text-muted-foreground">{driveCheck.hint}</p>
-                ) : null}
-                {updateLead.isPending && <p className="text-xs text-muted-foreground">Saving…</p>}
-              </>
-            ) : lead.drive_url ? (
-              <DriveLink url={lead.drive_url} />
-            ) : (
-              <p className="text-sm text-muted-foreground">Not added yet.</p>
-            )}
-          </section>
-          <Section i={0} note={rights.ffeAndColours && !rights.full ? "Set by sales — read only for design." : undefined}>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <TextF label="Account" value={h.account} onChange={setH("account")} ro={roFull} />
-              <TextF label="Primary contact" value={h.primary} onChange={setH("primary")} ro={roFull} />
-              <TextF label="Property" value={h.property} onChange={setH("property")} ro={roFull} />
-              <TextF label="Unit" value={h.unit} onChange={setH("unit")} ro={roFull} />
-              <TextF label="Size" value={h.size} onChange={setH("size")} ro={roFull} />
-              <TextF label="Rooms" value={h.rooms} onChange={setH("rooms")} ro={roFull} />
-              <TextF label="Outdoor" value={h.outdoor} onChange={setH("outdoor")} ro={roFull} />
+          <Section i={0} note="From the lead — always current. Change it on the lead, not here.">
+            {/* Read live from the lead, never copied into the brief, so it cannot go stale. */}
+            <div className="space-y-3">
+              {rights.full && (
+                <div className="flex justify-end">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setLeadEditOpen(true)}>Edit lead</Button>
+                </div>
+              )}
+              <DefGrid items={[
+                ["Client", lead.name], ["Phone", lead.phone], ["Email", lead.email], ["Property", lead.property],
+                ["Building / unit", lead.building], ["Area", lead.location], ["Unit type", lead.unit_type], ["Size", lead.size],
+                ["Handover status", lead.handover_status], ["Expected handover", lead.exp_handover ? shortDate(lead.exp_handover) : null],
+                ["Use", lead.use_type], ["Budget", lead.budget != null ? aed(lead.budget) : null],
+                ["Target date", lead.target_date ? shortDate(lead.target_date) : null], ["Scope", lead.scope],
+                ["Style", lead.style], ["Source", lead.source],
+                ["Google Drive folder", lead.drive_url ? <DriveLink url={lead.drive_url} /> : rights.full ? (
+                  <span className="block space-y-1">
+                    <Input
+                      id="brief-drive-url" type="url" inputMode="url" placeholder="https://drive.google.com/…"
+                      aria-label="Google Drive folder" value={driveDraft} aria-invalid={!!driveCheck.error}
+                      onChange={(e) => setDriveDraft(e.target.value)}
+                      onBlur={saveDrive}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); saveDrive(); } }}
+                    />
+                    <span className="block text-xs text-muted-foreground">Floor plan, site photos and client references live here. The designer needs it.</span>
+                    {driveCheck.error ? (
+                      <span className="block text-xs text-destructive">{driveCheck.error}</span>
+                    ) : driveCheck.hint ? (
+                      <span className="block text-xs text-muted-foreground">{driveCheck.hint}</span>
+                    ) : null}
+                    {updateLead.isPending && <span className="block text-xs text-muted-foreground">Saving…</span>}
+                  </span>
+                ) : null],
+              ]} />
+            </div>
+            <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-3">
+              <TextF label="Outdoor (balcony / terrace)" value={h.outdoor} onChange={setH("outdoor")} ro={roFull} />
               <SelectF label="Project type" value={h.projectType} options={PROJECT_TYPES} onChange={setH("projectType")} ro={roFull} />
               {h.projectType === "Other" && (
                 <TextF label="Project type (other)" value={h.projectTypeOther} onChange={setH("projectTypeOther")} ro={roFull} />
               )}
               <TextF label="Urgency" value={h.urgency} onChange={setH("urgency")} ro={roFull} />
-              {roFull
-                ? <Field label="Budget"><Ro v={h.budget ? aed(h.budget) : ""} /></Field>
-                : <TextF label="Budget (AED)" type="number" value={h.budget} onChange={setH("budget")} ro={false} />}
               <Chips label="Contract" value={h.contract} options={CONTRACT_STATES} onChange={setH("contract")} ro={roFull} />
             </div>
           </Section>
