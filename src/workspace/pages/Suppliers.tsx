@@ -70,7 +70,8 @@ const SupplierDialog = ({ supplier, open, onOpenChange }: { supplier: Supplier |
 
 const Suppliers = () => {
   const { member } = useWorkspace();
-  const canEdit = member?.role === "gm" || member?.role === "coordinator";
+  // Designers source FF&E, so they add and edit suppliers too. Delete (and blocking) stays with the GM.
+  const canEdit = member?.role === "gm" || member?.role === "coordinator" || member?.role === "designer";
   const { data: suppliers = [], isLoading, error } = useSuppliers();
   const { data: openCounts } = useSupplierOpenCounts();
   const [editing, setEditing] = useState<Supplier | null>(null);

@@ -196,6 +196,43 @@ const SupplierCombo = ({ row, onChange, disabled, canAdd }: { row: FfeRow; onCha
 };
 
 /** Editable room heading. Renaming moves every item in the group; a name matching another group merges into it. */
+/** Move one item to another section: pick an existing one or type a new name. */
+const RoomCombo = ({ value, rooms, onChange, disabled }: { value: string; rooms: string[]; onChange: (room: string) => void; disabled?: boolean }) => {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  if (disabled) return <span className="text-xs">{value}</span>;
+  const typed = q.trim();
+  const exact = rooms.find((r) => r.toLowerCase() === typed.toLowerCase());
+  const go = (room: string) => { setOpen(false); setQ(""); if (room !== value) onChange(room); };
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(""); }}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" role="combobox" aria-label="Section" className="h-7 w-full min-w-0 justify-between px-2 text-xs font-normal">
+          <span className="truncate">{value}</span><ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Move to section…" value={q} onValueChange={setQ} />
+          <CommandList>
+            <CommandEmpty>No section.</CommandEmpty>
+            <CommandGroup>
+              {typed && !exact && (
+                <CommandItem value={`__new ${typed}`} onSelect={() => go(typed)}><Plus className="mr-2 h-4 w-4" /> New section "{typed}"</CommandItem>
+              )}
+              {rooms.map((r) => (
+                <CommandItem key={r} value={r} onSelect={() => go(r)}>
+                  <Check className={cn("mr-2 h-4 w-4", r === value ? "opacity-100" : "opacity-0")} />{r}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const RoomHeading = ({ room, canEdit, onRename }: { room: string; canEdit: boolean; onRename: (to: string) => void }) => {
   const [v, setV] = useState(room);
   useEffect(() => setV(room), [room]);
@@ -365,7 +402,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (!rows.length) return <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />;
 
-  const canAddSupplier = isGm || role === "coordinator";
+  const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
     add.mutate({ owner: ctx.owner, room, existing: rows }, { onSuccess: (id) => setFocusId(id), onError: (e) => toast.error(errMsg(e, "Failed")) });
   const addRoom = () => {
@@ -377,6 +414,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       onSuccess: (id) => { setNewRoom(""); setAddingRoom(false); setFocusId(id); }, onError: (e) => toast.error(errMsg(e, "Failed")),
     });
   };
+  // Renaming keeps each item's ref (LIV-3 stays LIV-3) on purpose: refs may already be on a PO or in a supplier email.
   const renameRoom = (from: string, to: string) => {
     const target = groups.find(([g]) => g !== from && g.trim().toLowerCase() === to.trim().toLowerCase())?.[0] ?? to.trim();
     const ids = rows.filter((r) => r.room === from).map((r) => r.id);
@@ -390,7 +428,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const primaryCols = withCost
     ? "grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-[minmax(0,1fr)_4.5rem_7rem_8rem_2.25rem]"
     : "grid-cols-[1fr_auto] md:grid-cols-[minmax(0,1fr)_4.5rem_2.25rem]";
-  const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)]";
+  const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)_minmax(0,.9fr)]";
 
   const itemRow = (r: FfeRow) => (
     <li key={r.id} className="space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2">
@@ -439,6 +477,9 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         <F label="Notes" className="col-span-2 md:col-span-1">
           <EditCell label="Notes" value={r.notes} disabled={!canEdit} className="h-7 text-xs" placeholder="Notes, finish, colour…"
             onSave={(v) => save(r.id, { notes: v.trim() || null })} />
+        </F>
+        <F label="Section" className="col-span-2 md:col-span-1">
+          <RoomCombo value={r.room} rooms={groups.map(([g]) => g)} disabled={!canEdit} onChange={(room) => save(r.id, { room })} />
         </F>
       </div>
     </li>
