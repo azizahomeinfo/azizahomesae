@@ -494,7 +494,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const close = () => onOpenChange(false);
 
   const body = (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 md:px-6">
         <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Design package</p>
@@ -575,7 +575,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="h-[100dvh] p-0 bg-background [&>button]:hidden">
+        {/* Flex and overflow containment keep the inner package bounded and scrollable. */}
+        <SheetContent side="bottom" className="h-[100dvh] p-0 bg-background [&>button]:hidden flex flex-col overflow-hidden">
           <SheetTitle className="sr-only">Design package</SheetTitle>
           {body}
         </SheetContent>
@@ -584,7 +585,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 gap-0 sm:rounded-none bg-background [&>button]:hidden">
+      {/* Flex and overflow containment override DialogContent's grid so the package can scroll. */}
+      <DialogContent className="max-w-none w-screen h-[100dvh] p-0 gap-0 sm:rounded-none bg-background [&>button]:hidden flex flex-col overflow-hidden">
         <DialogTitle className="sr-only">Design package</DialogTitle>
         {body}
       </DialogContent>
