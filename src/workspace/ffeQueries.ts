@@ -22,7 +22,15 @@ export type Costing = Pick<
   T["ffe_costings"]["Row"],
   "id" | "project_id" | "lead_id" | "status" | "version" | "submitted_at" | "quoted_at"
 > & { markup_pct?: number; gm_notes?: string | null; return_note?: string | null; options: QuoteOption[] };
-...
+export type Snag = Pick<
+  T["snags"]["Row"],
+  "id" | "project_id" | "ref" | "ref_seq" | "area" | "description" | "owner_id" | "status" | "photo_path" | "fixed_on" | "created_at"
+>;
+
+const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, payment_terms, rating, status, notes";
+// Sales never receive cost price: the column is not even requested for them.
+const FFE_BASE =
+  "id, project_id, lead_id, ref, room, category, item, sku, dims, finish, spec, qty, unit, supplier_id, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
 const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, options";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
 
