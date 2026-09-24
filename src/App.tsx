@@ -23,6 +23,7 @@ import CaseStudy from "./pages/CaseStudy";
 import { lazy, Suspense } from "react";
 
 const Workspace = lazy(() => import("./workspace/WorkspaceApp"));
+const Harness = lazy(() => import("./workspace/__Harness"));
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
       <Sonner />
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/__harness" element={<Suspense fallback={null}><Harness /></Suspense>} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<AboutUs />} />
