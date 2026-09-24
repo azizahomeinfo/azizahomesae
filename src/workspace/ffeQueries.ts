@@ -227,8 +227,9 @@ export const useUpdateFfeItems = () => {
         fail(error);
         if (!Object.keys(values).length) return v;
       }
-      // Moving a single row to another room re-issues its ref under that room's prefix.
-      if (values.room && v.ids.length === 1 && v.existing) values.ref = nextRef(values.room, v.existing.map((r) => r.ref));
+      // Moving a row to another section changes ONLY its room, never its ref — same decision as
+      // renames (FfeTab.tsx): a ref is an identifier, not a location, and may already be on a PO
+      // or in a supplier email. nextRef issues refs at creation only; updates never re-issue one.
       const { error } = await supabase.from("ffe_items").update(values).in("id", v.ids);
       fail(error);
       if (values.stage) await recomputeIfProject(v.owner);
