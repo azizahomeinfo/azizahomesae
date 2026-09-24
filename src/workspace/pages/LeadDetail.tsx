@@ -197,11 +197,18 @@ const LeadDetail = () => {
         )}
         {status === "Won" && (
           <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-foreground">Convert to project</p>
-            <div className="flex flex-col items-start sm:items-end gap-1">
-              <Button disabled>Convert to project</Button>
-              <span className="text-xs text-muted-foreground">Coming in the next release</span>
-            </div>
+            <p className="text-foreground">{lead.converted_project_id ? "Project" : "Convert to project"}</p>
+            {lead.converted_project_id ? (
+              projectCode ? (
+                <Button asChild variant="outline"><Link to={`/workspace/projects/${projectCode}`}>Open project {projectCode}</Link></Button>
+              ) : (
+                <span className="text-sm text-muted-foreground">Already converted.</span>
+              )
+            ) : canConvert ? (
+              <Button onClick={() => setConvertOpen(true)}>Convert to project</Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">GM or sales converts won leads.</span>
+            )}
           </div>
         )}
       </section>
