@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { canSee, type WorkspaceRole } from "../access";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
@@ -25,23 +25,12 @@ import LeadForm from "../LeadForm";
 import CommentThread from "../CommentThread";
 import { FollowUp } from "./Leads";
 import ConvertProject from "../ConvertProject";
+import DefGrid from "../DefGrid";
 import { useProjectCode } from "../projectQueries";
 
 const PIPE = LEAD_STATUSES.filter((s) => s !== "Lost");
 
-const Grid = ({ title, items }: { title: string; items: [string, ReactNode][] }) => (
-  <div>
-    <p className="mb-3 text-[11px] uppercase tracking-[0.25em] text-muted-foreground">{title}</p>
-    <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
-      {items.map(([k, v]) => (
-        <div key={k} className="min-w-0">
-          <dt className="text-xs text-muted-foreground">{k}</dt>
-          <dd className="text-sm text-foreground break-words">{v === null || v === undefined || v === "" ? "—" : v}</dd>
-        </div>
-      ))}
-    </dl>
-  </div>
-);
+const Grid = DefGrid;
 
 const LeadDetail = () => {
   const { id } = useParams();

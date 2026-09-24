@@ -91,9 +91,12 @@ const layoutSections = (unitType: string | null | undefined): ChecklistSection[]
 export const sectionsForLayout = (unitType: string | null): FfeSection[] =>
   layoutSections(unitType).map((s) => ({ ...s, items: s.items.map((i) => ({ ...i, required: "", notes: "" })) }));
 
+/**
+ * Only what the brief owns. Client, property, unit, size and budget are read live from the lead;
+ * historic briefs may still hold account/primary/property/unit/size/rooms/budget keys — kept, not shown.
+ */
 export interface BriefHeader {
-  account: string; primary: string; property: string; unit: string; size: string; rooms: string; outdoor: string;
-  projectType: string; projectTypeOther: string; urgency: string; budget: string; contract: string[];
+  outdoor: string; projectType: string; projectTypeOther: string; urgency: string; contract: string[];
 }
 export interface BriefStyle {
   vision: string; special: string; primaryStyle: string; primaryOther: string; accents: string[];
@@ -157,9 +160,7 @@ interface LeadLike {
 
 export const blankBrief = (lead: LeadLike): BriefDoc => ({
   header: {
-    account: lead.name ?? "", primary: "", property: lead.property ?? lead.building ?? "",
-    unit: lead.unit_type ?? "", size: lead.size ?? "", rooms: "", outdoor: "", projectType: "New Fit-Out",
-    projectTypeOther: "", urgency: "", budget: lead.budget != null ? String(lead.budget) : "", contract: [],
+    outdoor: "", projectType: "New Fit-Out", projectTypeOther: "", urgency: "", contract: [],
   },
   style: {
     vision: "", special: "", primaryStyle: "", primaryOther: "", accents: [], accentNotes: "", refs: "",
