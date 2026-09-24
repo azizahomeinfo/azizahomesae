@@ -67,7 +67,9 @@ const PREFIX: Record<string, string> = {
   Entrance: "ENT", "Living Room": "LIV", "Living Area": "LIV", "Living / Dining": "LIV", Dining: "DIN",
   Kitchen: "KIT", "Kitchen & Tabletop": "KIT", "Master Bedroom": "MBR", "Bedroom 2": "BR2", "Bedroom 3": "BR3",
   "Bedroom 4": "BR4", "Maid's Room": "MAD", Bathroom: "BTH", Bathrooms: "BTH", Balcony: "BAL", Appliances: "APP",
-  Bedrooms: "BED",
+  Bedrooms: "BED", "Living & Dining": "LIV", "Kitchenware & Tabletop": "KIT", "Sleeping Area": "SLP",
+  "Guest Bedroom": "GBR", "Guest Bedroom 1": "GB1", "Guest Bedroom 2": "GB2", "Guest Bedroom 3": "GB3",
+  "Safety, Access & Compliance": "SAF",
 };
 export const roomPrefix = (room: string) =>
   PREFIX[room.trim()] ?? (room.replace(/[^a-z]/gi, "").slice(0, 3).toUpperCase() || "ITM");
