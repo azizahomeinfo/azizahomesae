@@ -20,7 +20,7 @@ export type CostingStatus = T["ffe_costings"]["Row"]["status"];
 export interface QuoteOption { label: string; desc: string; amount: number }
 export type Costing = Pick<
   T["ffe_costings"]["Row"],
-  "id" | "project_id" | "lead_id" | "status" | "version" | "submitted_at" | "quoted_at"
+  "id" | "project_id" | "lead_id" | "status" | "version" | "submitted_at" | "quoted_at" | "quoted_by"
 > & { markup_pct?: number; gm_notes?: string | null; return_note?: string | null; options: QuoteOption[] };
 export type Snag = Pick<
   T["snags"]["Row"],
@@ -31,7 +31,7 @@ const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, pay
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
   "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
-const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, options";
+const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, options";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
 
 /**
@@ -287,7 +287,7 @@ export const useCosting = (owner: FfeOwner | undefined, withCost: boolean) =>
     },
   });
 
-export type CostingValues = Pick<T["ffe_costings"]["Update"], "status" | "options" | "version" | "submitted_at" | "quoted_at"> &
+export type CostingValues = Pick<T["ffe_costings"]["Update"], "status" | "options" | "version" | "submitted_at" | "quoted_at" | "quoted_by"> &
   Pick<T["ffe_costing_private"]["Update"], "markup_pct" | "gm_notes" | "return_note">;
 
 export const useCostingTransition = () => {
