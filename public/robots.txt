@@ -19,6 +19,7 @@ Sitemap: https://www.azizahomes.com/sitemap.xml
 # Exclude private/utility routes
 User-agent: *
 Disallow: /auth
+Disallow: /workspace
 
 # Crawl-delay
 Crawl-delay: 1
