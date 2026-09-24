@@ -252,7 +252,7 @@ export const useDeleteFfeItem = () => {
       await recomputeIfProject(v.owner);
       return v;
     },
-    onSettled: (_d, _e, v) => {
+    onSettled: () => {
       invalidateFfe(qc);
       qc.invalidateQueries({ queryKey: ["ws", "project"] });
     },
