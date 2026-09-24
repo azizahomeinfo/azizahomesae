@@ -22,6 +22,8 @@ const blank: Form = { name: "", category: "", contact: "", phone: "", email: "",
 
 const SupplierDialog = ({ supplier, open, onOpenChange }: { supplier: Supplier | null; open: boolean; onOpenChange: (o: boolean) => void }) => {
   const save = useSaveSupplier();
+  const { member } = useWorkspace();
+  const isGm = member?.role === "gm";
   const [f, setF] = useState<Form>(blank);
   const [seeded, setSeeded] = useState<string | null>(null);
   const key = supplier?.id ?? "new";
@@ -57,7 +59,10 @@ const SupplierDialog = ({ supplier, open, onOpenChange }: { supplier: Supplier |
           <div className="space-y-1"><Label>Status</Label>
             <Select value={f.status} onValueChange={(v) => setF({ ...f, status: v as Supplier["status"] })}>
               <SelectTrigger aria-label="Status"><SelectValue /></SelectTrigger>
-              <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              <SelectContent>{STATUSES.map((s) => (
+                // Blocking a supplier is a commercial call: GM only (the UI enforces this; the database allows edits by designers/coordinators).
+                <SelectItem key={s} value={s} disabled={s === "Blocked" && !isGm && f.status !== "Blocked"}>{s}</SelectItem>
+              ))}</SelectContent>
             </Select></div>
           <div className="space-y-1 sm:col-span-2"><Label htmlFor="sup-notes">Notes</Label>
             <Textarea id="sup-notes" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
