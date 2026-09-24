@@ -13,7 +13,7 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useSaveIssue, useTickHandover, useUploadProjectFile, type Issue, type Project,
+  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, type Issue, type Project,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -50,6 +50,9 @@ const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
 export const OverviewTab = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const commercial = member?.role === "gm" || member?.role === "sales";
+  // Sales never fetch cost figures: contract value beside cost is the margin.
+  const seesCost = member?.role === "gm" || member?.role === "designer" || member?.role === "coordinator";
+  const { data: costs } = useProjectCosts(project.id, member?.role);
   const balance = project.value === null ? null : Number(project.value) - Number(project.received ?? 0);
   const left = project.handover_date ? daysBetween(todayISO(), project.handover_date) : null;
   return (
@@ -58,12 +61,17 @@ export const OverviewTab = ({ project }: { project: Project }) => {
         {commercial && (
           <Card title="Commercial">
             <Row k="Contract value" v={aed(project.value)} />
-            <Row k="Est. procurement" v={aed(project.est_proc)} />
-            <Row k="Est. operations" v={aed(project.est_ops)} />
             <Row k="Received" v={aed(project.received)} />
             <Row k="Balance" v={aed(balance)} />
             <Row k="Payment status" v={project.pay_status} className={cn(project.pay_status === "Overdue" && "text-destructive")} />
             <Row k="Next due" v={project.next_due ? `${project.next_due}${project.next_due_date ? ` · ${shortDate(project.next_due_date)}` : ""}` : null} />
+            {seesCost && (
+              <>
+                <Row k="Est. procurement" v={aed(costs?.est_proc ?? null)} />
+                <Row k="Est. operations" v={aed(costs?.est_ops ?? null)} />
+                <Row k="Actual procurement" v={aed(costs?.act_proc ?? null)} />
+              </>
+            )}
           </Card>
         )}
         <Card title="Schedule">

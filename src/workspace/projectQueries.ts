@@ -9,7 +9,7 @@ export type Project = Pick<
   T["projects"]["Row"],
   | "id" | "code" | "lead_id" | "name" | "client" | "property" | "unit" | "unit_type" | "location" | "drive_url"
   | "sales_id" | "designer_id" | "coordinator_id" | "start_date" | "handover_date" | "actual_handover"
-  | "stage" | "risk" | "overall_pct" | "proc_pct" | "value" | "est_proc" | "est_ops" | "received"
+  | "stage" | "risk" | "overall_pct" | "proc_pct" | "value" | "received"
   | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at"
 >;
 export type Task = Pick<
@@ -31,7 +31,7 @@ export type ProjectFile = Pick<
 >;
 
 const PROJECT_COLS =
-  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, value, est_proc, est_ops, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
+  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, value, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
 const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, priority, done, done_at, created_at";
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, cost_delta, days_delta, status, decided_at, decided_by";
@@ -82,6 +82,20 @@ export const useProject = (code: string | undefined) =>
     },
   });
 
+export type ProjectCosts = Pick<T["project_costs_private"]["Row"], "est_proc" | "act_proc" | "est_ops" | "act_ops">;
+/** Cost figures sit in project_costs_private (RLS: never sales). Only fetched for cost-seeing roles. */
+export const useProjectCosts = (projectId: string | undefined, role: string | undefined) =>
+  useQuery({
+    queryKey: ["ws", "project-costs", projectId ?? ""],
+    enabled: !!projectId && (role === "gm" || role === "designer" || role === "coordinator"),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("project_costs_private")
+        .select("est_proc, act_proc, est_ops, act_ops").eq("project_id", projectId!).maybeSingle();
+      fail(error);
+      return (data ?? null) as ProjectCosts | null;
+    },
+  });
+
 export const useProjectCode = (id: string | null | undefined) =>
   useQuery({
     queryKey: ["ws", "project-code", id ?? ""],
@@ -107,6 +121,7 @@ export const useConvertLead = () => {
       const id = crypto.randomUUID();
       const { error } = await supabase.from("projects").insert({ ...v.values, id, lead_id: v.leadId, stage: "Contract / Deposit" });
       fail(error);
+      // The project_costs_private row is created by a database trigger (sales may not write it).
       const { error: lErr } = await supabase.from("leads").update({ converted_project_id: id }).eq("id", v.leadId);
       fail(lErr);
       const targets = [...new Set([v.values.designer_id, v.values.coordinator_id].filter(Boolean) as string[])].filter(

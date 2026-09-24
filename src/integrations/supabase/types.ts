@@ -930,6 +930,41 @@ export type Database = {
           },
         ]
       }
+      project_costs_private: {
+        Row: {
+          act_ops: number | null
+          act_proc: number | null
+          est_ops: number | null
+          est_proc: number | null
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          act_ops?: number | null
+          act_proc?: number | null
+          est_ops?: number | null
+          est_proc?: number | null
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          act_ops?: number | null
+          act_proc?: number | null
+          est_ops?: number | null
+          est_proc?: number | null
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_costs_private_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_files: {
         Row: {
           category: string | null
@@ -1577,6 +1612,10 @@ export type Database = {
       }
       can_see_lead: { Args: { _lead: string; _uid: string }; Returns: boolean }
       can_see_project: {
+        Args: { _project: string; _uid: string }
+        Returns: boolean
+      }
+      can_see_project_costs: {
         Args: { _project: string; _uid: string }
         Returns: boolean
       }
