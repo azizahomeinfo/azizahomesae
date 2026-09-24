@@ -22,6 +22,8 @@ import StatusPill from "../StatusPill";
 import LeadForm from "../LeadForm";
 import CommentThread from "../CommentThread";
 import { FollowUp } from "./Leads";
+import ConvertProject from "../ConvertProject";
+import { useProjectCode } from "../projectQueries";
 
 const PIPE = LEAD_STATUSES.filter((s) => s !== "Lost");
 
@@ -52,6 +54,8 @@ const LeadDetail = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [lostReason, setLostReason] = useState("");
+  const [convertOpen, setConvertOpen] = useState(false);
+  const { data: projectCode } = useProjectCode(lead?.converted_project_id);
 
   const back = (
     <Link to="/workspace/leads" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -88,6 +92,7 @@ const LeadDetail = () => {
   };
 
   const briefStage = status === "Qualified" || status === "Proposal Sent" || status === "Won";
+  const canConvert = member?.role === "gm" || member?.role === "sales";
   const canStartBrief = member?.role === "gm" || (!!member && lead.sales_id === member.user_id);
 
   const startBrief = async () => {
@@ -248,6 +253,10 @@ const LeadDetail = () => {
       </section>
 
       <CommentThread leadId={lead.id} parentName={lead.name} />
+
+      {status === "Won" && !lead.converted_project_id && (
+        <ConvertProject lead={lead} open={convertOpen} onOpenChange={setConvertOpen} />
+      )}
 
       <LeadForm open={editOpen} onOpenChange={setEditOpen} lead={lead} />
 
