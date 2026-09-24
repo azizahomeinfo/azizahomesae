@@ -106,7 +106,7 @@ const LeadDetail = () => {
         createdBy: member.user_id,
         doc: {
           header: d.header as never, style: d.style as never, colours: d.colours as never, ffe: d.ffe as never,
-          bedrooms: d.bedrooms as never, lists: d.lists as never, attachments: d.attachments as never,
+          lists: d.lists as never, attachments: d.attachments as never,
         },
       });
       setBriefOpen(true);

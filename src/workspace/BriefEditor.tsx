@@ -17,7 +17,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
-  ACCENTS, CONTRACT_STATES, OUTPUTS, PROJECT_TYPES, STYLES, normaliseBrief, blankFfeItem, blankFfeSection, restoreStandardFfe,
+  ACCENTS, CONTRACT_STATES, OUTPUTS, PROJECT_TYPES, STYLES, normaliseBrief, blankFfeItem, blankFfeSection, restoreStandardFfe, addMissingSections, missingLayoutSections,
   type BriefDoc, type FfeItem, type Included,
 } from "./briefSchema";
 import { editRights, type BriefStatus } from "./briefWorkflow";
@@ -28,7 +28,7 @@ import BriefStatusPill from "./BriefStatusPill";
 import { aed } from "./format";
 
 const SECTIONS = [
-  "Project header", "Vision", "Style", "Colour direction", "FF&E requirements", "Bedrooms",
+  "Project header", "Vision", "Style", "Colour direction", "FF&E requirements",
   "Existing items, issues, open queries", "Attachments",
 ];
 const secId = (i: number) => `brief-sec-${i + 1}`;
@@ -153,6 +153,8 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   };
 
   const [doc, setDoc] = useState<BriefDoc>(() => normaliseBrief(brief, lead));
+  const [layoutNoteHidden, setLayoutNoteHidden] = useState(false);
+  useEffect(() => { setLayoutNoteHidden(false); }, [lead.unit_type]);
   const [dirty, setDirty] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const docRef = useRef(doc);
@@ -182,7 +184,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
     const cols: BriefDocColumns = rights.full
       ? {
           header: d.header as never, style: d.style as never, colours: d.colours as never, ffe: d.ffe as never,
-          bedrooms: d.bedrooms as never, lists: d.lists as never, attachments: d.attachments as never,
+          lists: d.lists as never, attachments: d.attachments as never,
         }
       : { colours: d.colours as never, ffe: d.ffe as never };
     const sending = rev.current;
@@ -226,6 +228,9 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
     setDirty(true);
   };
   const roFull = !rights.full;
+  // Sections are generated from the unit type only when the brief is created. If sales changes the
+  // unit type later, offer to append what the new layout adds — never silently.
+  const missing = lead.unit_type ? missingLayoutSections(doc.ffe, lead.unit_type) : [];
   const roFfe = !rights.ffeAndColours;
   const h = doc.header;
   const s = doc.style;
@@ -399,6 +404,22 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
 
           <Section i={4}>
             <div className="space-y-3">
+              {!roFull && missing.length > 0 && !layoutNoteHidden && (
+                <div className="flex flex-col gap-2 rounded-[var(--radius)] border border-primary/40 bg-primary/5 p-3 text-sm sm:flex-row sm:items-center">
+                  <p className="flex-1">
+                    This unit is now a {lead.unit_type}. Add the missing sections?
+                    <span className="block text-xs text-muted-foreground">{missing.map((m) => m.title).join(" · ")}</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" onClick={() => upd((d) => ({ ...d, ffe: addMissingSections(d.ffe, lead.unit_type ?? null) }))}>
+                      Add missing sections
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" aria-label="Dismiss" onClick={() => setLayoutNoteHidden(true)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
               {!roFull && (
                 <div className="flex justify-end">
                   <button type="button" onClick={() => setRestoreOpen(true)} className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
@@ -409,10 +430,11 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
               {doc.ffe.map((sec, si) => {
                 const inc = sec.items.filter((i) => i.included === "inc").length;
                 return (
-                  <Collapsible key={si} defaultOpen={sec.code === "5.1" || sec.code === "5.2" || !!sec.custom} className="rounded-[var(--radius)] border border-border">
+                  <Collapsible key={si} defaultOpen={si < 2 || !!sec.custom} className="rounded-[var(--radius)] border border-border">
                     <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 p-3 text-left">
                       <span className="min-w-0">
-                        {sec.code && <span className="text-primary mr-2">{sec.code}</span>}
+                        {/* Numbered by position so it stays 5.1…5.n through add/delete. */}
+                        <span className="text-primary mr-2">5.{si + 1}</span>
                         <span className="text-foreground">{sec.title}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
@@ -525,48 +547,13 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => upd((d) => ({ ...d, ffe: restoreStandardFfe(d.ffe) }))}>Restore</AlertDialogAction>
+                  <AlertDialogAction onClick={() => upd((d) => ({ ...d, ffe: restoreStandardFfe(d.ffe, lead.unit_type ?? null) }))}>Restore</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </Section>
 
           <Section i={5}>
-            <div className="space-y-3">
-              {doc.bedrooms.length === 0 && <p className="text-sm text-muted-foreground">No bedrooms listed.</p>}
-              {doc.bedrooms.map((b, bi) => (
-                <div key={bi} className="rounded-[var(--radius)] border border-border p-3">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end">
-                    {(["bedroom", "size", "headboard", "lighting", "notes"] as const).map((k) => (
-                      <TextF
-                        key={k}
-                        label={k[0].toUpperCase() + k.slice(1)}
-                        value={b[k]}
-                        ro={roFull}
-                        onChange={(v) => upd((d) => { d.bedrooms[bi][k] = v; return d; })}
-                      />
-                    ))}
-                  </div>
-                  {!roFull && (
-                    <Button variant="ghost" size="sm" className="mt-2" onClick={() => upd((d) => { d.bedrooms.splice(bi, 1); return d; })}>
-                      <X className="h-4 w-4 mr-1" />Remove
-                    </Button>
-                  )}
-                </div>
-              ))}
-              {!roFull && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => upd((d) => { d.bedrooms.push({ bedroom: `Bedroom ${d.bedrooms.length + 1}`, size: "", headboard: "", lighting: "", notes: "" }); return d; })}
-                >
-                  <Plus className="h-4 w-4 mr-1" />Add bedroom
-                </Button>
-              )}
-            </div>
-          </Section>
-
-          <Section i={6}>
             <div className="grid gap-6 lg:grid-cols-3">
               {(Object.keys(LIST_LABELS) as (keyof BriefDoc["lists"])[]).map((k) => (
                 <div key={k} className="space-y-2">
@@ -594,7 +581,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
             </div>
           </Section>
 
-          <Section i={7}>
+          <Section i={6}>
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-8">
               {([["floorPlan", "Floor plan received"], ["siteVisit", "Site visit done"]] as const).map(([k, label]) =>
                 roFull ? (

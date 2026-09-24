@@ -17,54 +17,79 @@ const ALT = "Alt / Spec Notes";
 const mk = (rows: [string, string | number, Included?][]): ChecklistItem[] =>
   rows.map(([item, std, included]) => ({ item, std: String(std), included: included ?? "inc" }));
 
-export const FFE_CHECKLIST: ChecklistSection[] = [
-  {
-    code: "5.1", title: "Living / Dining Room", notesLabel: ALT,
-    items: mk([
-      ["Sofa", 1], ["Wall Art Above Sofa", 1], ["Floor Lamp", 1], ["TV Unit", 1], ["Coffee Table", 1],
-      ["Dining Table", 1], ["Dining Chairs", 4], ["Ceiling Pendant Above Sofa", 1], ["Rug (Living)", 1],
-      ["Faux Plant w/ Pot", 1], ["Full Length Mirror", 1], ["Curtain w/ Sheer (Living)", "1 set"],
-      ["Balcony Set – 2-Seater", 1],
-    ]),
-  },
-  {
-    code: "5.2", title: "Bedrooms (aggregate for all bedrooms)", notesLabel: ALT,
-    items: mk([
-      ["King Bed + Mattress 1.8m", 1], ["Double Bed + Mattress", 1], ["Nightstands", 3], ["Ceiling Pendants", 2],
-      ["Wall Lamps", 2], ["Desk Lamp", 1], ["Dresser + Ottoman + Mirror", 2], ["Bedroom Rugs", 2],
-      ["Curtains w/ Sheer (Bedrooms)", "2 sets"], ["Wall Art Décor (Bedrooms)", 3], ["Pillows (Sleeping)", 12],
-      ["Comforters", 3], ["Decorative Cushions on Beds", 4], ["Throws", 3], ["Bedding Sets (sheet + cases)", 6],
-    ]),
-  },
-  {
-    code: "5.3", title: "Bathrooms", notesLabel: ALT,
-    items: mk([["Soap Dispenser Set", 2], ["Trash Can", 2]]),
-  },
-  {
-    code: "5.4", title: "Kitchenware & Tabletop", notesLabel: ALT,
-    items: mk([
-      ["Cookware Set (10 pcs)", 1], ["Utensil Set", 1], ["Dinner Set for 6", 1], ["Knife Set", 1],
-      ["Cutlery Set (24 pcs)", 1], ["Highball Glass", 6], ["Wine Glass", 6], ["Placemat", 4], ["Cutlery Tray", 1],
-      ["Colander", 1], ["Peeler", 1], ["Can Opener", 1], ["Steel Grater", 1], ["Wine Bottle Opener", 1],
-      ["Ironing Board", 1], ["Drying Rack", 1], ["Hanger Set", 2], ["Chopping Board", 1], ["Kitchen Towels", 2],
-      ["Napkin Rings", 4], ["Table Napkins", 4], ["Mugs", 4],
-    ]),
-  },
-  {
-    code: "5.5", title: "Appliances", notesLabel: ALT,
-    items: mk([
-      ["Microwave", 1], ["TV 65”", 1], ["Electric Kettle", 1], ["Fridge", 1], ["Washing Machine", 1],
-      ["Iron", 1], ["Hair Dryer", 1], ["Coffee Machine", 1],
-    ]),
-  },
-  {
-    code: "5.6", title: "Safety, Access & Compliance (DTCM & Other)", notesLabel: "Location / Spec Notes",
-    items: mk([
-      ["Safety Box", 1], ["Prayer Mat", 1, "pend"], ["Smart Lock (Supply & Install – Oji EVO or other)", 1, "pend"],
-      ["First Aid Kit", 1], ["Ash Tray", 1], ["Weighing Scale", 1],
-    ]),
-  },
-];
+const LIVING = mk([
+  ["Sofa", 1], ["Wall Art Above Sofa", 1], ["Floor Lamp", 1], ["TV Unit", 1], ["Coffee Table", 1],
+  ["Dining Table", 1], ["Dining Chairs", 4], ["Ceiling Pendant Above Sofa", 1], ["Rug (Living)", 1],
+  ["Faux Plant w/ Pot", 1], ["Full Length Mirror", 1], ["Curtain w/ Sheer (Living)", "1 set"],
+  ["Balcony Set – 2-Seater", 1],
+]);
+const MASTER = mk([
+  ["King Bed + Mattress 1.8m", 1], ["Nightstands", 2], ["Ceiling Pendant", 1], ["Wall Lamps", 2],
+  ["Dresser + Ottoman + Mirror", 1], ["Bedroom Rug", 1], ["Curtain w/ Sheer", "1 set"], ["Wall Art Décor", 1],
+  ["Pillows", 4], ["Comforter", 1], ["Decorative Cushions", 2], ["Throw", 1], ["Bedding Set", 2],
+]);
+const GUEST = mk([
+  ["Queen Bed + Mattress 1.6m", 1], ["Nightstands", 2], ["Ceiling Pendant", 1], ["Wall Lamps", 2],
+  ["Dresser + Mirror", 1], ["Bedroom Rug", 1], ["Curtain w/ Sheer", "1 set"], ["Wall Art Décor", 1],
+  ["Pillows", 4], ["Comforter", 1], ["Decorative Cushions", 2], ["Throw", 1], ["Bedding Set", 2],
+]);
+const SLEEPING = mk([
+  ["Queen Bed + Mattress 1.6m", 1], ["Nightstands", 2], ["Wall Sconces", 2], ["Bedroom Rug", 1],
+  ["Curtain w/ Sheer", "1 set"], ["Wall Art Décor", 1], ["Pillows", 4], ["Comforter", 1],
+  ["Decorative Cushions", 2], ["Throw", 1], ["Bedding Set", 2],
+]);
+const MAID = mk([["Single Bed + Mattress", 1], ["Nightstand", 1], ["Curtain", "1 set"], ["Pillows", 2], ["Comforter", 1], ["Bedding Set", 1]]);
+const BATH = mk([["Soap Dispenser Set", 2], ["Trash Can", 2], ["Towel Set", 2], ["Bathroom Amenities", 1]]);
+const KITCHEN = mk([
+  ["Cookware Set (10 pcs)", 1], ["Utensil Set", 1], ["Dinner Set for 6", 1], ["Knife Set", 1],
+  ["Cutlery Set (24 pcs)", 1], ["Highball Glass", 6], ["Wine Glass", 6], ["Placemat", 4], ["Cutlery Tray", 1],
+  ["Colander", 1], ["Peeler", 1], ["Can Opener", 1], ["Steel Grater", 1], ["Wine Bottle Opener", 1],
+  ["Ironing Board", 1], ["Drying Rack", 1], ["Hanger Set", 2], ["Chopping Board", 1], ["Kitchen Towels", 2],
+  ["Napkin Rings", 4], ["Table Napkins", 4], ["Mugs", 4],
+]);
+const APPLIANCES = mk([
+  ["Microwave", 1], ["TV 65”", 1], ["Electric Kettle", 1], ["Fridge", 1], ["Washing Machine", 1],
+  ["Iron", 1], ["Hair Dryer", 1], ["Coffee Machine", 1],
+]);
+const DTCM = mk([
+  ["Safety Box", 1], ["Prayer Mat", 1, "pend"], ["Smart Lock (Supply & Install – Oji EVO or other)", 1, "pend"],
+  ["First Aid Kit", 1], ["Ash Tray", 1], ["Weighing Scale", 1],
+]);
+
+const sec = (title: string, items: ChecklistItem[], notesLabel = ALT): ChecklistSection => ({ code: "", title, notesLabel, items });
+
+/** Bedrooms, maid's room for a unit type. Unknown / null falls back to 2 Bedroom. */
+const layoutOf = (unitType: string | null | undefined) => {
+  const t = (unitType ?? "").trim().toLowerCase();
+  if (t === "studio") return { studio: true, beds: 0, maid: false };
+  const m = t.match(/^(\d)\s*bedroom(\s*\+\s*maid)?$/);
+  if (!m) return { studio: false, beds: 2, maid: false };
+  return { studio: false, beds: Number(m[1]), maid: !!m[2] };
+};
+
+/**
+ * Default FF&E sections for a unit type: every bedroom is its own section.
+ * One guest room is "Guest Bedroom"; two or more are numbered from 1.
+ */
+const layoutSections = (unitType: string | null | undefined): ChecklistSection[] => {
+  const { studio, beds, maid } = layoutOf(unitType);
+  const rooms: ChecklistSection[] = [];
+  if (studio) rooms.push(sec("Sleeping Area", SLEEPING));
+  else {
+    rooms.push(sec("Master Bedroom", MASTER));
+    const guests = Math.max(0, beds - 1);
+    for (let g = 1; g <= guests; g++) rooms.push(sec(guests === 1 ? "Guest Bedroom" : `Guest Bedroom ${g}`, GUEST));
+    if (maid) rooms.push(sec("Maid's Room", MAID));
+  }
+  return [
+    sec("Living & Dining", LIVING), ...rooms, sec("Bathroom", BATH), sec("Kitchenware & Tabletop", KITCHEN),
+    sec("Appliances", APPLIANCES), sec("Safety, Access & Compliance (DTCM & Other)", DTCM, "Location / Spec Notes"),
+  ];
+};
+
+/** Fresh, editable FF&E sections for a unit type. Codes are not stored: the number is the section's position. */
+export const sectionsForLayout = (unitType: string | null): FfeSection[] =>
+  layoutSections(unitType).map((s) => ({ ...s, items: s.items.map((i) => ({ ...i, required: "", notes: "" })) }));
 
 export interface BriefHeader {
   account: string; primary: string; property: string; unit: string; size: string; rooms: string; outdoor: string;
@@ -91,38 +116,44 @@ export const blankFfeSection = (title: string): FfeSection => ({
 
 const norm = (v: string) => v.trim().toLowerCase();
 
-/** Re-add any standard checklist item missing from the document. Never touches existing or custom items. */
-export const restoreStandardFfe = (ffe: FfeSection[]): FfeSection[] => {
+const sameName = (a: string, b: string) => norm(a) === norm(b);
+
+/** Layout sections absent from the document, matched by trimmed, case-insensitive name. */
+export const missingLayoutSections = (ffe: FfeSection[], unitType: string | null): FfeSection[] =>
+  sectionsForLayout(unitType).filter((l) => !ffe.some((s) => sameName(s.title, l.title)));
+
+/** Append missing layout sections. Never deletes, renames or reorders, and never touches existing items. */
+export const addMissingSections = (ffe: FfeSection[], unitType: string | null): FfeSection[] =>
+  [...ffe, ...missingLayoutSections(ffe, unitType)];
+
+/**
+ * Re-add any standard item missing from a standard section of this unit's layout (matched by section name),
+ * and any missing layout section. Never touches existing or custom items.
+ */
+export const restoreStandardFfe = (ffe: FfeSection[], unitType: string | null): FfeSection[] => {
   const out = ffe.map((s) => ({ ...s, items: [...s.items] }));
-  for (const std of FFE_CHECKLIST) {
-    let sec = out.find((s) => !s.custom && s.code === std.code);
-    if (!sec) {
-      sec = { code: std.code, title: std.title, notesLabel: std.notesLabel, items: [] };
-      const at = out.findIndex((s) => s.custom || s.code > std.code);
-      out.splice(at === -1 ? out.length : at, 0, sec);
-    }
+  for (const std of layoutSections(unitType)) {
+    const sec = out.find((s) => !s.custom && sameName(s.title, std.title));
+    if (!sec) { out.push({ ...std, items: std.items.map((i) => ({ ...i, required: "", notes: "" })) }); continue; }
     const present = new Set(sec.items.filter((i) => !i.custom).flatMap((i) => [norm(i.item), norm(i.origin ?? "")]));
-    for (const i of std.items) {
-      if (!present.has(norm(i.item))) sec.items.push({ ...i, required: "", notes: "" });
-    }
+    for (const i of std.items) if (!present.has(norm(i.item))) sec.items.push({ ...i, required: "", notes: "" });
   }
   return out;
 };
+/** Retained only for historic briefs: the `bedrooms` column is no longer written or shown. Bedrooms are FF&E sections now. */
 export interface BedroomRow { bedroom: string; size: string; headboard: string; lighting: string; notes: string }
 export interface BriefLists { existing: string[]; issues: string[]; queries: string[] }
 export interface BriefAttachments { floorPlan: boolean; siteVisit: boolean }
 
 export interface BriefDoc {
   header: BriefHeader; style: BriefStyle; colours: ColourRow[]; ffe: FfeSection[];
-  bedrooms: BedroomRow[]; lists: BriefLists; attachments: BriefAttachments;
+  lists: BriefLists; attachments: BriefAttachments;
 }
 
 interface LeadLike {
   name?: string | null; property?: string | null; building?: string | null; unit_type?: string | null;
   size?: string | null; budget?: number | string | null;
 }
-
-const bedroom = (name: string): BedroomRow => ({ bedroom: name, size: "", headboard: "", lighting: "", notes: "" });
 
 export const blankBrief = (lead: LeadLike): BriefDoc => ({
   header: {
@@ -135,11 +166,8 @@ export const blankBrief = (lead: LeadLike): BriefDoc => ({
     dislikes: "", outputs: [],
   },
   colours: ZONES.map((zone) => ({ zone, base: "", accent: "", saturation: "", notes: "" })),
-  ffe: FFE_CHECKLIST.map((s) => ({
-    code: s.code, title: s.title, notesLabel: s.notesLabel,
-    items: s.items.map((i) => ({ ...i, required: "", notes: "" })),
-  })),
-  bedrooms: [bedroom("Master Bed"), bedroom("Guest Bed")],
+  // Generated from the unit type only here, when the brief is first created — never silently afterwards.
+  ffe: sectionsForLayout(lead.unit_type ?? null),
   lists: { existing: [], issues: [], queries: [] },
   attachments: { floorPlan: false, siteVisit: false },
 });
@@ -161,7 +189,6 @@ export const normaliseBrief = (
     style: s ? { ...b.style, ...s } : b.style,
     colours: (arr(stored.colours) as ColourRow[]) ?? b.colours,
     ffe: (arr(stored.ffe) as FfeSection[]) ?? b.ffe,
-    bedrooms: Array.isArray(stored.bedrooms) && h && Object.keys(h).length ? (stored.bedrooms as BedroomRow[]) : b.bedrooms,
     lists: l ? { ...b.lists, ...l } : b.lists,
     attachments: a ? { ...b.attachments, ...a } : b.attachments,
   };
