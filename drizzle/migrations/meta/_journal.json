@@ -99,6 +99,13 @@
       "when": 1790285658207,
       "tag": "0013_project_costs_private_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790285855185,
+      "tag": "0014_workspace_storage_scoped",
+      "breakpoints": true
     }
   ]
 }
