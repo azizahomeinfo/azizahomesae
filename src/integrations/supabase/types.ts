@@ -487,6 +487,7 @@ export type Database = {
           notes: string | null
           ordered_on: string | null
           po_ref: string | null
+          product_url: string | null
           project_id: string | null
           qty: number
           ref: string | null
@@ -495,7 +496,9 @@ export type Database = {
           sort_order: number
           spec: string | null
           stage: Database["public"]["Enums"]["proc_stage"]
+          supplier_contact: string | null
           supplier_id: string | null
+          supplier_name: string | null
           unit: string | null
           unit_cost: number | null
           updated_at: string
@@ -514,6 +517,7 @@ export type Database = {
           notes?: string | null
           ordered_on?: string | null
           po_ref?: string | null
+          product_url?: string | null
           project_id?: string | null
           qty?: number
           ref?: string | null
@@ -522,7 +526,9 @@ export type Database = {
           sort_order?: number
           spec?: string | null
           stage?: Database["public"]["Enums"]["proc_stage"]
+          supplier_contact?: string | null
           supplier_id?: string | null
+          supplier_name?: string | null
           unit?: string | null
           unit_cost?: number | null
           updated_at?: string
@@ -541,6 +547,7 @@ export type Database = {
           notes?: string | null
           ordered_on?: string | null
           po_ref?: string | null
+          product_url?: string | null
           project_id?: string | null
           qty?: number
           ref?: string | null
@@ -549,7 +556,9 @@ export type Database = {
           sort_order?: number
           spec?: string | null
           stage?: Database["public"]["Enums"]["proc_stage"]
+          supplier_contact?: string | null
           supplier_id?: string | null
+          supplier_name?: string | null
           unit?: string | null
           unit_cost?: number | null
           updated_at?: string
