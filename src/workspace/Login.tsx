@@ -50,7 +50,7 @@ const Login = () => {
 
   const signUp = async (e: FormEvent) => {
     e.preventDefault();
-    const v = validate(signInSchema);
+    const v = validate(signUpSchema);
     if (!v) return;
     setBusy(true);
     const { error } = await supabase.auth.signUp({
