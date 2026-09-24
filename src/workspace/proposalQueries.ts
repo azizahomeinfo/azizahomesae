@@ -133,7 +133,7 @@ export const fromDesign = (design: AcceptedDesign, style: string, previous?: Doc
 };
 
 export const buildDocument = async (v: {
-  lead: { name: string; property: string | null; building: string | null; unit_type: string | null; style: string | null; converted_project_id: string | null };
+  lead: { id: string; name: string; property: string | null; building: string | null; unit_type: string | null; style: string | null; converted_project_id: string | null };
   brief: { style: unknown; ffe: unknown } | null;
   design: AcceptedDesign;
 }): Promise<ProposalDocument> => {
@@ -144,10 +144,10 @@ export const buildDocument = async (v: {
   let itemList: ProposalDocument["itemList"] = [];
   let itemSource: ProposalDocument["itemSource"] = "brief";
   let options: QuoteOption[] = [];
-  const projectId = v.lead.converted_project_id;
-  if (projectId) {
+  // FF&E belongs to the lead (the project inherits the same rows), so read it by lead.
+  {
     // item + qty only — cost price is never read here.
-    const { data: items, error } = await supabase.from("ffe_items").select("room, item, qty, sort_order").eq("project_id", projectId).order("sort_order");
+    const { data: items, error } = await supabase.from("ffe_items").select("room, item, qty, sort_order").eq("lead_id", v.lead.id).order("sort_order");
     fail(error);
     if (items?.length) {
       itemSource = "project";
@@ -155,9 +155,10 @@ export const buildDocument = async (v: {
       for (const i of items) m.set(i.room, [...(m.get(i.room) ?? []), { item: i.item, qty: Number(i.qty) }]);
       itemList = [...m.entries()].map(([room, list]) => ({ room, items: list }));
     }
-    const { data: c, error: cErr } = await supabase.from("ffe_costings").select("options").eq("project_id", projectId).maybeSingle();
+    const { data: c, error: cErr } = await supabase.from("ffe_costings").select("status, options").eq("lead_id", v.lead.id).maybeSingle();
     fail(cErr);
-    if (Array.isArray(c?.options)) options = c!.options as unknown as QuoteOption[];
+    // Only a quotation the GM has set is client-facing.
+    if (c?.status === "Quoted" && Array.isArray(c.options)) options = c!.options as unknown as QuoteOption[];
   }
   if (itemSource === "brief") {
     const ffe = (v.brief?.ffe as FfeSection[] | null) ?? [];

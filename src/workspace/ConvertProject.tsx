@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMembers, type Lead } from "./queries";
 import { useConvertLead } from "./projectQueries";
+import { inheritLeadFfe } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { todayISO } from "./format";
 
@@ -65,6 +66,11 @@ const ConvertProject = ({ lead, open, onOpenChange }: { lead: Lead; open: boolea
           created_by: member.user_id,
         },
       });
+      try {
+        await inheritLeadFfe(lead.id, res.id);
+      } catch (e) {
+        toast.error(`Project created, but its FF&E list was not linked: ${e instanceof Error ? e.message : "unknown error"}`);
+      }
       toast.success("Project created");
       onOpenChange(false);
       navigate(res.code ? `/workspace/projects/${res.code}` : "/workspace/projects");

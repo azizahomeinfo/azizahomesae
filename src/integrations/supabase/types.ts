@@ -356,9 +356,10 @@ export type Database = {
           created_at: string
           gm_notes: string | null
           id: string
+          lead_id: string | null
           markup_pct: number
           options: Json
-          project_id: string
+          project_id: string | null
           quoted_at: string | null
           return_note: string | null
           status: Database["public"]["Enums"]["costing_status"]
@@ -370,9 +371,10 @@ export type Database = {
           created_at?: string
           gm_notes?: string | null
           id?: string
+          lead_id?: string | null
           markup_pct?: number
           options?: Json
-          project_id: string
+          project_id?: string | null
           quoted_at?: string | null
           return_note?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
@@ -384,9 +386,10 @@ export type Database = {
           created_at?: string
           gm_notes?: string | null
           id?: string
+          lead_id?: string | null
           markup_pct?: number
           options?: Json
-          project_id?: string
+          project_id?: string | null
           quoted_at?: string | null
           return_note?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
@@ -396,9 +399,16 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "ffe_costings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ffe_costings_project_id_fkey"
             columns: ["project_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -441,10 +451,11 @@ export type Database = {
           id: string
           installed_on: string | null
           item: string
+          lead_id: string | null
           notes: string | null
           ordered_on: string | null
           po_ref: string | null
-          project_id: string
+          project_id: string | null
           qty: number
           ref: string | null
           room: string
@@ -467,10 +478,11 @@ export type Database = {
           id?: string
           installed_on?: string | null
           item: string
+          lead_id?: string | null
           notes?: string | null
           ordered_on?: string | null
           po_ref?: string | null
-          project_id: string
+          project_id?: string | null
           qty?: number
           ref?: string | null
           room: string
@@ -493,10 +505,11 @@ export type Database = {
           id?: string
           installed_on?: string | null
           item?: string
+          lead_id?: string | null
           notes?: string | null
           ordered_on?: string | null
           po_ref?: string | null
-          project_id?: string
+          project_id?: string | null
           qty?: number
           ref?: string | null
           room?: string
@@ -510,6 +523,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ffe_items_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ffe_items_project_id_fkey"
             columns: ["project_id"]
@@ -1509,6 +1529,14 @@ export type Database = {
     Functions: {
       can_see_costs: {
         Args: { _project: string; _uid: string }
+        Returns: boolean
+      }
+      can_see_costs_item: {
+        Args: { _item: string; _uid: string }
+        Returns: boolean
+      }
+      can_see_ffe: {
+        Args: { _lead: string; _project: string; _uid: string }
         Returns: boolean
       }
       can_see_lead: { Args: { _lead: string; _uid: string }; Returns: boolean }

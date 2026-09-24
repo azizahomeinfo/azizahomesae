@@ -19,14 +19,34 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier,
-  useSeedFfe, useSuppliers, useUpdateFfeItems, type CostingStatus, type FfeRow, type ProcStage, type QuoteOption,
+  projectOwner, useSeedFfe, useSuppliers, useUpdateFfeItems,
+  type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
+
+/** What the sheet belongs to: a lead (inside the design package) or a project (inherited on conversion). */
+export interface FfeContext {
+  owner: FfeOwner;
+  /** Lead whose brief seeds the list, and which notifications link to. */
+  leadId: string | null;
+  projectId: string | null;
+  name: string;
+  designerId: string | null;
+  salesId: string | null;
+}
 
 const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
 const lineTotal = (r: FfeRow) => Number(r.qty ?? 0) * Number(r.unit_cost ?? 0);
 
 export const COSTING_LABEL: Record<CostingStatus, string> = {
   Draft: "Draft", Submitted: "With GM for quotation", Returned: "Returned by GM", Quoted: "Quotation set",
+};
+
+/** "AED 48,000", or "AED 48,000 – 62,000 (3 options)" when the GM priced several. */
+const quoteSummary = (options: QuoteOption[]) => {
+  const amts = options.map((o) => Number(o.amount) || 0);
+  if (amts.length <= 1) return aed(amts[0] ?? 0);
+  const lo = Math.min(...amts), hi = Math.max(...amts);
+  return lo === hi ? aed(lo) : `${aed(lo)} – ${aed(hi).replace(/^AED\s*/, "")} (${amts.length} options)`;
 };
 
 const byRoom = (rows: FfeRow[]) => {
@@ -120,36 +140,34 @@ const Section = ({ title, right, children }: { title: string; right?: ReactNode;
 
 /* ---------------- empty state: seed from the brief ---------------- */
 
-const SeedSheet = ({ project, canEdit }: { project: Project; canEdit: boolean }) => {
-  const { data: brief, isLoading } = useBrief(project.lead_id ?? undefined);
+const SeedSheet = ({ ctx, canEdit }: { ctx: FfeContext; canEdit: boolean }) => {
+  const { data: brief, isLoading } = useBrief(ctx.leadId ?? undefined);
   const seed = useSeedFfe();
   const add = useAddFfeItem();
   const ffe = (brief?.ffe as unknown as FfeSection[] | null) ?? [];
   const included = ffe.reduce((n, s) => n + (s.items ?? []).filter((i) => i.included === "inc" && i.item?.trim()).length, 0);
-  if (isLoading && project.lead_id) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (isLoading && ctx.leadId) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!canEdit) return <p className="text-sm text-muted-foreground">No FF&E items yet.</p>;
   return (
     <div className="rounded-[var(--radius)] border border-dashed border-border p-8 text-center space-y-3">
-      <p className="text-sm text-muted-foreground">This project has no FF&E items yet.</p>
-      {brief && included > 0 ? (
-        <>
+      <p className="text-sm text-muted-foreground">No FF&E items yet.</p>
+      <div className="flex flex-wrap justify-center gap-2">
+        {brief && included > 0 && (
           <Button disabled={seed.isPending}
-            onClick={() => seed.mutate({ projectId: project.id, ffe }, {
+            onClick={() => seed.mutate({ owner: ctx.owner, ffe }, {
               onSuccess: (n) => toast.success(`${n} items added from the brief`), onError: (e) => toast.error(errMsg(e, "Failed")),
             })}>
             {seed.isPending ? "Building…" : "Build from the client brief"}
           </Button>
-          <p className="text-xs text-muted-foreground">{included} included items in the brief.</p>
-        </>
-      ) : (
-        <>
-          <Button variant="outline" disabled={add.isPending}
-            onClick={() => add.mutate({ projectId: project.id, room: "Living Room", existing: [] }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
-            Start an empty sheet
-          </Button>
-          <p className="text-xs text-muted-foreground">{project.lead_id ? "No brief with included items that you can see." : "This project has no brief."}</p>
-        </>
-      )}
+        )}
+        <Button variant="outline" disabled={add.isPending}
+          onClick={() => add.mutate({ owner: ctx.owner, room: "Living Room", existing: [] }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
+          Start an empty list
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {brief && included > 0 ? `${included} included items in the brief.` : ctx.leadId ? "No brief with included items that you can see." : "This project has no brief."}
+      </p>
     </div>
   );
 };
@@ -217,12 +235,20 @@ const QuoteDialog = ({ open, onOpenChange, cost, initial, onSave, pending }: {
 
 /* ---------------- FF&E costing sheet ---------------- */
 
-export const FfeTab = ({ project }: { project: Project }) => {
+export const FfeTab = ({ project }: { project: Project }) => (
+  <FfeSheet ctx={{
+    owner: projectOwner(project.id), leadId: project.lead_id, projectId: project.id, name: project.name,
+    designerId: project.designer_id, salesId: project.sales_id,
+  }} />
+);
+
+/** The FF&E list + costing workflow, shared by the lead's design package and the project tab. */
+export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?: boolean }) => {
   const { member } = useWorkspace();
   const role = member?.role as WorkspaceRole;
   const withCost = role !== "sales";
-  const { data: rows = [], isLoading } = useFfeItems(project.id, withCost);
-  const { data: costing } = useCosting(project.id, withCost);
+  const { data: rows = [], isLoading } = useFfeItems(ctx.owner, withCost);
+  const { data: costing } = useCosting(ctx.owner, withCost);
   const { data: members = [] } = useMembers();
   const update = useUpdateFfeItems();
   const add = useAddFfeItem();
@@ -235,27 +261,27 @@ export const FfeTab = ({ project }: { project: Project }) => {
 
   const status: CostingStatus = costing?.status ?? "Draft";
   const isGm = role === "gm";
-  const canEdit = role !== "sales" && (status === "Draft" || status === "Returned");
+  const canEdit = !readOnly && role !== "sales" && (status === "Draft" || status === "Returned");
   const canSubmit = (isGm || role === "designer") && canEdit && rows.length > 0;
   const grand = rows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
 
   const save = (id: string, values: Partial<FfeRow>) =>
-    update.mutate({ projectId: project.id, ids: [id], values, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Could not save")) });
+    update.mutate({ owner: ctx.owner, ids: [id], values, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Could not save")) });
   const num = (s: string) => (s.trim() === "" ? null : Number(s));
   const name = member?.full_name ?? "Someone";
   const gms = members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id);
   const notifyTo = (ids: (string | null)[], title: string) =>
     [...new Set(ids.filter(Boolean) as string[])].filter((u) => u !== member?.user_id)
-      .map((user_id) => ({ user_id, kind: "costing", project_id: project.id, title }));
+      .map((user_id) => ({ user_id, kind: "costing", lead_id: ctx.leadId, project_id: ctx.projectId, title }));
 
   const run = (values: Parameters<typeof transition.mutate>[0]["values"], notify: ReturnType<typeof notifyTo>, ok: string, done?: () => void) =>
-    transition.mutate({ projectId: project.id, exists: !!costing, values, notify }, {
+    transition.mutate({ owner: ctx.owner, exists: !!costing, values, notify }, {
       onSuccess: () => { toast.success(ok); done?.(); }, onError: (e) => toast.error(errMsg(e, "Failed")),
     });
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
-  if (!rows.length) return <SeedSheet project={project} canEdit={role !== "sales"} />;
+  if (!rows.length) return <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />;
 
   const cells = (r: FfeRow) => ({
     item: <EditCell label="Item" value={r.item} disabled={!canEdit} onSave={(v) => v.trim() && save(r.id, { item: v.trim() })} />,
@@ -273,7 +299,7 @@ export const FfeTab = ({ project }: { project: Project }) => {
     ) : null,
     del: canEdit ? (
       <Button variant="ghost" size="icon" aria-label={`Delete ${r.item}`}
-        onClick={() => del.mutate({ projectId: project.id, id: r.id }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
+        onClick={() => del.mutate({ owner: ctx.owner, id: r.id }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
         <Trash2 className="h-4 w-4" />
       </Button>
     ) : null,
@@ -286,11 +312,11 @@ export const FfeTab = ({ project }: { project: Project }) => {
           {canSubmit && (
             <Button size="sm" disabled={transition.isPending}
               onClick={() => run({ status: "Submitted", submitted_at: new Date().toISOString() },
-                notifyTo(gms, `${name} submitted the FF&E costing for ${project.name}`), "Sent to GM for quotation")}>
+                notifyTo(gms, `${name} submitted the FF&E list for ${ctx.name} — quotation needed`), "Sent to GM for quotation")}>
               Submit for quotation
             </Button>
           )}
-          {isGm && status === "Submitted" && (
+          {isGm && !readOnly && status === "Submitted" && (
             <>
               <Button size="sm" variant="outline" onClick={() => { setReturnNote(""); setReturnOpen(true); }}>Return to designer</Button>
               <Button size="sm" onClick={() => setQuoteOpen(true)}>Set quotation</Button>
@@ -325,7 +351,7 @@ export const FfeTab = ({ project }: { project: Project }) => {
               {withCost && <span className="text-sm">{aed(sub)}</span>}
               {canEdit && (
                 <Button size="sm" variant="outline" disabled={add.isPending}
-                  onClick={() => add.mutate({ projectId: project.id, room, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
+                  onClick={() => add.mutate({ owner: ctx.owner, room, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Failed")) })}>
                   <Plus className="h-4 w-4" /> Row
                 </Button>
               )}
@@ -385,7 +411,7 @@ export const FfeTab = ({ project }: { project: Project }) => {
         <div className="flex gap-2">
           <Input placeholder="New room, e.g. Balcony" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} className="sm:w-64" aria-label="New room" />
           <Button variant="outline" disabled={!newRoom.trim() || add.isPending}
-            onClick={() => add.mutate({ projectId: project.id, room: newRoom.trim(), existing: rows }, { onSuccess: () => setNewRoom(""), onError: (e) => toast.error(errMsg(e, "Failed")) })}>
+            onClick={() => add.mutate({ owner: ctx.owner, room: newRoom.trim(), existing: rows }, { onSuccess: () => setNewRoom(""), onError: (e) => toast.error(errMsg(e, "Failed")) })}>
             Add room
           </Button>
         </div>
@@ -399,7 +425,7 @@ export const FfeTab = ({ project }: { project: Project }) => {
           <DialogFooter>
             <Button disabled={!returnNote.trim() || transition.isPending}
               onClick={() => run({ status: "Returned", return_note: returnNote.trim() },
-                notifyTo([project.designer_id], `${name} returned the FF&E costing for ${project.name}`), "Returned to designer", () => setReturnOpen(false))}>
+                notifyTo([ctx.designerId], `${name} returned the FF&E list for ${ctx.name}`), "Returned to designer", () => setReturnOpen(false))}>
               Return
             </Button>
           </DialogFooter>
@@ -411,7 +437,11 @@ export const FfeTab = ({ project }: { project: Project }) => {
           initial={{ markup: Number(costing?.markup_pct ?? 35), options: costing?.options ?? [], notes: costing?.gm_notes ?? "" }}
           onSave={(v) => run(
             { status: "Quoted", quoted_at: new Date().toISOString(), markup_pct: v.markup, options: v.options as unknown as never, gm_notes: v.notes || null },
-            notifyTo([project.designer_id, project.sales_id], `Quotation set for ${project.name}`), "Quotation set", () => setQuoteOpen(false),
+            [
+              // The hand-back: sales builds the proposal from this quote.
+              ...notifyTo([ctx.salesId], `Quotation ready for ${ctx.name} — ${quoteSummary(v.options)}`),
+              ...notifyTo([ctx.designerId].filter((d) => d !== ctx.salesId), `Quotation set for ${ctx.name}`),
+            ], "Quotation set", () => setQuoteOpen(false),
           )} />
       )}
     </div>
@@ -490,7 +520,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const role = member?.role as WorkspaceRole;
   const canEdit = role === "gm" || role === "coordinator";
-  const { data: rows = [], isLoading } = useFfeItems(project.id, false);
+  const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), false);
   const update = useUpdateFfeItems();
   const [view, setView] = useState<"table" | "board">("table");
   const [sel, setSel] = useState<Set<string>>(new Set());
@@ -500,7 +530,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
 
   const apply = (ids: string[], values: Partial<FfeRow>, ok?: string) =>
-    update.mutate({ projectId: project.id, ids, values }, {
+    update.mutate({ owner: projectOwner(project.id), ids, values }, {
       onSuccess: () => ok && toast.success(ok), onError: (e) => toast.error(errMsg(e, "Could not save")),
     });
   const toggle = (id: string, on: boolean) => { const n = new Set(sel); if (on) n.add(id); else n.delete(id); setSel(n); };

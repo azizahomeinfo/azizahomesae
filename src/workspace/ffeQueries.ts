@@ -12,7 +12,7 @@ export type Supplier = Pick<
 >;
 export type FfeRow = Pick<
   T["ffe_items"]["Row"],
-  | "id" | "project_id" | "ref" | "room" | "category" | "item" | "sku" | "dims" | "finish" | "spec" | "qty" | "unit"
+  | "id" | "project_id" | "lead_id" | "ref" | "room" | "category" | "item" | "sku" | "dims" | "finish" | "spec" | "qty" | "unit"
   | "supplier_id" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order"
 > & { unit_cost?: number | null };
 export type ProcStage = T["ffe_items"]["Row"]["stage"];
@@ -20,7 +20,7 @@ export type CostingStatus = T["ffe_costings"]["Row"]["status"];
 export interface QuoteOption { label: string; desc: string; amount: number }
 export type Costing = Pick<
   T["ffe_costings"]["Row"],
-  "id" | "project_id" | "status" | "version" | "gm_notes" | "return_note" | "submitted_at" | "quoted_at"
+  "id" | "project_id" | "lead_id" | "status" | "version" | "gm_notes" | "return_note" | "submitted_at" | "quoted_at"
 > & { markup_pct?: number; options: QuoteOption[] };
 export type Snag = Pick<
   T["snags"]["Row"],
@@ -30,16 +30,25 @@ export type Snag = Pick<
 const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, payment_terms, rating, status, notes";
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
-  "id, project_id, ref, room, category, item, sku, dims, finish, spec, qty, unit, supplier_id, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
-const COSTING_BASE = "id, project_id, status, version, gm_notes, return_note, submitted_at, quoted_at, options";
+  "id, project_id, lead_id, ref, room, category, item, sku, dims, finish, spec, qty, unit, supplier_id, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
+const COSTING_BASE = "id, project_id, lead_id, status, version, gm_notes, return_note, submitted_at, quoted_at, options";
 const costingCols = (withCost: boolean) => (withCost ? `${COSTING_BASE}, markup_pct` : COSTING_BASE);
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
+
+/**
+ * FF&E belongs to a lead (designer specs it beside the renders) and is inherited by the
+ * project on conversion (same rows, project_id stamped). Screens address it by either owner.
+ */
+export interface FfeOwner { col: "lead_id" | "project_id"; id: string }
+export const leadOwner = (id: string): FfeOwner => ({ col: "lead_id", id });
+export const projectOwner = (id: string): FfeOwner => ({ col: "project_id", id });
+const ownerKey = (o: FfeOwner | undefined) => (o ? `${o.col}:${o.id}` : "");
 
 export const fKeys = {
   suppliers: ["ws", "suppliers"] as const,
   supplierOpen: ["ws", "supplier-open"] as const,
-  ffe: (projectId: string) => ["ws", "ffe", projectId] as const,
-  costing: (projectId: string) => ["ws", "costing", projectId] as const,
+  ffe: (owner: string) => ["ws", "ffe", owner] as const,
+  costing: (owner: string) => ["ws", "costing", owner] as const,
   snags: (projectId: string) => ["ws", "snags", projectId] as const,
 };
 
@@ -128,12 +137,12 @@ export const useSaveSupplier = () => {
 
 /* ---------------- ffe items ---------------- */
 
-export const useFfeItems = (projectId: string | undefined, withCost: boolean) =>
+export const useFfeItems = (owner: FfeOwner | undefined, withCost: boolean) =>
   useQuery({
-    queryKey: [...fKeys.ffe(projectId ?? ""), withCost],
-    enabled: !!projectId,
+    queryKey: [...fKeys.ffe(ownerKey(owner)), withCost],
+    enabled: !!owner?.id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("ffe_items").select(FFE_BASE).eq("project_id", projectId!).order("sort_order");
+      const { data, error } = await supabase.from("ffe_items").select(FFE_BASE).eq(owner!.col, owner!.id).order("sort_order");
       fail(error);
       const rows = (data ?? []) as unknown as FfeRow[];
       // Cost price lives in ffe_item_costs, which RLS hides from sales entirely.
@@ -154,15 +163,18 @@ const recomputeProcPct = async (projectId: string) => {
   fail(uErr);
 };
 
-const invalidateFfe = (qc: ReturnType<typeof useQueryClient>, projectId: string) => {
-  qc.invalidateQueries({ queryKey: fKeys.ffe(projectId) });
+const recomputeIfProject = async (o: FfeOwner) => { if (o.col === "project_id") await recomputeProcPct(o.id); };
+
+// Lead and project views can show the same rows, so refresh all FF&E lists.
+const invalidateFfe = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: ["ws", "ffe"] });
   qc.invalidateQueries({ queryKey: fKeys.supplierOpen });
 };
 
 export const useSeedFfe = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { projectId: string; ffe: FfeSection[] }) => {
+    mutationFn: async (v: { owner: FfeOwner; ffe: FfeSection[] }) => {
       const rows: T["ffe_items"]["Insert"][] = [];
       const refs: string[] = [];
       for (const s of v.ffe ?? []) {
@@ -172,7 +184,7 @@ export const useSeedFfe = () => {
           const ref = nextRef(room, refs);
           refs.push(ref);
           rows.push({
-            project_id: v.projectId, room, item: i.item.trim(), ref,
+            [v.owner.col]: v.owner.id, room, item: i.item.trim(), ref,
             qty: qtyOf(i.required) ?? qtyOf(i.std) ?? 1,
             finish: i.notes?.trim() || null, category: categoryForRoom(room), sort_order: rows.length,
           });
@@ -183,30 +195,30 @@ export const useSeedFfe = () => {
       fail(error);
       return rows.length;
     },
-    onSettled: (_d, _e, v) => invalidateFfe(qc, v.projectId),
+    onSettled: () => invalidateFfe(qc),
   });
 };
 
 export const useAddFfeItem = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { projectId: string; room: string; existing: FfeRow[] }) => {
+    mutationFn: async (v: { owner: FfeOwner; room: string; existing: FfeRow[] }) => {
       const { error } = await supabase.from("ffe_items").insert({
-        project_id: v.projectId, room: v.room, item: "New item", category: categoryForRoom(v.room),
+        [v.owner.col]: v.owner.id, room: v.room, item: "New item", category: categoryForRoom(v.room),
         ref: nextRef(v.room, v.existing.map((r) => r.ref)),
         sort_order: v.existing.reduce((m, r) => Math.max(m, r.sort_order), -1) + 1,
       });
       fail(error);
       return v;
     },
-    onSettled: (_d, _e, v) => invalidateFfe(qc, v.projectId),
+    onSettled: () => invalidateFfe(qc),
   });
 };
 
 export const useUpdateFfeItems = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { projectId: string; ids: string[]; values: Omit<T["ffe_items"]["Update"], "unit_cost"> & { unit_cost?: number | null }; existing?: FfeRow[] }) => {
+    mutationFn: async (v: { owner: FfeOwner; ids: string[]; values: Omit<T["ffe_items"]["Update"], "unit_cost"> & { unit_cost?: number | null }; existing?: FfeRow[] }) => {
       if (!v.ids.length) return v;
       const { unit_cost, ...values } = v.values;
       if (unit_cost !== undefined) {
@@ -218,11 +230,11 @@ export const useUpdateFfeItems = () => {
       if (values.room && v.ids.length === 1 && v.existing) values.ref = nextRef(values.room, v.existing.map((r) => r.ref));
       const { error } = await supabase.from("ffe_items").update(values).in("id", v.ids);
       fail(error);
-      if (values.stage) await recomputeProcPct(v.projectId);
+      if (values.stage) await recomputeIfProject(v.owner);
       return v;
     },
     onSettled: (_d, _e, v) => {
-      invalidateFfe(qc, v.projectId);
+      invalidateFfe(qc);
       if (v.values.stage) {
         qc.invalidateQueries({ queryKey: ["ws", "project"] });
         qc.invalidateQueries({ queryKey: pKeys.projects });
@@ -234,14 +246,14 @@ export const useUpdateFfeItems = () => {
 export const useDeleteFfeItem = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { projectId: string; id: string }) => {
+    mutationFn: async (v: { owner: FfeOwner; id: string }) => {
       const { error } = await supabase.from("ffe_items").delete().eq("id", v.id);
       fail(error);
-      await recomputeProcPct(v.projectId);
+      await recomputeIfProject(v.owner);
       return v;
     },
-    onSettled: (_d, _e, v) => {
-      invalidateFfe(qc, v.projectId);
+    onSettled: () => {
+      invalidateFfe(qc);
       qc.invalidateQueries({ queryKey: ["ws", "project"] });
     },
   });
@@ -249,12 +261,12 @@ export const useDeleteFfeItem = () => {
 
 /* ---------------- costing ---------------- */
 
-export const useCosting = (projectId: string | undefined, withCost: boolean) =>
+export const useCosting = (owner: FfeOwner | undefined, withCost: boolean) =>
   useQuery({
-    queryKey: [...fKeys.costing(projectId ?? ""), withCost],
-    enabled: !!projectId,
+    queryKey: [...fKeys.costing(ownerKey(owner)), withCost],
+    enabled: !!owner?.id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("ffe_costings").select(costingCols(withCost)).eq("project_id", projectId!).maybeSingle();
+      const { data, error } = await supabase.from("ffe_costings").select(costingCols(withCost)).eq(owner!.col, owner!.id).maybeSingle();
       fail(error);
       if (!data) return null;
       const d = data as unknown as Costing & { options: Json };
@@ -266,20 +278,28 @@ export const useCostingTransition = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: {
-      projectId: string;
+      owner: FfeOwner;
       exists: boolean;
       values: T["ffe_costings"]["Update"];
       notify?: T["notifications"]["Insert"][];
     }) => {
       const { error } = v.exists
-        ? await supabase.from("ffe_costings").update(v.values).eq("project_id", v.projectId)
-        : await supabase.from("ffe_costings").insert({ ...(v.values as T["ffe_costings"]["Insert"]), project_id: v.projectId });
+        ? await supabase.from("ffe_costings").update(v.values).eq(v.owner.col, v.owner.id)
+        : await supabase.from("ffe_costings").insert({ ...(v.values as T["ffe_costings"]["Insert"]), [v.owner.col]: v.owner.id });
       fail(error);
       await notify(v.notify ?? []);
       return v;
     },
-    onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: fKeys.costing(v.projectId) }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
   });
+};
+
+/** On conversion the project inherits the lead's FF&E: the same rows get project_id stamped, nothing is copied. */
+export const inheritLeadFfe = async (leadId: string, projectId: string) => {
+  const { error } = await supabase.from("ffe_items").update({ project_id: projectId }).eq("lead_id", leadId).is("project_id", null);
+  fail(error);
+  const { error: cErr } = await supabase.from("ffe_costings").update({ project_id: projectId }).eq("lead_id", leadId).is("project_id", null);
+  fail(cErr);
 };
 
 /* ---------------- snags ---------------- */

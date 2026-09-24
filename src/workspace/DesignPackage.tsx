@@ -26,6 +26,8 @@ import {
 } from "./designQueries";
 import { DESIGN_AREAS, REJECT_REASONS, type DesignStatus } from "./designSchema";
 import DesignStatusPill from "./DesignStatusPill";
+import { FfeSheet } from "./FfeTab";
+import { leadOwner } from "./ffeQueries";
 
 interface Props {
   leadId: string;
@@ -515,6 +517,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     || (latest?.status === "Accepted" && (isGm || isAssignedDesigner || (!!lead && lead.sales_id === me)))
   );
   const [reopenOpen, setReopenOpen] = useState(false);
+  // The designer specs FF&E against the renders, so both live in this dialog.
+  const [tab, setTab] = useState<"renders" | "ffe">("renders");
+  useEffect(() => { if (open) setTab("renders"); }, [open]);
   const nameOf = (id: string | null | undefined) => members.find((m) => m.user_id === id)?.full_name ?? "Someone";
 
   const doStart = async () => {
@@ -596,7 +601,34 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         <Button variant="ghost" size="icon" onClick={close} aria-label="Close"><X className="h-5 w-5" /></Button>
       </header>
 
-      {designs.length > 0 && (
+      <div role="tablist" aria-label="Design package sections" className="flex gap-1 border-b border-border px-4 md:px-6">
+        {([["renders", "Renders"], ["ffe", "FF&E list"]] as const).map(([k, label]) => (
+          <button
+            key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={cn("-mb-px border-b-2 px-3 py-2 text-sm", tab === k ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "ffe" && (
+        <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+          <div className="mx-auto max-w-6xl">
+            {lead ? (
+              <FfeSheet
+                readOnly={viewOnly}
+                ctx={{
+                  owner: leadOwner(lead.id), leadId: lead.id, projectId: lead.converted_project_id ?? null, name: lead.name,
+                  designerId: brief?.designer_id ?? lead.designer_id, salesId: lead.sales_id,
+                }}
+              />
+            ) : <p className="text-muted-foreground">Loading…</p>}
+          </div>
+        </div>
+      )}
+
+      {tab === "renders" && designs.length > 0 && (
         <nav className="flex gap-2 overflow-x-auto border-b border-border px-4 py-2 md:px-6">
           {designs.slice().reverse().map((d) => (
             <button
@@ -613,7 +645,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         </nav>
       )}
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+      <div className={cn("flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6", tab !== "renders" && "hidden")}>
         <div className="mx-auto max-w-6xl space-y-6">
           {isLoading ? (
             <p className="text-muted-foreground">Loading…</p>
@@ -651,7 +683,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         </div>
       </div>
 
-      {(editable || canReview || canStartNext) && (
+      {tab === "renders" && (editable || canReview || canStartNext) && (
         <footer className="border-t border-border px-4 py-3 md:px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           {editable && selected?.status === "Draft" && (
             <>
