@@ -15,6 +15,7 @@ import { blankBrief } from "../briefSchema";
 import type { BriefStatus } from "../briefWorkflow";
 import BriefStatusPill from "../BriefStatusPill";
 import BriefEditor from "../BriefEditor";
+import DesignPackage from "../DesignPackage";
 import { LEAD_STATUSES, LEAD_STATUS_HELP, type LeadStatus } from "../constants";
 import { aed, shortDate } from "../format";
 import StatusPill from "../StatusPill";
@@ -47,6 +48,7 @@ const LeadDetail = () => {
   const { data: brief } = useBrief(id);
   const createBrief = useCreateBrief();
   const [briefOpen, setBriefOpen] = useState(false);
+  const [designOpen, setDesignOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [lostReason, setLostReason] = useState("");
@@ -174,6 +176,25 @@ const LeadDetail = () => {
         ) : (
           <p className="text-sm text-foreground">{LEAD_STATUS_HELP[status]}</p>
         )}
+        {brief && ["Assigned", "In Design", "Revision Requested", "Design Ready", "Design Approved"].includes(brief.status) && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-foreground">Design package</p>
+              {brief.status === "Design Approved" && <p className="text-sm text-primary">Design approved</p>}
+              {brief.status === "Design Ready" && <p className="text-sm text-muted-foreground">Submitted for review.</p>}
+            </div>
+            <Button
+              variant={brief.status === "Design Approved" ? "outline" : "default"}
+              onClick={() => setDesignOpen(true)}
+            >
+              {brief.status === "Design Approved"
+                ? "View approved design"
+                : brief.status === "Design Ready" && member?.role !== "designer" && (member?.role === "gm" || lead.sales_id === member?.user_id)
+                  ? "Review design"
+                  : "Open design package"}
+            </Button>
+          </div>
+        )}
         {status === "Won" && (
           <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-foreground">Convert to project</p>
@@ -226,6 +247,8 @@ const LeadDetail = () => {
       {brief && (
         <BriefEditor open={briefOpen} onOpenChange={setBriefOpen} lead={lead} brief={brief} />
       )}
+
+      {brief && <DesignPackage leadId={lead.id} open={designOpen} onOpenChange={setDesignOpen} />}
 
       <Dialog open={lostOpen} onOpenChange={setLostOpen}>
         <DialogContent>

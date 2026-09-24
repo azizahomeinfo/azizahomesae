@@ -167,28 +167,40 @@ export type Database = {
           caption: string | null
           created_at: string
           design_id: string
+          file_name: string | null
+          height: number | null
           id: string
+          kind: string
           room: string | null
           sort_order: number
           storage_path: string
+          width: number | null
         }
         Insert: {
           caption?: string | null
           created_at?: string
           design_id: string
+          file_name?: string | null
+          height?: number | null
           id?: string
+          kind?: string
           room?: string | null
           sort_order?: number
           storage_path: string
+          width?: number | null
         }
         Update: {
           caption?: string | null
           created_at?: string
           design_id?: string
+          file_name?: string | null
+          height?: number | null
           id?: string
+          kind?: string
           room?: string | null
           sort_order?: number
           storage_path?: string
+          width?: number | null
         }
         Relationships: [
           {
@@ -203,10 +215,15 @@ export type Database = {
       designs: {
         Row: {
           created_at: string
+          decided_at: string | null
+          decided_by: string | null
           designer_id: string | null
+          feedback: string | null
           id: string
           lead_id: string
           notes: string | null
+          reject_reason: string | null
+          status: Database["public"]["Enums"]["design_status"]
           submitted_at: string | null
           summary: string | null
           updated_at: string
@@ -214,10 +231,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
           designer_id?: string | null
+          feedback?: string | null
           id?: string
           lead_id: string
           notes?: string | null
+          reject_reason?: string | null
+          status?: Database["public"]["Enums"]["design_status"]
           submitted_at?: string | null
           summary?: string | null
           updated_at?: string
@@ -225,16 +247,28 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
           designer_id?: string | null
+          feedback?: string | null
           id?: string
           lead_id?: string
           notes?: string | null
+          reject_reason?: string | null
+          status?: Database["public"]["Enums"]["design_status"]
           submitted_at?: string | null
           summary?: string | null
           updated_at?: string
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "designs_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "designs_designer_id_fkey"
             columns: ["designer_id"]
@@ -1002,6 +1036,7 @@ export type Database = {
         | "Design Ready"
         | "Design Approved"
         | "Revision Requested"
+      design_status: "Draft" | "Submitted" | "Accepted" | "Rejected"
       lead_status:
         | "New Lead"
         | "Contacted"
@@ -1162,6 +1197,7 @@ export const Constants = {
         "Design Approved",
         "Revision Requested",
       ],
+      design_status: ["Draft", "Submitted", "Accepted", "Rejected"],
       lead_status: [
         "New Lead",
         "Contacted",
