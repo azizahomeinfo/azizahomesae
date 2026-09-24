@@ -18,6 +18,7 @@ import {
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
+import { DriveLink } from "./DriveLink";
 import { NewTaskForm, TaskRow } from "./TaskList";
 import CommentThread from "./CommentThread";
 import BriefEditor from "./BriefEditor";
@@ -68,6 +69,7 @@ export const OverviewTab = ({ project }: { project: Project }) => {
         <Card title="Schedule">
           <Row k="Start" v={shortDate(project.start_date)} />
           <Row k="Handover" v={shortDate(project.handover_date)} />
+          <Row k="Drive folder" v={project.drive_url ? <DriveLink url={project.drive_url} /> : null} />
           <Row
             k="Days remaining"
             v={left === null ? null : project.stage === "Closed" ? "Closed" : left < 0 ? `${-left} days late` : `${left} days`}

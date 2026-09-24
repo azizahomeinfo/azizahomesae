@@ -31,7 +31,7 @@ export type ProjectFile = Pick<
 >;
 
 const PROJECT_COLS =
-  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, value, est_proc, est_ops, received, next_due, next_due_date, pay_status, created_at, updated_at";
+  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, value, est_proc, est_ops, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
 const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, priority, done, done_at, created_at";
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, cost_delta, days_delta, status, decided_at, decided_by";

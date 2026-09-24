@@ -10,7 +10,7 @@ export type Comment = Pick<T["comments"]["Row"], "id" | "lead_id" | "project_id"
 export type MemberLite = Pick<T["workspace_members"]["Row"], "user_id" | "full_name" | "role" | "title" | "active">;
 
 const LEAD_COLS =
-  "id, ref, name, phone, email, property, building, location, unit_type, size, handover_status, exp_handover, use_type, budget, target_date, scope, style, refs, floor_plan, source, sales_id, designer_id, status, last_contact, next_follow, notes, lost_reason, converted_project_id, is_demo, created_by, created_at, updated_at, closed_at";
+  "id, ref, name, phone, email, property, building, location, unit_type, size, handover_status, exp_handover, use_type, budget, target_date, scope, style, refs, floor_plan, source, sales_id, designer_id, status, last_contact, next_follow, notes, lost_reason, converted_project_id, is_demo, created_by, created_at, updated_at, closed_at, drive_url";
 const COMMENT_COLS = "id, lead_id, project_id, author_id, body, mentions, created_at";
 const MEMBER_COLS = "user_id, full_name, role, title, active";
 
@@ -154,7 +154,7 @@ export type BriefDocColumns = Pick<T["requirement_briefs"]["Update"], "header" |
 const BRIEF_COLS =
   "id, lead_id, status, designer_id, header, style, colours, ffe, bedrooms, lists, attachments, revision_note, submitted_at, assigned_at, ready_at, approved_at, updated_at";
 const BRIEF_LIST_COLS =
-  "id, lead_id, status, designer_id, submitted_at, updated_at, leads(name, property, unit_type, budget, target_date, sales_id)";
+  "id, lead_id, status, designer_id, submitted_at, updated_at, leads(name, property, unit_type, budget, target_date, sales_id, drive_url)";
 
 export interface BriefListRow {
   id: string;
@@ -163,7 +163,7 @@ export interface BriefListRow {
   designer_id: string | null;
   submitted_at: string | null;
   updated_at: string;
-  leads: { name: string; property: string | null; unit_type: string | null; budget: number | null; target_date: string | null; sales_id: string | null } | null;
+  leads: { name: string; property: string | null; unit_type: string | null; budget: number | null; target_date: string | null; sales_id: string | null; drive_url: string | null } | null;
 }
 
 export type QueueRow = Database["public"]["Functions"]["ws_brief_queue"]["Returns"][number];

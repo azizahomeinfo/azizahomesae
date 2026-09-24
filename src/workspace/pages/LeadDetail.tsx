@@ -10,6 +10,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { DriveLink } from "../DriveLink";
 import { useBrief, useCreateBrief, useLead, useMembers, useUpdateLead } from "../queries";
 import { useWorkspace } from "../WorkspaceProvider";
 import { blankBrief } from "../briefSchema";
@@ -242,6 +243,7 @@ const LeadDetail = () => {
             ["Use", lead.use_type], ["Budget", aed(lead.budget)],
             ["Target date", lead.target_date ? shortDate(lead.target_date) : null], ["Scope", lead.scope],
             ["Style", lead.style], ["References", lead.refs], ["Floor plan", lead.floor_plan], ["Source", lead.source],
+            ["Google Drive folder", lead.drive_url ? <DriveLink url={lead.drive_url} /> : null],
           ]}
         />
         <Grid

@@ -17,6 +17,8 @@ export interface BriefRef {
   status: BriefStatus;
   designerId: string | null;
   salesId: string | null;
+  /** The lead's Google Drive folder; required before "Submit to design". */
+  driveUrl?: string | null;
 }
 
 export const useActor = (salesId: string | null, designerId: string | null): Actor | null => {
@@ -56,6 +58,7 @@ export const BriefActionBar = ({
 
   const me = member.user_id;
   const busy = transition.isPending || assign.isPending;
+  const noDrive = !brief.driveUrl?.trim();
   const now = () => new Date().toISOString();
   const n = (user_id: string | null | undefined, title: string, body?: string): NotifyTarget[] =>
     user_id && user_id !== me ? [{ user_id, title, body: body ?? null, lead_id: brief.leadId, kind: "brief" }] : [];
@@ -108,13 +111,16 @@ export const BriefActionBar = ({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {actions.some((a) => a.kind === "submit") && noDrive && (
+          <span className="text-xs text-muted-foreground">Add the Google Drive folder link before submitting.</span>
+        )}
         {actions.map((a, i) => (
           <Button
             key={a.kind}
             size={size}
             variant={i === 0 ? "default" : "outline"}
-            disabled={busy}
+            disabled={busy || (a.kind === "submit" && noDrive)}
             onClick={() => (a.kind === "assign" ? setAssignOpen(true) : a.kind === "revise" ? setReviseOpen(true) : run(a))}
           >
             {a.label}
