@@ -543,6 +543,7 @@ export type Database = {
           ordered_on: string | null
           po_ref: string | null
           priority_band: number | null
+          priority_band_manual: boolean
           product_url: string | null
           project_id: string | null
           qty: number
@@ -573,6 +574,7 @@ export type Database = {
           ordered_on?: string | null
           po_ref?: string | null
           priority_band?: number | null
+          priority_band_manual?: boolean
           product_url?: string | null
           project_id?: string | null
           qty?: number
@@ -603,6 +605,7 @@ export type Database = {
           ordered_on?: string | null
           po_ref?: string | null
           priority_band?: number | null
+          priority_band_manual?: boolean
           product_url?: string | null
           project_id?: string | null
           qty?: number
@@ -1712,6 +1715,10 @@ export type Database = {
           target_date: string
           unit_type: string
         }[]
+      }
+      ws_ffe_band: {
+        Args: { _category: string; _item: string; _room: string }
+        Returns: number
       }
       ws_ffe_edit_notify_lead: { Args: { _lead: string }; Returns: undefined }
       ws_notify_once: {
