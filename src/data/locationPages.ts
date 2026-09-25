@@ -228,7 +228,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "What does furnishing a Business Bay 1BR cost?",
-        a: "1-bedroom packages start from AED 30,000 (Essential), AED 36,500 (Premium) and AED 46,000 (Luxury), excluding appliances and VAT. Premium is the most common choice for Bay rentals.",
+        a: "1-bedroom packages start from AED 30,000 (Essential), AED 36,500 (Premium) and AED 65,800 (Luxury), excluding appliances and VAT. Premium is the most common choice for Bay rentals.",
       },
       {
         q: "Can you furnish for both long-term rental and Airbnb?",
@@ -888,8 +888,8 @@ export const getLocationPage = (slug: string | undefined): LocationPageData | un
 
 /** Shared starting-price table (matches /investors-furnishing-dubai) */
 export const locationPricing = [
-  { layout: "Studio", essential: "from AED 22,500", premium: "from AED 26,500", luxury: "from AED 30,500" },
-  { layout: "1 Bedroom", essential: "from AED 30,000", premium: "from AED 36,500", luxury: "from AED 46,000" },
-  { layout: "2 Bedroom", essential: "from AED 40,000", premium: "from AED 55,000", luxury: "from AED 65,500" },
-  { layout: "3 Bedroom", essential: "from AED 52,500", premium: "from AED 72,800", luxury: "from AED 88,600" },
+  { layout: "Studio", essential: "from AED 22,500", premium: "from AED 26,500", luxury: "from AED 45,500" },
+  { layout: "1 Bedroom", essential: "from AED 30,000", premium: "from AED 36,500", luxury: "from AED 65,800" },
+  { layout: "2 Bedroom", essential: "from AED 40,000", premium: "from AED 55,000", luxury: "from AED 85,500" },
+  { layout: "3 Bedroom", essential: "from AED 52,500", premium: "from AED 72,800", luxury: "from AED 99,600" },
 ];

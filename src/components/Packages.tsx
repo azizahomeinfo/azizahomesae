@@ -27,7 +27,7 @@ const localPackages = [
   {
     handle: "luxury",
     title: "Aziza Luxury Furnishing",
-    price: "30,500",
+    price: "45,500",
     image: package3,
     description: "Everything in Essential plus full feature wall design throughout the apartment for a complete luxury transformation.",
   },
