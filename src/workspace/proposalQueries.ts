@@ -11,15 +11,16 @@ export type { ProposalDocument } from "./proposalModel";
 
 export interface ProposalRow {
   id: string; lead_id: string; version: number; status: ProposalStatus; design_id: string | null;
-  total: number | null; sent_at: string | null; decided_at: string | null; created_at: string; updated_at: string;
+  total: number | null; accepted_option: AcceptedOption | null; sent_at: string | null; decided_at: string | null; created_at: string; updated_at: string;
   doc: ProposalDocument;
 }
+export interface AcceptedOption { index: number; label: string; desc: string; amount: number }
 export interface ProposalListRow {
   id: string; lead_id: string; version: number; status: ProposalStatus; total: number | null; created_at: string;
   leads: { name: string; property: string | null; unit_type: string | null } | null;
 }
 
-const COLS = "id, lead_id, version, status, design_id, total, sent_at, decided_at, created_at, updated_at, line_items";
+const COLS = "id, lead_id, version, status, design_id, total, sent_at, decided_at, created_at, updated_at, line_items, accepted_option";
 
 export const prKeys = {
   list: ["ws", "proposals"] as const,
@@ -150,11 +151,12 @@ export const useSaveProposal = () => {
 export const useProposalStatus = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { id: string; leadId: string; status: ProposalStatus }) => {
+    mutationFn: async (v: { id: string; leadId: string; status: ProposalStatus; acceptedOption?: AcceptedOption | null }) => {
       const now = new Date().toISOString();
       const patch: T["proposals"]["Update"] = { status: v.status };
       if (v.status === "Sent") patch.sent_at = now;
       if (v.status === "Accepted" || v.status === "Rejected") patch.decided_at = now;
+      if (v.status === "Accepted") patch.accepted_option = (v.acceptedOption ?? null) as unknown as Json;
       const { error } = await supabase.from("proposals").update(patch).eq("id", v.id);
       fail(error);
       return v;

@@ -4,6 +4,7 @@ export type WorkspacePage =
   | "leads"
   | "briefs"
   | "proposals"
+  | "contracts"
   | "projects"
   | "tasks"
   | "suppliers"
@@ -12,8 +13,8 @@ export type WorkspacePage =
 
 // Convenience only — database RLS is the real access boundary.
 export const PAGES_BY_ROLE: Record<WorkspaceRole, WorkspacePage[]> = {
-  gm: ["dashboard", "leads", "briefs", "proposals", "projects", "tasks", "suppliers", "reports", "settings"],
-  sales: ["dashboard", "leads", "proposals", "projects", "reports"],
+  gm: ["dashboard", "leads", "briefs", "proposals", "contracts", "projects", "tasks", "suppliers", "reports", "settings"],
+  sales: ["dashboard", "leads", "proposals", "contracts", "projects", "reports"],
   designer: ["dashboard", "briefs", "proposals", "projects", "tasks", "suppliers"],
   coordinator: ["dashboard", "projects", "tasks", "suppliers"],
 };
@@ -26,6 +27,7 @@ export const PAGE_META: Record<WorkspacePage, { label: string; path: string; des
   leads: { label: "Leads", path: "/workspace/leads", description: "Every enquiry from first contact to won or lost." },
   briefs: { label: "Briefs", path: "/workspace/briefs", description: "Client requirements handed to design." },
   proposals: { label: "Proposals", path: "/workspace/proposals", description: "Quotes sent to clients and their outcome." },
+  contracts: { label: "Contracts", path: "/workspace/proposals", description: "Sales agreements generated from accepted proposals." },
   projects: { label: "Projects", path: "/workspace/projects", description: "Live jobs from deposit to handover." },
   tasks: { label: "Tasks", path: "/workspace/tasks", description: "What needs doing, by whom, and when." },
   suppliers: { label: "Suppliers", path: "/workspace/suppliers", description: "Who we buy from, their terms and how they perform." },
