@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/aziza-logo.png";
@@ -13,7 +13,9 @@ import {
 import { useBrief, useLead, useMembers } from "./queries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { useLeadProposals, useProposalItems } from "./proposalQueries";
-import { useCreateContract, useLeadContracts, useSaveContract, type ContractStatus } from "./contractQueries";
+import { useCreateContract, useLeadContracts, useSaveContract, useSignContract, type ContractStatus } from "./contractQueries";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
@@ -455,6 +457,25 @@ const ContractDoc = () => {
           <ContractPaper d={d} />
         </div>
       </div>
+
+      <Dialog open={signOpen} onOpenChange={setSignOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark signed · {lead.name}</DialogTitle>
+            <DialogDescription>
+              Signing creates the project, moves the lead to Won and hands its FF&E list to procurement. The designer gets four drawings due in 2 days; the coordinator gets the FF&E list and this handover date.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="sign-handover">Handover date (required)</Label>
+            <Input id="sign-handover" type="date" value={handover} onChange={(e) => setHandover(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSignOpen(false)}>Cancel</Button>
+            <Button onClick={doSign} disabled={sign.isPending}>{sign.isPending ? "Signing…" : "Mark signed"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
         <AlertDialogContent>
