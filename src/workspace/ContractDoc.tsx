@@ -15,7 +15,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { useLeadProposals, useProposalItems } from "./proposalQueries";
 import { useCreateContract, useLeadContracts, useSaveContract, type ContractStatus } from "./contractQueries";
 import {
-  CATEGORIES, CONTRACT_UNIT_TYPES, SELLER, SIGNATURE_COPY, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
+  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
   type ContractDocument, type CSection,
 } from "./contractModel";
@@ -85,8 +85,8 @@ const CSS = `
 const Head = ({ d, fixed }: { d: ContractDocument; fixed?: boolean }) => (
   <div className={fixed ? "ctr-head ctr-pf" : "ctr-head"}><img src={logo} alt="Aziza Home" /><span>Sales Agreement · {projectLabel(d) || "—"}</span></div>
 );
-const Foot = ({ fixed }: { fixed?: boolean }) => (
-  <div className={fixed ? "ctr-foot ctr-pf" : "ctr-foot"}><span>Aziza Home L.L.C-FZ · Dubai, UAE</span><span>azizahomes.com · +971 55 977 9635</span></div>
+const Foot = ({ d, fixed }: { d: ContractDocument; fixed?: boolean }) => (
+  <div className={fixed ? "ctr-foot ctr-pf" : "ctr-foot"}><span>{footerLeft(d.vatCharged)}</span><span>azizahomes.com · +971 55 977 9635</span></div>
 );
 
 const longDate = (iso: string) => {
@@ -97,10 +97,11 @@ const longDate = (iso: string) => {
 export const ContractPaper = ({ d }: { d: ContractDocument }) => {
   const m = contractMoney(d);
   const proj = projectLabel(d);
+  const seller = sellerFor(d.vatCharged);
   return (
     <div className="ctr contract-doc" data-contract-root>
       <style>{CSS}</style>
-      <Head d={d} fixed /><Foot fixed />
+      <Head d={d} fixed /><Foot d={d} fixed />
       <div className="ctr-sheet">
         <Head d={d} />
         <table className="ctr-layout">
@@ -113,7 +114,7 @@ export const ContractPaper = ({ d }: { d: ContractDocument }) => {
               <div className="ctr-rule" />
             </div>
             <p>
-              This Sales Agreement (the "Agreement") is entered into <b>{longDate(d.date)}</b> (the "Effective Date"), by and between <b>{SELLER}</b>, with an address of 6th Floor, Business Center, The Meydan Hotel Grandstand, Meydan Road, Nad Al Sheba Dubai, UAE (the "Seller") and <b>{d.client || "—"}</b>, with an address of Unit {d.unit || "—"}, {proj || "—"}, Dubai, UAE, (the "Buyer"), also individually referred to as "Party", and collectively "the Parties."
+              This Sales Agreement (the "Agreement") is entered into <b>{longDate(d.date)}</b> (the "Effective Date"), by and between <b>{seller.name}</b>, with an address of {seller.address} (the "Seller") and <b>{d.client || "—"}</b>, with an address of Unit {d.unit || "—"}, {proj || "—"}, Dubai, UAE, (the "Buyer"), also individually referred to as "Party", and collectively "the Parties."
             </p>
             <h2 className="ctr-h2">Background</h2>
             <p>The Seller is the manufacturer/distributor of the following product(s):</p>
@@ -166,7 +167,7 @@ export const ContractPaper = ({ d }: { d: ContractDocument }) => {
             <div className="ctr-sign">
               <p>{SIGNATURE_COPY.sig}</p>
               <div className="ctr-sign-grid">
-                {[[SIGNATURE_COPY.buyer, d.client], [SIGNATURE_COPY.seller, SELLER]].map(([h, name]) => (
+                {[[SIGNATURE_COPY.buyer, d.client], [SIGNATURE_COPY.seller, seller.name]].map(([h, name]) => (
                   <div key={h}>
                     <h3>{h}</h3>
                     <div className="ctr-line"><span>{SIGNATURE_COPY.signed}</span><span /></div>
@@ -178,7 +179,7 @@ export const ContractPaper = ({ d }: { d: ContractDocument }) => {
             </div>
           </td></tr></tbody>
         </table>
-        <Foot />
+        <Foot d={d} />
       </div>
     </div>
   );
