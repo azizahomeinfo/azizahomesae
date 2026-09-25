@@ -60,3 +60,21 @@ export const useSaveContract = () => {
     onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: key(v.leadId) }),
   });
 };
+
+/** Signing is one database transaction: project, lead → Won, FF&E handed to the project, drawing tasks, notifications. */
+export const useSignContract = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; leadId: string; handover: string; doc?: ContractDocument }) => {
+      if (v.doc) { const { error } = await supabase.from("contracts").update({ doc: v.doc as unknown as Json }).eq("id", v.id); fail(error); }
+      const { data, error } = await supabase.rpc("ws_sign_contract", { _contract: v.id, _handover: v.handover });
+      fail(error);
+      const { data: p } = await supabase.from("projects").select("code").eq("id", data as string).maybeSingle();
+      return { projectId: data as string, code: p?.code ?? null };
+    },
+    onSettled: (_d, _e, v) => {
+      qc.invalidateQueries({ queryKey: key(v.leadId) });
+      qc.invalidateQueries({ queryKey: ["ws"] });
+    },
+  });
+};

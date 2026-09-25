@@ -217,6 +217,10 @@ const ContractDoc = () => {
   const save = useSaveContract();
   const [draft, setDraft] = useState<ContractDocument | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
+  const [signOpen, setSignOpen] = useState(false);
+  const [handover, setHandover] = useState("");
+  const sign = useSignContract();
+  const navigate = useNavigate();
 
   const accepted = proposals.find((p) => p.status === "Accepted");
   const back = accepted
@@ -297,6 +301,15 @@ const ContractDoc = () => {
     if (missing.length) setConfirm({ title: "Some details are missing", body: `Missing: ${missing.join(", ")}. Print anyway?`, run: () => window.setTimeout(() => window.print(), 200) });
     else window.print();
   };
+  const doSign = async () => {
+    if (!handover) { toast.error("Enter the handover date — a contract can't be marked signed without it."); return; }
+    try {
+      const r = await sign.mutateAsync({ id: row.id, leadId: lead.id, handover, doc: draft ?? undefined });
+      setDraft(null); setSignOpen(false);
+      toast.success("Signed — project created, designer and coordinator notified");
+      if (r.code) navigate(`/workspace/projects/${r.code}`);
+    } catch (e) { toast.error(errMsg(e, "Could not mark signed")); }
+  };
   const dis = !editable;
 
   return (
@@ -316,7 +329,7 @@ const ContractDoc = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           {canEdit && row.status === "Draft" && <Button variant="outline" onClick={() => setStatus("Issued")}>Mark issued</Button>}
-          {canEdit && row.status === "Issued" && <Button variant="outline" onClick={() => setStatus("Signed")}>Mark signed</Button>}
+          {canEdit && row.status === "Issued" && <Button variant="outline" onClick={() => { setHandover(lead.target_date ?? ""); setSignOpen(true); }}>Mark signed</Button>}
           {editable && <Button variant="outline" disabled={!draft || save.isPending} onClick={persist}>Save</Button>}
           <Button onClick={print}>Save as PDF / Print</Button>
         </div>
