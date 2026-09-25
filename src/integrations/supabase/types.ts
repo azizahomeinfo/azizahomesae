@@ -1730,6 +1730,11 @@ export type Database = {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]
       }
+      ws_room_prefix: { Args: { _room: string }; Returns: string }
+      ws_seed_ffe_from_brief: {
+        Args: { _lead: string; _project?: string }
+        Returns: number
+      }
       ws_sign_contract: {
         Args: { _contract: string; _handover: string }
         Returns: string

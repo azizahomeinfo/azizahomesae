@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-ssr";
 import type { Database, Json } from "@/integrations/supabase/types";
-import type { FfeSection } from "./briefSchema";
-import { cleanRoom } from "./ffeQueries";
 import { normalizeDoc, type ItemGroup, type ProposalDocument, type SourceDesign } from "./proposalModel";
 
 type T = Database["public"]["Tables"];
@@ -83,27 +81,17 @@ export const useSharedDesign = (leadId: string | undefined) =>
     },
   });
 
-/** Client-facing item groups: room, item and qty only — never a cost or a supplier. Falls back to the brief checklist. */
-export const useProposalItems = (leadId: string | undefined, briefFfe: unknown) =>
+/** Client-facing item groups: room, item and qty only — never a cost or a supplier. ffe_items is the only source: no brief fallback, so an empty list shows as empty. */
+export const useProposalItems = (leadId: string | undefined, _briefFfe?: unknown) =>
   useQuery({
-    queryKey: [...prKeys.items(leadId ?? ""), !!briefFfe],
+    queryKey: prKeys.items(leadId ?? ""),
     enabled: !!leadId,
     queryFn: async (): Promise<ItemGroup[]> => {
       const { data, error } = await supabase.from("ffe_items").select("room, item, qty, sort_order").eq("lead_id", leadId!).order("sort_order");
       fail(error);
-      if (data?.length) {
-        const m = new Map<string, { item: string; qty: number }[]>();
-        for (const i of data) if (i.item?.trim()) m.set(i.room, [...(m.get(i.room) ?? []), { item: i.item, qty: Number(i.qty) }]);
-        return [...m.entries()].map(([room, items]) => ({ room, items }));
-      }
-      const ffe = (briefFfe as FfeSection[] | null) ?? [];
-      return ffe.map((s) => ({
-        room: cleanRoom(s.title),
-        items: (s.items ?? []).filter((i) => i.included === "inc" && i.item?.trim()).map((i) => {
-          const q = parseFloat(String(i.required || i.std).replace(/[^0-9.]/g, ""));
-          return { item: i.item, qty: Number.isFinite(q) && q > 0 ? q : 1 };
-        }),
-      })).filter((g) => g.items.length);
+      const m = new Map<string, { item: string; qty: number }[]>();
+      for (const i of data ?? []) if (i.item?.trim()) m.set(i.room, [...(m.get(i.room) ?? []), { item: i.item, qty: Number(i.qty) }]);
+      return [...m.entries()].map(([room, items]) => ({ room, items }));
     },
   });
 
