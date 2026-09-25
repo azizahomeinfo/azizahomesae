@@ -197,6 +197,13 @@
       "when": 1790363280379,
       "tag": "0027_contract_signing_handoff",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790364056518,
+      "tag": "0028_ffe_priority_band_derivation",
+      "breakpoints": true
     }
   ]
 }
