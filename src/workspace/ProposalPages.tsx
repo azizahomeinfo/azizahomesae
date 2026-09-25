@@ -28,7 +28,7 @@ export const PROPOSAL_CSS = `
   font-size: 9px; font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pp-label); }
 .ppd-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .ppd-grow { flex: 1 1 auto; min-height: 0; }
-.ppd-cols { column-count: 3; column-gap: 32px; column-rule: 1px solid var(--pp-line-soft); column-fill: auto; }
+.ppd-cols { column-count: 3; column-gap: 32px; column-rule: 1px solid var(--pp-line-soft); column-fill: balance; }
 .ppd-cols.ppd-cols-4 { column-count: 4; column-gap: 24px; }
 .ppd-group { break-inside: avoid; page-break-inside: avoid; margin-bottom: 14px; }
 .ppd-group h4 { font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-olive);
