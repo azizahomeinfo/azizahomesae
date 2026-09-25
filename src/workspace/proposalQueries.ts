@@ -62,7 +62,7 @@ export const useLeadProposals = (leadId: string | undefined) =>
     queryFn: async () => {
       const { data, error } = await supabase.from("proposals").select(COLS).eq("lead_id", leadId!).order("version", { ascending: false });
       fail(error);
-      return (data ?? []).map(({ line_items, ...r }) => ({ ...r, doc: normalizeDoc(line_items) })) as ProposalRow[];
+      return (data ?? []).map(({ line_items, ...r }) => ({ ...r, doc: normalizeDoc(line_items) })) as unknown as ProposalRow[];
     },
   });
 
