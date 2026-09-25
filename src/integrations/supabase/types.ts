@@ -386,15 +386,12 @@ export type Database = {
       ffe_costings: {
         Row: {
           created_at: string
-          gm_notes: string | null
           id: string
           lead_id: string | null
-          markup_pct: number
           options: Json
           project_id: string | null
           quoted_at: string | null
           quoted_by: string | null
-          return_note: string | null
           status: Database["public"]["Enums"]["costing_status"]
           submitted_at: string | null
           updated_at: string
@@ -402,15 +399,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          gm_notes?: string | null
           id?: string
           lead_id?: string | null
-          markup_pct?: number
           options?: Json
           project_id?: string | null
           quoted_at?: string | null
           quoted_by?: string | null
-          return_note?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
           submitted_at?: string | null
           updated_at?: string
@@ -418,15 +412,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          gm_notes?: string | null
           id?: string
           lead_id?: string | null
-          markup_pct?: number
           options?: Json
           project_id?: string | null
           quoted_at?: string | null
           quoted_by?: string | null
-          return_note?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
           submitted_at?: string | null
           updated_at?: string
@@ -510,7 +501,6 @@ export type Database = {
           supplier_id: string | null
           supplier_name: string | null
           unit: string | null
-          unit_cost: number | null
           updated_at: string
         }
         Insert: {
@@ -540,7 +530,6 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string | null
           unit?: string | null
-          unit_cost?: number | null
           updated_at?: string
         }
         Update: {
@@ -570,7 +559,6 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string | null
           unit?: string | null
-          unit_cost?: number | null
           updated_at?: string
         }
         Relationships: [
