@@ -92,7 +92,7 @@ const longDate = (iso: string) => {
   return Number.isNaN(dt.getTime()) ? iso : dt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 };
 
-const ContractPaper = ({ d }: { d: ContractDocument }) => {
+export const ContractPaper = ({ d }: { d: ContractDocument }) => {
   const m = contractMoney(d);
   const proj = projectLabel(d);
   return (
