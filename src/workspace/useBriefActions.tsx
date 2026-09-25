@@ -63,6 +63,7 @@ export const BriefActionBar = ({
   const n = (user_id: string | null | undefined, title: string, body?: string): NotifyTarget[] =>
     user_id && user_id !== me ? [{ user_id, title, body: body ?? null, lead_id: brief.leadId, kind: "brief" }] : [];
   const gms = members.filter((m) => m.active && m.role === "gm").map((m) => m.user_id);
+  const designers = members.filter((m) => m.active && m.role === "designer");
   const lead = brief.leadName;
 
   const run = async (a: BriefAction, extra?: { designerId?: string; note?: string }) => {
