@@ -21,7 +21,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier,
-  projectOwner, useSeedFfe, useSuppliers, useUpdateFfeItems,
+  projectOwner, useSeedFfe, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -797,7 +797,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <label className="flex items-center gap-2 text-xs">
             <Checkbox checked={items.every((r) => sel.has(r.id))}
               onCheckedChange={(c) => { const n = new Set(sel); items.forEach((r) => (c === true ? n.add(r.id) : n.delete(r.id))); setSel(n); }} />
-            Select room
+            Select group
           </label>
         ) : undefined}>
           <div className="hidden md:block overflow-x-auto">
