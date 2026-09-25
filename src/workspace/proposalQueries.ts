@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-ssr";
 import type { Database, Json } from "@/integrations/supabase/types";
-import type { FfeSection } from "./briefSchema";
-import { cleanRoom } from "./ffeQueries";
 import { normalizeDoc, type ItemGroup, type ProposalDocument, type SourceDesign } from "./proposalModel";
 
 type T = Database["public"]["Tables"];
