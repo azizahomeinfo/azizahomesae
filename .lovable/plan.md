@@ -1,15 +1,16 @@
-# Balance paginated proposal item lists
+# Public package-price consistency sweep
 
 ## Scope
-- Change only item-list pagination and oversized room-group flow.
-- Preserve single-page lists, investment combining, document styling, and all other proposal behavior.
+Audit and correct every visitor- or crawler-facing package price outside `/workspace`, using the supplied 12-value AED table as the only source of truth. Essential and Premium remain unchanged unless a public reference conflicts with that table.
 
-## Implementation
-- Calculate total item weight first, derive the required page count from the existing hard cap, then target an even weight per page without exceeding the cap.
-- Mark room groups taller than one available column as splittable; normal groups remain unbroken.
-- When an oversized room continues in a later column, repeat its room heading with a continuation marker.
+## Changes
+- Review public pages, shared data, all seven locale files, metadata, structured data, FAQs, articles, landing pages, static public files, prerender configuration, and WhatsApp copy.
+- Replace stale package amounts, including every localized form of the old AED 28,900 starting price, with AED 22,500 in the locale’s existing number style.
+- Correct package ranges and lowest/highest summaries to derive from AED 22,500–99,600.
+- Preserve unrelated financial figures such as rent, property value, ROI, and case-study amounts; report them separately.
+- Keep `/workspace` untouched.
 
-## Validation
-- Check the 107-item, 8-room scenario for two similarly filled pages and populated columns.
-- Check a small list remains one page and investment still combines on the final item page.
-- Verify the fixed 794×1123 layout in the browser and confirm the project build remains healthy.
+## Verification
+- Search all public sources for the five retired package prices in comma, dot, space, compact, and Arabic-digit formats.
+- Check the current preview/build signal after edits.
+- Report every changed file and the exact correction made.
