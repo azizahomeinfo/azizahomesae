@@ -524,14 +524,17 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       <Section title="Costing" right={
         <div className="flex flex-wrap items-center gap-2">
           <CostingPill status={status} version={hasQuote ? costing?.version : null} />
-          {/* The first submission goes with the renders ("Submit design package"). Only a list the GM returned is resubmitted alone. */}
-          {canSubmit && status === "Returned" && (
+          {/* The first submission goes with the renders ("Submit design package"). After that the list alone can go back
+              to the GM: when the GM returned it, or to re-quote (e.g. a supplier price changed) — no new design version needed. */}
+          {canSubmit && (status === "Returned" || status === "Quoted") && (
             <Button size="sm" disabled={transition.isPending}
               onClick={() => {
                 const uncosted = rows.filter((r) => r.unit_cost == null).length;
                 if (uncosted) { toast.error(`Can't resubmit — ${uncosted} item${uncosted === 1 ? " has" : "s have"} no unit cost.`); return; }
+                // Re-quoting withdraws the current quote, so sales hears too — any proposal built on it is no longer current.
+                const extra = status === "Quoted" ? notifyTo([ctx.salesId], `GM quotation withdrawn for ${ctx.name} — FF&E sent back for re-quoting; hold the proposal`) : [];
                 run({ status: "Submitted", submitted_at: new Date().toISOString() },
-                  notifyTo(gms, `${name} resubmitted the FF&E list for ${ctx.name} — quotation needed`), "Resubmitted to GM for quotation");
+                  [...notifyTo(gms, `${name} resubmitted the FF&E list for ${ctx.name} — quotation needed`), ...extra], "Resubmitted to GM for quotation");
               }}>
               Resubmit to GM
             </Button>
