@@ -591,7 +591,6 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const updatedAfterSubmit = !!selected && selected.status === "Submitted" && !!selected.submitted_at
     && new Date(selected.updated_at).getTime() - new Date(selected.submitted_at).getTime() > 60_000;
 
-  const zeroFiles = currentImages.length === 0;
   const close = () => onOpenChange(false);
 
   const body = (
