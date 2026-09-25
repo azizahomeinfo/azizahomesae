@@ -31,6 +31,12 @@ const Dashboard = () => {
   const inDesign = myBriefs.filter((b) => b.status !== "Design Approved").length;
   const myOrdered = [...myBriefs.filter((b) => b.status !== "Design Approved"), ...myBriefs.filter((b) => b.status === "Design Approved")];
 
+  // Post-signing drawings past their 2-day deadline, one row per project.
+  const today = new Date().toISOString().slice(0, 10);
+  const lateDrawings = [...myTasks.filter((t) => t.drawing_kind && !t.done && t.due_date && t.due_date < today)
+    .reduce((m, t) => m.set(t.project_id!, [...(m.get(t.project_id!) ?? []), t]), new Map<string, typeof myTasks>())]
+    .map(([pid, ts]) => ({ project: projects.find((p) => p.id === pid), tasks: ts }));
+
   const now = new Date();
   const active = leads.filter((l) => !isClosed(l.status));
   const due = active
@@ -74,10 +80,25 @@ const Dashboard = () => {
             <AssignQueue rows={queue} />
           </div>
         )}
+        {lateDrawings.length > 0 && (
+          <div className="space-y-1 rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 px-3 py-3">
+            <p className="text-sm font-medium text-foreground">{lateDrawings.reduce((n, g) => n + g.tasks.length, 0)} drawing{lateDrawings.reduce((n, g) => n + g.tasks.length, 0) === 1 ? "" : "s"} overdue for procurement</p>
+            <ul className="divide-y divide-border">
+              {lateDrawings.map(({ project, tasks }) => (
+                <li key={tasks[0].id}>
+                  <Link to={project ? `/workspace/projects/${project.code}` : "/workspace/tasks"} className="flex flex-col gap-0.5 py-2 hover:text-primary sm:flex-row sm:items-center sm:justify-between">
+                    <span className="truncate">{project?.client ?? project?.name ?? "Project"}</span>
+                    <span className="text-xs text-destructive">{tasks.map((t) => t.title).join(" · ")} · due {shortDate(tasks[0].due_date)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : due.length === 0 ? (
-          queue.length === 0 && <p className="text-sm text-muted-foreground">Nothing overdue.</p>
+          queue.length === 0 && lateDrawings.length === 0 && <p className="text-sm text-muted-foreground">Nothing overdue.</p>
         ) : (
           <ul className="divide-y divide-border">
             {due.slice(0, 5).map((l) => (
