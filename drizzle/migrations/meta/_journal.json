@@ -141,6 +141,13 @@
       "when": 1790286754048,
       "tag": "0019_costing_quoted_by",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790351878058,
+      "tag": "0020_contracts",
+      "breakpoints": true
     }
   ]
 }
