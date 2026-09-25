@@ -97,6 +97,7 @@ export const ContractPaper = ({ d }: { d: ContractDocument }) => {
   const proj = projectLabel(d);
   return (
     <div className="ctr contract-doc" data-contract-root>
+      <style>{CSS}</style>
       <Head d={d} fixed /><Foot fixed />
       <div className="ctr-sheet">
         <Head d={d} />
@@ -273,7 +274,6 @@ const ContractDoc = () => {
 
   return (
     <div className="space-y-4">
-      <style>{CSS}</style>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-1">
           {back}
