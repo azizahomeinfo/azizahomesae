@@ -13,7 +13,7 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, type Issue, type Project,
+  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, DRAWING_KINDS, type Issue, type Project,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -395,7 +395,7 @@ export const SnaggingTab = ({ project }: { project: Project }) => {
 
 /* ---------------- files ---------------- */
 
-const FILE_CATEGORIES = ["Contract", "Invoice", "Floor plan", "Quote", "Photo", "Other"];
+const FILE_CATEGORIES = [...DRAWING_KINDS, "Contract", "Invoice", "Floor plan", "Quote", "Photo", "Other"];
 const MAX_FILE = 25 * 1024 * 1024;
 
 export const FilesTab = ({ project }: { project: Project }) => {
@@ -404,7 +404,10 @@ export const FilesTab = ({ project }: { project: Project }) => {
   const { data: members = [] } = useMembers();
   const { data: urls } = useSignedUrls(files.map((f) => f.storage_path));
   const upload = useUploadProjectFile();
-  const [category, setCategory] = useState("Other");
+  const { data: ptasks = [] } = useProjectTasks(project.id);
+  const firstMissing = DRAWING_KINDS.find((k) => ptasks.some((t) => t.drawing_kind === k) && !files.some((f) => f.category === k));
+  const [picked, setCategory] = useState<string | null>(null);
+  const category = picked ?? firstMissing ?? "Other";
   const input = useRef<HTMLInputElement>(null);
 
   const onFiles = async (list: FileList | null) => {
@@ -453,6 +456,40 @@ export const FilesTab = ({ project }: { project: Project }) => {
         </ul>
       )}
     </Card>
+  );
+};
+
+/** The designer's four post-signing drawings: complete when each category has an upload. Tasks close in the database on upload. */
+export const DrawingsChecklist = ({ project }: { project: Project }) => {
+  const { data: tasks = [] } = useProjectTasks(project.id);
+  const { data: files = [] } = useProjectFiles(project.id);
+  const drawing = tasks.filter((t) => t.drawing_kind);
+  if (!drawing.length) return null;
+  const due = drawing[0].due_date;
+  const today = todayISO();
+  const rows = DRAWING_KINDS.map((k) => ({ k, file: files.find((f) => f.category === k) }));
+  const missing = rows.filter((r) => !r.file).length;
+  const late = missing > 0 && !!due && due < today;
+  return (
+    <section className={cn("rounded-[var(--radius)] border p-4 md:p-6 space-y-3", late ? "border-destructive/50 bg-destructive/5" : "border-border bg-card")}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Drawings for procurement</h3>
+        <p className={cn("text-xs", late ? "text-destructive" : "text-muted-foreground")}>
+          {missing === 0 ? "All 4 uploaded" : `${missing} of 4 outstanding · due ${shortDate(due)}${late ? " · overdue" : ""}`}
+        </p>
+      </div>
+      <ul className="divide-y divide-border">
+        {rows.map(({ k, file }) => (
+          <li key={k} className="flex flex-col gap-0.5 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <span>{k}</span>
+            <span className={cn("text-xs break-all", file ? "text-success" : late ? "text-destructive" : "text-muted-foreground")}>
+              {file ? `✓ uploaded ${file.file_name}` : "not uploaded"}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {missing > 0 && <p className="text-xs text-muted-foreground">Upload each in the Files tab under its matching category — the task closes on upload.</p>}
+    </section>
   );
 };
 
