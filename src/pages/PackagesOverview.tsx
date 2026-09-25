@@ -111,6 +111,9 @@ const PackagesOverview = () => {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Select from our curated furnishing packages designed to suit every style and budget
             </p>
+            <p className="text-xs text-muted-foreground/80 mt-3">
+              Prices exclude VAT and appliances.
+            </p>
           </div>
 
           {/* Room Type Selector */}

@@ -938,10 +938,10 @@ const BlogPost = () => {
             <h2 class="text-2xl font-bold text-foreground mb-4">The Short Answer</h2>
             <p class="text-muted-foreground mb-4">In 2026, professionally furnishing an apartment in Dubai with a turnkey package costs approximately:</p>
             <ul class="space-y-2 text-muted-foreground">
-              <li><strong class="text-foreground">Studio:</strong> from AED 22,500 to AED 30,500+</li>
-              <li><strong class="text-foreground">1 Bedroom:</strong> from AED 30,000 to AED 46,000+</li>
-              <li><strong class="text-foreground">2 Bedroom:</strong> from AED 40,000 to AED 65,500+</li>
-              <li><strong class="text-foreground">3 Bedroom:</strong> from AED 52,500 to AED 88,600+</li>
+              <li><strong class="text-foreground">Studio:</strong> from AED 22,500 to AED 45,500+</li>
+              <li><strong class="text-foreground">1 Bedroom:</strong> from AED 30,000 to AED 65,800+</li>
+              <li><strong class="text-foreground">2 Bedroom:</strong> from AED 40,000 to AED 85,500+</li>
+              <li><strong class="text-foreground">3 Bedroom:</strong> from AED 52,500 to AED 99,600+</li>
             </ul>
             <p class="text-muted-foreground mt-4 text-sm italic">Ranges span Essential to Luxury tiers, excluding appliances and 5% VAT. Villas and townhouses are quoted per project.</p>
           </section>
@@ -961,10 +961,10 @@ const BlogPost = () => {
                   </tr>
                 </thead>
                 <tbody class="text-muted-foreground">
-                  <tr><td class="p-4 font-medium text-foreground">Studio</td><td class="p-4">from AED 22,500</td><td class="p-4">from AED 26,500</td><td class="p-4">from AED 30,500</td></tr>
-                  <tr><td class="p-4 font-medium text-foreground">1 Bedroom</td><td class="p-4">from AED 30,000</td><td class="p-4">from AED 36,500</td><td class="p-4">from AED 46,000</td></tr>
-                  <tr><td class="p-4 font-medium text-foreground">2 Bedroom</td><td class="p-4">from AED 40,000</td><td class="p-4">from AED 55,000</td><td class="p-4">from AED 65,500</td></tr>
-                  <tr><td class="p-4 font-medium text-foreground">3 Bedroom</td><td class="p-4">from AED 52,500</td><td class="p-4">from AED 72,800</td><td class="p-4">from AED 88,600</td></tr>
+                  <tr><td class="p-4 font-medium text-foreground">Studio</td><td class="p-4">from AED 22,500</td><td class="p-4">from AED 26,500</td><td class="p-4">from AED 45,500</td></tr>
+                  <tr><td class="p-4 font-medium text-foreground">1 Bedroom</td><td class="p-4">from AED 30,000</td><td class="p-4">from AED 36,500</td><td class="p-4">from AED 65,800</td></tr>
+                  <tr><td class="p-4 font-medium text-foreground">2 Bedroom</td><td class="p-4">from AED 40,000</td><td class="p-4">from AED 55,000</td><td class="p-4">from AED 85,500</td></tr>
+                  <tr><td class="p-4 font-medium text-foreground">3 Bedroom</td><td class="p-4">from AED 52,500</td><td class="p-4">from AED 72,800</td><td class="p-4">from AED 99,600</td></tr>
                 </tbody>
               </table>
             </div>
