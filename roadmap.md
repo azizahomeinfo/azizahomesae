@@ -1,4 +1,4 @@
-- [ ] Balance multi-page proposal item lists by actual weight while preserving the hard cap.
-- [ ] Base automatic investment combining on the balanced final-page weight; always render investment when enabled.
-- [ ] Let oversized room groups span columns with repeated continuation headings.
-- [ ] Verify the 107-item case, small-list behavior, A4 fit, and build health.
+- [x] Balance multi-page proposal item lists by actual weight while preserving the hard cap.
+- [x] Base automatic investment combining on the balanced final-page weight; always render investment when enabled.
+- [x] Let oversized room groups span columns with repeated continuation headings.
+- [x] Verify the 107-item case, small-list behavior, A4 fit, and build health.
