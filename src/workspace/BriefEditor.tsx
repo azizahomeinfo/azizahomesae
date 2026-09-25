@@ -220,6 +220,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   const [newSection, setNewSection] = useState("");
   const [addingSection, setAddingSection] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
+  const [delSection, setDelSection] = useState<number | null>(null);
   useEffect(() => {
     if (!focusRef.current) return;
     document.getElementById(focusRef.current)?.focus();
@@ -433,18 +434,25 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
               {doc.ffe.map((sec, si) => {
                 const inc = sec.items.filter((i) => i.included === "inc").length;
                 return (
-                  <Collapsible key={si} defaultOpen={si < 2 || !!sec.custom} className="rounded-[var(--radius)] border border-border">
-                    <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 p-3 text-left">
-                      <span className="min-w-0">
-                        {/* Numbered by position so it stays 5.1…5.n through add/delete. */}
-                        <span className="text-primary mr-2">5.{si + 1}</span>
-                        <span className="text-foreground">{sec.title}</span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                        {inc} of {sec.items.length} included
-                        <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
-                      </span>
-                    </CollapsibleTrigger>
+                  <Collapsible key={`${si}-${sec.title}`} defaultOpen={si < 2 || !!sec.custom} className="rounded-[var(--radius)] border border-border">
+                    <div className="flex items-center gap-1 pr-2">
+                      <CollapsibleTrigger className="group flex min-w-0 flex-1 items-center justify-between gap-3 p-3 text-left">
+                        <span className="min-w-0">
+                          {/* Numbered by position so it stays 5.1…5.n through add/delete. */}
+                          <span className="text-primary mr-2">5.{si + 1}</span>
+                          <span className="text-foreground">{sec.title}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                          {inc} of {sec.items.length} included
+                          <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+                        </span>
+                      </CollapsibleTrigger>
+                      {!roFull && (
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Delete section ${sec.title}`} title={`Delete section ${sec.title}`} onClick={() => setDelSection(si)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     <CollapsibleContent>
                       <div className="hidden md:grid grid-cols-[minmax(0,2fr)_auto_auto_90px_minmax(0,2fr)_auto] gap-3 border-t border-border px-3 py-2 text-xs text-muted-foreground">
                         <span>Item</span><span>Standard</span><span>Status</span><span>Required</span><span>{sec.notesLabel}</span><span className="sr-only">Remove</span>
@@ -511,11 +519,6 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
                           <Button type="button" variant="ghost" size="sm" onClick={() => addItem(si)}>
                             <Plus className="mr-1 h-4 w-4" /> Add item
                           </Button>
-                          {sec.custom && (
-                            <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeSection(si)}>
-                              <Trash2 className="mr-1 h-4 w-4" /> Delete section
-                            </Button>
-                          )}
                         </div>
                       )}
                     </CollapsibleContent>
@@ -540,6 +543,30 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
                 </Button>
               ))}
             </div>
+            <AlertDialog open={delSection !== null} onOpenChange={(o) => { if (!o) setDelSection(null); }}>
+              <AlertDialogContent>
+                {delSection !== null && doc.ffe[delSection] && (() => {
+                  const ds = doc.ffe[delSection];
+                  const n = ds.items.length;
+                  return (
+                    <>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete "{ds.title}"{n ? ` and its ${n} item${n === 1 ? "" : "s"}` : ""}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {ds.custom
+                            ? "This section was added to this brief and cannot be brought back automatically."
+                            : "Standard sections can be brought back with Restore standard checklist; anything filled in on it is lost."}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { removeSection(delSection); setDelSection(null); }}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </>
+                  );
+                })()}
+              </AlertDialogContent>
+            </AlertDialog>
             <AlertDialog open={restoreOpen} onOpenChange={setRestoreOpen}>
               <AlertDialogContent>
                 <AlertDialogHeader>
