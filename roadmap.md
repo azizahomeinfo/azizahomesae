@@ -13,3 +13,4 @@
 - [x] Designers see only briefs assigned to them (policy + GM-only queue); no Awaiting group for designers.
 - [x] GM notified on brief submit ("assign a designer"); dashboard + Briefs page assignment queue, oldest first, inline assign.
 - [x] One "Submit design package": renders to sales + costed FF&E to GM in one transaction; DB refuses a design share without the FF&E; returned FF&E resubmits alone.
+- [x] Design guard requires a freshly Submitted costing; FF&E resubmit allowed from Returned and Quoted; proposals flag a withdrawn quote and block send/print/accept.
