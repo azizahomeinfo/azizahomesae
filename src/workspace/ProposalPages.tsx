@@ -159,12 +159,25 @@ const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: P
       <h2 className="ppd-serif" style={{ fontSize: 36, letterSpacing: "0.04em", lineHeight: 1.05 }}>{s.title}</h2>
     </div>
     <div className={s.withInvest ? "ppd-cols ppd-cols-4" : "ppd-cols ppd-grow"} style={s.withInvest ? { flex: "1 1 auto", minHeight: 0 } : undefined}>
-      {s.groups.map((g: ItemGroup, gi) => (
-        <div key={`${g.room}-${gi}`} className="ppd-group">
-          <h4>{g.room}</h4>
-          {g.items.map((it, k) => <div key={k} className="ppd-row"><span>{it.item}</span><b>{it.qty}</b></div>)}
-        </div>
-      ))}
+      {(() => {
+        const columnCount = s.withInvest ? 4 : 3;
+        const itemCount = s.groups.reduce((sum, group) => sum + group.items.length, 0);
+        const itemsPerColumn = Math.max(1, Math.ceil(itemCount / columnCount));
+        return s.groups.flatMap((g: ItemGroup, gi) => {
+          const chunks: ItemGroup["items"][] = [];
+          if (g.items.length > itemsPerColumn) {
+            for (let i = 0; i < g.items.length; i += itemsPerColumn) chunks.push(g.items.slice(i, i + itemsPerColumn));
+          } else {
+            chunks.push(g.items);
+          }
+          return chunks.map((items, ci) => (
+            <div key={`${g.room}-${gi}-${ci}`} className="ppd-group">
+              <h4>{g.room}{ci > 0 ? " · continued" : ""}</h4>
+              {items.map((it, k) => <div key={k} className="ppd-row"><span>{it.item}</span><b>{it.qty}</b></div>)}
+            </div>
+          ));
+        });
+      })()}
     </div>
     {s.withInvest && <InvestTable doc={doc} />}
     <Foot client={doc.cover.client} n={n} />

@@ -179,15 +179,53 @@ const itemRows = (item: string) => Math.max(1, Math.ceil(item.length / ITEM_CHAR
 const groupWeight = (g: ItemGroup) => 1.6 + g.items.reduce((s, i) => s + itemRows(i.item), 0);
 
 export const paginateItems = (groups: ItemGroup[]) => {
-  const pages: ItemGroup[][] = [];
-  let cur: ItemGroup[] = [], w = 0;
-  for (const g of groups) {
-    const gw = groupWeight(g);
-    if (cur.length && w + gw > ITEM_PAGE_CAP) { pages.push(cur); cur = []; w = 0; }
-    cur.push(g); w += gw;
+  if (!groups.length) return { pages: [] as ItemGroup[][], pageWeights: [] as number[], usedWeight: 0 };
+  const weights = groups.map(groupWeight);
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const prefix = [0];
+  for (const weight of weights) prefix.push((prefix[prefix.length - 1] ?? 0) + weight);
+
+  /** Ordered partitioning keeps room order while making every page look intentionally filled. */
+  const partition = (pageCount: number) => {
+    const target = totalWeight / pageCount;
+    const dp = Array.from({ length: pageCount + 1 }, () => Array(groups.length + 1).fill(Number.POSITIVE_INFINITY));
+    const cut = Array.from({ length: pageCount + 1 }, () => Array(groups.length + 1).fill(-1));
+    dp[0][0] = 0;
+    for (let page = 1; page <= pageCount; page += 1) {
+      for (let end = page; end <= groups.length; end += 1) {
+        for (let start = page - 1; start < end; start += 1) {
+          const weight = (prefix[end] ?? 0) - (prefix[start] ?? 0);
+          if (weight > ITEM_PAGE_CAP || !Number.isFinite(dp[page - 1]?.[start])) continue;
+          const score = (dp[page - 1]?.[start] ?? 0) + Math.pow(weight - target, 2);
+          if (score < (dp[page]?.[end] ?? Number.POSITIVE_INFINITY)) {
+            if (dp[page]) dp[page][end] = score;
+            if (cut[page]) cut[page][end] = start;
+          }
+        }
+      }
+    }
+    if (!Number.isFinite(dp[pageCount]?.[groups.length])) return null;
+    const ranges: Array<[number, number]> = [];
+    let end = groups.length;
+    for (let page = pageCount; page > 0; page -= 1) {
+      const start = cut[page]?.[end] ?? -1;
+      if (start < 0) return null;
+      ranges.unshift([start, end]);
+      end = start;
+    }
+    return ranges;
+  };
+
+  let pageCount = Math.max(1, Math.ceil(totalWeight / ITEM_PAGE_CAP));
+  let ranges = partition(pageCount);
+  while (!ranges && pageCount < groups.length) {
+    pageCount += 1;
+    ranges = partition(pageCount);
   }
-  if (cur.length) pages.push(cur);
-  return { pages, usedWeight: w };
+  if (!ranges) ranges = groups.map((_, index) => [index, index + 1] as [number, number]);
+  const pages = ranges.map(([start, end]) => groups.slice(start, end));
+  const pageWeights = ranges.map(([start, end]) => (prefix[end] ?? 0) - (prefix[start] ?? 0));
+  return { pages, pageWeights, usedWeight: pageWeights[pageWeights.length - 1] ?? 0 };
 };
 
 export const autoCombine = (usedWeight: number, optionCount: number) =>
