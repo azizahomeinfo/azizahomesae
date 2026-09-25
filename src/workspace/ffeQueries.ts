@@ -140,22 +140,8 @@ export const useSaveSupplier = () => {
 
 /** Coarse buying order for the coordinator: large furniture first, decor last. A work queue, not a taxonomy. */
 export const PRIORITY_BANDS = ["Large furniture", "Furniture & appliances", "Soft furnishings", "Kitchenware & linen", "Decor & accessories"] as const;
-const LARGE = /\b(bed|beds|mattress|sofa|sectional|wardrobe|dining table|tv unit|tv console|media unit|sideboard|bunk)\b/i;
-const DECOR = /\b(decor|décor|vases?|artwork|art|frames?|mirrors?|plants?|candles?|sculptures?|books|trays?|accessor\w*|ornaments?|diffusers?|clocks?|cushions?)\b/i;
-const LINEN = /\b(towel|linen|bedding|duvet|pillow|sheet|bath mat|kitchenware|cutlery|plate|glass|mug|cookware|pan|pot|utensil|tableware|tabletop|dinner set|knife|bowl|amenit)/i;
-const SOFT = /\b(curtain|blind|drape|rug|carpet|lamp|light|lighting|pendant|chandelier|sconce|throw)/i;
-const APPLIANCE_ROOM = /appliance/i;
-const KITCHEN_ROOM = /kitchenware|tabletop|linen/i;
-/** 1–5. The coordinator's override wins; otherwise derived from item name, then room. */
-export const bandOf = (r: Pick<FfeRow, "priority_band" | "item" | "room">): number => {
-  if (r.priority_band) return r.priority_band;
-  if (LARGE.test(r.item)) return 1;
-  if (DECOR.test(r.item)) return 5;
-  if (LINEN.test(r.item) || KITCHEN_ROOM.test(r.room)) return 4;
-  if (SOFT.test(r.item)) return 3;
-  if (APPLIANCE_ROOM.test(r.room)) return 2;
-  return 2;
-};
+/** 1–5. Derived in the database (ws_ffe_band, set on insert, coordinator overrides stick); 3 only covers a row not yet saved. */
+export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? 3;
 
 /* ---------------- ffe items ---------------- */
 

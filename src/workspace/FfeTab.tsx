@@ -732,8 +732,10 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
+  // Buying order: band first (large furniture → decor), then room, then sheet order.
   const groups = useMemo(() => groupBy === "room" ? byRoom(rows)
-    : PRIORITY_BANDS.map((b, i) => [`${i + 1} · ${b}`, rows.filter((r) => bandOf(r) === i + 1)] as [string, FfeRow[]]).filter(([, l]) => l.length),
+    : PRIORITY_BANDS.map((b, i) => [`${i + 1} · ${b}`, rows.filter((r) => bandOf(r) === i + 1)
+        .sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]).filter(([, l]) => l.length),
   [rows, groupBy]);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
