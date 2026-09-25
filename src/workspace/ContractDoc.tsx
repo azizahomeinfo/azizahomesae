@@ -6,7 +6,7 @@ import logo from "@/assets/aziza-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
@@ -108,7 +108,7 @@ export const ContractPaper = ({ d }: { d: ContractDocument }) => {
           <tfoot><tr><td><div className="ctr-spacer-f" /></td></tr></tfoot>
           <tbody><tr><td>
             <div className="ctr-title">
-              <p className="ctr-eyebrow">{[proj, d.unitType, d.useType].filter(Boolean).join(" · ")}</p>
+              <p className="ctr-eyebrow">{[proj, d.unitType].filter(Boolean).join(" · ")}</p>
               <h1 className="ctr-h1">Sales Agreement</h1>
               <div className="ctr-rule" />
             </div>
@@ -324,6 +324,21 @@ const ContractDoc = () => {
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <aside className="space-y-3">
           <Section title="Parties & property">
+            {/* Who signs decides VAT; stored as the existing vatCharged flag. */}
+            <div role="radiogroup" aria-label="Signing party" className="grid gap-2">
+              {([
+                { v: true, label: "Signed with a company", note: "VAT 5% charged · bank details included" },
+                { v: false, label: "Signed with an individual", note: "VAT waived · bank details omitted" },
+              ] as const).map((o) => (
+                <button key={o.label} type="button" role="radio" aria-checked={d.vatCharged === o.v} disabled={dis}
+                  onClick={() => change({ vatCharged: o.v })}
+                  className={cn("rounded-[var(--radius)] border px-3 py-2 text-left transition-colors disabled:opacity-60",
+                    d.vatCharged === o.v ? "border-primary bg-primary/10" : "border-border hover:border-primary/60")}>
+                  <span className="block text-sm font-medium text-foreground">{o.label}</span>
+                  <span className="block text-xs text-muted-foreground">{o.note}</span>
+                </button>
+              ))}
+            </div>
             <Field label="Client name"><Input disabled={dis} value={d.client} onChange={(e) => change({ client: e.target.value })} /></Field>
             <div className="grid grid-cols-2 gap-2">
               <Field label="Unit no."><Input disabled={dis} value={d.unit} onChange={(e) => change({ unit: e.target.value })} /></Field>
@@ -353,7 +368,7 @@ const ContractDoc = () => {
             <Field label={isDirect ? "Subtotal ex-VAT (AED)" : "Subtotal ex-VAT (AED) — locked to GM quote"}>
               <Input type="number" min={0} placeholder="Enter the price" readOnly={!isDirect} disabled={dis || !isDirect} value={d.subtotal || ""} onChange={(e) => change({ subtotal: Number(e.target.value) })} />
             </Field>
-            <label className="flex items-center justify-between text-sm">VAT 5% charged<Switch disabled={dis} checked={d.vatCharged} onCheckedChange={(v) => change({ vatCharged: v })} /></label>
+            <p className="text-xs text-muted-foreground">{d.vatCharged ? "VAT 5% charged · bank details included" : "VAT waived · bank details omitted"} — set by who signs, under Parties & property.</p>
             <div className="grid grid-cols-3 gap-2">
               <Field label="Deposit %"><Input type="number" min={0} max={100} disabled={dis} value={d.deposit}
                 onChange={(e) => { const dep = Math.min(100, Math.max(0, Number(e.target.value) || 0)); change({ deposit: dep, delivery: Math.min(d.delivery, 100 - dep) }); }} /></Field>
