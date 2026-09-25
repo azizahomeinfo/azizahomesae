@@ -505,8 +505,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const isGm = member?.role === "gm";
   const isAssignedDesigner = !!me && (brief?.designer_id === me || lead?.designer_id === me);
   const isLatest = !!selected && selected.id === latest?.id;
-  // Draft and Submitted stay editable for the designer; Accepted is locked because the proposal is built from it.
-  const editable = !viewOnly && isLatest && (selected.status === "Draft" || selected.status === "Submitted")
+  // Draft, Submitted and Accepted stay editable for the designer; edits to a shared or approved version notify sales (DB trigger, 15-min debounce) without resetting the approval.
+  const editable = !viewOnly && isLatest && (selected.status === "Draft" || selected.status === "Submitted" || selected.status === "Accepted")
     && !!me && (selected.designer_id === me || isAssignedDesigner);
   const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
