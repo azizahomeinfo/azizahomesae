@@ -198,3 +198,21 @@ All colors MUST be HSL.
     @apply transition-all duration-300 ease-in-out;
   }
 }
+
+/* Contract document tokens (the offline generator's names, mapped to our palette). Always light: it's a printed page. */
+:root {
+  --fg-2: 30 12% 30%;
+  --border-soft: 32 18% 84%;
+  --surface-warm: 36 45% 95%;
+}
+.contract-doc {
+  --background: 38 65% 98%;
+  --foreground: 30 15% 15%;
+  --card: 0 0% 100%;
+  --primary: 68 16% 22%;
+  --primary-foreground: 30 25% 96%;
+  --secondary: 32 18% 58%;
+  --fg-2: 30 12% 30%;
+  --border-soft: 32 18% 84%;
+  --surface-warm: 36 45% 95%;
+}
