@@ -7,3 +7,6 @@
 - [x] Prove retired package prices are absent, verify build health, and report changed files plus unrelated amounts.
 - [ ] Add confirmed deletion for every FF&E section in the requirement brief.
 - [ ] Verify contiguous numbering, live counts, autosave persistence, and standard checklist restoration.
+- [ ] Direct contracts: nullable proposal_id, guard only checks supplied proposals, contracts.source column (dry-run first).
+- [ ] Lead-page "Generate contract" at any stage; prefill from lead + brief FF&E (or unit template), blank subtotal, 80/0/20.
+- [ ] Label direct contracts "Direct contract · no GM quotation"; notify the GM with lead and total when issued.
