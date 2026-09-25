@@ -62,10 +62,10 @@ const packages: Package[] = [
     description: "Including everything from the Essential package plus all wall well designs throughout your apartment. The ultimate transformation with comprehensive interior design coverage for a truly luxurious living experience.",
     image: package3,
     prices: {
-      studio: "30,500 AED",
-      "1b": "46,000 AED",
-      "2b": "65,500 AED",
-      "3b": "88,600 AED",
+      studio: "45,500 AED",
+      "1b": "65,800 AED",
+      "2b": "85,500 AED",
+      "3b": "99,600 AED",
     },
   },
 ];
@@ -96,7 +96,7 @@ const PackagesOverview = () => {
           { name: "Packages", url: "https://www.azizahomes.com/packages" }
         ]}
         pageTitle="Packages"
-        pageDescription="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 30,500 AED). Complete furniture packages for Dubai properties."
+        pageDescription="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 45,500 AED). Complete furniture packages for Dubai properties."
       />
       <Navigation />
       
@@ -110,6 +110,9 @@ const PackagesOverview = () => {
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Select from our curated furnishing packages designed to suit every style and budget
+            </p>
+            <p className="text-xs text-muted-foreground/80 mt-3">
+              Prices exclude VAT and appliances.
             </p>
           </div>
 
@@ -171,6 +174,9 @@ const PackagesOverview = () => {
                       <div className="text-right">
                         <p className="text-3xl font-bold">
                           from {pkg.prices[selectedRoom]}
+                        </p>
+                        <p className="text-xs text-muted-foreground/80 mt-1">
+                          Prices exclude VAT and appliances.
                         </p>
                       </div>
                     </div>
