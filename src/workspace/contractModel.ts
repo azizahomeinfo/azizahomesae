@@ -24,6 +24,14 @@ export interface ContractDocument {
 export const CONTRACT_UNIT_TYPES = UNIT_TYPES;
 export const USE_TYPES = ["End User", "Holiday Home"];
 export const SELLER = "Aziza Home L.L.C-FZ";
+// Seller identity follows the signing choice (vatCharged: true = company, false = individual).
+export const SELLERS = {
+  company: { name: SELLER, address: "6th Floor, Business Center, The Meydan Hotel Grandstand, Meydan Road, Nad Al Sheba Dubai, UAE" },
+  individual: { name: "Ruiqing Xu", address: "905, Forte Tower 1, Downtown, Dubai, UAE" },
+} as const;
+export const sellerFor = (vatCharged: boolean) => (vatCharged ? SELLERS.company : SELLERS.individual);
+// Running footer (left side). Kept on both versions for now — awaiting Veronica on the individual version.
+export const footerLeft = (_vatCharged: boolean) => "Aziza Home L.L.C-FZ · Dubai, UAE";
 export const DEFAULT_DELIVERY_DAYS = "8–12";
 export const SIGNATURE_COPY = {
   sig: "The Parties agree to the terms and conditions set forth above as demonstrated by their signatures as follows:",
