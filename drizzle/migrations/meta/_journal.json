@@ -176,6 +176,13 @@
       "when": 1790358554454,
       "tag": "0024_design_guard_requires_fresh_costing",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790359445609,
+      "tag": "0025_mood_board_required_and_edit_notify",
+      "breakpoints": true
     }
   ]
 }

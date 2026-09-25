@@ -1707,6 +1707,11 @@ export type Database = {
           unit_type: string
         }[]
       }
+      ws_ffe_edit_notify_lead: { Args: { _lead: string }; Returns: undefined }
+      ws_notify_once: {
+        Args: { _kind: string; _lead: string; _title: string; _user: string }
+        Returns: undefined
+      }
       ws_role: {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]
