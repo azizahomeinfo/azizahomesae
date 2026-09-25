@@ -28,7 +28,7 @@ export const PROPOSAL_CSS = `
   font-size: 9px; font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pp-label); }
 .ppd-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .ppd-grow { flex: 1 1 auto; min-height: 0; }
-.ppd-cols { column-count: 3; column-gap: 32px; column-rule: 1px solid var(--pp-line-soft); column-fill: auto; }
+.ppd-cols { column-count: 3; column-gap: 32px; column-rule: 1px solid var(--pp-line-soft); column-fill: balance; }
 .ppd-cols.ppd-cols-4 { column-count: 4; column-gap: 24px; }
 .ppd-group { break-inside: avoid; page-break-inside: avoid; margin-bottom: 14px; }
 .ppd-group h4 { font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-olive);
@@ -159,12 +159,25 @@ const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: P
       <h2 className="ppd-serif" style={{ fontSize: 36, letterSpacing: "0.04em", lineHeight: 1.05 }}>{s.title}</h2>
     </div>
     <div className={s.withInvest ? "ppd-cols ppd-cols-4" : "ppd-cols ppd-grow"} style={s.withInvest ? { flex: "1 1 auto", minHeight: 0 } : undefined}>
-      {s.groups.map((g: ItemGroup, gi) => (
-        <div key={`${g.room}-${gi}`} className="ppd-group">
-          <h4>{g.room}</h4>
-          {g.items.map((it, k) => <div key={k} className="ppd-row"><span>{it.item}</span><b>{it.qty}</b></div>)}
-        </div>
-      ))}
+      {(() => {
+        const columnCount = s.withInvest ? 4 : 3;
+        const itemCount = s.groups.reduce((sum, group) => sum + group.items.length, 0);
+        const itemsPerColumn = Math.max(1, Math.ceil(itemCount / columnCount));
+        return s.groups.flatMap((g: ItemGroup, gi) => {
+          const chunks: ItemGroup["items"][] = [];
+          if (g.items.length > itemsPerColumn) {
+            for (let i = 0; i < g.items.length; i += itemsPerColumn) chunks.push(g.items.slice(i, i + itemsPerColumn));
+          } else {
+            chunks.push(g.items);
+          }
+          return chunks.map((items, ci) => (
+            <div key={`${g.room}-${gi}-${ci}`} className="ppd-group">
+              <h4>{g.room}{ci > 0 ? " · continued" : ""}</h4>
+              {items.map((it, k) => <div key={k} className="ppd-row"><span>{it.item}</span><b>{it.qty}</b></div>)}
+            </div>
+          ));
+        });
+      })()}
     </div>
     {s.withInvest && <InvestTable doc={doc} />}
     <Foot client={doc.cover.client} n={n} />
