@@ -1,0 +1,50 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase-ssr";
+import type { Database, Json } from "@/integrations/supabase/types";
+import type { ContractDocument } from "./contractModel";
+
+export type ContractStatus = Database["public"]["Enums"]["contract_status"];
+export interface ContractRow { id: string; lead_id: string; proposal_id: string | null; version: number; status: ContractStatus; created_at: string; updated_at: string; doc: ContractDocument }
+
+const COLS = "id, lead_id, proposal_id, version, status, created_at, updated_at, doc";
+const key = (leadId: string) => ["ws", "contracts", leadId] as const;
+const fail = (e: { message: string } | null) => { if (e) throw new Error(e.message); };
+
+export const useLeadContracts = (leadId: string | undefined) =>
+  useQuery({
+    queryKey: key(leadId ?? ""),
+    enabled: !!leadId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("contracts").select(COLS).eq("lead_id", leadId!).order("version", { ascending: false });
+      fail(error);
+      return (data ?? []) as unknown as ContractRow[];
+    },
+  });
+
+export const useCreateContract = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { leadId: string; proposalId: string; doc: ContractDocument; by: string; version: number }) => {
+      const { data, error } = await supabase.from("contracts").insert({
+        lead_id: v.leadId, proposal_id: v.proposalId, version: v.version, doc: v.doc as unknown as Json, created_by: v.by,
+      }).select("id").single();
+      fail(error);
+      return data!.id as string;
+    },
+    onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: key(v.leadId) }),
+  });
+};
+
+export const useSaveContract = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; leadId: string; doc?: ContractDocument; status?: ContractStatus }) => {
+      const patch: Database["public"]["Tables"]["contracts"]["Update"] = {};
+      if (v.doc) patch.doc = v.doc as unknown as Json;
+      if (v.status) patch.status = v.status;
+      const { error } = await supabase.from("contracts").update(patch).eq("id", v.id);
+      fail(error);
+    },
+    onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: key(v.leadId) }),
+  });
+};

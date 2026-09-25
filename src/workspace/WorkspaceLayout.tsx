@@ -24,7 +24,7 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
         <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Workspace</p>
       </div>
       <nav className="flex-1 px-3 space-y-1">
-        {PAGES_BY_ROLE[role].map((p) => (
+        {PAGES_BY_ROLE[role].filter((p) => p !== "contracts").map((p) => (
           <NavLink
             key={p}
             to={PAGE_META[p].path}

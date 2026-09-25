@@ -121,6 +121,7 @@ const ProposalDoc = () => {
   const [draft, setDraft] = useState<ProposalDocument | null>(null);
   const [notices, setNotices] = useState<string[]>([]);
   const [attempted, setAttempted] = useState(false);
+  const [picking, setPicking] = useState<number | null>(null);
   const synced = useRef<string | null>(null);
 
   const row = proposals.find((p) => p.id === selectedId) ?? proposals[0];
@@ -208,6 +209,22 @@ const ProposalDoc = () => {
     const ok = await persist({ ...current, finalAt: new Date().toISOString() });
     if (ok) window.setTimeout(() => window.print(), 300);
   };
+  const opts = row?.doc.investment.options ?? [];
+  const acceptWith = (i: number) => {
+    const o = opts[i];
+    if (!row || !o) return;
+    setStatus.mutate({ id: row.id, leadId: lead.id, status: "Accepted", acceptedOption: { index: i, label: o.label, desc: o.desc, amount: Number(o.amount) || 0 } }, {
+      onSuccess: () => { toast.success(`Marked Accepted · ${o.label}`); setPicking(null); }, onError: (e) => toast.error(errMsg(e, "Failed")),
+    });
+  };
+  // With 2+ options sales must record which one the client took; a single option is taken automatically.
+  const clientAccepted = () => (opts.length > 1 ? setPicking(-1) : opts.length === 1 ? acceptWith(0) : toast.error("This proposal has no quote option to accept."));
+  const acceptedRow = proposals.find((p) => p.status === "Accepted");
+  const openContract = () => {
+    if (acceptedRow) { navigate(`/workspace/contracts/${lead.id}`); return; }
+    const st = proposals[0]?.status ?? "missing";
+    toast.error(`Can't generate the contract yet — the proposal must be Accepted by the client. It is currently ${st}${st === "Draft" ? " (finalise it, then Mark sent)" : st === "Sent" ? " (record Client accepted)" : ""}.`);
+  };
   const markStatus = (s: ProposalStatus) => row && setStatus.mutate({ id: row.id, leadId: lead.id, status: s }, {
     onSuccess: () => toast.success(`Marked ${s}`), onError: (e) => toast.error(errMsg(e, "Failed")),
   });
@@ -266,7 +283,9 @@ const ProposalDoc = () => {
             </select>
           )}
           {canEdit && row.status === "Draft" && d.finalAt && !dirty && <Button variant="outline" onClick={() => markStatus("Sent")}>Mark sent</Button>}
-          {canEdit && row.status === "Sent" && <><Button variant="outline" onClick={() => markStatus("Accepted")}>Client accepted</Button><Button variant="outline" onClick={() => markStatus("Rejected")}>Client rejected</Button></>}
+          {canEdit && row.status === "Sent" && <><Button variant="outline" onClick={clientAccepted}>Client accepted</Button><Button variant="outline" onClick={() => markStatus("Rejected")}>Client rejected</Button></>}
+          {row.status === "Accepted" && row.accepted_option && <span className="self-center text-xs text-muted-foreground">Client chose {row.accepted_option.label}</span>}
+          {canEdit && <Button variant="outline" onClick={openContract}>Generate contract</Button>}
           {d.finalAt && !dirty
             ? <Button onClick={() => window.print()}>Download PDF</Button>
             : canEdit && <Button onClick={finalise} disabled={save.isPending}>Finalise &amp; download</Button>}
@@ -402,6 +421,28 @@ const ProposalDoc = () => {
           <ProposalPages doc={d} url={url} />
         </div>
       </div>
+
+      {picking !== null && (
+        <div role="dialog" aria-modal="true" aria-label="Which option did the client accept?" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4" onClick={() => setPicking(null)}>
+          <div className="w-full max-w-md space-y-4 rounded-[var(--radius)] border border-border bg-card p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-heading text-xl uppercase tracking-wide">Which option did the client accept?</h3>
+            <p className="text-sm text-muted-foreground">The contract price comes from this option.</p>
+            <div className="space-y-2">
+              {opts.map((o, i) => (
+                <label key={i} className="flex cursor-pointer items-start gap-3 rounded-[var(--radius)] border border-border p-3 has-[:checked]:border-primary">
+                  <input type="radio" name="accepted-option" checked={picking === i} onChange={() => setPicking(i)} className="mt-1" />
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{o.label}</span><span className="block text-xs text-muted-foreground">{o.desc}</span></span>
+                  <span className="text-sm tabular-nums">AED {Math.round(Number(o.amount) || 0).toLocaleString("en-US")}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setPicking(null)}>Cancel</Button>
+              <Button disabled={picking < 0 || setStatus.isPending} onClick={() => acceptWith(picking)}>Mark accepted</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

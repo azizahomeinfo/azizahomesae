@@ -228,6 +228,57 @@ export type Database = {
         }
         Relationships: []
       }
+      contracts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doc: Json
+          id: string
+          lead_id: string
+          proposal_id: string | null
+          status: Database["public"]["Enums"]["contract_status"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doc?: Json
+          id?: string
+          lead_id: string
+          proposal_id?: string | null
+          status?: Database["public"]["Enums"]["contract_status"]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doc?: Json
+          id?: string
+          lead_id?: string
+          proposal_id?: string | null
+          status?: Database["public"]["Enums"]["contract_status"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       design_images: {
         Row: {
           caption: string | null
@@ -1162,6 +1213,7 @@ export type Database = {
       }
       proposals: {
         Row: {
+          accepted_option: Json | null
           created_at: string
           created_by: string | null
           currency: string
@@ -1181,6 +1233,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          accepted_option?: Json | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -1200,6 +1253,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          accepted_option?: Json | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -1665,6 +1719,7 @@ export type Database = {
         | "Design Ready"
         | "Design Approved"
         | "Revision Requested"
+      contract_status: "Draft" | "Issued" | "Signed"
       costing_status: "Draft" | "Submitted" | "Returned" | "Quoted"
       cr_status: "Pending Approval" | "Approved" | "Rejected"
       design_status: "Draft" | "Submitted" | "Accepted" | "Rejected"
@@ -1848,6 +1903,7 @@ export const Constants = {
         "Design Approved",
         "Revision Requested",
       ],
+      contract_status: ["Draft", "Issued", "Signed"],
       costing_status: ["Draft", "Submitted", "Returned", "Quoted"],
       cr_status: ["Pending Approval", "Approved", "Rejected"],
       design_status: ["Draft", "Submitted", "Accepted", "Rejected"],
