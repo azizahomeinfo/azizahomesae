@@ -110,8 +110,10 @@ const GmView = () => {
       <p className={waiting ? "rounded-[var(--radius)] border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-foreground" : "text-sm text-muted-foreground"}>
         {waiting ? `${waiting} brief${waiting === 1 ? "" : "s"} waiting for a designer — assign below.` : "No briefs waiting for a designer."}
       </p>
-      {BRIEF_STATUSES.map((st) => {
+      {/* The assignment queue leads, oldest first; everything else follows in workflow order. */}
+      {(["Submitted", ...BRIEF_STATUSES.filter((x) => x !== "Submitted")] as BriefStatus[]).map((st) => {
         const rows = list.filter((b) => b.status === st);
+        if (st === "Submitted") rows.sort((a, b) => (a.submitted_at ?? "").localeCompare(b.submitted_at ?? ""));
         if (!rows.length) return null;
         return (
           <section key={st} className="space-y-3">
