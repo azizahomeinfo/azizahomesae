@@ -717,7 +717,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
           <AlertDialogHeader>
             <AlertDialogTitle>Reopen the approved design?</AlertDialogTitle>
             <AlertDialogDescription>
-              A proposal may already use these renders. Starting a new version reopens the design — the approved version stays as a record.
+              Sales may already be using these renders with the client. Starting a new version reopens the design — the approved version stays as a record.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

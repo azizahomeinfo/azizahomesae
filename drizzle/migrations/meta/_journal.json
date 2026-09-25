@@ -183,6 +183,13 @@
       "when": 1790359445609,
       "tag": "0025_mood_board_required_and_edit_notify",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790362265612,
+      "tag": "0026_proposals_hide_from_designers",
+      "breakpoints": true
     }
   ]
 }

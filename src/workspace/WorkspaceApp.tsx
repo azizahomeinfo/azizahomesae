@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import type { ReactElement } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,12 @@ import ProposalDoc from "./ProposalDoc";
 import ContractDoc from "./ContractDoc";
 
 const Guard = ({ page, role, children }: { page: WorkspacePage; role: WorkspaceRole; children: ReactElement }) =>
-  canSee(role, page) ? children : <Navigate to="/workspace" replace />;
+  canSee(role, page) ? children : (
+    <div className="space-y-4">
+      <Link to="/workspace" className="text-sm text-muted-foreground hover:text-primary">← Dashboard</Link>
+      <p className="text-muted-foreground">You don't have access to this page.</p>
+    </div>
+  );
 
 const Gate = () => {
   const { session, member, loading } = useWorkspace();
