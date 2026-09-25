@@ -1,13 +1,15 @@
-## Change
+# Balance paginated proposal item lists
 
-Update the small disclaimer line under the Starting Package Prices table on `/investors-furnishing-dubai` so it clearly states that prices are **exclusive of appliances and VAT**.
+## Scope
+- Change only item-list pagination and oversized room-group flow.
+- Preserve single-page lists, investment combining, document styling, and all other proposal behavior.
 
-**File:** `src/pages/InvestorsFurnishingDubai.tsx` (line ~385)
+## Implementation
+- Calculate total item weight first, derive the required page count from the existing hard cap, then target an even weight per page without exceeding the cap.
+- Mark room groups taller than one available column as splittable; normal groups remain unbroken.
+- When an oversized room continues in a later column, repeat its room heading with a continuation marker.
 
-**Current text:**
-> Appliance packages are available for ready-to-rent and holiday-home setups.
-
-**New text:**
-> Prices are exclusive of appliances and 5% VAT. Appliance packages are available as an add-on for ready-to-rent and holiday-home setups.
-
-No other content, layout, or styling changes.
+## Validation
+- Check the 107-item, 8-room scenario for two similarly filled pages and populated columns.
+- Check a small list remains one page and investment still combines on the final item page.
+- Verify the fixed 794×1123 layout in the browser and confirm the project build remains healthy.
