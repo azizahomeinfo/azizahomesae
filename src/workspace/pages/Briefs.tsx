@@ -35,14 +35,14 @@ interface CardData {
   budget: number | null; targetDate: string | null; status: BriefStatus;
 }
 
-const BriefCard = ({ d }: { d: CardData }) => (
+const BriefCard = ({ d, label }: { d: CardData; label?: string }) => (
   <Link
     to={`/workspace/leads/${d.leadId}`}
     className="block rounded-[var(--radius)] border border-border bg-card p-4 space-y-2 hover:border-primary/50"
   >
     <div className="flex items-start justify-between gap-2">
       <p className="text-foreground min-w-0 truncate">{d.name}</p>
-      <BriefStatusPill status={d.status} />
+      <BriefStatusPill status={d.status} label={label} />
     </div>
     <p className="text-sm text-muted-foreground truncate">{[d.property, d.unitType].filter(Boolean).join(" · ") || "—"}</p>
     <div className="flex justify-between text-sm">
@@ -68,27 +68,44 @@ const fromRow = (b: BriefListRow): CardData => ({
   budget: b.leads?.budget ?? null, targetDate: b.leads?.target_date ?? null, status: b.status as BriefStatus,
 });
 
-/** Designers see only briefs the GM assigned to them — there is no unassigned queue for them. */
+/** Designer-facing wording for each brief status. */
+export const DESIGNER_LABEL: Partial<Record<BriefStatus, string>> = {
+  Assigned: "Not started",
+  "In Design": "In progress",
+  "Design Ready": "Awaiting sales review",
+  "Design Approved": "Approved by sales",
+  "Revision Requested": "Changes requested",
+};
+
+/** "Mine" follows the same column RLS uses (leads.designer_id); ws_assign_brief writes both. */
+export const isMineBrief = (b: BriefListRow, uid: string | undefined) => !!uid && b.leads?.designer_id === uid;
+
+/** Designers see every brief assigned to them, at every status — live work first, approved after. */
 const DesignerView = () => {
   const { member } = useWorkspace();
   const { data: list = [], isLoading: lLoading, error: lErr } = useBriefList();
-  const mine = list.filter((b) => b.designer_id === member?.user_id && b.status !== "Design Approved");
+  const mine = list.filter((b) => isMineBrief(b, member?.user_id));
+  const live = mine.filter((b) => b.status !== "Design Approved");
+  const done = mine.filter((b) => b.status === "Design Approved");
 
   if (lErr) return <p className="text-destructive">{(lErr as Error).message}</p>;
   if (lLoading) return <p className="text-muted-foreground">Loading…</p>;
 
+  const grid = (rows: BriefListRow[]) => (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {rows.map((b) => (
+        <div key={b.id} className="space-y-2">
+          <BriefCard d={fromRow(b)} label={DESIGNER_LABEL[b.status as BriefStatus]} />
+          <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="space-y-8">
-      <Group title="My briefs" empty="Nothing assigned to you." count={mine.length}>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {mine.map((b) => (
-            <div key={b.id} className="space-y-2">
-              <BriefCard d={fromRow(b)} />
-              <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
-            </div>
-          ))}
-        </div>
-      </Group>
+      <Group title="My briefs" empty="Nothing assigned to you." count={live.length}>{grid(live)}</Group>
+      {done.length > 0 && <Group title="Approved by sales" empty="" count={done.length}>{grid(done)}</Group>}
     </div>
   );
 };
