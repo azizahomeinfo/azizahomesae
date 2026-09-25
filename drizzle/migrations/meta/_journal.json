@@ -169,6 +169,13 @@
       "when": 1790358336482,
       "tag": "0023_design_package_submit_together",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790358554454,
+      "tag": "0024_design_guard_requires_fresh_costing",
+      "breakpoints": true
     }
   ]
 }

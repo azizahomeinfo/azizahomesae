@@ -163,6 +163,8 @@ const ProposalDoc = () => {
   const editable = canEdit && row?.status === "Draft";
   const dirty = !!draft;
   const locked = current?.quoteVersion != null;
+  // The designer resubmitted the costing after a quote: the prices this proposal carries are superseded until the GM re-quotes.
+  const withdrawn = locked && !!costing && costing.status !== "Quoted";
 
   /* ---- gate ---- */
   const designOk = design?.status === "Accepted" && current?.designId === design.id;
@@ -282,12 +284,12 @@ const ProposalDoc = () => {
               {proposals.map((p) => <option key={p.id} value={p.id}>V{p.version} · {p.status}</option>)}
             </select>
           )}
-          {canEdit && row.status === "Draft" && d.finalAt && !dirty && <Button variant="outline" onClick={() => markStatus("Sent")}>Mark sent</Button>}
-          {canEdit && row.status === "Sent" && <><Button variant="outline" onClick={clientAccepted}>Client accepted</Button><Button variant="outline" onClick={() => markStatus("Rejected")}>Client rejected</Button></>}
+          {canEdit && row.status === "Draft" && d.finalAt && !dirty && <Button variant="outline" disabled={withdrawn} onClick={() => markStatus("Sent")}>Mark sent</Button>}
+          {canEdit && row.status === "Sent" && <><Button variant="outline" disabled={withdrawn} onClick={clientAccepted}>Client accepted</Button><Button variant="outline" onClick={() => markStatus("Rejected")}>Client rejected</Button></>}
           {row.status === "Accepted" && row.accepted_option && <span className="self-center text-xs text-muted-foreground">Client chose {row.accepted_option.label}</span>}
           {canEdit && <Button variant="outline" onClick={openContract}>Generate contract</Button>}
           {d.finalAt && !dirty
-            ? <Button onClick={() => window.print()}>Download PDF</Button>
+            ? <Button disabled={withdrawn} onClick={() => window.print()}>Download PDF</Button>
             : canEdit && <Button onClick={finalise} disabled={save.isPending}>Finalise &amp; download</Button>}
         </div>
       </div>
@@ -295,8 +297,15 @@ const ProposalDoc = () => {
       {/* gate */}
       <div className="grid gap-2 md:grid-cols-2">
         <Chip label="Design" text={designText} mark={markOf(designOk)} />
-        <Chip label="Quotation" text={quoteText} mark={markOf(quoteOk)} />
+        <Chip label="Quotation" text={withdrawn ? `GM quote V${d.quoteVersion} withdrawn — waiting for a new quotation` : quoteText} mark={withdrawn ? "block" : markOf(quoteOk)} />
       </div>
+      {withdrawn && (
+        <p className="rounded-[var(--radius)] border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm">
+          {row.status === "Accepted"
+            ? `The FF&E has gone back to the GM for re-quoting since the client accepted. The price here is from GM quotation V${d.quoteVersion}; check with the GM before generating the contract.`
+            : `GM quotation V${d.quoteVersion} has been withdrawn — the FF&E is back with the GM for re-quoting. The prices shown are not current: don't send or print this proposal until the new quotation arrives.`}
+        </p>
+      )}
       {notices.map((n) => <p key={n} className="rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-sm">{n}</p>)}
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
