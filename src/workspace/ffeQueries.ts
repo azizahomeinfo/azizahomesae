@@ -141,7 +141,7 @@ export const useSaveSupplier = () => {
 /** Coarse buying order for the coordinator: large furniture first, decor last. A work queue, not a taxonomy. */
 export const PRIORITY_BANDS = ["Large furniture", "Furniture & appliances", "Soft furnishings", "Kitchenware & linen", "Decor & accessories"] as const;
 const LARGE = /\b(bed|beds|mattress|sofa|sectional|wardrobe|dining table|tv unit|tv console|media unit|sideboard|bunk)\b/i;
-const DECOR = /\b(decor|décor|vase|artwork|art|frame|mirror|plant|candle|sculpture|book|tray|accessor|ornament|diffuser|clock|cushion)/i;
+const DECOR = /\b(decor|décor|vases?|artwork|art|frames?|mirrors?|plants?|candles?|sculptures?|books|trays?|accessor\w*|ornaments?|diffusers?|clocks?|cushions?)\b/i;
 const LINEN = /\b(towel|linen|bedding|duvet|pillow|sheet|bath mat|kitchenware|cutlery|plate|glass|mug|cookware|pan|pot|utensil|tableware|tabletop|dinner set|knife|bowl|amenit)/i;
 const SOFT = /\b(curtain|blind|drape|rug|carpet|lamp|light|lighting|pendant|chandelier|sconce|throw)/i;
 const APPLIANCE_ROOM = /appliance/i;
