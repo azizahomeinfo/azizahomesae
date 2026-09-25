@@ -13,7 +13,8 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, DRAWING_KINDS, type Issue, type Project,
+  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, DRAWING_KINDS, SIGNED_CONTRACT,
+  type Issue, type Project, type ProjectFile,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -459,36 +460,102 @@ export const FilesTab = ({ project }: { project: Project }) => {
   );
 };
 
-/** The designer's four post-signing drawings: complete when each category has an upload. Tasks close in the database on upload. */
+/** Upload / list / replace / delete for one file category. Replace = upload the new file, then delete the old one. */
+const FileSlot = ({ project, category, files, canUpload, accept }: {
+  project: Project; category: string; files: ProjectFile[]; canUpload: boolean; accept?: string;
+}) => {
+  const { member } = useWorkspace();
+  const { data: urls } = useSignedUrls(files.map((f) => f.storage_path));
+  const upload = useUploadProjectFile();
+  const del = useDeleteProjectFile();
+  const input = useRef<HTMLInputElement>(null);
+  const [replacing, setReplacing] = useState<ProjectFile | null>(null);
+  const mine = (f: ProjectFile) => member && (f.uploaded_by === member.user_id || member.role === "gm");
+
+  const onFiles = async (list: FileList | null) => {
+    if (!list || !member) return;
+    const old = replacing;
+    for (const file of Array.from(list)) {
+      if (file.size > MAX_FILE) { toast.error(`${file.name} is over 25 MB`); continue; }
+      try { await upload.mutateAsync({ projectId: project.id, file, category, by: member.user_id }); }
+      catch (e) { toast.error(errMsg(e, `Could not upload ${file.name}`)); return; }
+    }
+    // Upload first, delete after, so a replaced drawing never leaves its task reopened in between.
+    if (old) del.mutate({ id: old.id, projectId: project.id, path: old.storage_path }, { onError: (e) => toast.error(errMsg(e, "Could not remove the old file")) });
+    setReplacing(null);
+    if (input.current) input.current.value = "";
+  };
+  const pick = (f: ProjectFile | null) => { setReplacing(f); input.current?.click(); };
+
+  return (
+    <div className="py-3 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm">{category}</span>
+        <div className="flex items-center gap-2">
+          <span className={cn("text-xs", files.length ? "text-success" : "text-muted-foreground")}>{files.length ? `${files.length} file${files.length > 1 ? "s" : ""}` : "not uploaded"}</span>
+          {canUpload && <Button size="sm" variant="outline" disabled={upload.isPending} onClick={() => pick(null)}>{upload.isPending ? "Uploading…" : "Upload"}</Button>}
+        </div>
+      </div>
+      <input ref={input} type="file" multiple={!replacing} accept={accept} className="hidden" onChange={(e) => onFiles(e.target.files)} />
+      {files.length > 0 && (
+        <ul className="space-y-1">
+          {files.map((f) => (
+            <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] bg-muted/40 px-2 py-1.5 text-xs">
+              <span className="min-w-0 break-all">{f.file_name} · {shortDate(f.created_at)}</span>
+              <span className="flex gap-1">
+                {urls?.get(f.storage_path) && <Button asChild size="sm" variant="ghost" className="h-7"><a href={urls.get(f.storage_path)} target="_blank" rel="noreferrer">Open</a></Button>}
+                {canUpload && mine(f) && <Button size="sm" variant="ghost" className="h-7" onClick={() => pick(f)}>Replace</Button>}
+                {mine(f) && <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => {
+                  if (confirm(`Delete ${f.file_name}?`)) del.mutate({ id: f.id, projectId: project.id, path: f.storage_path }, { onError: (e) => toast.error(errMsg(e, "Could not delete")) });
+                }}>Delete</Button>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+/** The designer's four drawings, grouped by type and kept on the project permanently. Tasks follow uploads in the database. */
 export const DrawingsChecklist = ({ project }: { project: Project }) => {
+  const { member } = useWorkspace();
   const { data: tasks = [] } = useProjectTasks(project.id);
   const { data: files = [] } = useProjectFiles(project.id);
   const drawing = tasks.filter((t) => t.drawing_kind);
-  if (!drawing.length) return null;
-  const due = drawing[0].due_date;
+  const anyDrawing = files.some((f) => (DRAWING_KINDS as readonly string[]).includes(f.category ?? ""));
+  if (!drawing.length && !anyDrawing) return null;
+  const due = drawing[0]?.due_date;
   const today = todayISO();
-  const rows = DRAWING_KINDS.map((k) => ({ k, file: files.find((f) => f.category === k) }));
-  const missing = rows.filter((r) => !r.file).length;
+  const missing = DRAWING_KINDS.filter((k) => !files.some((f) => f.category === k)).length;
   const late = missing > 0 && !!due && due < today;
+  const canUpload = member?.role === "designer" || member?.role === "gm";
   return (
-    <section className={cn("rounded-[var(--radius)] border p-4 md:p-6 space-y-3", late ? "border-destructive/50 bg-destructive/5" : "border-border bg-card")}>
+    <section className={cn("rounded-[var(--radius)] border p-4 md:p-6", late ? "border-destructive/50 bg-destructive/5" : "border-border bg-card")}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Drawings for procurement</h3>
+        <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Drawings</h3>
         <p className={cn("text-xs", late ? "text-destructive" : "text-muted-foreground")}>
-          {missing === 0 ? "All 4 uploaded" : `${missing} of 4 outstanding · due ${shortDate(due)}${late ? " · overdue" : ""}`}
+          {missing === 0 ? "All 4 types uploaded" : `${missing} of 4 outstanding${due ? ` · due ${shortDate(due)}` : ""}${late ? " · overdue" : ""}`}
         </p>
       </div>
-      <ul className="divide-y divide-border">
-        {rows.map(({ k, file }) => (
-          <li key={k} className="flex flex-col gap-0.5 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <span>{k}</span>
-            <span className={cn("text-xs break-all", file ? "text-success" : late ? "text-destructive" : "text-muted-foreground")}>
-              {file ? `✓ uploaded ${file.file_name}` : "not uploaded"}
-            </span>
-          </li>
-        ))}
-      </ul>
-      {missing > 0 && <p className="text-xs text-muted-foreground">Upload each in the Files tab under its matching category — the task closes on upload.</p>}
+      <div className="divide-y divide-border">
+        {DRAWING_KINDS.map((k) => <FileSlot key={k} project={project} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} />)}
+      </div>
+      <p className="pt-2 text-xs text-muted-foreground">Each drawing task closes when its first file is uploaded and reopens if every file of that type is deleted.</p>
+    </section>
+  );
+};
+
+/** The client-signed original, distinct from the contract the system generated. Sales and GM upload; everyone on the project can open it. */
+export const SignedContractCard = ({ project }: { project: Project }) => {
+  const { member } = useWorkspace();
+  const { data: files = [] } = useProjectFiles(project.id);
+  const canUpload = member?.role === "sales" || member?.role === "gm";
+  const signed = files.filter((f) => f.category === SIGNED_CONTRACT);
+  if (!canUpload && !signed.length) return null;
+  return (
+    <section className="rounded-[var(--radius)] border border-border bg-card px-4 md:px-6">
+      <FileSlot project={project} category={SIGNED_CONTRACT} files={signed} canUpload={canUpload} accept="application/pdf,image/*" />
     </section>
   );
 };
