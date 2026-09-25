@@ -15,7 +15,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { useLeadProposals } from "./proposalQueries";
 import { useCreateContract, useLeadContracts, useSaveContract, type ContractStatus } from "./contractQueries";
 import {
-  CATEGORIES, CONTRACT_UNIT_TYPES, SELLER, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
+  CATEGORIES, CONTRACT_UNIT_TYPES, SELLER, SIGNATURE_COPY, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
   type ContractDocument, type CSection,
 } from "./contractModel";
@@ -57,7 +57,9 @@ const CSS = `
 .ctr-strip > div { flex: 1; padding: 8px 10px 2px; }
 .ctr-strip > div + div { border-left: 1px solid hsl(var(--primary)); }
 .ctr-strip b { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: hsl(var(--primary)); display: block; }
-.ctr-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 26px; break-inside: avoid; }
+.ctr-sign { margin-top: 26px; break-inside: avoid; }
+.ctr-sign > p { margin: 0 0 22px; }
+.ctr-sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
 .ctr-sign h3 { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--primary)); border-bottom: 1px solid hsl(var(--primary)); padding-bottom: 4px; margin: 0 0 14px; font-weight: 600; }
 .ctr-line { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
 .ctr-line span:last-child { flex: 1; border-bottom: 1px solid hsl(var(--foreground) / 0.5); min-height: 16px; padding-left: 4px; }
@@ -162,14 +164,17 @@ export const ContractPaper = ({ d }: { d: ContractDocument }) => {
             })}
 
             <div className="ctr-sign">
-              {[["Buyer", d.client], ["Seller", SELLER]].map(([h, name]) => (
-                <div key={h}>
-                  <h3>{h}</h3>
-                  <div className="ctr-line"><span>Signed</span><span /></div>
-                  <div className="ctr-line"><span>Name</span><span>{name}</span></div>
-                  <div className="ctr-line"><span>Date</span><span /></div>
-                </div>
-              ))}
+              <p>{SIGNATURE_COPY.sig}</p>
+              <div className="ctr-sign-grid">
+                {[[SIGNATURE_COPY.buyer, d.client], [SIGNATURE_COPY.seller, SELLER]].map(([h, name]) => (
+                  <div key={h}>
+                    <h3>{h}</h3>
+                    <div className="ctr-line"><span>{SIGNATURE_COPY.signed}</span><span /></div>
+                    <div className="ctr-line"><span>{SIGNATURE_COPY.name}</span><span>{name}</span></div>
+                    <div className="ctr-line"><span>{SIGNATURE_COPY.date}</span><span /></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </td></tr></tbody>
         </table>
