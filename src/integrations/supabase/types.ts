@@ -236,6 +236,7 @@ export type Database = {
           id: string
           lead_id: string
           proposal_id: string | null
+          source: string
           status: Database["public"]["Enums"]["contract_status"]
           updated_at: string
           version: number
@@ -247,6 +248,7 @@ export type Database = {
           id?: string
           lead_id: string
           proposal_id?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["contract_status"]
           updated_at?: string
           version?: number
@@ -258,6 +260,7 @@ export type Database = {
           id?: string
           lead_id?: string
           proposal_id?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["contract_status"]
           updated_at?: string
           version?: number
