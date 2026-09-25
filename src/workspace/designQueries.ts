@@ -329,20 +329,21 @@ export const useStartDesign = () => {
   });
 };
 
+/**
+ * One package: the design version goes to sales and the costed FF&E goes to the GM in a single
+ * database transaction (ws_submit_design_package) — both or neither. The RPC names anything missing.
+ */
 export const useSubmitDesign = () => {
   const inv = useInvalidateAll();
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { leadId: string; design: DesignRow; brief: BriefRef; notify: NotifyTarget[] }) => {
-      const now = new Date().toISOString();
-      const { error } = await supabase.from("designs").update({ status: "Submitted", submitted_at: now }).eq("id", v.design.id);
+    mutationFn: async (v: { leadId: string; design: DesignRow; notify: NotifyTarget[] }) => {
+      const { error } = await supabase.rpc("ws_submit_design_package", { _design: v.design.id });
       fail(error);
-      await briefToInDesign(v.brief);
-      const { error: bErr } = await supabase.from("requirement_briefs").update({ status: "Design Ready", ready_at: now }).eq("id", v.brief.id);
-      fail(bErr);
       await notify(v.notify);
       return v;
     },
-    onSettled: (_d, _e, v) => inv(v.leadId),
+    onSettled: (_d, _e, v) => { inv(v.leadId); qc.invalidateQueries({ queryKey: ["ws", "costing"] }); },
   });
 };
 

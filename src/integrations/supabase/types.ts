@@ -1711,6 +1711,10 @@ export type Database = {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]
       }
+      ws_submit_design_package: {
+        Args: { _design: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"

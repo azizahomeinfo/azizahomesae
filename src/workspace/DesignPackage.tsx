@@ -490,7 +490,6 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const { data: brief } = useBrief(open ? leadId : undefined);
   const { data: designs = [], isLoading } = useDesigns(open ? leadId : undefined);
   const { data: members = [] } = useMembers();
-  const { data: currentImages = [] } = useDesignImages(open ? designs[0]?.id : undefined);
   const start = useStartDesign();
   const submit = useSubmitDesign();
   const decide = useDecideDesign();
@@ -535,16 +534,19 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
 
   const doSubmit = async () => {
     if (!selected || !brief || !lead || !member) return;
-    const targets = new Set<string>(members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id));
-    if (lead.sales_id) targets.add(lead.sales_id);
-    targets.delete(member.user_id);
-    const title = `${member.full_name} submitted design V${selected.version} for ${lead.name}`;
-    const notify: NotifyTarget[] = [...targets].map((user_id) => ({ user_id, kind: "design", title, lead_id: lead.id }));
+    const gmIds = members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id).filter((u) => u !== member.user_id);
+    const notify: NotifyTarget[] = [
+      ...gmIds.map((user_id) => ({ user_id, kind: "design", lead_id: lead.id,
+        title: `${member.full_name} submitted design package V${selected.version} for ${lead.name} — quotation needed` })),
+      ...(lead.sales_id && lead.sales_id !== member.user_id && !gmIds.includes(lead.sales_id)
+        ? [{ user_id: lead.sales_id, kind: "design", lead_id: lead.id, title: `${member.full_name} submitted design V${selected.version} for ${lead.name} — ready for your review` }]
+        : []),
+    ];
     try {
-      await submit.mutateAsync({ leadId, design: selected, brief: { id: brief.id, status: brief.status }, notify });
-      toast.success(`V${selected.version} sent to sales`);
+      await submit.mutateAsync({ leadId, design: selected, notify });
+      toast.success(`V${selected.version} sent — design to sales, FF&E to the GM`);
     } catch (e) {
-      toast.error(errMsg(e, "Could not submit"));
+      toast.error(errMsg(e, "Could not submit"), { duration: 10000 });
     }
   };
 
@@ -588,7 +590,6 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const updatedAfterSubmit = !!selected && selected.status === "Submitted" && !!selected.submitted_at
     && new Date(selected.updated_at).getTime() - new Date(selected.submitted_at).getTime() > 60_000;
 
-  const zeroFiles = currentImages.length === 0;
   const close = () => onOpenChange(false);
 
   const body = (
@@ -661,6 +662,12 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
           ) : (
             <>
               {!isLatest && <p className="text-sm text-muted-foreground">V{selected.version} is a past version and is read-only.</p>}
+              {editable && selected.status === "Draft" && (
+                <p className="rounded-[var(--radius)] border border-primary/40 bg-primary/5 p-3 text-sm">
+                  The renders and the FF&E list go out together: sales reviews the design while the GM quotes from your costs.
+                  Before submitting you need at least one render, and every FF&E item priced with a unit cost.
+                </p>
+              )}
               {selected.status === "Submitted" && isLatest && !canReview && (
                 <p className="text-sm text-muted-foreground">Submitted {selected.submitted_at ? new Date(selected.submitted_at).toLocaleString() : ""} — waiting for sales to review.</p>
               )}
@@ -687,8 +694,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         <footer className="border-t border-border px-4 py-3 md:px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           {editable && selected?.status === "Draft" && (
             <>
-              {zeroFiles && <span className="text-xs text-muted-foreground sm:mr-auto">Add at least one file before submitting.</span>}
-              <Button onClick={doSubmit} disabled={zeroFiles || submit.isPending}>Submit to sales</Button>
+              <span className="text-xs text-muted-foreground sm:mr-auto">Sends the renders to sales and the costed FF&E list to the GM together.</span>
+              <Button onClick={doSubmit} disabled={submit.isPending}>{submit.isPending ? "Submitting…" : "Submit design package"}</Button>
             </>
           )}
           {canReview && (

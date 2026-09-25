@@ -162,6 +162,13 @@
       "when": 1790358077864,
       "tag": "0022_briefs_designer_only_assigned",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790358336482,
+      "tag": "0023_design_package_submit_together",
+      "breakpoints": true
     }
   ]
 }
