@@ -25,6 +25,14 @@ export const CONTRACT_UNIT_TYPES = UNIT_TYPES;
 export const USE_TYPES = ["End User", "Holiday Home"];
 export const SELLER = "Aziza Home L.L.C-FZ";
 export const DEFAULT_DELIVERY_DAYS = "8–12";
+export const SIGNATURE_COPY = {
+  sig: "The Parties agree to the terms and conditions set forth above as demonstrated by their signatures as follows:",
+  buyer: "Buyer",
+  seller: "Seller",
+  signed: "Signed",
+  name: "Name",
+  date: "Date",
+} as const;
 
 const id = () => crypto.randomUUID();
 
