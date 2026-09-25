@@ -5,8 +5,8 @@
 - [x] Audit every public source, locale, metadata, and static file against the package price table.
 - [x] Replace the stale 28,900 starting price in all seven package meta descriptions without changing delivery claims.
 - [x] Prove retired package prices are absent, verify build health, and report changed files plus unrelated amounts.
-- [ ] Add confirmed deletion for every FF&E section in the requirement brief.
-- [ ] Verify contiguous numbering, live counts, autosave persistence, and standard checklist restoration.
-- [ ] Direct contracts: nullable proposal_id, guard only checks supplied proposals, contracts.source column (dry-run first).
-- [ ] Lead-page "Generate contract" at any stage; prefill from lead + brief FF&E (or unit template), blank subtotal, 80/0/20.
-- [ ] Label direct contracts "Direct contract · no GM quotation"; notify the GM with lead and total when issued.
+- [x] Add confirmed deletion for every FF&E section in the requirement brief.
+- [x] Verify contiguous numbering, live counts, autosave persistence, and standard checklist restoration.
+- [x] Direct contracts: nullable proposal_id, guard only checks supplied proposals, contracts.source column (dry-run first).
+- [x] Lead-page "Generate contract" at any stage; prefill from lead + brief FF&E (or unit template), blank subtotal, 80/0/20.
+- [x] Label direct contracts "Direct contract · no GM quotation"; notify the GM with lead and total when issued.
