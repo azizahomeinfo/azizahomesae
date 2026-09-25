@@ -421,6 +421,28 @@ const ProposalDoc = () => {
           <ProposalPages doc={d} url={url} />
         </div>
       </div>
+
+      {picking !== null && (
+        <div role="dialog" aria-modal="true" aria-label="Which option did the client accept?" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4" onClick={() => setPicking(null)}>
+          <div className="w-full max-w-md space-y-4 rounded-[var(--radius)] border border-border bg-card p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-heading text-xl uppercase tracking-wide">Which option did the client accept?</h3>
+            <p className="text-sm text-muted-foreground">The contract price comes from this option.</p>
+            <div className="space-y-2">
+              {opts.map((o, i) => (
+                <label key={i} className="flex cursor-pointer items-start gap-3 rounded-[var(--radius)] border border-border p-3 has-[:checked]:border-primary">
+                  <input type="radio" name="accepted-option" checked={picking === i} onChange={() => setPicking(i)} className="mt-1" />
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{o.label}</span><span className="block text-xs text-muted-foreground">{o.desc}</span></span>
+                  <span className="text-sm tabular-nums">AED {Math.round(Number(o.amount) || 0).toLocaleString("en-US")}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setPicking(null)}>Cancel</Button>
+              <Button disabled={picking < 0 || setStatus.isPending} onClick={() => acceptWith(picking)}>Mark accepted</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
