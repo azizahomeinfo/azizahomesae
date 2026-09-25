@@ -490,7 +490,6 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const { data: brief } = useBrief(open ? leadId : undefined);
   const { data: designs = [], isLoading } = useDesigns(open ? leadId : undefined);
   const { data: members = [] } = useMembers();
-  const { data: currentImages = [] } = useDesignImages(open ? designs[0]?.id : undefined);
   const start = useStartDesign();
   const submit = useSubmitDesign();
   const decide = useDecideDesign();
