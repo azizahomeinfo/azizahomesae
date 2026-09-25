@@ -8,6 +8,7 @@ import { isDue, shortDate } from "../format";
 import StatusPill from "../StatusPill";
 import { useMyTasks, useProjects } from "../projectQueries";
 import { dueTaskCount } from "../TaskList";
+import AssignQueue, { useAssignQueue } from "../AssignQueue";
 
 const Dashboard = () => {
   const { member } = useWorkspace();
@@ -17,6 +18,7 @@ const Dashboard = () => {
   const { data: designStatuses } = useDesignStatuses();
   const { data: briefs = [] } = useBriefList();
   const role = member?.role;
+  const { rows: queue } = useAssignQueue(role === "gm");
   const { data: projects = [] } = useProjects();
   const { data: myTasks = [] } = useMyTasks(member?.user_id);
   const tasksDue = dueTaskCount(myTasks);
@@ -61,10 +63,16 @@ const Dashboard = () => {
 
       <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
         <h3 className="font-heading uppercase text-xl tracking-wide">Needs your attention</h3>
+        {queue.length > 0 && (
+          <div className="space-y-1 rounded-[var(--radius)] border border-warning/40 bg-warning/10 px-3 pt-3">
+            <p className="text-sm font-medium text-foreground">{queue.length} brief{queue.length === 1 ? "" : "s"} waiting for a designer</p>
+            <AssignQueue rows={queue} />
+          </div>
+        )}
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : due.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nothing overdue.</p>
+          queue.length === 0 && <p className="text-sm text-muted-foreground">Nothing overdue.</p>
         ) : (
           <ul className="divide-y divide-border">
             {due.slice(0, 5).map((l) => (

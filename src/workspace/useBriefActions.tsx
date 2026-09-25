@@ -81,9 +81,11 @@ export const BriefActionBar = ({
         let notify: NotifyTarget[] = [];
         if (a.kind === "submit") {
           patch = { ...patch, submitted_at: now() };
-          notify = brief.designerId
-            ? n(brief.designerId, `Brief submitted: ${lead}`)
-            : designers.flatMap((d) => n(d.user_id, `New brief awaiting a designer: ${lead}`));
+          // Only the GM assigns, so every submission goes to every active GM (and to the designer on a resubmission).
+          notify = [
+            ...gms.flatMap((g) => n(g, `Requirement brief submitted · ${lead} — assign a designer`)),
+            ...n(brief.designerId, `Brief resubmitted: ${lead}`),
+          ];
         } else if (a.kind === "ready") {
           patch = { ...patch, ready_at: now() };
           const targets = Array.from(new Set([brief.salesId, ...gms].filter(Boolean) as string[]));

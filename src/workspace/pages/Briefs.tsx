@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useBriefList, useBriefQueue, useMembers, type BriefListRow } from "../queries";
+import { useBriefList, useMembers, type BriefListRow } from "../queries";
 import { BRIEF_LABEL, BRIEF_STATUSES, type BriefStatus } from "../briefWorkflow";
 import { BriefActionBar } from "../useBriefActions";
 import BriefStatusPill from "../BriefStatusPill";
@@ -68,38 +68,17 @@ const fromRow = (b: BriefListRow): CardData => ({
   budget: b.leads?.budget ?? null, targetDate: b.leads?.target_date ?? null, status: b.status as BriefStatus,
 });
 
+/** Designers see only briefs the GM assigned to them — there is no unassigned queue for them. */
 const DesignerView = () => {
   const { member } = useWorkspace();
-  const { data: queue = [], isLoading: qLoading, error: qErr } = useBriefQueue();
   const { data: list = [], isLoading: lLoading, error: lErr } = useBriefList();
   const mine = list.filter((b) => b.designer_id === member?.user_id && b.status !== "Design Approved");
-  const err = (qErr || lErr) as Error | null;
 
-  if (err) return <p className="text-destructive">{err.message}</p>;
-  if (qLoading || lLoading) return <p className="text-muted-foreground">Loading…</p>;
+  if (lErr) return <p className="text-destructive">{(lErr as Error).message}</p>;
+  if (lLoading) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
     <div className="space-y-8">
-      <Group title="Waiting for the GM to assign" empty="No briefs waiting." count={queue.length}>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {queue.map((q) => (
-            <div key={q.brief_id} className="space-y-2">
-              {/* Read-only: only the GM assigns. The lead becomes visible to a designer once assigned, so this is not a link. */}
-              <div className="rounded-[var(--radius)] border border-border bg-card p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-foreground min-w-0 truncate">{q.name}</p>
-                  <BriefStatusPill status={q.status as BriefStatus} />
-                </div>
-                <p className="text-sm text-muted-foreground truncate">{[q.property, q.unit_type].filter(Boolean).join(" · ") || "—"}</p>
-                <div className="flex justify-between text-sm">
-                  <span>{aed(q.budget)}</span>
-                  <span className="text-muted-foreground">Target {shortDate(q.target_date)}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Group>
       <Group title="My briefs" empty="Nothing assigned to you." count={mine.length}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {mine.map((b) => (
@@ -125,10 +104,16 @@ const GmView = () => {
     return <div className="rounded-[var(--radius)] border border-border p-8 text-center text-muted-foreground">No briefs waiting.</div>;
   }
 
+  const waiting = list.filter((b) => b.status === "Submitted").length;
   return (
     <div className="space-y-8">
-      {BRIEF_STATUSES.map((st) => {
+      <p className={waiting ? "rounded-[var(--radius)] border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-foreground" : "text-sm text-muted-foreground"}>
+        {waiting ? `${waiting} brief${waiting === 1 ? "" : "s"} waiting for a designer — assign below.` : "No briefs waiting for a designer."}
+      </p>
+      {/* The assignment queue leads, oldest first; everything else follows in workflow order. */}
+      {(["Submitted", ...BRIEF_STATUSES.filter((x) => x !== "Submitted")] as BriefStatus[]).map((st) => {
         const rows = list.filter((b) => b.status === st);
+        if (st === "Submitted") rows.sort((a, b) => (a.submitted_at ?? "").localeCompare(b.submitted_at ?? ""));
         if (!rows.length) return null;
         return (
           <section key={st} className="space-y-3">
