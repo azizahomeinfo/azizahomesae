@@ -9,6 +9,9 @@ import StatusPill from "../StatusPill";
 import { useMyTasks, useProjects } from "../projectQueries";
 import { dueTaskCount } from "../TaskList";
 import AssignQueue, { useAssignQueue } from "../AssignQueue";
+import BriefStatusPill from "../BriefStatusPill";
+import type { BriefStatus } from "../briefWorkflow";
+import { DESIGNER_LABEL, isMineBrief } from "./Briefs";
 
 const Dashboard = () => {
   const { member } = useWorkspace();
@@ -24,7 +27,9 @@ const Dashboard = () => {
   const tasksDue = dueTaskCount(myTasks);
   const atRisk = projects.filter((p) => p.stage !== "Closed" && p.risk === "Red").length;
   const awaitingReview = [...(designStatuses?.values() ?? [])].filter((d) => d.status === "Submitted").length;
-  const inDesign = briefs.filter((b) => b.designer_id === member?.user_id && (b.status === "Assigned" || b.status === "In Design")).length;
+  const myBriefs = role === "designer" ? briefs.filter((b) => isMineBrief(b, member?.user_id)) : [];
+  const inDesign = myBriefs.filter((b) => b.status !== "Design Approved").length;
+  const myOrdered = [...myBriefs.filter((b) => b.status !== "Design Approved"), ...myBriefs.filter((b) => b.status === "Design Approved")];
 
   const now = new Date();
   const active = leads.filter((l) => !isClosed(l.status));
@@ -46,7 +51,7 @@ const Dashboard = () => {
   ];
   if (role === "gm" || role === "sales") stats.splice(2, 0, { label: "Awaiting your review", value: awaitingReview, caption: "submitted designs", alert: awaitingReview > 0 });
   if (role === "gm") stats.push({ label: "At risk", value: atRisk, caption: "red projects", alert: atRisk > 0 });
-  if (role === "designer") stats.splice(2, 0, { label: "In design", value: inDesign, caption: "briefs assigned to you" });
+  if (role === "designer") stats.splice(2, 0, { label: "In design", value: inDesign, caption: "live briefs assigned to you" });
 
   return (
     <div className="space-y-6">
@@ -89,6 +94,29 @@ const Dashboard = () => {
           </ul>
         )}
       </section>
+
+      {role === "designer" && (
+        <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
+          <h3 className="font-heading uppercase text-xl tracking-wide">My briefs <span className="text-muted-foreground text-base">({myBriefs.length})</span></h3>
+          {myOrdered.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nothing assigned to you.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {myOrdered.map((b) => (
+                <li key={b.id}>
+                  <Link to={`/workspace/leads/${b.lead_id}`} className="flex items-center justify-between gap-3 py-3 hover:text-primary">
+                    <div className="min-w-0">
+                      <p className="truncate">{b.leads?.name ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{[b.leads?.property, b.leads?.unit_type].filter(Boolean).join(" · ") || "—"}</p>
+                    </div>
+                    <BriefStatusPill status={b.status as BriefStatus} label={DESIGNER_LABEL[b.status as BriefStatus]} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
     </div>
   );
 };
