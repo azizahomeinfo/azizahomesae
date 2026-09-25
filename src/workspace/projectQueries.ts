@@ -354,6 +354,22 @@ export const useUploadProjectFile = () => {
   });
 };
 
+/** Removes the record, then the stored file. A drawing delete reopens its task in the database if it was the last one. */
+export const useDeleteProjectFile = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; projectId: string; path: string }) => {
+      const { error } = await supabase.from("project_files").delete().eq("id", v.id);
+      fail(error);
+      await supabase.storage.from(BUCKET).remove([v.path]);
+      return v;
+    },
+    onSettled: (_d, _e, v) => { qc.invalidateQueries({ queryKey: pKeys.files(v.projectId) }); invalidateTasks(qc); },
+  });
+};
+
 /* ---------------- drawings (post-signing) ---------------- */
 
+// Category strings are stable identifiers (tasks.drawing_kind, DB triggers, and any future Drive sync key off them).
 export const DRAWING_KINDS = ["Wall design drawings", "Furniture drawings", "Cabinet drawings", "Artwork locations"] as const;
+export const SIGNED_CONTRACT = "Signed contract";

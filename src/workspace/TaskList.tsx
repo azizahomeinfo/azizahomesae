@@ -27,7 +27,10 @@ export const TaskRow = ({ task, projectCode }: { task: Task; projectCode?: strin
       <Checkbox
         className="mt-0.5"
         checked={task.done}
-        aria-label={task.done ? "Mark as not done" : "Mark as done"}
+        // Drawing tasks follow the uploads on the project; the database refuses a hand tick.
+        disabled={!!task.drawing_kind}
+        title={task.drawing_kind ? "Closes when the drawing is uploaded to the project" : undefined}
+        aria-label={task.drawing_kind ? "Closes on upload" : task.done ? "Mark as not done" : "Mark as done"}
         onCheckedChange={(c) =>
           toggle.mutate({ id: task.id, done: c === true }, { onError: (e) => toast.error(e instanceof Error ? e.message : "Could not update task") })
         }

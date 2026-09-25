@@ -11,7 +11,7 @@ import {
 } from "../projectQueries";
 import { PROJECT_STAGES, RiskDot, StagePill, TAB_LABEL, TABS_BY_ROLE, type ProjectStage, type ProjectTab } from "../projectConstants";
 import {
-  BriefTab, ChangesTab, ComingSoon, DesignTab, DrawingsChecklist, FilesTab, IssuesTab, OverviewTab, SnaggingTab, TasksTab, TimelineTab,
+  BriefTab, ChangesTab, ComingSoon, DesignTab, DrawingsChecklist, FilesTab, IssuesTab, OverviewTab, SignedContractCard, SnaggingTab, TasksTab, TimelineTab,
 } from "../ProjectTabs";
 import { Team } from "./Projects";
 import { FfeTab, ProcurementTab } from "../FfeTab";
@@ -119,6 +119,7 @@ const ProjectDetail = () => {
         </div>
       </section>
 
+      <SignedContractCard project={project} />
       <DrawingsChecklist project={project} />
 
       <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0" aria-label="Project sections">
