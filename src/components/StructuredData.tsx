@@ -83,7 +83,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
     "url": baseUrl,
     "telephone": "+971-55-977-9635",
     "email": "info@azizahome.com",
-    "priceRange": "€€€",
+    "priceRange": "AED 22,500–99,600",
     "currenciesAccepted": "AED, USD, EUR",
     "paymentAccepted": "Cash, Credit Card, Bank Transfer",
     "address": {
@@ -225,8 +225,8 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       "offers": {
         "@type": "Offer",
         "availability": "https://schema.org/InStock",
-        "priceRange": "€€€",
-        "priceCurrency": "EUR"
+        "priceRange": "AED 22,500–99,600",
+        "priceCurrency": "AED"
       },
       "category": "Turnkey Furnishing Package",
       "hasOfferCatalog": {
@@ -280,7 +280,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       "offers": {
         "@type": "Offer",
         "availability": "https://schema.org/InStock",
-        "priceRange": "€€€"
+        "priceRange": "AED 22,500–99,600"
       }
     },
     {
@@ -303,7 +303,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       "offers": {
         "@type": "Offer",
         "availability": "https://schema.org/InStock",
-        "priceRange": "€€€"
+        "priceRange": "AED 22,500–99,600"
       }
     },
     {
@@ -326,7 +326,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       "offers": {
         "@type": "Offer",
         "availability": "https://schema.org/InStock",
-        "priceRange": "€€€"
+        "priceRange": "AED 22,500–99,600"
       },
       "additionalType": "Investment Property Service"
     },
@@ -350,7 +350,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       "offers": {
         "@type": "Offer",
         "availability": "https://schema.org/InStock",
-        "priceRange": "€€€"
+        "priceRange": "AED 22,500–99,600"
       }
     }
   ];
