@@ -155,6 +155,13 @@
       "when": 1790357896913,
       "tag": "0021_contracts_direct_source",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790358077864,
+      "tag": "0022_briefs_designer_only_assigned",
+      "breakpoints": true
     }
   ]
 }
