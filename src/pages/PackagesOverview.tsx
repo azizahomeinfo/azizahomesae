@@ -175,6 +175,9 @@ const PackagesOverview = () => {
                         <p className="text-3xl font-bold">
                           from {pkg.prices[selectedRoom]}
                         </p>
+                        <p className="text-xs text-muted-foreground/80 mt-1">
+                          Prices exclude VAT and appliances.
+                        </p>
                       </div>
                     </div>
 
