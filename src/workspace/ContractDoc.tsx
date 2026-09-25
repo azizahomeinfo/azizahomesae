@@ -328,8 +328,8 @@ const ContractDoc = () => {
             {/* Who signs decides VAT; stored as the existing vatCharged flag. */}
             <div role="radiogroup" aria-label="Signing party" className="grid gap-2">
               {([
-                { v: true, label: "Signed with a company", note: "VAT 5% charged · bank details included" },
-                { v: false, label: "Signed with an individual", note: "VAT waived · bank details omitted" },
+                { v: true, label: "Signed with a company", note: "Seller Aziza Home L.L.C-FZ · VAT 5% charged · bank details included" },
+                { v: false, label: "Signed with an individual", note: "Seller Ruiqing Xu · VAT waived · bank details omitted" },
               ] as const).map((o) => (
                 <button key={o.label} type="button" role="radio" aria-checked={d.vatCharged === o.v} disabled={dis}
                   onClick={() => change({ vatCharged: o.v })}
