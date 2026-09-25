@@ -1,16 +1,12 @@
-# Public package-price consistency sweep
-
-## Scope
-Audit and correct every visitor- or crawler-facing package price outside `/workspace`, using the supplied 12-value AED table as the only source of truth. Essential and Premium remain unchanged unless a public reference conflicts with that table.
+# Requirement brief section deletion
 
 ## Changes
-- Review public pages, shared data, all seven locale files, metadata, structured data, FAQs, articles, landing pages, static public files, prerender configuration, and WhatsApp copy.
-- Replace stale package amounts, including every localized form of the old AED 28,900 starting price, with AED 22,500 in the locale’s existing number style.
-- Correct package ranges and lowest/highest summaries to derive from AED 22,500–99,600.
-- Preserve unrelated financial figures such as rent, property value, ROI, and case-study amounts; report them separately.
-- Keep `/workspace` untouched.
+- Add a trash control beside every FF&E section heading, including standard sections.
+- Open the app’s existing confirmation dialog before deletion, naming the section and its item count and noting that standard sections can be restored.
+- Delete through the existing brief update/autosave path so closing and reopening preserves the change.
+- Keep section numbers derived from their current position, so numbering remains contiguous automatically.
 
 ## Verification
-- Search all public sources for the five retired package prices in comma, dot, space, compact, and Arabic-digit formats.
-- Check the current preview/build signal after edits.
-- Report every changed file and the exact correction made.
+- Confirm a newly added section can be deleted back to the prior state.
+- Confirm deleting Bathroom updates numbering and counts, persists, and Restore standard checklist adds it back.
+- Check the current build signal after the edit.

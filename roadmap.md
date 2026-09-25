@@ -5,3 +5,5 @@
 - [x] Audit every public source, locale, metadata, and static file against the package price table.
 - [x] Replace the stale 28,900 starting price in all seven package meta descriptions without changing delivery claims.
 - [x] Prove retired package prices are absent, verify build health, and report changed files plus unrelated amounts.
+- [ ] Add confirmed deletion for every FF&E section in the requirement brief.
+- [ ] Verify contiguous numbering, live counts, autosave persistence, and standard checklist restoration.
