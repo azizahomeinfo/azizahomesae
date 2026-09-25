@@ -306,7 +306,11 @@ const ContractDoc = () => {
           <h2 className="font-heading text-2xl uppercase tracking-wide break-words">Contract · {lead.name}</h2>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className={`inline-flex rounded-full border px-2.5 py-0.5 ${CONTRACT_TONE[row.status]}`}>{row.status}</span>
-            <span>V{row.version}</span>{d.optionLabel && <span>· {d.optionLabel}</span>}{draft && <span>· unsaved changes</span>}
+            <span>V{row.version}</span>
+            {isDirect
+              ? <span className="inline-flex rounded-full border border-warning/40 bg-warning/10 px-2.5 py-0.5 text-foreground">Direct contract · no GM quotation</span>
+              : d.optionLabel && <span>· {d.optionLabel}</span>}
+            {draft && <span>· unsaved changes</span>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -346,7 +350,9 @@ const ContractDoc = () => {
           </Section>
 
           <Section title="Price & payments">
-            <Field label="Subtotal ex-VAT (AED)"><Input type="number" min={0} disabled={dis} value={d.subtotal} onChange={(e) => change({ subtotal: Number(e.target.value) })} /></Field>
+            <Field label={isDirect ? "Subtotal ex-VAT (AED)" : "Subtotal ex-VAT (AED) — locked to GM quote"}>
+              <Input type="number" min={0} placeholder="Enter the price" readOnly={!isDirect} disabled={dis || !isDirect} value={d.subtotal || ""} onChange={(e) => change({ subtotal: Number(e.target.value) })} />
+            </Field>
             <label className="flex items-center justify-between text-sm">VAT 5% charged<Switch disabled={dis} checked={d.vatCharged} onCheckedChange={(v) => change({ vatCharged: v })} /></label>
             <div className="grid grid-cols-3 gap-2">
               <Field label="Deposit %"><Input type="number" min={0} max={100} disabled={dis} value={d.deposit}
