@@ -194,6 +194,15 @@ const LeadDetail = () => {
             </Button>
           </div>
         )}
+        {canSee(member?.role as WorkspaceRole, "contracts") && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-foreground">Sales agreement</p>
+              <p className="text-sm text-muted-foreground">From an accepted proposal, or directly for a repeat client.</p>
+            </div>
+            <Button asChild variant="outline"><Link to={`/workspace/contracts/${lead.id}`}>Generate contract</Link></Button>
+          </div>
+        )}
         {status === "Won" && (
           <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-foreground">{lead.converted_project_id ? "Project" : "Convert to project"}</p>

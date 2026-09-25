@@ -10,9 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useLead } from "./queries";
+import { useBrief, useLead, useMembers } from "./queries";
 import { useWorkspace } from "./WorkspaceProvider";
-import { useLeadProposals } from "./proposalQueries";
+import { useLeadProposals, useProposalItems } from "./proposalQueries";
 import { useCreateContract, useLeadContracts, useSaveContract, type ContractStatus } from "./contractQueries";
 import {
   CATEGORIES, CONTRACT_UNIT_TYPES, SELLER, SIGNATURE_COPY, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
@@ -207,27 +207,30 @@ const ContractDoc = () => {
   const { leadId } = useParams();
   const { member } = useWorkspace();
   const { data: lead, isLoading } = useLead(leadId);
+  const { data: members = [] } = useMembers();
+  const { data: brief, isLoading: bLoading } = useBrief(leadId);
   const { data: proposals = [], isLoading: pLoading } = useLeadProposals(leadId);
   const { data: contracts = [], isLoading: cLoading, error: cError } = useLeadContracts(leadId);
+  const { data: briefGroups = [], isLoading: gLoading } = useProposalItems(leadId, brief?.ffe ?? null);
   const create = useCreateContract();
   const save = useSaveContract();
   const [draft, setDraft] = useState<ContractDocument | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
 
-  const back = <Link to={`/workspace/proposals/${leadId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Proposal</Link>;
-  if (isLoading || pLoading || cLoading) return <div className="space-y-4">{back}<p className="text-muted-foreground">Loading…</p></div>;
+  const accepted = proposals.find((p) => p.status === "Accepted");
+  const back = accepted
+    ? <Link to={`/workspace/proposals/${leadId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Proposal</Link>
+    : <Link to={`/workspace/leads/${leadId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Lead</Link>;
+  if (isLoading || pLoading || cLoading || bLoading || gLoading) return <div className="space-y-4">{back}<p className="text-muted-foreground">Loading…</p></div>;
   if (!lead || !member || member.role === "designer") return <div className="space-y-4">{back}<p className="text-muted-foreground">You don't have access to this contract.</p></div>;
   if (cError) return <div className="space-y-4">{back}<p className="text-destructive">{(cError as Error).message}</p></div>;
 
   const canEdit = member.role === "gm" || lead.sales_id === member.user_id;
-  const accepted = proposals.find((p) => p.status === "Accepted");
   const row = contracts[0];
 
   if (!row) {
-    const latest = proposals[0];
-    const reason = !latest ? "there is no proposal for this lead yet"
-      : `the proposal is ${latest.status}, not Accepted — mark it Sent, then Client accepted`;
-    const generate = async () => {
+    // Route A: an accepted proposal exists → price locked to the accepted quote option.
+    const fromProposal = async () => {
       if (!accepted) return;
       const opts = accepted.doc.investment.options;
       const opt = accepted.accepted_option ?? (opts.length === 1 ? { label: opts[0].label, amount: Number(opts[0].amount) } : null);
@@ -238,21 +241,34 @@ const ContractDoc = () => {
       try { await create.mutateAsync({ leadId: lead.id, proposalId: accepted.id, doc, by: member.user_id, version: 1 }); toast.success("Contract created"); }
       catch (e) { toast.error(errMsg(e, "Could not create the contract")); }
     };
+    // Route B: direct from the lead — items from the brief (or the unit template), subtotal left for sales to type.
+    const direct = async () => {
+      const doc = buildContract({ lead, unit: null, option: null, vat: 5, down: 80, groups: briefGroups });
+      if (!doc.sections.length) doc.sections = templateFor(doc.unitType);
+      try { await create.mutateAsync({ leadId: lead.id, proposalId: null, doc, by: member.user_id, version: 1 }); toast.success("Direct contract created — enter the subtotal"); }
+      catch (e) { toast.error(errMsg(e, "Could not create the contract")); }
+    };
     return (
       <div className="space-y-4">
         {back}
         <h2 className="font-heading text-2xl uppercase tracking-wide">Contract · {lead.name}</h2>
         <div className="space-y-3 rounded-[var(--radius)] border border-dashed border-border p-8 text-center">
-          {accepted
-            ? <p className="text-sm text-muted-foreground">Generated from accepted proposal V{accepted.version}{accepted.accepted_option ? ` · ${accepted.accepted_option.label}` : ""}.</p>
-            : <p className="text-sm text-destructive">Can't generate a contract yet — {reason}.</p>}
-          {canEdit ? <Button onClick={generate} disabled={!accepted || create.isPending}>{create.isPending ? "Generating…" : "Generate contract"}</Button>
-            : <p className="text-sm text-muted-foreground">Only the lead's sales owner or the GM can generate the contract.</p>}
+          {accepted ? (
+            <p className="text-sm text-muted-foreground">Generated from accepted proposal V{accepted.version}{accepted.accepted_option ? ` · ${accepted.accepted_option.label}` : ""} — the price is the GM's quoted option.</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Direct contract — no proposal or GM quotation. Client details come from the lead, items from {briefGroups.length ? "the requirement brief" : `the standard ${lead.unit_type || "2 Bedroom"} list`}; you type the subtotal.
+            </p>
+          )}
+          {canEdit ? (
+            <Button onClick={accepted ? fromProposal : direct} disabled={create.isPending}>{create.isPending ? "Generating…" : "Generate contract"}</Button>
+          ) : <p className="text-sm text-muted-foreground">Only the lead's sales owner or the GM can generate the contract.</p>}
         </div>
       </div>
     );
   }
 
+  const isDirect = row.source === "direct";
   const d = draft ?? row.doc;
   const editable = canEdit && row.status !== "Signed";
   const change = (p: Partial<ContractDocument>) => setDraft({ ...d, ...p });
@@ -267,7 +283,12 @@ const ContractDoc = () => {
     catch (e) { toast.error(errMsg(e, "Could not save")); }
   };
   const setStatus = async (status: ContractStatus) => {
-    try { await save.mutateAsync({ id: row.id, leadId: lead.id, status, doc: draft ?? undefined }); setDraft(null); toast.success(`Marked ${status}`); }
+    // Every other client-facing price comes from the GM; a direct contract's doesn't, so the GM hears when one goes out.
+    const notify = isDirect && status === "Issued"
+      ? members.filter((x) => x.role === "gm" && x.active && x.user_id !== member.user_id)
+          .map((x) => ({ user_id: x.user_id, title: `Direct contract issued · ${lead.name} · ${aedWhole(m.total)}`, body: "Price set by sales — no GM quotation." }))
+      : undefined;
+    try { await save.mutateAsync({ id: row.id, leadId: lead.id, status, doc: draft ?? undefined, notify }); setDraft(null); toast.success(`Marked ${status}`); }
     catch (e) { toast.error(errMsg(e, "Failed")); }
   };
   const print = () => {
@@ -285,7 +306,11 @@ const ContractDoc = () => {
           <h2 className="font-heading text-2xl uppercase tracking-wide break-words">Contract · {lead.name}</h2>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className={`inline-flex rounded-full border px-2.5 py-0.5 ${CONTRACT_TONE[row.status]}`}>{row.status}</span>
-            <span>V{row.version}</span>{d.optionLabel && <span>· {d.optionLabel}</span>}{draft && <span>· unsaved changes</span>}
+            <span>V{row.version}</span>
+            {isDirect
+              ? <span className="inline-flex rounded-full border border-warning/40 bg-warning/10 px-2.5 py-0.5 text-foreground">Direct contract · no GM quotation</span>
+              : d.optionLabel && <span>· {d.optionLabel}</span>}
+            {draft && <span>· unsaved changes</span>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -325,7 +350,9 @@ const ContractDoc = () => {
           </Section>
 
           <Section title="Price & payments">
-            <Field label="Subtotal ex-VAT (AED)"><Input type="number" min={0} disabled={dis} value={d.subtotal} onChange={(e) => change({ subtotal: Number(e.target.value) })} /></Field>
+            <Field label={isDirect ? "Subtotal ex-VAT (AED)" : "Subtotal ex-VAT (AED) — locked to GM quote"}>
+              <Input type="number" min={0} placeholder="Enter the price" readOnly={!isDirect} disabled={dis || !isDirect} value={d.subtotal || ""} onChange={(e) => change({ subtotal: Number(e.target.value) })} />
+            </Field>
             <label className="flex items-center justify-between text-sm">VAT 5% charged<Switch disabled={dis} checked={d.vatCharged} onCheckedChange={(v) => change({ vatCharged: v })} /></label>
             <div className="grid grid-cols-3 gap-2">
               <Field label="Deposit %"><Input type="number" min={0} max={100} disabled={dis} value={d.deposit}
