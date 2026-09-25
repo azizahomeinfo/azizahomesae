@@ -14,7 +14,7 @@ export type Project = Pick<
 >;
 export type Task = Pick<
   T["tasks"]["Row"],
-  "id" | "project_id" | "lead_id" | "title" | "assignee_id" | "due_date" | "priority" | "done" | "done_at" | "created_at"
+  "id" | "project_id" | "lead_id" | "title" | "assignee_id" | "due_date" | "priority" | "done" | "done_at" | "created_at" | "drawing_kind"
 >;
 export type Issue = Pick<
   T["issues"]["Row"],
@@ -32,7 +32,7 @@ export type ProjectFile = Pick<
 
 const PROJECT_COLS =
   "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, value, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
-const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, priority, done, done_at, created_at";
+const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, priority, done, done_at, created_at, drawing_kind";
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, cost_delta, days_delta, status, decided_at, decided_by";
 const HANDOVER_COLS = "id, project_id, label, sort_order, done, done_at, done_by";
@@ -349,6 +349,11 @@ export const useUploadProjectFile = () => {
       }
       return v;
     },
-    onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: pKeys.files(v.projectId) }),
+    // A drawing upload closes its task in the database, so tasks refresh too.
+    onSettled: (_d, _e, v) => { qc.invalidateQueries({ queryKey: pKeys.files(v.projectId) }); invalidateTasks(qc); },
   });
 };
+
+/* ---------------- drawings (post-signing) ---------------- */
+
+export const DRAWING_KINDS = ["Wall design drawings", "Furniture drawings", "Cabinet drawings", "Artwork locations"] as const;

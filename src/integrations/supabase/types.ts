@@ -542,6 +542,7 @@ export type Database = {
           notes: string | null
           ordered_on: string | null
           po_ref: string | null
+          priority_band: number | null
           product_url: string | null
           project_id: string | null
           qty: number
@@ -571,6 +572,7 @@ export type Database = {
           notes?: string | null
           ordered_on?: string | null
           po_ref?: string | null
+          priority_band?: number | null
           product_url?: string | null
           project_id?: string | null
           qty?: number
@@ -600,6 +602,7 @@ export type Database = {
           notes?: string | null
           ordered_on?: string | null
           po_ref?: string | null
+          priority_band?: number | null
           product_url?: string | null
           project_id?: string | null
           qty?: number
@@ -1510,6 +1513,7 @@ export type Database = {
           detail: string | null
           done: boolean
           done_at: string | null
+          drawing_kind: string | null
           due_date: string | null
           id: string
           lead_id: string | null
@@ -1525,6 +1529,7 @@ export type Database = {
           detail?: string | null
           done?: boolean
           done_at?: string | null
+          drawing_kind?: string | null
           due_date?: string | null
           id?: string
           lead_id?: string | null
@@ -1540,6 +1545,7 @@ export type Database = {
           detail?: string | null
           done?: boolean
           done_at?: string | null
+          drawing_kind?: string | null
           due_date?: string | null
           id?: string
           lead_id?: string | null
@@ -1712,9 +1718,14 @@ export type Database = {
         Args: { _kind: string; _lead: string; _title: string; _user: string }
         Returns: undefined
       }
+      ws_notify_overdue_drawings: { Args: never; Returns: undefined }
       ws_role: {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]
+      }
+      ws_sign_contract: {
+        Args: { _contract: string; _handover: string }
+        Returns: string
       }
       ws_submit_design_package: {
         Args: { _design: string }
