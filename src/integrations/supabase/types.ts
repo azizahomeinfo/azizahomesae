@@ -1743,6 +1743,10 @@ export type Database = {
         Args: { _design: string }
         Returns: undefined
       }
+      ws_sync_drawing_task: {
+        Args: { _kind: string; _project: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"

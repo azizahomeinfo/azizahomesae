@@ -211,6 +211,13 @@
       "when": 1790364599890,
       "tag": "0029_ffe_seed_from_brief",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790365194017,
+      "tag": "0030_ffe_bands_furniture_and_drawing_sync",
+      "breakpoints": true
     }
   ]
 }
