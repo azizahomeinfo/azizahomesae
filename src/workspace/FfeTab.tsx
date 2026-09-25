@@ -724,14 +724,25 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const role = member?.role as WorkspaceRole;
   const canEdit = role === "gm" || role === "coordinator";
-  const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), false);
+  // GM and coordinator buy, so they see cost; nobody else reaches this tab with cost.
+  const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
   const update = useUpdateFfeItems();
   const [view, setView] = useState<"table" | "board">("table");
+  const [groupBy, setGroupBy] = useState<"priority" | "room">("priority");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
-  const groups = useMemo(() => byRoom(rows), [rows]);
+  const groups = useMemo(() => groupBy === "room" ? byRoom(rows)
+    : PRIORITY_BANDS.map((b, i) => [`${i + 1} · ${b}`, rows.filter((r) => bandOf(r) === i + 1)] as [string, FfeRow[]]).filter(([, l]) => l.length),
+  [rows, groupBy]);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
+  const bandCell = (r: FfeRow) => canEdit ? (
+    <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
+      <SelectTrigger className="h-8 w-44" aria-label={`Priority for ${r.item}`}><SelectValue /></SelectTrigger>
+      <SelectContent>{PRIORITY_BANDS.map((b, i) => <SelectItem key={b} value={String(i + 1)}>{i + 1} · {b}</SelectItem>)}</SelectContent>
+    </Select>
+  ) : <span className="text-xs whitespace-nowrap">{bandOf(r)} · {PRIORITY_BANDS[bandOf(r) - 1]}</span>;
+  const costCell = (r: FfeRow) => canEdit ? <span className="tabular-nums whitespace-nowrap">{r.unit_cost == null ? "—" : aed(Number(r.unit_cost) * Number(r.qty))}</span> : null;
 
   const apply = (ids: string[], values: Partial<FfeRow>, ok?: string) =>
     update.mutate({ owner: projectOwner(project.id), ids, values }, {
@@ -754,6 +765,11 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         <div className="flex gap-1">
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
+          {view === "table" && (
+            <Button size="sm" variant="outline" onClick={() => setGroupBy(groupBy === "priority" ? "room" : "priority")}>
+              {groupBy === "priority" ? "Group by room" : "Group by priority"}
+            </Button>
+          )}
         </div>
       }>
         <div className="flex flex-wrap gap-2 text-xs">
@@ -787,13 +803,15 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-muted-foreground">
-                <tr>{canEdit && <th />}<th className="p-1">Item</th><th className="p-1">Stage</th><th className="p-1">PO ref</th><th className="p-1">Ordered</th><th className="p-1">ETA</th><th className="p-1">Delivered</th><th className="p-1">Installed</th><th className="p-1">Notes</th></tr>
+                <tr>{canEdit && <th />}<th className="p-1">Item</th><th className="p-1">Priority</th>{canEdit && <th className="p-1">Cost</th>}<th className="p-1">Stage</th><th className="p-1">PO ref</th><th className="p-1">Ordered</th><th className="p-1">ETA</th><th className="p-1">Delivered</th><th className="p-1">Installed</th><th className="p-1">Notes</th></tr>
               </thead>
               <tbody>
                 {items.map((r) => (
                   <tr key={r.id} className="border-t border-border align-top">
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
-                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span>{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></td>
+                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span>{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy === "priority" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}</td>
+                    <td className="p-1">{bandCell(r)}</td>
+                    {canEdit && <td className="p-1">{costCell(r)}</td>}
                     <td className="p-1"><StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} /></td>
                     <td className="p-1"><EditCell label="PO ref" value={r.po_ref} disabled={!canEdit} className="w-28" onSave={(v) => apply([r.id], { po_ref: v || null })} /></td>
                     <td className="p-1">{dateCell(r, "ordered_on", "Ordered on")}</td>
@@ -811,8 +829,9 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <li key={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm">{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p></div>
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm">{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy === "priority" && <p className="text-[10px] text-muted-foreground">{r.room}{canEdit && r.unit_cost != null ? ` · ${aed(Number(r.unit_cost) * Number(r.qty))}` : ""}</p>}</div>
                 </div>
+                {bandCell(r)}
                 <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} />
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <label className="space-y-1"><span className="text-muted-foreground">PO ref</span><EditCell label="PO ref" value={r.po_ref} disabled={!canEdit} onSave={(v) => apply([r.id], { po_ref: v || null })} /></label>

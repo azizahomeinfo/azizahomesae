@@ -13,7 +13,7 @@ export type Supplier = Pick<
 export type FfeRow = Pick<
   T["ffe_items"]["Row"],
   | "id" | "project_id" | "lead_id" | "ref" | "room" | "category" | "item" | "dims" | "spec" | "qty" | "unit"
-  | "supplier_id" | "supplier_name" | "supplier_contact" | "product_url" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order"
+  | "supplier_id" | "supplier_name" | "supplier_contact" | "product_url" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order" | "priority_band"
 > & { unit_cost?: number | null };
 export type ProcStage = T["ffe_items"]["Row"]["stage"];
 export type CostingStatus = T["ffe_costings"]["Row"]["status"];
@@ -30,7 +30,7 @@ export type Snag = Pick<
 const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, payment_terms, rating, status, notes";
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
-  "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order";
+  "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order, priority_band";
 const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, options";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
 
@@ -134,6 +134,27 @@ export const useSaveSupplier = () => {
     },
     onSettled: () => qc.invalidateQueries({ queryKey: fKeys.suppliers }),
   });
+};
+
+/* ---------------- purchasing priority ---------------- */
+
+/** Coarse buying order for the coordinator: large furniture first, decor last. A work queue, not a taxonomy. */
+export const PRIORITY_BANDS = ["Large furniture", "Furniture & appliances", "Soft furnishings", "Kitchenware & linen", "Decor & accessories"] as const;
+const LARGE = /\b(bed|beds|mattress|sofa|sectional|wardrobe|dining table|tv unit|tv console|media unit|sideboard|bunk)\b/i;
+const DECOR = /\b(decor|décor|vase|artwork|art|frame|mirror|plant|candle|sculpture|book|tray|accessor|ornament|diffuser|clock|cushion)/i;
+const LINEN = /\b(towel|linen|bedding|duvet|pillow|sheet|bath mat|kitchenware|cutlery|plate|glass|mug|cookware|pan|pot|utensil|tableware|tabletop|dinner set|knife|bowl|amenit)/i;
+const SOFT = /\b(curtain|blind|drape|rug|carpet|lamp|light|lighting|pendant|chandelier|sconce|throw)/i;
+const APPLIANCE_ROOM = /appliance/i;
+const KITCHEN_ROOM = /kitchenware|tabletop|linen/i;
+/** 1–5. The coordinator's override wins; otherwise derived from item name, then room. */
+export const bandOf = (r: Pick<FfeRow, "priority_band" | "item" | "room">): number => {
+  if (r.priority_band) return r.priority_band;
+  if (LARGE.test(r.item)) return 1;
+  if (DECOR.test(r.item)) return 5;
+  if (LINEN.test(r.item) || KITCHEN_ROOM.test(r.room)) return 4;
+  if (SOFT.test(r.item)) return 3;
+  if (APPLIANCE_ROOM.test(r.room)) return 2;
+  return 2;
 };
 
 /* ---------------- ffe items ---------------- */
