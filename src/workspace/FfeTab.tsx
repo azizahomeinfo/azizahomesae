@@ -524,17 +524,25 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       <Section title="Costing" right={
         <div className="flex flex-wrap items-center gap-2">
           <CostingPill status={status} version={hasQuote ? costing?.version : null} />
-          {canSubmit && (
+          {/* The first submission goes with the renders ("Submit design package"). Only a list the GM returned is resubmitted alone. */}
+          {canSubmit && status === "Returned" && (
             <Button size="sm" disabled={transition.isPending}
-              onClick={() => run({ status: "Submitted", submitted_at: new Date().toISOString() },
-                notifyTo(gms, `${name} ${hasQuote ? "resubmitted" : "submitted"} the FF&E list for ${ctx.name} — quotation needed`), "Sent to GM for quotation")}>
-              {hasQuote ? "Resubmit to GM" : "Submit to GM"}
+              onClick={() => {
+                const uncosted = rows.filter((r) => r.unit_cost == null).length;
+                if (uncosted) { toast.error(`Can't resubmit — ${uncosted} item${uncosted === 1 ? " has" : "s have"} no unit cost.`); return; }
+                run({ status: "Submitted", submitted_at: new Date().toISOString() },
+                  notifyTo(gms, `${name} resubmitted the FF&E list for ${ctx.name} — quotation needed`), "Resubmitted to GM for quotation");
+              }}>
+              Resubmit to GM
             </Button>
           )}
         </div>
       }>
-        {role === "designer" && (status === "Draft" || status === "Returned") && (
-          <p className="text-sm text-muted-foreground">Specify every item for this design — supplier, purchase link, quantity, dimensions and unit cost. Submit to the GM to set the final quotation.</p>
+        {role === "designer" && status === "Draft" && (
+          <p className="text-sm text-muted-foreground">Specify every item for this design — supplier, purchase link, quantity, dimensions and unit cost. The list goes to the GM together with your renders when you press "Submit design package" on the Renders tab; every item needs a unit cost.</p>
+        )}
+        {role === "designer" && status === "Returned" && (
+          <p className="text-sm text-muted-foreground">The GM returned this list. Fix the costing and resubmit it — the design doesn't need to be shared again.</p>
         )}
         {status === "Returned" && costing?.return_note && (
           <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Returned by GM: {costing.return_note}</p>
