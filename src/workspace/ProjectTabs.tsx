@@ -13,8 +13,8 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, DRAWING_KINDS, DEAL_RECORD_KINDS,
-  type Issue, type Project, type ProjectFile,
+  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, useLeadDealFiles, DRAWING_KINDS, DEAL_RECORD_KINDS,
+  type Issue, type Project, type ProjectFile, type FileOwner,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -418,7 +418,7 @@ export const FilesTab = ({ project }: { project: Project }) => {
     for (const file of Array.from(list)) {
       if (file.size > MAX_FILE) { toast.error(`${file.name} is over 25 MB`); continue; }
       try {
-        await upload.mutateAsync({ projectId: project.id, file, category, by: member.user_id });
+        await upload.mutateAsync({ projectId: project.id, leadId: project.lead_id, file, category, by: member.user_id });
       } catch (e) { toast.error(errMsg(e, `Could not upload ${file.name}`)); }
     }
     if (input.current) input.current.value = "";
@@ -464,8 +464,8 @@ export const FilesTab = ({ project }: { project: Project }) => {
 
 /** Upload / list / replace / delete for one file category. Replace = upload the new file, then delete the old one.
  *  versioned: no in-place replace; the newest file is current and older ones stay visible as superseded. */
-const FileSlot = ({ project, category, files, canUpload, accept, versioned }: {
-  project: Project; category: string; files: ProjectFile[]; canUpload: boolean; accept?: string; versioned?: boolean;
+export const FileSlot = ({ owner, category, files, canUpload, accept, versioned }: {
+  owner: FileOwner; category: string; files: ProjectFile[]; canUpload: boolean; accept?: string; versioned?: boolean;
 }) => {
   const { member } = useWorkspace();
   const { data: urls } = useSignedUrls(files.map((f) => f.storage_path));
@@ -481,11 +481,11 @@ const FileSlot = ({ project, category, files, canUpload, accept, versioned }: {
     const old = replacing;
     for (const file of Array.from(list)) {
       if (file.size > MAX_FILE) { toast.error(`${file.name} is over 25 MB`); continue; }
-      try { await upload.mutateAsync({ projectId: project.id, file, category, by: member.user_id }); }
+      try { await upload.mutateAsync({ ...owner, file, category, by: member.user_id }); }
       catch (e) { toast.error(errMsg(e, `Could not upload ${file.name}`)); return; }
     }
     // Upload first, delete after, so a replaced drawing never leaves its task reopened in between.
-    if (old) del.mutate({ id: old.id, projectId: project.id, path: old.storage_path }, { onError: (e) => toast.error(errMsg(e, "Could not remove the old file")) });
+    if (old) del.mutate({ ...owner, id: old.id, path: old.storage_path }, { onError: (e) => toast.error(errMsg(e, "Could not remove the old file")) });
     setReplacing(null);
     if (input.current) input.current.value = "";
   };
@@ -513,7 +513,7 @@ const FileSlot = ({ project, category, files, canUpload, accept, versioned }: {
                 {urls?.get(f.storage_path) && <Button asChild size="sm" variant="ghost" className="h-7"><a href={urls.get(f.storage_path)} target="_blank" rel="noreferrer">Open</a></Button>}
                 {!versioned && canUpload && mine(f) && <Button size="sm" variant="ghost" className="h-7" onClick={() => pick(f)}>Replace</Button>}
                 {mine(f) && <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => {
-                  if (confirm(`Delete ${f.file_name}?`)) del.mutate({ id: f.id, projectId: project.id, path: f.storage_path }, { onError: (e) => toast.error(errMsg(e, "Could not delete")) });
+                  if (confirm(`Delete ${f.file_name}?`)) del.mutate({ ...owner, id: f.id, path: f.storage_path }, { onError: (e) => toast.error(errMsg(e, "Could not delete")) });
                 }}>Delete</Button>}
               </span>
             </li>
@@ -553,7 +553,7 @@ export const DrawingsChecklist = ({ project }: { project: Project }) => {
                   Due {dueTimeLabel(t.due_at)} · {timeLeftLabel(t.due_at)}
                 </p>
               )}
-              <FileSlot project={project} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} />
+              <FileSlot owner={{ projectId: project.id, leadId: null }} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} />
             </div>
           );
         })}
@@ -576,7 +576,7 @@ export const SignedContractCard = ({ project }: { project: Project }) => {
       <h3 className="text-[11px] uppercase tracking-[0.25em] text-primary">Record of the deal</h3>
       <div className="divide-y divide-border">
         {DEAL_RECORD_KINDS.map((k) => (
-          <FileSlot key={k} project={project} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} accept="application/pdf,image/*" versioned />
+          <FileSlot key={k} owner={{ projectId: project.id, leadId: project.lead_id }} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} accept="application/pdf,image/*" versioned />
         ))}
       </div>
       <p className="pt-2 text-xs text-muted-foreground">What the client actually signed and was sent. Uploading a new version keeps the earlier ones.</p>
@@ -587,3 +587,24 @@ export const SignedContractCard = ({ project }: { project: Project }) => {
 export const ComingSoon = () => (
   <div className="rounded-[var(--radius)] border border-border p-10 text-center text-muted-foreground">Coming in the next release.</div>
 );
+
+/** Record of the deal on the lead: sales owner and GM file the signed contract and proposal before any project exists.
+ *  The same rows become the project's when it is created (ws_carry_deal_files) — no copies, no re-upload. */
+export const LeadDealCard = ({ lead }: { lead: { id: string; sales_id: string | null; converted_project_id: string | null } }) => {
+  const { member } = useWorkspace();
+  const { data: files = [] } = useLeadDealFiles(lead.id);
+  const canUpload = member?.role === "gm" || (member?.role === "sales" && lead.sales_id === member.user_id);
+  if (member?.role === "designer" || (!canUpload && !files.length)) return null;
+  const owner: FileOwner = { projectId: lead.converted_project_id, leadId: lead.id };
+  return (
+    <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6">
+      <h3 className="text-[11px] uppercase tracking-[0.25em] text-primary">Record of the deal</h3>
+      <div className="divide-y divide-border">
+        {DEAL_RECORD_KINDS.map((k) => (
+          <FileSlot key={k} owner={owner} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} accept="application/pdf,image/*" versioned />
+        ))}
+      </div>
+      <p className="pt-2 text-xs text-muted-foreground">The signed contract and the proposal sent to the client. They move to the project automatically when this lead becomes one.</p>
+    </section>
+  );
+};

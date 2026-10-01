@@ -1038,7 +1038,8 @@ export type Database = {
           created_at: string
           file_name: string
           id: string
-          project_id: string
+          lead_id: string | null
+          project_id: string | null
           size_bytes: number | null
           storage_path: string
           uploaded_by: string | null
@@ -1048,7 +1049,8 @@ export type Database = {
           created_at?: string
           file_name: string
           id?: string
-          project_id: string
+          lead_id?: string | null
+          project_id?: string | null
           size_bytes?: number | null
           storage_path: string
           uploaded_by?: string | null
@@ -1058,12 +1060,20 @@ export type Database = {
           created_at?: string
           file_name?: string
           id?: string
-          project_id?: string
+          lead_id?: string | null
+          project_id?: string | null
           size_bytes?: number | null
           storage_path?: string
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "project_files_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_files_project_id_fkey"
             columns: ["project_id"]
