@@ -1543,6 +1543,7 @@ export type Database = {
           done: boolean
           done_at: string | null
           drawing_kind: string | null
+          due_at: string | null
           due_date: string | null
           id: string
           lead_id: string | null
@@ -1559,6 +1560,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           drawing_kind?: string | null
+          due_at?: string | null
           due_date?: string | null
           id?: string
           lead_id?: string | null
@@ -1575,6 +1577,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           drawing_kind?: string | null
+          due_at?: string | null
           due_date?: string | null
           id?: string
           lead_id?: string | null
@@ -1750,6 +1753,17 @@ export type Database = {
         Args: { _handover: string; _lead: string }
         Returns: Json
       }
+      ws_create_drawing_tasks: {
+        Args: {
+          _designer: string
+          _lead: string
+          _project: string
+          _title: string
+        }
+        Returns: undefined
+      }
+      ws_drawing_hours: { Args: { _kind: string }; Returns: number }
+      ws_drawing_kinds: { Args: never; Returns: string[] }
       ws_ffe_band: {
         Args: { _category: string; _item: string; _room: string }
         Returns: number

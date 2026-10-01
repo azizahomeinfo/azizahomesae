@@ -20,7 +20,7 @@ import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import { DriveLink } from "./DriveLink";
-import { NewTaskForm, TaskRow } from "./TaskList";
+import { NewTaskForm, TaskRow, isOverdue, dueTimeLabel, timeLeftLabel } from "./TaskList";
 import CommentThread from "./CommentThread";
 import BriefEditor from "./BriefEditor";
 import BriefStatusPill from "./BriefStatusPill";
@@ -532,21 +532,31 @@ export const DrawingsChecklist = ({ project }: { project: Project }) => {
   const drawing = tasks.filter((t) => t.drawing_kind);
   const anyDrawing = files.some((f) => (DRAWING_KINDS as readonly string[]).includes(f.category ?? ""));
   if (!drawing.length && !anyDrawing) return null;
-  const due = drawing[0]?.due_date;
-  const today = todayISO();
   const missing = DRAWING_KINDS.filter((k) => !files.some((f) => f.category === k)).length;
-  const late = missing > 0 && !!due && due < today;
+  const late = drawing.some((t) => isOverdue(t));
   const canUpload = member?.role === "designer" || member?.role === "gm";
   return (
     <section className={cn("rounded-[var(--radius)] border p-4 md:p-6", late ? "border-destructive/50 bg-destructive/5" : "border-border bg-card")}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Drawings</h3>
         <p className={cn("text-xs", late ? "text-destructive" : "text-muted-foreground")}>
-          {missing === 0 ? "All 4 types uploaded" : `${missing} of 4 outstanding${due ? ` · due ${shortDate(due)}` : ""}${late ? " · overdue" : ""}`}
+          {missing === 0 ? "All 4 types uploaded" : `${missing} of 4 outstanding${late ? " · overdue" : ""}`}
         </p>
       </div>
       <div className="divide-y divide-border">
-        {DRAWING_KINDS.map((k) => <FileSlot key={k} project={project} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} />)}
+        {DRAWING_KINDS.map((k) => {
+          const t = drawing.find((x) => x.drawing_kind === k);
+          return (
+            <div key={k}>
+              {t?.due_at && !t.done && (
+                <p className={cn("pt-3 text-xs", isOverdue(t) ? "text-destructive" : "text-muted-foreground")}>
+                  Due {dueTimeLabel(t.due_at)} · {timeLeftLabel(t.due_at)}
+                </p>
+              )}
+              <FileSlot project={project} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} />
+            </div>
+          );
+        })}
       </div>
       <p className="pt-2 text-xs text-muted-foreground">Each drawing task closes when its first file is uploaded and reopens if every file of that type is deleted.</p>
     </section>

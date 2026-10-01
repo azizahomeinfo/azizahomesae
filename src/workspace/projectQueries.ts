@@ -14,7 +14,7 @@ export type Project = Pick<
 >;
 export type Task = Pick<
   T["tasks"]["Row"],
-  "id" | "project_id" | "lead_id" | "title" | "assignee_id" | "due_date" | "priority" | "done" | "done_at" | "created_at" | "drawing_kind"
+  "id" | "project_id" | "lead_id" | "title" | "assignee_id" | "due_date" | "due_at" | "priority" | "done" | "done_at" | "created_at" | "drawing_kind"
 >;
 export type Issue = Pick<
   T["issues"]["Row"],
@@ -33,7 +33,7 @@ export type ProjectFile = Pick<
 // projects.value is revoked from staff (contract value lives in project_value_private) — never list it here.
 const PROJECT_COLS =
   "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
-const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, priority, done, done_at, created_at, drawing_kind";
+const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, due_at, priority, done, done_at, created_at, drawing_kind";
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, cost_delta, days_delta, status, decided_at, decided_by";
 const HANDOVER_COLS = "id, project_id, label, sort_order, done, done_at, done_by";
@@ -365,7 +365,8 @@ export const useDeleteProjectFile = () => {
 /* ---------------- drawings (post-signing) ---------------- */
 
 // Category strings are stable identifiers (tasks.drawing_kind, DB triggers, and any future Drive sync key off them).
-export const DRAWING_KINDS = ["Wall design drawings", "Furniture drawings", "Cabinet drawings", "Artwork locations"] as const;
+// Ordered by deadline (24h, 48h, 48h, 72h — set in ws_drawing_hours).
+export const DRAWING_KINDS = ["Cabinet drawings", "Furniture drawings", "Wall design drawings", "Hanging & light fixtures instructions"] as const;
 export const SIGNED_CONTRACT = "Signed contract";
 export const SALES_PROPOSAL = "Proposal";
 /** Sales/GM-only categories (enforced by project_files policies); never drive drawing tasks. Stable keys. */

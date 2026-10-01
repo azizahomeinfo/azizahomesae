@@ -15,7 +15,29 @@ const PRIORITIES = ["Low", "Medium", "High"] as const;
 type Priority = (typeof PRIORITIES)[number];
 const NONE = "__none";
 
-export const isOverdue = (t: Pick<Task, "done" | "due_date">) => !t.done && !!t.due_date && t.due_date < todayISO();
+// due_at (exact time) decides lateness when present; due_date is the fallback for date-only tasks.
+export const isOverdue = (t: Pick<Task, "done" | "due_date" | "due_at">) =>
+  !t.done && (t.due_at ? new Date(t.due_at).getTime() < Date.now() : !!t.due_date && t.due_date < todayISO());
+
+const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+/** "17:40 today", "17:40 tomorrow", "17:40 Sat 3 Oct". */
+export const dueTimeLabel = (iso: string) => {
+  const d = new Date(iso);
+  const hm = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const now = new Date();
+  const tmr = new Date(now); tmr.setDate(now.getDate() + 1);
+  if (sameDay(d, now)) return `${hm} today`;
+  if (sameDay(d, tmr)) return `${hm} tomorrow`;
+  return `${hm} ${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}`;
+};
+/** "5h 20m left", "1d 4h left", "3h overdue". */
+export const timeLeftLabel = (iso: string) => {
+  const ms = new Date(iso).getTime() - Date.now();
+  const m = Math.floor(Math.abs(ms) / 60000);
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+  const s = d ? `${d}d ${h}h` : h ? `${h}h ${mm}m` : `${mm}m`;
+  return ms < 0 ? `${s} overdue` : `${s} left`;
+};
 
 export const TaskRow = ({ task, projectCode }: { task: Task; projectCode?: string }) => {
   const toggle = useToggleTask();
@@ -39,7 +61,9 @@ export const TaskRow = ({ task, projectCode }: { task: Task; projectCode?: strin
         <p className={cn("break-words text-sm", task.done && "line-through text-muted-foreground")}>{task.title}</p>
         <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {projectCode && <Link to={`/workspace/projects/${projectCode}`} className="text-primary hover:underline">{projectCode}</Link>}
-          {task.due_date && <span className={cn(overdue && "text-destructive")}>Due {shortDate(task.due_date)}{overdue && " · overdue"}</span>}
+          {task.due_at ? (
+            <span className={cn(overdue && "text-destructive")}>Due {dueTimeLabel(task.due_at)}{!task.done && ` · ${timeLeftLabel(task.due_at)}`}</span>
+          ) : task.due_date && <span className={cn(overdue && "text-destructive")}>Due {shortDate(task.due_date)}{overdue && " · overdue"}</span>}
           <span className={cn(task.priority === "High" && "text-destructive")}>{task.priority} priority</span>
           {who && <span>{who}</span>}
         </p>
