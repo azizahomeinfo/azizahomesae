@@ -13,7 +13,7 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, DRAWING_KINDS, DEAL_RECORD_KINDS,
+  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, useLeadDealFiles, DRAWING_KINDS, DEAL_RECORD_KINDS,
   type Issue, type Project, type ProjectFile, type FileOwner,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
@@ -587,3 +587,24 @@ export const SignedContractCard = ({ project }: { project: Project }) => {
 export const ComingSoon = () => (
   <div className="rounded-[var(--radius)] border border-border p-10 text-center text-muted-foreground">Coming in the next release.</div>
 );
+
+/** Record of the deal on the lead: sales owner and GM file the signed contract and proposal before any project exists.
+ *  The same rows become the project's when it is created (ws_carry_deal_files) — no copies, no re-upload. */
+export const LeadDealCard = ({ lead }: { lead: { id: string; sales_id: string | null; converted_project_id: string | null } }) => {
+  const { member } = useWorkspace();
+  const { data: files = [] } = useLeadDealFiles(lead.id);
+  const canUpload = member?.role === "gm" || (member?.role === "sales" && lead.sales_id === member.user_id);
+  if (!canUpload && !files.length) return null;
+  const owner: FileOwner = { projectId: lead.converted_project_id, leadId: lead.id };
+  return (
+    <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6">
+      <h3 className="text-[11px] uppercase tracking-[0.25em] text-primary">Record of the deal</h3>
+      <div className="divide-y divide-border">
+        {DEAL_RECORD_KINDS.map((k) => (
+          <FileSlot key={k} owner={owner} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} accept="application/pdf,image/*" versioned />
+        ))}
+      </div>
+      <p className="pt-2 text-xs text-muted-foreground">The signed contract and the proposal sent to the client. They move to the project automatically when this lead becomes one.</p>
+    </section>
+  );
+};
