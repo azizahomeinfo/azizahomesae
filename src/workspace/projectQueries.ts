@@ -27,7 +27,7 @@ export type ChangeRequest = Pick<
 export type HandoverItem = Pick<T["handover_items"]["Row"], "id" | "project_id" | "label" | "sort_order" | "done" | "done_at" | "done_by">;
 export type ProjectFile = Pick<
   T["project_files"]["Row"],
-  "id" | "project_id" | "storage_path" | "file_name" | "category" | "size_bytes" | "uploaded_by" | "created_at"
+  "id" | "project_id" | "lead_id" | "storage_path" | "file_name" | "category" | "size_bytes" | "uploaded_by" | "created_at"
 >;
 
 // projects.value is revoked from staff (contract value lives in project_value_private) — never list it here.
@@ -37,7 +37,7 @@ const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, due_at
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, cost_delta, days_delta, status, decided_at, decided_by";
 const HANDOVER_COLS = "id, project_id, label, sort_order, done, done_at, done_by";
-const FILE_COLS = "id, project_id, storage_path, file_name, category, size_bytes, uploaded_by, created_at";
+const FILE_COLS = "id, project_id, lead_id, storage_path, file_name, category, size_bytes, uploaded_by, created_at";
 const BUCKET = "workspace";
 
 export const pKeys = {
@@ -325,16 +325,34 @@ export const useProjectFiles = (projectId: string | undefined) =>
     },
   });
 
+/** Who a file belongs to: a project, or (deal documents only) a lead that isn't a project yet. */
+export type FileOwner = { projectId: string | null; leadId: string | null };
+const ownerKey = (o: FileOwner) => (o.projectId ? pKeys.files(o.projectId) : pKeys.files(`lead:${o.leadId}`));
+
+/** Deal documents filed on a lead, including ones carried into its project (same rows). */
+export const useLeadDealFiles = (leadId: string | undefined) =>
+  useQuery({
+    queryKey: pKeys.files(`lead:${leadId ?? ""}`),
+    enabled: !!leadId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("project_files").select(FILE_COLS).eq("lead_id", leadId!)
+        .in("category", [...DEAL_RECORD_KINDS]).order("created_at", { ascending: false });
+      fail(error);
+      return (data ?? []) as ProjectFile[];
+    },
+  });
+
 export const useUploadProjectFile = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { projectId: string; file: File; category: string | null; by: string }) => {
+    mutationFn: async (v: FileOwner & { file: File; category: string | null; by: string }) => {
       const ext = (v.file.name.split(".").pop() ?? "bin").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
-      const path = `projects/${v.projectId}/${crypto.randomUUID()}.${ext}`;
+      // Lead-only deal documents live under deals/<lead_id>/ and keep that path after the project is created.
+      const path = v.projectId ? `projects/${v.projectId}/${crypto.randomUUID()}.${ext}` : `deals/${v.leadId}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, v.file, { contentType: v.file.type || undefined });
       fail(upErr);
       const { error } = await supabase.from("project_files").insert({
-        project_id: v.projectId, storage_path: path, file_name: v.file.name.slice(0, 200),
+        project_id: v.projectId, lead_id: v.leadId, storage_path: path, file_name: v.file.name.slice(0, 200),
         category: v.category, size_bytes: v.file.size, uploaded_by: v.by,
       });
       if (error) {
@@ -344,7 +362,11 @@ export const useUploadProjectFile = () => {
       return v;
     },
     // A drawing upload closes its task in the database, so tasks refresh too.
-    onSettled: (_d, _e, v) => { qc.invalidateQueries({ queryKey: pKeys.files(v.projectId) }); invalidateTasks(qc); },
+    onSettled: (_d, _e, v) => {
+      qc.invalidateQueries({ queryKey: ownerKey(v) });
+      if (v.leadId) qc.invalidateQueries({ queryKey: pKeys.files(`lead:${v.leadId}`) });
+      invalidateTasks(qc);
+    },
   });
 };
 
@@ -352,13 +374,17 @@ export const useUploadProjectFile = () => {
 export const useDeleteProjectFile = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { id: string; projectId: string; path: string }) => {
+    mutationFn: async (v: FileOwner & { id: string; path: string }) => {
       const { error } = await supabase.from("project_files").delete().eq("id", v.id);
       fail(error);
       await supabase.storage.from(BUCKET).remove([v.path]);
       return v;
     },
-    onSettled: (_d, _e, v) => { qc.invalidateQueries({ queryKey: pKeys.files(v.projectId) }); invalidateTasks(qc); },
+    onSettled: (_d, _e, v) => {
+      qc.invalidateQueries({ queryKey: ownerKey(v) });
+      if (v.leadId) qc.invalidateQueries({ queryKey: pKeys.files(`lead:${v.leadId}`) });
+      invalidateTasks(qc);
+    },
   });
 };
 
