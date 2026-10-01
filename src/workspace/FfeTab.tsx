@@ -14,14 +14,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useBrief, useMembers } from "./queries";
-import type { Project } from "./projectQueries";
+import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, type Project } from "./projectQueries";
 import type { WorkspaceRole } from "./access";
 import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier,
-  projectOwner, useSeedFfe, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf,
+  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, missingLink, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -379,6 +379,111 @@ const QuotePanel = ({ cost, initial, hasQuote, version, pending, onSet, onReturn
   );
 };
 
+/* ---------------- budget approval (route 2) ---------------- */
+
+const BUDGET_LABEL: Record<CostingStatus, string> = {
+  Draft: "Being completed", Submitted: "With GM for budget approval", Quoted: "Budget approved", Returned: "Sent back by GM",
+};
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** Project with no in-system contract and no FF&E list: say so instead of a blank sheet. */
+const NoListBanner = ({ projectId }: { projectId: string }) => {
+  const { data: files = [] } = useProjectFiles(projectId);
+  const hasContract = files.some((f) => f.category === SIGNED_CONTRACT);
+  return (
+    <div className="rounded-[var(--radius)] border border-warning/40 bg-warning/10 p-4 text-sm space-y-1">
+      <p className="font-medium">{hasContract ? "A signed contract is on file, but there's no FF&E list yet." : "No FF&E list yet, and no contract signed in the system."}</p>
+      <p className="text-muted-foreground">
+        Add the items from the contract below — one row per line, with room and quantity. Then the designer adds the supplier and purchase link
+        for every item and submits the list to the GM for budget approval. The coordinator starts buying only after the GM approves.
+        The system does not read items out of the contract file.
+      </p>
+    </div>
+  );
+};
+
+const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, withCost, canSubmit, isGm, role, onlyGaps, setOnlyGaps }: {
+  projectId: string; name: string; status: CostingStatus; costing: ReturnType<typeof useCosting>["data"]; rows: FfeRow[]; gapRows: FfeRow[];
+  cost: number; withCost: boolean; canSubmit: boolean; isGm: boolean; role: WorkspaceRole; onlyGaps: boolean; setOnlyGaps: (v: boolean) => void;
+}) => {
+  const submit = useSubmitBudget();
+  const decide = useDecideBudget();
+  const { data: values } = useProjectValues(role);
+  const [note, setNote] = useState("");
+  const contract = values?.get(projectId) ?? null;
+  const noSupplier = rows.filter(missingSupplier).length;
+  const noLink = rows.filter(missingLink).length;
+  const uncosted = rows.filter((r) => r.unit_cost == null).length;
+  const send = () => submit.mutate(projectId, {
+    onSuccess: () => toast.success("Sent to the GM for budget approval"), onError: (e) => toast.error(errMsg(e, "Failed")),
+  });
+  const decideNow = (approve: boolean) => decide.mutate({ projectId, approve, note }, {
+    onSuccess: () => { setNote(""); toast.success(approve ? "Budget approved — the coordinator has been told to start buying" : "Sent back to the designer"); },
+    onError: (e) => toast.error(errMsg(e, "Failed")),
+  });
+  return (
+    <>
+      <Section title="Budget approval" right={
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-border px-2.5 py-0.5 text-xs">{BUDGET_LABEL[status]}</span>
+          {canSubmit && status !== "Submitted" && (
+            <Button size="sm" disabled={submit.isPending} onClick={send}>
+              {status === "Draft" ? "Submit for budget approval" : "Resubmit for budget approval"}
+            </Button>
+          )}
+        </div>
+      }>
+        <p className="text-sm text-muted-foreground">
+          The client price is already agreed in the signed contract. The GM approves the internal spend on this list — not a client quotation.
+          {status !== "Quoted" && " The coordinator starts buying once it's approved."}
+        </p>
+        {status !== "Quoted" && (gapRows.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">
+            <span>
+              {plural(gapRows.length, "item isn't", "items aren't")} ready to buy
+              {noSupplier > 0 && ` · ${noSupplier} without a supplier`}
+              {noLink > 0 && ` · ${noLink} without a purchase link`}. Every item needs both before the list can go to the GM.
+            </span>
+            <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only incomplete"}</Button>
+          </div>
+        ) : (
+          <p className="text-sm">Every item has a supplier and a purchase link.</p>
+        ))}
+        {status === "Returned" && costing?.return_note && (
+          <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Sent back by GM: {costing.return_note}</p>
+        )}
+        {status === "Quoted" && (
+          <p className="rounded-[var(--radius)] border border-success/40 bg-success/10 p-3 text-sm">
+            Budget approved{costing?.quoted_at ? ` on ${shortDate(costing.quoted_at)}` : ""}{costing?.gm_notes ? ` — ${costing.gm_notes}` : ""}. The coordinator is buying from this list.
+            {role === "designer" && " If you change it, resubmit so the GM sees the new figures."}
+          </p>
+        )}
+        {withCost && <p className="text-sm">Total cost: <span className="font-medium tabular-nums">{aed(cost)}</span> · {rows.length} items{uncosted ? ` · ${uncosted} without a unit cost` : ""}</p>}
+        {!withCost && <p className="text-sm">{rows.length} items</p>}
+      </Section>
+
+      {isGm && status === "Submitted" && (
+        <Section title={`Approve the budget — ${name}`}>
+          <dl className="grid gap-3 sm:grid-cols-3 text-sm">
+            <div><dt className="text-xs text-muted-foreground">Contract total (agreed with client)</dt><dd className="font-medium tabular-nums">{contract == null ? "Not recorded" : aed(contract)}</dd></div>
+            <div><dt className="text-xs text-muted-foreground">FF&E cost on this list</dt><dd className="font-medium tabular-nums">{aed(cost)}</dd></div>
+            <div><dt className="text-xs text-muted-foreground">Left after FF&E</dt><dd className={cn("font-medium tabular-nums", contract != null && contract - cost < 0 && "text-destructive")}>{contract == null ? "—" : aed(contract - cost)}</dd></div>
+          </dl>
+          {uncosted > 0 && <p className="text-sm text-destructive">{plural(uncosted, "item has", "items have")} no unit cost, so the cost total is incomplete.</p>}
+          <div className="space-y-1">
+            <Label htmlFor="budget-note">Note (required to send back)</Label>
+            <Textarea id="budget-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="What needs changing, or a note for the coordinator" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={decide.isPending} onClick={() => decideNow(true)}>Approve budget</Button>
+            <Button variant="outline" disabled={decide.isPending || !note.trim()} onClick={() => decideNow(false)}>Send back to designer</Button>
+          </div>
+        </Section>
+      )}
+    </>
+  );
+};
+
 /* ---------------- FF&E costing sheet ---------------- */
 
 export const FfeTab = ({ project }: { project: Project }) => (
@@ -404,6 +509,10 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const [addingRoom, setAddingRoom] = useState(false);
   const [delRoom, setDelRoom] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const { data: needsBudget } = useNeedsBudget(ctx.projectId);
+  // Route 2: no contract signed in the system — the list goes designer → GM budget approval → coordinator.
+  const budget = !!ctx.projectId && needsBudget === true;
+  const [onlyGaps, setOnlyGaps] = useState(false);
 
   const status: CostingStatus = costing?.status ?? "Draft";
   const isGm = role === "gm";
@@ -428,7 +537,14 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
     });
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
-  if (!rows.length) return <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />;
+  if (!rows.length) return (
+    <div className="space-y-4">
+      {budget && ctx.projectId && <NoListBanner projectId={ctx.projectId} />}
+      <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />
+    </div>
+  );
+  const gapRows = budget ? rows.filter((r) => missingSupplier(r) || missingLink(r)) : [];
+  const shownGroups = budget && onlyGaps ? groups.map(([g, l]) => [g, l.filter((r) => missingSupplier(r) || missingLink(r))] as [string, FfeRow[]]).filter(([, l]) => l.length) : groups;
 
   const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
@@ -459,7 +575,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)_minmax(0,.9fr)]";
 
   const itemRow = (r: FfeRow) => (
-    <li key={r.id} className="space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2">
+    <li key={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
+      budget && (missingSupplier(r) || missingLink(r)) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
           <span className="block text-[10px] text-muted-foreground">{r.ref}</span>
@@ -521,6 +638,11 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
 
   return (
     <div className="space-y-4">
+      {budget && ctx.projectId ? (
+        <BudgetSection projectId={ctx.projectId} name={ctx.name} status={status} costing={costing} rows={rows} gapRows={gapRows}
+          cost={grand} withCost={withCost} canSubmit={(isGm || role === "designer") && !readOnly}
+          isGm={isGm && !readOnly} role={role} onlyGaps={onlyGaps} setOnlyGaps={setOnlyGaps} />
+      ) : (<>
       <Section title="Costing" right={
         <div className="flex flex-wrap items-center gap-2">
           <CostingPill status={status} version={hasQuote ? costing?.version : null} />
@@ -587,8 +709,9 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
           onReturn={(note) => run({ status: "Returned", return_note: note || null },
             notifyTo([ctx.designerId], `${name} returned the FF&E list for ${ctx.name}`), "Returned to designer")} />
       )}
+      </>)}
 
-      {groups.map(([room, items]) => {
+      {shownGroups.map(([room, items]) => {
         const sub = items.reduce((s, r) => s + lineTotal(r), 0);
         return (
           <section key={room} className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
@@ -726,6 +849,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const canEdit = role === "gm" || role === "coordinator";
   // GM and coordinator buy, so they see cost; nobody else reaches this tab with cost.
   const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
+  const { data: needsBudget } = useNeedsBudget(project.id);
+  const { data: budgetCosting } = useCosting(projectOwner(project.id), false);
   const update = useUpdateFfeItems();
   const [view, setView] = useState<"table" | "board">("table");
   const [groupBy, setGroupBy] = useState<"priority" | "room">("priority");
@@ -754,6 +879,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (!rows.length) return <div className="rounded-[var(--radius)] border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No FF&E items yet. Build the costing sheet on the FF&E tab first.</div>;
+  const awaitingBudget = needsBudget === true && budgetCosting?.status !== "Quoted";
 
   const dateCell = (r: FfeRow, k: "ordered_on" | "eta" | "delivered_on" | "installed_on", label: string) =>
     canEdit ? (
