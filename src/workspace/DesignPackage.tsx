@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, ChevronRight, FileText, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, FileText, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +24,10 @@ import {
   touchSubmittedDesign, useRenameArea, useSignedUrls, useStartDesign, useSubmitDesign, useUpdateImage, useUploadDesignFile,
   type DesignImage, type DesignRow, type UploadStage,
 } from "./designQueries";
-import { DESIGN_AREAS, REJECT_REASONS, type DesignStatus } from "./designSchema";
+import { DESIGN_AREAS, DESIGN_KINDS, REJECT_REASONS, type DesignKind, type DesignStatus } from "./designSchema";
 import DesignStatusPill from "./DesignStatusPill";
 import { FfeSheet } from "./FfeTab";
-import { leadOwner } from "./ffeQueries";
+import { leadOwner, useFfeItems } from "./ffeQueries";
 
 interface Props {
   leadId: string;
@@ -75,6 +75,17 @@ const Thumb = ({
   );
   useAutosave(caption, img.caption ?? "", editable, saveCaption);
   const pdf = isPdf(img);
+  // The kind decides what counts toward "renders" and "mood board" at submission. Changing it moves the file into the
+  // matching area (Mood Board / Floor Plan) so a later area rename can't silently flip it back.
+  const setKind = (kind: DesignKind) => {
+    if (kind === img.kind) return;
+    const fixed = img.room === "Mood Board" || img.room === "Floor Plan";
+    const room = kind === "Mood board" ? "Mood Board" : kind === "Floor plan" ? "Floor Plan" : fixed ? "Other" : img.room;
+    update.mutate({ id: img.id, designId: img.design_id, patch: { kind, room } }, {
+      onSuccess: () => { toast.success(`Marked as ${kind}`); onChanged(); },
+      onError: (e) => toast.error(errMsg(e, "Could not change the kind")),
+    });
+  };
 
   const remove = async () => {
     try {
@@ -117,6 +128,10 @@ const Thumb = ({
         {editable ? (
           <>
             <Input value={caption} onChange={(e) => setCaption(e.target.value.slice(0, 300))} placeholder="Caption" className="h-8 text-sm" />
+            <Select value={img.kind} onValueChange={(v) => setKind(v as DesignKind)}>
+              <SelectTrigger className="h-8 text-xs" aria-label={`Kind of ${img.file_name || "file"}`}><span className="text-muted-foreground mr-1">Kind:</span><SelectValue /></SelectTrigger>
+              <SelectContent>{DESIGN_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
+            </Select>
             <div className="flex items-center justify-between gap-1">
               <div className="flex gap-1">
                 <Button type="button" size="icon" variant="ghost" className="h-8 w-8" disabled={!canLeft} onClick={() => onMove(-1)} aria-label="Move earlier">
@@ -132,7 +147,10 @@ const Thumb = ({
             </div>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground min-h-5 break-words">{img.caption || "\u00a0"}</p>
+          <>
+            <p className="text-sm text-muted-foreground min-h-5 break-words">{img.caption || "\u00a0"}</p>
+            <p className="text-[11px] text-muted-foreground">{img.kind}</p>
+          </>
         )}
       </div>
     </div>
@@ -495,6 +513,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const decide = useDecideDesign();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const latest = designs[0];
   useEffect(() => { setSelectedId(latest?.id ?? null); }, [latest?.id, open]);
@@ -519,6 +538,24 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   // The designer specs FF&E against the renders, so both live in this dialog.
   const [tab, setTab] = useState<"renders" | "ffe">("renders");
   useEffect(() => { if (open) setTab("renders"); }, [open]);
+  // Live checklist mirroring ws_submit_design_package, so the gap is visible while uploading, not after pressing Submit.
+  const { data: pkgImages = [] } = useDesignImages(open && selected?.status === "Draft" ? selected.id : undefined);
+  const { data: pkgItems = [] } = useFfeItems(open && selected?.status === "Draft" ? leadOwner(leadId) : undefined, member?.role !== "sales");
+  const nRenders = pkgImages.filter((i) => /render/i.test(i.kind)).length;
+  const nMood = pkgImages.filter((i) => /mood/i.test(i.kind)).length;
+  const nUncosted = pkgItems.filter((r) => r.unit_cost == null).length;
+  const checks = [
+    { ok: nRenders > 0, label: nRenders ? `Renders · ${nRenders}` : "Renders",
+      fix: "Upload at least one render into a room area (e.g. Living Room) on the Renders tab." },
+    { ok: nMood > 0, label: nMood ? `Mood board · ${nMood}` : "Mood board",
+      fix: "Add at least one mood board image: choose \u201c+ Add area \u2192 Mood Board\u201d and upload there, or set an uploaded file's Kind to \u201cMood board\u201d (the menu under each file). Files uploaded into a room area count as renders." },
+    { ok: pkgItems.length > 0 && nUncosted === 0,
+      label: pkgItems.length === 0 ? "FF&E list" : nUncosted ? `FF&E costed · ${nUncosted} missing` : `FF&E costed · ${pkgItems.length}`,
+      fix: pkgItems.length === 0 ? "Add the FF&E items on the FF&E tab." : `Enter a unit cost for ${nUncosted} item${nUncosted === 1 ? "" : "s"} on the FF&E tab.` },
+  ];
+  const gaps = checks.filter((c) => !c.ok);
+  useEffect(() => { if (!gaps.length) setSubmitError(null); }, [gaps.length]);
+  useEffect(() => { setSubmitError(null); }, [selected?.id, open]);
   const nameOf = (id: string | null | undefined) => members.find((m) => m.user_id === id)?.full_name ?? "Someone";
 
   const doStart = async () => {
@@ -534,6 +571,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
 
   const doSubmit = async () => {
     if (!selected || !brief || !lead || !member) return;
+    if (gaps.length) { setSubmitError(`Can't submit yet — ${gaps.map((g) => g.fix).join(" ")}`); return; }
+    setSubmitError(null);
     const gmIds = members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id).filter((u) => u !== member.user_id);
     const notify: NotifyTarget[] = [
       ...gmIds.map((user_id) => ({ user_id, kind: "design", lead_id: lead.id,
@@ -546,7 +585,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
       await submit.mutateAsync({ leadId, design: selected, notify });
       toast.success(`V${selected.version} sent — design to sales, FF&E to the GM`);
     } catch (e) {
-      toast.error(errMsg(e, "Could not submit"), { duration: 10000 });
+      // Inline and persistent: a refusal that fades away reads as a broken button.
+      setSubmitError(errMsg(e, "Could not submit"));
     }
   };
 
@@ -694,7 +734,23 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         <footer className="border-t border-border px-4 py-3 md:px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           {editable && selected?.status === "Draft" && (
             <>
-              <span className="text-xs text-muted-foreground sm:mr-auto">Sends the renders to sales and the costed FF&E list to the GM together.</span>
+              <div className="space-y-1.5 sm:mr-auto min-w-0">
+                <ul className="flex flex-wrap gap-1.5" aria-label="Needed to submit">
+                  {checks.map((c) => (
+                    <li key={c.label} className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs",
+                      c.ok ? "border-success/50 text-success" : "border-destructive/60 bg-destructive/10 text-destructive")}>
+                      {c.ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}{c.label}
+                    </li>
+                  ))}
+                </ul>
+                {submitError ? (
+                  <p role="alert" className="text-sm text-destructive">{submitError}</p>
+                ) : gaps.length ? (
+                  <p className="text-xs text-muted-foreground">{gaps[0].fix}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Ready — sends the renders to sales and the costed FF&E list to the GM together.</p>
+                )}
+              </div>
               <Button onClick={doSubmit} disabled={submit.isPending}>{submit.isPending ? "Submitting…" : "Submit design package"}</Button>
             </>
           )}
