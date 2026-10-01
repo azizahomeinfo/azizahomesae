@@ -9,7 +9,7 @@ export type Project = Pick<
   T["projects"]["Row"],
   | "id" | "code" | "lead_id" | "name" | "client" | "property" | "unit" | "unit_type" | "location" | "drive_url"
   | "sales_id" | "designer_id" | "coordinator_id" | "start_date" | "handover_date" | "actual_handover"
-  | "stage" | "risk" | "overall_pct" | "proc_pct" | "value" | "received"
+  | "stage" | "risk" | "overall_pct" | "proc_pct" | "received"
   | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at"
 >;
 export type Task = Pick<
@@ -30,8 +30,9 @@ export type ProjectFile = Pick<
   "id" | "project_id" | "storage_path" | "file_name" | "category" | "size_bytes" | "uploaded_by" | "created_at"
 >;
 
+// projects.value is revoked from staff (contract value lives in project_value_private) — never list it here.
 const PROJECT_COLS =
-  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, value, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
+  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
 const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, priority, done, done_at, created_at, drawing_kind";
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, cost_delta, days_delta, status, decided_at, decided_by";
@@ -79,6 +80,18 @@ export const useProject = (code: string | undefined) =>
       const { data, error } = await supabase.from("projects").select(PROJECT_COLS).eq("code", code!).maybeSingle();
       fail(error);
       return (data ?? null) as Project | null;
+    },
+  });
+
+/** Contract value per project (RLS: GM and the project's sales owner only). Only fetched for those roles. */
+export const useProjectValues = (role: string | undefined) =>
+  useQuery({
+    queryKey: ["ws", "project-values"],
+    enabled: role === "gm" || role === "sales",
+    queryFn: async () => {
+      const { data, error } = await supabase.from("project_value_private").select("project_id, value");
+      fail(error);
+      return new Map((data ?? []).map((r) => [r.project_id, r.value === null ? null : Number(r.value)]));
     },
   });
 
