@@ -31,11 +31,13 @@ const Dashboard = () => {
   const inDesign = myBriefs.filter((b) => b.status !== "Design Approved").length;
   const myOrdered = [...myBriefs.filter((b) => b.status !== "Design Approved"), ...myBriefs.filter((b) => b.status === "Design Approved")];
 
-  // Post-signing drawings past their 2-day deadline, one row per project.
-  const today = new Date().toISOString().slice(0, 10);
-  const lateDrawings = [...myTasks.filter((t) => t.drawing_kind && !t.done && t.due_date && t.due_date < today)
+  // Open post-signing drawings, one row per project, each drawing with its own clock (24h/48h/48h/72h).
+  const lateDrawings = [...myTasks.filter((t) => t.drawing_kind && !t.done)
+    .sort((a, b) => (a.due_at ?? a.due_date ?? "").localeCompare(b.due_at ?? b.due_date ?? ""))
     .reduce((m, t) => m.set(t.project_id!, [...(m.get(t.project_id!) ?? []), t]), new Map<string, typeof myTasks>())]
     .map(([pid, ts]) => ({ project: projects.find((p) => p.id === pid), tasks: ts }));
+  const lateCount = lateDrawings.reduce((n, g) => n + g.tasks.filter((t) => isOverdue(t)).length, 0);
+  const openCount = lateDrawings.reduce((n, g) => n + g.tasks.length, 0);
 
   const now = new Date();
   const active = leads.filter((l) => !isClosed(l.status));
@@ -81,15 +83,24 @@ const Dashboard = () => {
           </div>
         )}
         {lateDrawings.length > 0 && (
-          <div className="space-y-1 rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 px-3 py-3">
-            <p className="text-sm font-medium text-foreground">{lateDrawings.reduce((n, g) => n + g.tasks.length, 0)} drawing{lateDrawings.reduce((n, g) => n + g.tasks.length, 0) === 1 ? "" : "s"} overdue for procurement</p>
+          <div className={cn("space-y-1 rounded-[var(--radius)] border px-3 py-3", lateCount ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10")}>
+            <p className="text-sm font-medium text-foreground">
+              {openCount} drawing{openCount === 1 ? "" : "s"} to upload for procurement{lateCount ? ` · ${lateCount} overdue` : ""}
+            </p>
             <ul className="divide-y divide-border">
               {lateDrawings.map(({ project, tasks }) => (
-                <li key={tasks[0].id}>
-                  <Link to={project ? `/workspace/projects/${project.code}` : "/workspace/tasks"} className="flex flex-col gap-0.5 py-2 hover:text-primary sm:flex-row sm:items-center sm:justify-between">
-                    <span className="truncate">{project?.client ?? project?.name ?? "Project"}</span>
-                    <span className="text-xs text-destructive">{tasks.map((t) => t.title).join(" · ")} · due {shortDate(tasks[0].due_date)}</span>
+                <li key={tasks[0].id} className="py-2">
+                  <Link to={project ? `/workspace/projects/${project.code}` : "/workspace/tasks"} className="truncate hover:text-primary">
+                    {project?.client ?? project?.name ?? "Project"}
                   </Link>
+                  <ul className="mt-1 space-y-0.5">
+                    {tasks.map((t) => (
+                      <li key={t.id} className={cn("flex flex-wrap justify-between gap-x-3 text-xs", isOverdue(t) ? "text-destructive" : "text-muted-foreground")}>
+                        <span>{t.title}</span>
+                        <span>{t.due_at ? `due ${dueTimeLabel(t.due_at)} · ${timeLeftLabel(t.due_at)}` : t.due_date ? `due ${shortDate(t.due_date)}` : ""}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
