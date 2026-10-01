@@ -889,6 +889,11 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
 
   return (
     <div className="space-y-4">
+      {awaitingBudget && (
+        <p className="rounded-[var(--radius)] border border-warning/40 bg-warning/10 p-3 text-sm">
+          Waiting for GM budget approval — don't order yet. You'll be notified when it's approved.
+        </p>
+      )}
       <Section title={`Procurement · ${done} of ${rows.length} delivered · ${project.proc_pct}%`} right={
         <div className="flex gap-1">
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
