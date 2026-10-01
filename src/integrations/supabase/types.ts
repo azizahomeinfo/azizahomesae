@@ -444,6 +444,7 @@ export type Database = {
           lead_id: string | null
           options: Json
           project_id: string | null
+          purpose: string
           quoted_at: string | null
           quoted_by: string | null
           status: Database["public"]["Enums"]["costing_status"]
@@ -457,6 +458,7 @@ export type Database = {
           lead_id?: string | null
           options?: Json
           project_id?: string | null
+          purpose?: string
           quoted_at?: string | null
           quoted_by?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
@@ -470,6 +472,7 @@ export type Database = {
           lead_id?: string | null
           options?: Json
           project_id?: string | null
+          purpose?: string
           quoted_at?: string | null
           quoted_by?: string | null
           status?: Database["public"]["Enums"]["costing_status"]
@@ -1772,6 +1775,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      ws_decide_budget: {
+        Args: { _approve: boolean; _note: string; _project: string }
+        Returns: undefined
+      }
       ws_drawing_hours: { Args: { _kind: string }; Returns: number }
       ws_drawing_kinds: { Args: never; Returns: string[] }
       ws_ffe_band: {
@@ -1779,6 +1786,15 @@ export type Database = {
         Returns: number
       }
       ws_ffe_edit_notify_lead: { Args: { _lead: string }; Returns: undefined }
+      ws_ffe_gaps: {
+        Args: { _project: string }
+        Returns: Record<string, unknown>
+      }
+      ws_needs_budget: { Args: { _project: string }; Returns: boolean }
+      ws_notify_ffe_completion: {
+        Args: { _project: string }
+        Returns: undefined
+      }
       ws_notify_once: {
         Args: { _kind: string; _lead: string; _title: string; _user: string }
         Returns: undefined
@@ -1798,6 +1814,7 @@ export type Database = {
         Args: { _contract: string; _handover: string }
         Returns: string
       }
+      ws_submit_budget: { Args: { _project: string }; Returns: undefined }
       ws_submit_design_package: {
         Args: { _design: string }
         Returns: undefined
