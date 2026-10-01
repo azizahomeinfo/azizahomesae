@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
 import type { WorkspaceRole } from "../access";
 import {
-  stagePct, useChangeRequests, useIssues, useProject, useProjectTasks, useUpdateProject,
+  useChangeRequests, useIssues, useProject, useProjectTasks, useUpdateProject,
 } from "../projectQueries";
 import { PROJECT_STAGES, RiskDot, StagePill, TAB_LABEL, TABS_BY_ROLE, type ProjectStage, type ProjectTab } from "../projectConstants";
 import {
