@@ -20,7 +20,7 @@ export type CostingStatus = T["ffe_costings"]["Row"]["status"];
 export interface QuoteOption { label: string; desc: string; amount: number }
 export type Costing = Pick<
   T["ffe_costings"]["Row"],
-  "id" | "project_id" | "lead_id" | "status" | "version" | "submitted_at" | "quoted_at" | "quoted_by"
+  "id" | "project_id" | "lead_id" | "status" | "version" | "submitted_at" | "quoted_at" | "quoted_by" | "purpose"
 > & { markup_pct?: number; gm_notes?: string | null; return_note?: string | null; options: QuoteOption[] };
 export type Snag = Pick<
   T["snags"]["Row"],
@@ -31,7 +31,7 @@ const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, pay
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
   "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order, priority_band";
-const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, options";
+const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, options, purpose";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
 
 /**
@@ -376,5 +376,45 @@ export const useUpdateSnag = () => {
       return v;
     },
     onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: fKeys.snags(v.projectId) }),
+  });
+};
+
+/* ---------------- budget approval (route 2: contract signed outside the system) ---------------- */
+
+/** An item the coordinator can't buy yet: no supplier, or no purchase link. Mirrors ws_ffe_gaps. */
+export const missingSupplier = (r: Pick<FfeRow, "supplier_id" | "supplier_name">) => !r.supplier_id && !r.supplier_name?.trim();
+export const missingLink = (r: Pick<FfeRow, "product_url">) => !r.product_url?.trim();
+
+/** True when the project has no contract signed in the system, so its FF&E list needs a GM budget approval. */
+export const useNeedsBudget = (projectId: string | null | undefined) =>
+  useQuery({
+    queryKey: ["ws", "needs-budget", projectId],
+    enabled: !!projectId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ws_needs_budget", { _project: projectId! });
+      fail(error);
+      return !!data;
+    },
+  });
+
+export const useSubmitBudget = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.rpc("ws_submit_budget", { _project: projectId });
+      fail(error);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
+  });
+};
+
+export const useDecideBudget = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { projectId: string; approve: boolean; note: string }) => {
+      const { error } = await supabase.rpc("ws_decide_budget", { _project: v.projectId, _approve: v.approve, _note: v.note });
+      fail(error);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
   });
 };
