@@ -1080,6 +1080,32 @@ export type Database = {
           },
         ]
       }
+      project_value_private: {
+        Row: {
+          project_id: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          project_id: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          project_id?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_value_private_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           act_ops: number | null
@@ -1689,6 +1715,10 @@ export type Database = {
         Returns: boolean
       }
       can_see_project_costs: {
+        Args: { _project: string; _uid: string }
+        Returns: boolean
+      }
+      can_see_project_value: {
         Args: { _project: string; _uid: string }
         Returns: boolean
       }
