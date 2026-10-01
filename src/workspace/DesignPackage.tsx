@@ -545,10 +545,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const nMood = pkgImages.filter((i) => /mood/i.test(i.kind)).length;
   const nUncosted = pkgItems.filter((r) => r.unit_cost == null).length;
   const checks = [
-    { ok: nRenders > 0, label: nRenders ? `Renders · ${nRenders}` : "Renders",
-      fix: "Upload at least one render into a room area (e.g. Living Room) on the Renders tab." },
-    { ok: nMood > 0, label: nMood ? `Mood board · ${nMood}` : "Mood board",
-      fix: "Add at least one mood board image: choose \u201c+ Add area \u2192 Mood Board\u201d and upload there, or set an uploaded file's Kind to \u201cMood board\u201d (the menu under each file). Files uploaded into a room area count as renders." },
+    { ok: nRenders + nMood > 0,
+      label: nRenders + nMood ? `Images · ${[nRenders && `${nRenders} render${nRenders === 1 ? "" : "s"}`, nMood && `${nMood} mood board`].filter(Boolean).join(", ")}` : "Renders or mood board",
+      fix: "Upload at least one render or mood board image on the Renders tab — renders go into a room area, mood boards into \u201c+ Add area \u2192 Mood Board\u201d. You can change a file's Kind with the menu under it." },
     { ok: pkgItems.length > 0 && nUncosted === 0,
       label: pkgItems.length === 0 ? "FF&E list" : nUncosted ? `FF&E costed · ${nUncosted} missing` : `FF&E costed · ${pkgItems.length}`,
       fix: pkgItems.length === 0 ? "Add the FF&E items on the FF&E tab." : `Enter a unit cost for ${nUncosted} item${nUncosted === 1 ? "" : "s"} on the FF&E tab.` },
@@ -570,7 +569,10 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   };
 
   const doSubmit = async () => {
-    if (!selected || !brief || !lead || !member) return;
+    if (!selected || !brief || !lead || !member) {
+      setSubmitError("This package is still loading — wait a moment and press Submit again. If it keeps happening, reopen it from the lead page.");
+      return;
+    }
     if (gaps.length) { setSubmitError(`Can't submit yet — ${gaps.map((g) => g.fix).join(" ")}`); return; }
     setSubmitError(null);
     const gmIds = members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id).filter((u) => u !== member.user_id);
@@ -582,8 +584,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         : []),
     ];
     try {
-      await submit.mutateAsync({ leadId, design: selected, notify });
+      const r = await submit.mutateAsync({ leadId, design: selected, notify });
       toast.success(`V${selected.version} sent — design to sales, FF&E to the GM`);
+      if (!r.notified) toast.warning("Submitted, but sales and the GM couldn't be notified — please tell them.");
     } catch (e) {
       // Inline and persistent: a refusal that fades away reads as a broken button.
       setSubmitError(errMsg(e, "Could not submit"));
