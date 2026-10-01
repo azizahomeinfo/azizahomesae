@@ -1760,6 +1760,7 @@ export type Database = {
         Returns: undefined
       }
       ws_notify_overdue_drawings: { Args: never; Returns: undefined }
+      ws_recompute_proc_pct: { Args: { _project: string }; Returns: undefined }
       ws_role: {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]

@@ -154,7 +154,6 @@ export const useUpdateProject = () => {
   });
 };
 
-export const stagePct = (s: ProjectStage) => Math.round((PROJECT_STAGES.indexOf(s) / (PROJECT_STAGES.length - 1)) * 100);
 
 /* ---------------- tasks ---------------- */
 

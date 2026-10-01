@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
 import type { WorkspaceRole } from "../access";
 import {
-  stagePct, useChangeRequests, useIssues, useProject, useProjectTasks, useUpdateProject,
+  useChangeRequests, useIssues, useProject, useProjectTasks, useUpdateProject,
 } from "../projectQueries";
 import { PROJECT_STAGES, RiskDot, StagePill, TAB_LABEL, TABS_BY_ROLE, type ProjectStage, type ProjectTab } from "../projectConstants";
 import {
@@ -55,7 +55,8 @@ const ProjectDetail = () => {
 
   const setStage = async (s: ProjectStage) => {
     try {
-      await update.mutateAsync({ id: project.id, values: { stage: s, overall_pct: stagePct(s) } });
+      // overall_pct follows the stage in the database (ws_project_guard).
+      await update.mutateAsync({ id: project.id, values: { stage: s } });
       toast.success(`Moved to ${s}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not update stage");

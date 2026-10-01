@@ -162,18 +162,8 @@ export const useFfeItems = (owner: FfeOwner | undefined, withCost: boolean) =>
     },
   });
 
-const recomputeProcPct = async (projectId: string) => {
-  const { data, error } = await supabase.from("ffe_items").select("stage").eq("project_id", projectId);
-  fail(error);
-  const rows = data ?? [];
-  const pct = rows.length ? Math.round((rows.filter((r) => DONE_STAGES.includes(r.stage)).length / rows.length) * 100) : 0;
-  // ws_project_guard lets only the GM and the project's coordinator write proc_pct. A designer's FF&E edit
-  // must not fail because of it, so a refusal here is ignored (the next coordinator/GM edit recomputes).
-  const { error: uErr } = await supabase.from("projects").update({ proc_pct: pct }).eq("id", projectId);
-  if (uErr && !/move the project forward/.test(uErr.message)) fail(uErr);
-};
+// projects.proc_pct is derived in the database (trigger ffe_items_proc_pct); the app never writes it.
 
-const recomputeIfProject = async (o: FfeOwner) => { if (o.col === "project_id") await recomputeProcPct(o.id); };
 
 // Lead and project views can show the same rows, so refresh all FF&E lists.
 const invalidateFfe = (qc: ReturnType<typeof useQueryClient>) => {
@@ -241,7 +231,6 @@ export const useUpdateFfeItems = () => {
       // or in a supplier email. nextRef issues refs at creation only; updates never re-issue one.
       const { error } = await supabase.from("ffe_items").update(values).in("id", v.ids);
       fail(error);
-      if (values.stage) await recomputeIfProject(v.owner);
       return v;
     },
     onSettled: (_d, _e, v) => {
@@ -262,7 +251,6 @@ export const useDeleteFfeItem = () => {
       if (!ids.length) return v;
       const { error } = await supabase.from("ffe_items").delete().in("id", ids);
       fail(error);
-      await recomputeIfProject(v.owner);
       return v;
     },
     onSettled: () => {
