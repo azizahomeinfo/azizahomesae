@@ -594,7 +594,7 @@ export const LeadDealCard = ({ lead }: { lead: { id: string; sales_id: string | 
   const { member } = useWorkspace();
   const { data: files = [] } = useLeadDealFiles(lead.id);
   const canUpload = member?.role === "gm" || (member?.role === "sales" && lead.sales_id === member.user_id);
-  if (!canUpload && !files.length) return null;
+  if (member?.role === "designer" || (!canUpload && !files.length)) return null;
   const owner: FileOwner = { projectId: lead.converted_project_id, leadId: lead.id };
   return (
     <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6">

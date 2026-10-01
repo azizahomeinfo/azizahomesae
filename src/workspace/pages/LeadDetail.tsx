@@ -27,6 +27,7 @@ import { FollowUp } from "./Leads";
 import ConvertProject from "../ConvertProject";
 import DefGrid from "../DefGrid";
 import { useProjectCode } from "../projectQueries";
+import { LeadDealCard } from "../ProjectTabs";
 
 const PIPE = LEAD_STATUSES.filter((s) => s !== "Lost");
 
@@ -220,6 +221,8 @@ const LeadDetail = () => {
           </div>
         )}
       </section>
+
+      <LeadDealCard lead={lead} />
 
       <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-6">
         <div className="flex items-center justify-between">
