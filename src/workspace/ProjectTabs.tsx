@@ -13,7 +13,7 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, DRAWING_KINDS, DEAL_RECORD_KINDS,
+  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, DRAWING_KINDS, DEAL_RECORD_KINDS,
   type Issue, type Project, type ProjectFile,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
@@ -54,14 +54,16 @@ export const OverviewTab = ({ project }: { project: Project }) => {
   // Sales never fetch cost figures: contract value beside cost is the margin.
   const seesCost = member?.role === "gm" || member?.role === "designer" || member?.role === "coordinator";
   const { data: costs } = useProjectCosts(project.id, member?.role);
-  const balance = project.value === null ? null : Number(project.value) - Number(project.received ?? 0);
+  const { data: values } = useProjectValues(member?.role);
+  const value = values?.get(project.id) ?? null;
+  const balance = value === null ? null : value - Number(project.received ?? 0);
   const left = project.handover_date ? daysBetween(todayISO(), project.handover_date) : null;
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {commercial && (
           <Card title="Commercial">
-            <Row k="Contract value" v={aed(project.value)} />
+            <Row k="Contract value" v={aed(value)} />
             <Row k="Received" v={aed(project.received)} />
             <Row k="Balance" v={aed(balance)} />
             <Row k="Payment status" v={project.pay_status} className={cn(project.pay_status === "Overdue" && "text-destructive")} />

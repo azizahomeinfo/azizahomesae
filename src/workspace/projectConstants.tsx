@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
 import type { WorkspaceRole } from "./access";
 
+/** The active pipeline — the only place it is defined. Procurement is a parallel track (proc_pct), not a stage.
+ *  Site Survey / Client Approval / Procurement remain in the enum as legacy; ws_project_guard refuses entering them. */
 export const PROJECT_STAGES = [
-  "Contract / Deposit", "Site Survey", "Design", "Client Approval", "Procurement",
-  "Production", "Installation", "Snagging", "Handover", "Closed",
+  "Contract / Deposit", "Design", "Production", "Installation", "Snagging", "Handover", "Closed",
 ] as const;
 export type ProjectStage = (typeof PROJECT_STAGES)[number];
 
