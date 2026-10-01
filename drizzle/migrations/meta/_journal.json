@@ -239,6 +239,13 @@
       "when": 1790884495747,
       "tag": "0033_derive_proc_and_overall_pct",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790885078982,
+      "tag": "0034_drawing_deadlines_per_kind",
+      "breakpoints": true
     }
   ]
 }
