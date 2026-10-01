@@ -167,8 +167,10 @@ const recomputeProcPct = async (projectId: string) => {
   fail(error);
   const rows = data ?? [];
   const pct = rows.length ? Math.round((rows.filter((r) => DONE_STAGES.includes(r.stage)).length / rows.length) * 100) : 0;
+  // ws_project_guard lets only the GM and the project's coordinator write proc_pct. A designer's FF&E edit
+  // must not fail because of it, so a refusal here is ignored (the next coordinator/GM edit recomputes).
   const { error: uErr } = await supabase.from("projects").update({ proc_pct: pct }).eq("id", projectId);
-  fail(uErr);
+  if (uErr && !/move the project forward/.test(uErr.message)) fail(uErr);
 };
 
 const recomputeIfProject = async (o: FfeOwner) => { if (o.col === "project_id") await recomputeProcPct(o.id); };
