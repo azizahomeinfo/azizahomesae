@@ -13,7 +13,7 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, DRAWING_KINDS, SIGNED_CONTRACT,
+  useProjectCosts, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, DRAWING_KINDS, DEAL_RECORD_KINDS,
   type Issue, type Project, type ProjectFile,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
@@ -460,9 +460,10 @@ export const FilesTab = ({ project }: { project: Project }) => {
   );
 };
 
-/** Upload / list / replace / delete for one file category. Replace = upload the new file, then delete the old one. */
-const FileSlot = ({ project, category, files, canUpload, accept }: {
-  project: Project; category: string; files: ProjectFile[]; canUpload: boolean; accept?: string;
+/** Upload / list / replace / delete for one file category. Replace = upload the new file, then delete the old one.
+ *  versioned: no in-place replace; the newest file is current and older ones stay visible as superseded. */
+const FileSlot = ({ project, category, files, canUpload, accept, versioned }: {
+  project: Project; category: string; files: ProjectFile[]; canUpload: boolean; accept?: string; versioned?: boolean;
 }) => {
   const { member } = useWorkspace();
   const { data: urls } = useSignedUrls(files.map((f) => f.storage_path));
@@ -471,6 +472,7 @@ const FileSlot = ({ project, category, files, canUpload, accept }: {
   const input = useRef<HTMLInputElement>(null);
   const [replacing, setReplacing] = useState<ProjectFile | null>(null);
   const mine = (f: ProjectFile) => member && (f.uploaded_by === member.user_id || member.role === "gm");
+  const sorted = versioned ? [...files].sort((a, b) => b.created_at.localeCompare(a.created_at)) : files;
 
   const onFiles = async (list: FileList | null) => {
     if (!list || !member) return;
@@ -493,18 +495,21 @@ const FileSlot = ({ project, category, files, canUpload, accept }: {
         <span className="text-sm">{category}</span>
         <div className="flex items-center gap-2">
           <span className={cn("text-xs", files.length ? "text-success" : "text-muted-foreground")}>{files.length ? `${files.length} file${files.length > 1 ? "s" : ""}` : "not uploaded"}</span>
-          {canUpload && <Button size="sm" variant="outline" disabled={upload.isPending} onClick={() => pick(null)}>{upload.isPending ? "Uploading…" : "Upload"}</Button>}
+          {canUpload && <Button size="sm" variant="outline" disabled={upload.isPending} onClick={() => pick(null)}>{upload.isPending ? "Uploading…" : versioned && files.length ? "Upload new version" : "Upload"}</Button>}
         </div>
       </div>
       <input ref={input} type="file" multiple={!replacing} accept={accept} className="hidden" onChange={(e) => onFiles(e.target.files)} />
       {files.length > 0 && (
         <ul className="space-y-1">
-          {files.map((f) => (
-            <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] bg-muted/40 px-2 py-1.5 text-xs">
-              <span className="min-w-0 break-all">{f.file_name} · {shortDate(f.created_at)}</span>
+          {sorted.map((f, i) => (
+            <li key={f.id} className={cn("flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] bg-muted/40 px-2 py-1.5 text-xs", versioned && i > 0 && "opacity-70")}>
+              <span className="min-w-0 break-all">
+                {f.file_name} · {shortDate(f.created_at)}
+                {versioned && <span className={cn("ml-1", i === 0 ? "text-primary" : "text-muted-foreground")}>· {i === 0 ? "current" : "superseded"}</span>}
+              </span>
               <span className="flex gap-1">
                 {urls?.get(f.storage_path) && <Button asChild size="sm" variant="ghost" className="h-7"><a href={urls.get(f.storage_path)} target="_blank" rel="noreferrer">Open</a></Button>}
-                {canUpload && mine(f) && <Button size="sm" variant="ghost" className="h-7" onClick={() => pick(f)}>Replace</Button>}
+                {!versioned && canUpload && mine(f) && <Button size="sm" variant="ghost" className="h-7" onClick={() => pick(f)}>Replace</Button>}
                 {mine(f) && <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => {
                   if (confirm(`Delete ${f.file_name}?`)) del.mutate({ id: f.id, projectId: project.id, path: f.storage_path }, { onError: (e) => toast.error(errMsg(e, "Could not delete")) });
                 }}>Delete</Button>}
@@ -546,16 +551,23 @@ export const DrawingsChecklist = ({ project }: { project: Project }) => {
   );
 };
 
-/** The client-signed original, distinct from the contract the system generated. Sales and GM upload; everyone on the project can open it. */
+/** Record of the deal: the client-signed contract and the proposal that was sent. Sales and GM upload; everyone on the project can open them.
+ *  New uploads never overwrite — older files stay listed as superseded. These categories never touch drawing tasks. */
 export const SignedContractCard = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const { data: files = [] } = useProjectFiles(project.id);
   const canUpload = member?.role === "sales" || member?.role === "gm";
-  const signed = files.filter((f) => f.category === SIGNED_CONTRACT);
-  if (!canUpload && !signed.length) return null;
+  const deal = files.filter((f) => (DEAL_RECORD_KINDS as readonly string[]).includes(f.category ?? ""));
+  if (!canUpload && !deal.length) return null;
   return (
-    <section className="rounded-[var(--radius)] border border-border bg-card px-4 md:px-6">
-      <FileSlot project={project} category={SIGNED_CONTRACT} files={signed} canUpload={canUpload} accept="application/pdf,image/*" />
+    <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6">
+      <h3 className="text-[11px] uppercase tracking-[0.25em] text-primary">Record of the deal</h3>
+      <div className="divide-y divide-border">
+        {DEAL_RECORD_KINDS.map((k) => (
+          <FileSlot key={k} project={project} category={k} files={files.filter((f) => f.category === k)} canUpload={canUpload} accept="application/pdf,image/*" versioned />
+        ))}
+      </div>
+      <p className="pt-2 text-xs text-muted-foreground">What the client actually signed and was sent. Uploading a new version keeps the earlier ones.</p>
     </section>
   );
 };

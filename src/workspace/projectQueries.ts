@@ -107,39 +107,21 @@ export const useProjectCode = (id: string | null | undefined) =>
     },
   });
 
+/** Fast path Won lead → project: one database transaction (ws_convert_lead) — project, coordinator, FF&E seeded and stamped, drawing tasks if a designer exists, notifications. */
 export const useConvertLead = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: {
-      leadId: string;
-      values: T["projects"]["Insert"];
-      actorId: string;
-      actorName: string;
-    }) => {
-      // Generate the id client-side so we don't depend on reading the row back
-      // (a salesperson who assigns someone else as sales can't SELECT it).
-      const id = crypto.randomUUID();
-      const { error } = await supabase.from("projects").insert({ ...v.values, id, lead_id: v.leadId, stage: "Contract / Deposit" });
+    mutationFn: async (v: { leadId: string; handover: string }) => {
+      const { data, error } = await supabase.rpc("ws_convert_lead", { _lead: v.leadId, _handover: v.handover });
       fail(error);
-      // The project_costs_private row is created by a database trigger (sales may not write it).
-      const { error: lErr } = await supabase.from("leads").update({ converted_project_id: id }).eq("id", v.leadId);
-      fail(lErr);
-      const targets = [...new Set([v.values.designer_id, v.values.coordinator_id].filter(Boolean) as string[])].filter(
-        (u) => u !== v.actorId,
-      );
-      await notify(
-        targets.map((user_id) => ({
-          user_id, kind: "project", project_id: id, lead_id: v.leadId,
-          title: `${v.actorName} converted ${v.values.name} into a project`,
-        })),
-      );
-      const { data } = await supabase.from("projects").select("code").eq("id", id).maybeSingle();
-      return { id, code: data?.code ?? null };
+      const r = data as { project_id: string; code: string | null; items: number };
+      return { id: r.project_id, code: r.code, items: r.items };
     },
     onSuccess: (_r, v) => {
       qc.invalidateQueries({ queryKey: pKeys.projects });
       qc.invalidateQueries({ queryKey: keys.lead(v.leadId) });
       qc.invalidateQueries({ queryKey: keys.leads });
+      qc.invalidateQueries({ queryKey: ["ws"] });
     },
   });
 };
@@ -373,3 +355,6 @@ export const useDeleteProjectFile = () => {
 // Category strings are stable identifiers (tasks.drawing_kind, DB triggers, and any future Drive sync key off them).
 export const DRAWING_KINDS = ["Wall design drawings", "Furniture drawings", "Cabinet drawings", "Artwork locations"] as const;
 export const SIGNED_CONTRACT = "Signed contract";
+export const SALES_PROPOSAL = "Proposal";
+/** Sales/GM-only categories (enforced by project_files policies); never drive drawing tasks. Stable keys. */
+export const DEAL_RECORD_KINDS = [SIGNED_CONTRACT, SALES_PROPOSAL] as const;
