@@ -340,8 +340,10 @@ export const useSubmitDesign = () => {
     mutationFn: async (v: { leadId: string; design: DesignRow; notify: NotifyTarget[] }) => {
       const { error } = await supabase.rpc("ws_submit_design_package", { _design: v.design.id });
       fail(error);
-      await notify(v.notify);
-      return v;
+      // The package is submitted at this point; a failed heads-up must not read as a failed submission.
+      let notified = true;
+      try { await notify(v.notify); } catch { notified = false; }
+      return { ...v, notified };
     },
     onSettled: (_d, _e, v) => { inv(v.leadId); qc.invalidateQueries({ queryKey: ["ws", "costing"] }); },
   });

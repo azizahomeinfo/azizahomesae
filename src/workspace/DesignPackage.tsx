@@ -569,7 +569,10 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   };
 
   const doSubmit = async () => {
-    if (!selected || !brief || !lead || !member) return;
+    if (!selected || !brief || !lead || !member) {
+      setSubmitError("This package is still loading — wait a moment and press Submit again. If it keeps happening, reopen it from the lead page.");
+      return;
+    }
     if (gaps.length) { setSubmitError(`Can't submit yet — ${gaps.map((g) => g.fix).join(" ")}`); return; }
     setSubmitError(null);
     const gmIds = members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id).filter((u) => u !== member.user_id);
@@ -581,8 +584,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         : []),
     ];
     try {
-      await submit.mutateAsync({ leadId, design: selected, notify });
+      const r = await submit.mutateAsync({ leadId, design: selected, notify });
       toast.success(`V${selected.version} sent — design to sales, FF&E to the GM`);
+      if (!r.notified) toast.warning("Submitted, but sales and the GM couldn't be notified — please tell them.");
     } catch (e) {
       // Inline and persistent: a refusal that fades away reads as a broken button.
       setSubmitError(errMsg(e, "Could not submit"));
