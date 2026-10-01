@@ -1716,6 +1716,10 @@ export type Database = {
           unit_type: string
         }[]
       }
+      ws_convert_lead: {
+        Args: { _handover: string; _lead: string }
+        Returns: Json
+      }
       ws_ffe_band: {
         Args: { _category: string; _item: string; _room: string }
         Returns: number
