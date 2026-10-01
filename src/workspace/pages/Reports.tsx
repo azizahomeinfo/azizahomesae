@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase-ssr";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
 import { useLeads } from "../queries";
-import { useProjects } from "../projectQueries";
+import { useProjects, useProjectValues } from "../projectQueries";
 import { LEAD_STATUSES } from "../constants";
 import { PROJECT_STAGES } from "../projectConstants";
 import { aed, todayISO } from "../format";
@@ -33,6 +33,7 @@ const Reports = () => {
   const isGm = member?.role === "gm";
   const { data: leads = [], isLoading: l1 } = useLeads();
   const { data: projects = [], isLoading: l2 } = useProjects();
+  const { data: values } = useProjectValues(member?.role);
   const { data: approvedCr = 0 } = useQuery({
     queryKey: ["ws", "report-crs"],
     enabled: isGm,
@@ -65,7 +66,7 @@ const Reports = () => {
   const red = active.filter((p) => p.risk === "Red").length;
   const yellow = active.filter((p) => p.risk === "Yellow").length;
   const late = active.filter((p) => p.handover_date && p.handover_date < todayISO()).length;
-  const value = active.reduce((t, p) => t + Number(p.value ?? 0), 0);
+  const value = active.reduce((t, p) => t + Number(values?.get(p.id) ?? 0), 0);
   const received = active.reduce((t, p) => t + Number(p.received ?? 0), 0);
 
   return (

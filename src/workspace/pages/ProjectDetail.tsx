@@ -41,8 +41,9 @@ const ProjectDetail = () => {
   const tab: ProjectTab = requested && tabs.includes(requested) ? requested : "overview";
   const stage = project.stage as ProjectStage;
   const idx = PROJECT_STAGES.indexOf(stage);
-  const next = idx < PROJECT_STAGES.length - 1 ? PROJECT_STAGES[idx + 1] : null;
-  const isGm = role === "gm";
+  const next = idx >= 0 && idx < PROJECT_STAGES.length - 1 ? PROJECT_STAGES[idx + 1] : null;
+  // Mirrors ws_project_guard: only the GM and this project's coordinator move the stage.
+  const canMove = role === "gm" || project.coordinator_id === member.user_id;
 
   const counts: Partial<Record<ProjectTab, number>> = {
     tasks: tasks.filter((t) => !t.done).length,
@@ -95,26 +96,38 @@ const ProjectDetail = () => {
       </div>
 
       <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-4">
-        <ol className="flex gap-2 overflow-x-auto pb-1">
-          {PROJECT_STAGES.map((s, i) => (
-            <li key={s} className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap",
-              i === idx && "border-primary bg-primary text-primary-foreground",
-              i < idx && "border-primary text-primary",
-              i > idx && "border-border text-muted-foreground opacity-60",
-            )}>
-              {i < idx && <Check className="h-3 w-3" />}{s}
-            </li>
-          ))}
-        </ol>
+        <div className="grid gap-4 lg:grid-cols-[1fr_16rem]">
+          <div className="space-y-2 min-w-0">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Stage</p>
+            <ol className="flex gap-2 overflow-x-auto pb-1">
+              {PROJECT_STAGES.map((s, i) => (
+                <li key={s} className={cn(
+                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap",
+                  i === idx && "border-primary bg-primary text-primary-foreground",
+                  i < idx && "border-primary text-primary",
+                  i > idx && "border-border text-muted-foreground opacity-60",
+                )}>
+                  {i < idx && <Check className="h-3 w-3" />}{s}
+                </li>
+              ))}
+            </ol>
+            {idx < 0 && <p className="text-xs text-muted-foreground">Currently on a retired stage ({stage}); move it to an active stage.</p>}
+          </div>
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Procurement · runs from signing</p>
+            <div className="flex items-center justify-between text-sm"><span>Purchasing</span><span>{project.proc_pct}%</span></div>
+            <div className="h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary" style={{ width: `${project.proc_pct}%` }} /></div>
+          </div>
+        </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {next && <Button onClick={() => setStage(next)} disabled={update.isPending}>Advance to {next}</Button>}
-          {isGm && (
-            <Select value={stage} onValueChange={(v) => v !== stage && setStage(v as ProjectStage)}>
+          {canMove && next && <Button onClick={() => setStage(next)} disabled={update.isPending}>Advance to {next}</Button>}
+          {canMove && (
+            <Select value={idx >= 0 ? stage : undefined} onValueChange={(v) => v !== stage && setStage(v as ProjectStage)}>
               <SelectTrigger className="sm:w-56" aria-label="Set stage"><SelectValue placeholder="Set stage" /></SelectTrigger>
               <SelectContent>{PROJECT_STAGES.map((s) => <SelectItem key={s} value={s}>Set stage: {s}</SelectItem>)}</SelectContent>
             </Select>
           )}
+          {!canMove && <span className="text-xs text-muted-foreground">The coordinator moves the project forward.</span>}
           <span className="text-xs text-muted-foreground sm:ml-auto">{project.overall_pct}% complete</span>
         </div>
       </section>
