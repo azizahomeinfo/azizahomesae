@@ -25,6 +25,7 @@ import LeadForm from "../LeadForm";
 import CommentThread from "../CommentThread";
 import { FollowUp } from "./Leads";
 import ConvertProject from "../ConvertProject";
+import DeleteLead from "../DeleteLead";
 import DefGrid from "../DefGrid";
 import { useProjectCode } from "../projectQueries";
 import { LeadDealCard } from "../ProjectTabs";
@@ -149,6 +150,7 @@ const LeadDetail = () => {
               Reopen lead
             </Button>
           )}
+          {(member?.role === "gm" || (member?.role === "sales" && lead.sales_id === member.user_id)) && <DeleteLead lead={lead} />}
         </div>
       </section>
 
