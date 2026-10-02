@@ -1019,7 +1019,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       {view === "board" ? (
         <PhaseBoard rows={rows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
       ) : groups.map(([room, items]) => (
-        <Section key={room} title={`${room} · ${items.length}`} right={canEdit ? (
+        <Section key={room} title={`${room} · ${items.length} item${items.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(items.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
           <label className="flex items-center gap-2 text-xs">
             <Checkbox checked={items.every((r) => sel.has(r.id))}
               onCheckedChange={(c) => { const n = new Set(sel); items.forEach((r) => (c === true ? n.add(r.id) : n.delete(r.id))); setSel(n); }} />
