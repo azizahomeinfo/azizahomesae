@@ -1786,6 +1786,10 @@ export type Database = {
         Args: { _designer: string; _lead: string }
         Returns: undefined
       }
+      ws_assign_project_coordinator: {
+        Args: { _coordinator: string; _project: string }
+        Returns: undefined
+      }
       ws_assign_project_designer: {
         Args: { _designer: string; _project: string }
         Returns: undefined
@@ -1891,6 +1895,7 @@ export type Database = {
         Returns: undefined
       }
       ws_notify_overdue_drawings: { Args: never; Returns: undefined }
+      ws_project_coordinators: { Args: { _project: string }; Returns: string[] }
       ws_recompute_proc_pct: { Args: { _project: string }; Returns: undefined }
       ws_release_procurement: {
         Args: { _project: string; _title: string }

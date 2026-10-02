@@ -70,6 +70,31 @@ const bySupplier = (rows: FfeRow[]) => {
 /** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
 const buyable = (r: FfeRow) => !r.review && !DONE_STAGES.includes(r.stage);
 
+/** Every whitespace-separated term must appear somewhere in the row's text fields (never cost). Blank query matches all. */
+export const matchesSearch = (r: FfeRow, q: string) => {
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const hay = [r.ref, r.item, r.room, r.supplier_name, r.spec, r.notes, r.dims, r.po_ref, r.category]
+    .filter(Boolean).join(" ").toLowerCase();
+  return terms.every((t) => hay.includes(t));
+};
+
+/** Search box + "Showing N of M" line. Display only — totals elsewhere stay whole. */
+const SearchBox = ({ value, onChange, shown, total }: { value: string; onChange: (v: string) => void; shown: number; total: number }) => (
+  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+    <Input type="search" aria-label="Search items" placeholder="Search items" value={value}
+      onChange={(e) => onChange(e.target.value)} className="h-8 w-full sm:w-56" />
+    {value.trim() && <span className="text-xs text-muted-foreground whitespace-nowrap">Showing {shown} of {total} items</span>}
+  </div>
+);
+
+const NoMatches = ({ q, onClear }: { q: string; onClear: () => void }) => (
+  <div className="rounded-[var(--radius)] border border-dashed border-border p-6 text-center text-sm text-muted-foreground space-y-2">
+    <p>No items match '{q.trim()}'</p>
+    <Button size="sm" variant="outline" onClick={onClear}>Clear search</Button>
+  </div>
+);
+
 /** Text/number cell that saves 800ms after typing stops. */
 const EditCell = ({
   value, onSave, disabled, type = "text", className, label, placeholder, autoFocus,
@@ -608,6 +633,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   // Route 2: no contract signed in the system — the list goes designer → GM budget approval → coordinator.
   const budget = !!ctx.projectId && needsBudget === true;
   const [onlyGaps, setOnlyGaps] = useState(false);
+  const [search, setSearch] = useState("");
 
   const status: CostingStatus = costing?.status ?? "Draft";
   const isGm = role === "gm";
@@ -646,10 +672,19 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
     </div>
   );
   const gapRows = budget ? moneyRows.filter(missingBuyability) : [];
-  const shownInternal = budget && onlyGaps ? internalRows.filter(missingBuyability) : internalRows;
+  const searching = !!search.trim();
+  // Search is applied last, after the gap filter; it only changes what is displayed.
+  const gapInternal = budget && onlyGaps ? internalRows.filter(missingBuyability) : internalRows;
+  const shownInternal = gapInternal.filter((r) => matchesSearch(r, search));
   // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
   const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groups;
-  const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingBuyability)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
+  const gapGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingBuyability)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
+  // [heading, shown rows, whole group] — the subtotal always sums the whole group.
+  const shownGroups = gapGroups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
+    .filter(([, l]) => !searching || l.length);
+  const visibleCount = (withCost ? allRows : rows).filter((r) => matchesSearch(r, search)).length;
+  const internalVisible = showInternal && !((budget && onlyGaps) || searching ? !shownInternal.length : false);
+  const nothingMatches = searching && !shownGroups.length && !internalVisible;
 
   const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
@@ -826,9 +861,13 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       )}
       </>)}
 
-      <div className="flex justify-end"><GroupToggle value={groupBy} onChange={setGroupBy} /></div>
-      {shownGroups.map(([room, items]) => {
-        const sub = items.reduce((s, r) => s + lineTotal(r), 0);
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <SearchBox value={search} onChange={setSearch} shown={visibleCount} total={(withCost ? allRows : rows).length} />
+        <GroupToggle value={groupBy} onChange={setGroupBy} />
+      </div>
+      {nothingMatches && <NoMatches q={search} onClear={() => setSearch("")} />}
+      {shownGroups.map(([room, items, whole]) => {
+        const sub = whole.reduce((s, r) => s + lineTotal(r), 0);
         return (
           <section key={room} className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -836,7 +875,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
                 ? <h3 className="font-medium">{room}</h3>
                 : <RoomHeading room={room} canEdit={canEdit} onRename={(to) => renameRoom(room, to)} />}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{items.length} item{items.length === 1 ? "" : "s"}</span>
+                <span className="text-xs text-muted-foreground">{searching ? `${items.length} of ${whole.length}` : whole.length} item{whole.length === 1 ? "" : "s"}</span>
                 {withCost && <span className="text-sm tabular-nums">{aed(sub)}</span>}
                 {canEdit && !byPriority && (
                   <>
@@ -859,7 +898,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         );
       })}
 
-      {showInternal && !(budget && onlyGaps && !shownInternal.length) && (
+      {internalVisible && (
         <section className="rounded-[var(--radius)] border border-dashed border-border bg-card p-4 md:p-6 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -867,7 +906,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
               <p className="text-xs text-muted-foreground">Internal spend — never appears on the proposal or the contract.</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{internalRows.length} item{internalRows.length === 1 ? "" : "s"}</span>
+              <span className="text-xs text-muted-foreground">{searching ? `${shownInternal.length} of ${internalRows.length}` : internalRows.length} item{internalRows.length === 1 ? "" : "s"}</span>
               <span className="text-sm tabular-nums">{aed(internalRows.reduce((s, r) => s + lineTotal(r), 0))}</span>
               {canEdit && <Button size="sm" variant="outline" disabled={add.isPending} onClick={() => addItem(BUILDING_MATERIAL)}><Plus className="h-4 w-4" /> Add material</Button>}
             </div>
@@ -1001,11 +1040,16 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [orderAll, setOrderAll] = useState<{ supplier: string; items: FfeRow[] } | null>(null);
   const [orderPo, setOrderPo] = useState("");
+  const [search, setSearchRaw] = useState("");
+  // Changing the search clears the selection, so a bulk action can never include rows that are out of view.
+  const setSearch = (v: string) => { setSearchRaw(v); setSel(new Set()); };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
   // Building materials are bought like anything else: kept in the supplier view (so "Order all from …" includes them),
   // otherwise shown as their own group after the client groups.
+  const shownRows = useMemo(() => rows.filter((r) => matchesSearch(r, search)), [rows, search]);
+  const searching = !!search.trim();
   const groups = useMemo(() => {
     if (groupBy === "supplier") return bySupplier(rows);
     const client = rows.filter((r) => !isInternal(r));
@@ -1013,6 +1057,9 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
     const g = groupBy === "room" ? byRoom(client) : byBand(client);
     return internal.length ? [...g, [`${BUILDING_MATERIAL} · internal`, internal] as [string, FfeRow[]]] : g;
   }, [rows, groupBy]);
+  // [heading, shown rows, whole group]; search applied last, empty groups hidden while searching.
+  const shownGroups = groups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
+    .filter(([, l]) => !searching || l.length);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
     <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
@@ -1065,7 +1112,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         </p>
       )}
       <Section title={`Procurement · ${done} of ${rows.length} delivered · ${project.proc_pct}%`} right={
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap items-center gap-1">
+          <SearchBox value={search} onChange={setSearch} shown={shownRows.length} total={rows.length} />
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
           {view === "table" && (
@@ -1099,14 +1147,15 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         )}
       </Section>
 
+      {searching && !shownRows.length && <NoMatches q={search} onClear={() => setSearch("")} />}
       {view === "board" ? (
-        <PhaseBoard rows={rows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
-      ) : groups.map(([room, items]) => (
-        <Section key={room} title={`${room} · ${items.length} item${items.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(items.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
+        <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
+      ) : shownGroups.map(([room, items, whole]) => (
+        <Section key={room} title={`${room} · ${searching ? `${items.length} of ${whole.length}` : whole.length} item${whole.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(whole.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
           {groupBy === "supplier" && room !== NO_SUPPLIER && (
-            <Button size="sm" variant="outline" disabled={!items.some(buyable) || update.isPending}
-              onClick={() => { setOrderPo(""); setOrderAll({ supplier: room, items }); }}>Order all from {room}</Button>
+            <Button size="sm" variant="outline" disabled={!whole.some(buyable) || update.isPending}
+              onClick={() => { setOrderPo(""); setOrderAll({ supplier: room, items: whole }); }}>Order all from {room}</Button>
           )}
           <label className="flex items-center gap-2 text-xs">
             <Checkbox checked={items.every((r) => sel.has(r.id))}
