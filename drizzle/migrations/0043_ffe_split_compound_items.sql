@@ -125,7 +125,7 @@ BEGIN
       SELECT coalesce(max((regexp_match(ref, '^' || pre || '-(\d+)$'))[1]::int), 0) + 1 INTO nxt
         FROM public.ffe_items
        WHERE ((r.lead_id IS NOT NULL AND lead_id = r.lead_id) OR (r.lead_id IS NULL AND project_id = r.project_id));
-      INSERT INTO public.ffe_items (lead_id, project_id, room, item, ref, qty, notes, category, sort_order)
+      INSERT INTO public.ffe_items (lead_id, project_id, room, category, item, spec, qty, unit, notes, ref, sort_order)
       VALUES (r.lead_id, r.project_id, r.room, r.category, parts[j], r.spec, r.qty, r.unit, r.notes,
               pre || '-' || nxt, r.sort_order + j - 1);
     END LOOP;
