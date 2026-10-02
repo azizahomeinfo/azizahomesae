@@ -1790,6 +1790,12 @@ export type Database = {
         Args: { _project: string }
         Returns: Record<string, unknown>
       }
+      ws_lead_delete_block: {
+        Args: { _lead: string; _uid: string }
+        Returns: string
+      }
+      ws_lead_delete_preview: { Args: { _lead: string }; Returns: Json }
+      ws_lead_storage_paths: { Args: { _lead: string }; Returns: string[] }
       ws_needs_budget: { Args: { _project: string }; Returns: boolean }
       ws_notify_ffe_completion: {
         Args: { _project: string }
