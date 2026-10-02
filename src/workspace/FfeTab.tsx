@@ -1040,11 +1040,16 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [orderAll, setOrderAll] = useState<{ supplier: string; items: FfeRow[] } | null>(null);
   const [orderPo, setOrderPo] = useState("");
+  const [search, setSearchRaw] = useState("");
+  // Changing the search clears the selection, so a bulk action can never include rows that are out of view.
+  const setSearch = (v: string) => { setSearchRaw(v); setSel(new Set()); };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
   // Building materials are bought like anything else: kept in the supplier view (so "Order all from …" includes them),
   // otherwise shown as their own group after the client groups.
+  const shownRows = useMemo(() => rows.filter((r) => matchesSearch(r, search)), [rows, search]);
+  const searching = !!search.trim();
   const groups = useMemo(() => {
     if (groupBy === "supplier") return bySupplier(rows);
     const client = rows.filter((r) => !isInternal(r));
@@ -1052,6 +1057,9 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
     const g = groupBy === "room" ? byRoom(client) : byBand(client);
     return internal.length ? [...g, [`${BUILDING_MATERIAL} · internal`, internal] as [string, FfeRow[]]] : g;
   }, [rows, groupBy]);
+  // [heading, shown rows, whole group]; search applied last, empty groups hidden while searching.
+  const shownGroups = groups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
+    .filter(([, l]) => !searching || l.length);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
     <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
@@ -1104,7 +1112,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         </p>
       )}
       <Section title={`Procurement · ${done} of ${rows.length} delivered · ${project.proc_pct}%`} right={
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap items-center gap-1">
+          <SearchBox value={search} onChange={setSearch} shown={shownRows.length} total={rows.length} />
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
           {view === "table" && (
@@ -1138,14 +1147,15 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         )}
       </Section>
 
+      {searching && !shownRows.length && <NoMatches q={search} onClear={() => setSearch("")} />}
       {view === "board" ? (
-        <PhaseBoard rows={rows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
-      ) : groups.map(([room, items]) => (
-        <Section key={room} title={`${room} · ${items.length} item${items.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(items.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
+        <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
+      ) : shownGroups.map(([room, items, whole]) => (
+        <Section key={room} title={`${room} · ${searching ? `${items.length} of ${whole.length}` : whole.length} item${whole.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(whole.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
           {groupBy === "supplier" && room !== NO_SUPPLIER && (
-            <Button size="sm" variant="outline" disabled={!items.some(buyable) || update.isPending}
-              onClick={() => { setOrderPo(""); setOrderAll({ supplier: room, items }); }}>Order all from {room}</Button>
+            <Button size="sm" variant="outline" disabled={!whole.some(buyable) || update.isPending}
+              onClick={() => { setOrderPo(""); setOrderAll({ supplier: room, items: whole }); }}>Order all from {room}</Button>
           )}
           <label className="flex items-center gap-2 text-xs">
             <Checkbox checked={items.every((r) => sel.has(r.id))}
