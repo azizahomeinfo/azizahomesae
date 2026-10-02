@@ -486,6 +486,27 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
 
 /* ---------------- FF&E costing sheet ---------------- */
 
+/** Room or priority grouping, remembered per user in this browser (designers tend to want room, coordinators priority). */
+type GroupBy = "room" | "priority";
+const useFfeGroupBy = (fallback: GroupBy): [GroupBy, (g: GroupBy) => void] => {
+  const { member } = useWorkspace();
+  const key = `ws.ffe.groupBy.${member?.user_id ?? "anon"}`;
+  const read = (): GroupBy => { try { const v = localStorage.getItem(key); return v === "room" || v === "priority" ? v : fallback; } catch { return fallback; } };
+  const [g, setG] = useState<GroupBy>(read);
+  useEffect(() => { setG(read()); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  return [g, (v) => { setG(v); try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } }];
+};
+const byBand = (rows: FfeRow[]) => PRIORITY_BANDS.map((b, i) => [`${i + 1} · ${b}`, rows.filter((r) => bandOf(r) === i + 1)
+  .sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]).filter(([, l]) => l.length);
+
+export const GroupToggle = ({ value, onChange }: { value: GroupBy; onChange: (g: GroupBy) => void }) => (
+  <div className="flex items-center gap-1" role="group" aria-label="Group by">
+    <span className="text-xs text-muted-foreground">Group by</span>
+    <Button size="sm" variant={value === "room" ? "default" : "outline"} aria-pressed={value === "room"} onClick={() => onChange("room")}>Room</Button>
+    <Button size="sm" variant={value === "priority" ? "default" : "outline"} aria-pressed={value === "priority"} onClick={() => onChange("priority")}>Priority</Button>
+  </div>
+);
+
 /** After conversion the list waits for the designer (or the GM when there is none) to confirm it before procurement opens. */
 export const ConfirmBanner = ({ project, hasItems }: { project: Project; hasItems: boolean }) => {
   const { member } = useWorkspace();
@@ -580,6 +601,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const canSubmit = (isGm || role === "designer") && canEdit && rows.length > 0;
   const grand = rows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
+  const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
+  const byPriority = groupBy === "priority";
 
   const save = (id: string, values: Partial<FfeRow>) =>
     update.mutate({ owner: ctx.owner, ids: [id], values, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Could not save")) });
@@ -603,7 +626,9 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
     </div>
   );
   const gapRows = budget ? rows.filter((r) => missingSupplier(r) || missingLink(r)) : [];
-  const shownGroups = budget && onlyGaps ? groups.map(([g, l]) => [g, l.filter((r) => missingSupplier(r) || missingLink(r))] as [string, FfeRow[]]).filter(([, l]) => l.length) : groups;
+  // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
+  const baseGroups = byPriority ? byBand(rows) : groups;
+  const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter((r) => missingSupplier(r) || missingLink(r))] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
 
   const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
@@ -631,14 +656,14 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const primaryCols = withCost
     ? "grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-[minmax(0,1fr)_4.5rem_7rem_8rem_2.25rem]"
     : "grid-cols-[1fr_auto] md:grid-cols-[minmax(0,1fr)_4.5rem_2.25rem]";
-  const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)_minmax(0,.9fr)]";
+  const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)_minmax(0,.9fr)_minmax(0,1fr)]";
 
   const itemRow = (r: FfeRow) => (
     <li key={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
       budget && (missingSupplier(r) || missingLink(r)) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
-          <span className="block text-[10px] text-muted-foreground">{r.ref}</span>
+          <span className="block text-[10px] text-muted-foreground">{r.ref}{byPriority && <> · {r.room}</>}</span>
           <EditCell label="Item" value={r.item} disabled={!canEdit} autoFocus={focusId === r.id}
             onSave={(v) => v.trim() && save(r.id, { item: v.trim() })} />
         </F>
@@ -684,6 +709,14 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         </F>
         <F label="Section" className="col-span-2 md:col-span-1">
           <RoomCombo value={r.room} rooms={groups.map(([g]) => g)} disabled={!canEdit} onChange={(room) => save(r.id, { room })} />
+        </F>
+        <F label="Priority" className="col-span-2 md:col-span-1">
+          {canEdit ? (
+            <Select value={String(bandOf(r))} onValueChange={(v) => save(r.id, { priority_band: Number(v) })}>
+              <SelectTrigger className="h-7 text-xs" aria-label={`Priority for ${r.item}`}><SelectValue /></SelectTrigger>
+              <SelectContent>{PRIORITY_BANDS.map((b, i) => <SelectItem key={b} value={String(i + 1)}>{i + 1} · {b}</SelectItem>)}</SelectContent>
+            </Select>
+          ) : <p className="flex h-7 items-center text-xs">{bandOf(r)} · {PRIORITY_BANDS[bandOf(r) - 1]}</p>}
         </F>
       </div>
     </li>
@@ -771,15 +804,19 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       )}
       </>)}
 
+      <div className="flex justify-end"><GroupToggle value={groupBy} onChange={setGroupBy} /></div>
       {shownGroups.map(([room, items]) => {
         const sub = items.reduce((s, r) => s + lineTotal(r), 0);
         return (
           <section key={room} className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <RoomHeading room={room} canEdit={canEdit} onRename={(to) => renameRoom(room, to)} />
+              {byPriority
+                ? <h3 className="font-medium">{room}</h3>
+                : <RoomHeading room={room} canEdit={canEdit} onRename={(to) => renameRoom(room, to)} />}
               <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{items.length} item{items.length === 1 ? "" : "s"}</span>
                 {withCost && <span className="text-sm tabular-nums">{aed(sub)}</span>}
-                {canEdit && (
+                {canEdit && !byPriority && (
                   <>
                     <Button size="sm" variant="outline" disabled={add.isPending} onClick={() => addItem(room)}><Plus className="h-4 w-4" /> Item</Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Delete section ${room}`} onClick={() => setDelRoom(room)}><Trash2 className="h-4 w-4" /></Button>
@@ -800,7 +837,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         );
       })}
 
-      {canEdit && (addingRoom ? (
+      {canEdit && !byPriority && (addingRoom ? (
         <div className="flex gap-2">
           <Input autoFocus placeholder="New section, e.g. Balcony" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} className="sm:w-64" aria-label="New section"
             onKeyDown={(e) => { if (e.key === "Enter") addRoom(); if (e.key === "Escape") { setNewRoom(""); setAddingRoom(false); } }} />
@@ -913,7 +950,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const { data: budgetCosting } = useCosting(projectOwner(project.id), false);
   const update = useUpdateFfeItems();
   const [view, setView] = useState<"table" | "board">("table");
-  const [groupBy, setGroupBy] = useState<"priority" | "room">("priority");
+  const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
