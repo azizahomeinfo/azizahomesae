@@ -1813,6 +1813,10 @@ export type Database = {
         Args: { _project: string }
         Returns: Record<string, unknown>
       }
+      ws_ffe_split_parts: {
+        Args: { _category: string; _item: string; _room: string }
+        Returns: string[]
+      }
       ws_lead_delete_block: {
         Args: { _lead: string; _uid: string }
         Returns: string
@@ -1844,6 +1848,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["workspace_role"]
       }
       ws_room_prefix: { Args: { _room: string }; Returns: string }
+      ws_seed_ffe: {
+        Args: { _lead: string; _project?: string }
+        Returns: number
+      }
       ws_seed_ffe_from_brief: {
         Args: { _lead: string; _project?: string }
         Returns: number

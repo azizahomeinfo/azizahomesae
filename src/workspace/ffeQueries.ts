@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase-ssr";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { pKeys } from "./projectQueries";
 import { removeWorkspaceObject, uploadToWorkspace } from "./designQueries";
-import type { FfeSection } from "./briefSchema";
 
 type T = Database["public"]["Tables"];
 export type Supplier = Pick<
@@ -88,10 +87,6 @@ const nextRef = (room: string, taken: (string | null)[]) => {
 export const cleanRoom = (title: string) => title.replace(/^\s*\d+(\.\d+)*\s+/, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
 export const categoryForRoom = (room: string) =>
   /appliance/i.test(room) ? "Appliance" : /kitchen|tabletop/i.test(room) ? "Accessories" : "Furniture";
-const qtyOf = (s: string | undefined) => {
-  const n = parseFloat(String(s ?? "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) && n > 0 ? n : null;
-};
 
 export const DONE_STAGES: ProcStage[] = ["Delivered", "Installed", "Closed"];
 
@@ -173,29 +168,14 @@ const invalidateFfe = (qc: ReturnType<typeof useQueryClient>) => {
   qc.invalidateQueries({ queryKey: fKeys.supplierOpen });
 };
 
+/** Builds the list from the brief in the database (ws_seed_ffe), which splits cross-band bundles and derives bands. */
 export const useSeedFfe = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { owner: FfeOwner; ffe: FfeSection[] }) => {
-      const rows: T["ffe_items"]["Insert"][] = [];
-      const refs: string[] = [];
-      for (const s of v.ffe ?? []) {
-        const room = cleanRoom(s.title);
-        for (const i of s.items ?? []) {
-          if (i.included !== "inc" || !i.item?.trim()) continue;
-          const ref = nextRef(room, refs);
-          refs.push(ref);
-          rows.push({
-            [v.owner.col]: v.owner.id, room, item: i.item.trim(), ref,
-            qty: qtyOf(i.required) ?? qtyOf(i.std) ?? 1,
-            notes: i.notes?.trim() || null, category: categoryForRoom(room), sort_order: rows.length,
-          });
-        }
-      }
-      if (!rows.length) throw new Error("The brief has no included FF&E items");
-      const { error } = await supabase.from("ffe_items").insert(rows);
+    mutationFn: async (v: { owner: FfeOwner; leadId: string | null; projectId: string | null }) => {
+      const { data, error } = await supabase.rpc("ws_seed_ffe", { _lead: v.leadId as string, _project: v.projectId ?? undefined });
       fail(error);
-      return rows.length;
+      return data as number;
     },
     onSettled: () => invalidateFfe(qc),
   });
