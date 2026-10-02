@@ -563,13 +563,14 @@ export const DrawingsChecklist = ({ project }: { project: Project }) => {
   );
 };
 
-/** Record of the deal: the client-signed contract and the proposal that was sent. Sales and GM upload; everyone on the project can open them.
+/** Record of the deal: the client-signed contract and the proposal that was sent. Sales and GM upload and open them; designers and coordinators never see this card.
  *  New uploads never overwrite — older files stay listed as superseded. These categories never touch drawing tasks. */
 export const SignedContractCard = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const { data: files = [] } = useProjectFiles(project.id);
   const canUpload = member?.role === "sales" || member?.role === "gm";
   const deal = files.filter((f) => (DEAL_RECORD_KINDS as readonly string[]).includes(f.category ?? ""));
+  if (member?.role === "designer" || member?.role === "coordinator") return null;
   if (!canUpload && !deal.length) return null;
   return (
     <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6">
