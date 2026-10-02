@@ -21,7 +21,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -407,8 +407,8 @@ const NoListBanner = ({ projectId }: { projectId: string }) => {
     <div className="rounded-[var(--radius)] border border-warning/40 bg-warning/10 p-4 text-sm space-y-1">
       <p className="font-medium">{hasContract ? "A signed contract is on file, but there's no FF&E list yet." : "No FF&E list yet, and no contract signed in the system."}</p>
       <p className="text-muted-foreground">
-        Add the items from the contract below — one row per line, with room and quantity. Then the designer adds the supplier and purchase link
-        for every item and submits the list to the GM for budget approval. The coordinator starts buying only after the GM approves.
+        Add the items from the contract below — one row per line, with room and quantity. Then the designer adds the supplier and unit cost
+        for every item and submits the list to the GM for budget approval. A purchase link is optional. The coordinator starts buying only after the GM approves.
         The system does not read items out of the contract file.
       </p>
     </div>
@@ -451,12 +451,12 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
         {status !== "Quoted" && (gapRows.length > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">
             <span>
-              {plural(gapRows.length, "item has", "items have")} no supplier yet. Every item needs a supplier before the list can go to the GM. A purchase link is optional.
+              {plural(gapRows.length, "item has", "items have")} no supplier or no unit cost. Every item needs both before the list can go to the GM.
             </span>
-            <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only items without a supplier"}</Button>
+            <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only items with no supplier or no unit cost"}</Button>
           </div>
         ) : (
-          <p className="text-sm">Every item has a supplier. A purchase link is optional — trade suppliers are bought by phone or WhatsApp.</p>
+          <p className="text-sm">Every item has a supplier and a unit cost.</p>
         ))}
         {status === "Returned" && costing?.return_note && (
           <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Sent back by GM: {costing.return_note}</p>
@@ -645,11 +645,11 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />
     </div>
   );
-  const gapRows = budget ? moneyRows.filter(missingSupplier) : [];
-  const shownInternal = budget && onlyGaps ? internalRows.filter(missingSupplier) : internalRows;
+  const gapRows = budget ? moneyRows.filter(missingBuyability) : [];
+  const shownInternal = budget && onlyGaps ? internalRows.filter(missingBuyability) : internalRows;
   // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
   const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groups;
-  const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingSupplier)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
+  const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingBuyability)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
 
   const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
@@ -681,7 +681,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
 
   const itemRow = (r: FfeRow) => (
     <li key={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
-      budget && missingSupplier(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
+      budget && missingBuyability(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
           <span className="block text-[10px] text-muted-foreground">{r.ref}{byPriority && <> · {r.room}</>}</span>
@@ -779,7 +779,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         </div>
       }>
         {role === "designer" && status === "Draft" && (
-          <p className="text-sm text-muted-foreground">Specify every item for this design — supplier, purchase link, quantity, dimensions and unit cost. The list goes to the GM together with your renders when you press "Submit design package" on the Renders tab; every item needs a unit cost.</p>
+          <p className="text-sm text-muted-foreground">Specify every item for this design — supplier, quantity, dimensions and unit cost. A purchase link is optional: most trade suppliers are bought by phone or WhatsApp. The list goes to the GM together with your renders when you press "Submit design package" on the Renders tab; every item needs a unit cost.</p>
         )}
         {role === "designer" && status === "Returned" && (
           <p className="text-sm text-muted-foreground">The GM returned this list. Fix the costing and resubmit it — the design doesn't need to be shared again.</p>
