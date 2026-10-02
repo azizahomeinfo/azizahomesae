@@ -1,6 +1,6 @@
 # Roadmap
 
-- [x] Remove remaining copy that requires a purchase link.
-- [x] Centralize FF&E readiness as missing supplier or unit cost, including internal Building Material rows.
-- [x] Remove unused `missingLink` and audit every `product_url`/link use for gating.
-- [x] Correct the workspace architecture rule and run the typecheck.
+- [ ] Restore the shared buyability check to supplier-only.
+- [ ] Restore supplier-only gap wording and filtering while keeping links optional.
+- [ ] Correct the workspace budget rule to supplier-only.
+- [ ] Typecheck and confirm AZ-2635's UI gap count against a read-only database result.
