@@ -486,12 +486,71 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
 
 /* ---------------- FF&E costing sheet ---------------- */
 
-export const FfeTab = ({ project }: { project: Project }) => (
-  <FfeSheet ctx={{
-    owner: projectOwner(project.id), leadId: project.lead_id, projectId: project.id, name: project.name,
-    designerId: project.designer_id, salesId: project.sales_id,
-  }} />
-);
+/** After conversion the list waits for the designer (or the GM when there is none) to confirm it before procurement opens. */
+export const ConfirmBanner = ({ project, hasItems }: { project: Project; hasItems: boolean }) => {
+  const { member } = useWorkspace();
+  const { data: members = [] } = useMembers();
+  const confirm = useConfirmFfe();
+  const sendBack = useReturnFfe();
+  const [backOpen, setBackOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const role = member?.role;
+  const isGm = role === "gm";
+  const canConfirm = isGm || (!!project.designer_id && project.designer_id === member?.user_id);
+  const nameOf = (id: string | null) => members.find((m) => m.user_id === id)?.full_name ?? "someone";
+
+  if (project.confirmed_at) return (
+    <div className="space-y-2 rounded-[var(--radius)] border border-success/40 bg-success/10 p-3 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p>Confirmed by {nameOf(project.confirmed_by)} on {shortDate(project.confirmed_at)} — procurement open.
+          {role === "designer" && " Changes you make now are sent to the coordinator."}</p>
+        {isGm && !backOpen && <Button size="sm" variant="outline" onClick={() => setBackOpen(true)}>Send back to designer</Button>}
+      </div>
+      {backOpen && (
+        <div className="space-y-2">
+          <Textarea rows={2} placeholder="What should the designer re-check?" value={note} onChange={(e) => setNote(e.target.value)} />
+          <div className="flex gap-2">
+            <Button size="sm" disabled={sendBack.isPending || !note.trim()} onClick={() => sendBack.mutate({ projectId: project.id, note }, {
+              onSuccess: () => { toast.success("Sent back — the coordinator was told to hold new orders"); setBackOpen(false); setNote(""); },
+              onError: (e) => toast.error(errMsg(e, "Failed")),
+            })}>Send back</Button>
+            <Button size="sm" variant="outline" onClick={() => setBackOpen(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-warning/40 bg-warning/10 p-3 text-sm">
+      <p>
+        Awaiting the designer's confirmation.
+        {!project.designer_id && " No designer is assigned, so the GM confirms this list."}
+        {role === "coordinator" && " You can look at the list, but don't order yet — you'll be notified when it's confirmed."}
+        {canConfirm && " Check it, edit anything that changed, then confirm to send it to the coordinator."}
+        {canConfirm && !hasItems && " Add items first — an empty list can't be confirmed."}
+      </p>
+      {canConfirm && (
+        <Button size="sm" disabled={confirm.isPending || !hasItems} onClick={() => confirm.mutate(project.id, {
+          onSuccess: () => toast.success("FF&E list confirmed"), onError: (e) => toast.error(errMsg(e, "Could not confirm")),
+        })}>Confirm FF&E list</Button>
+      )}
+    </div>
+  );
+};
+
+export const FfeTab = ({ project }: { project: Project }) => {
+  const { data: rows = [] } = useFfeItems(projectOwner(project.id), false);
+  return (
+    <div className="space-y-4">
+      <ConfirmBanner project={project} hasItems={rows.length > 0} />
+      <FfeSheet ctx={{
+        owner: projectOwner(project.id), leadId: project.lead_id, projectId: project.id, name: project.name,
+        designerId: project.designer_id, salesId: project.sales_id,
+      }} />
+    </div>
+  );
+};
 
 /** The FF&E list + costing workflow, shared by the lead's design package and the project tab. */
 export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?: boolean }) => {
