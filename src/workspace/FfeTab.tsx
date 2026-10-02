@@ -269,7 +269,7 @@ const SeedSheet = ({ ctx, canEdit }: { ctx: FfeContext; canEdit: boolean }) => {
       <div className="flex flex-wrap justify-center gap-2">
         {brief && included > 0 && (
           <Button disabled={seed.isPending}
-            onClick={() => seed.mutate({ owner: ctx.owner, ffe }, {
+            onClick={() => seed.mutate({ owner: ctx.owner, leadId: ctx.leadId ?? null, projectId: ctx.projectId ?? null }, {
               onSuccess: (n) => toast.success(`${n} items added from the brief`), onError: (e) => toast.error(errMsg(e, "Failed")),
             })}>
             {seed.isPending ? "Building…" : "Build from the client brief"}
@@ -598,6 +598,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const isGm = role === "gm";
   // Locked only while it sits with the GM. After a quote the designer may edit and resubmit for a new one.
   const canEdit = !readOnly && role !== "sales" && status !== "Submitted";
+  // Cost only: the GM may correct a unit cost while the package sits with them for quoting.
+  const canEditCost = !readOnly && role !== "sales" && (canEdit || isGm);
   const canSubmit = (isGm || role === "designer") && canEdit && rows.length > 0;
   const grand = rows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
@@ -680,7 +682,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         </F>
         {withCost && (
           <F label="Unit cost" className="md:pt-[15px]">
-            <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} disabled={!canEdit} className="tabular-nums" onSave={(v) => save(r.id, { unit_cost: num(v) })} />
+            <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} disabled={!canEditCost} className="tabular-nums" onSave={(v) => save(r.id, { unit_cost: num(v) })} />
           </F>
         )}
         {withCost && (
@@ -963,7 +965,14 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       <SelectContent>{PRIORITY_BANDS.map((b, i) => <SelectItem key={b} value={String(i + 1)}>{i + 1} · {b}</SelectItem>)}</SelectContent>
     </Select>
   ) : <span className="text-xs whitespace-nowrap">{bandOf(r)} · {PRIORITY_BANDS[bandOf(r) - 1]}</span>;
-  const costCell = (r: FfeRow) => canEdit ? <span className="tabular-nums whitespace-nowrap">{r.unit_cost == null ? "—" : aed(Number(r.unit_cost) * Number(r.qty))}</span> : null;
+  // Editable unit cost (the coordinator learns the real price when buying); read-only line total beneath.
+  const costCell = (r: FfeRow) => canEdit ? (
+    <div>
+      <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24"
+        onSave={(v) => apply([r.id], { unit_cost: v.trim() === "" ? null : Number(v) })} />
+      <span className="block text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">Line {aed(Number(r.unit_cost ?? 0) * Number(r.qty))}</span>
+    </div>
+  ) : null;
 
   const apply = (ids: string[], values: Partial<FfeRow>, ok?: string) =>
     update.mutate({ owner: projectOwner(project.id), ids, values }, {
@@ -1029,7 +1038,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-muted-foreground">
-                <tr>{canEdit && <th />}<th className="p-1">Item</th><th className="p-1">Priority</th>{canEdit && <th className="p-1">Cost</th>}<th className="p-1">Stage</th><th className="p-1">PO ref</th><th className="p-1">Ordered</th><th className="p-1">ETA</th><th className="p-1">Delivered</th><th className="p-1">Installed</th><th className="p-1">Notes</th></tr>
+                <tr>{canEdit && <th />}<th className="p-1">Item</th><th className="p-1">Priority</th>{canEdit && <th className="p-1">Unit cost</th>}<th className="p-1">Stage</th><th className="p-1">PO ref</th><th className="p-1">Ordered</th><th className="p-1">ETA</th><th className="p-1">Delivered</th><th className="p-1">Installed</th><th className="p-1">Notes</th></tr>
               </thead>
               <tbody>
                 {items.map((r) => (
@@ -1055,11 +1064,12 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <li key={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm">{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy === "priority" && <p className="text-[10px] text-muted-foreground">{r.room}{canEdit && r.unit_cost != null ? ` · ${aed(Number(r.unit_cost) * Number(r.qty))}` : ""}</p>}</div>
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm">{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy === "priority" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}</div>
                 </div>
                 {bandCell(r)}
                 <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} />
                 <div className="grid grid-cols-2 gap-2 text-xs">
+                  {canEdit && <div className="col-span-2 space-y-1"><span className="text-muted-foreground">Unit cost</span>{costCell(r)}</div>}
                   <label className="space-y-1"><span className="text-muted-foreground">PO ref</span><EditCell label="PO ref" value={r.po_ref} disabled={!canEdit} onSave={(v) => apply([r.id], { po_ref: v || null })} /></label>
                   <label className="space-y-1"><span className="text-muted-foreground">ETA</span>{dateCell(r, "eta", "ETA")}</label>
                   <label className="space-y-1"><span className="text-muted-foreground">Ordered</span>{dateCell(r, "ordered_on", "Ordered on")}</label>
