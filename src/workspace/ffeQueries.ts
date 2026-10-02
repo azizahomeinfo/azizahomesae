@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase-ssr";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { pKeys } from "./projectQueries";
 import { removeWorkspaceObject, uploadToWorkspace } from "./designQueries";
-import type { FfeSection } from "./briefSchema";
 
 type T = Database["public"]["Tables"];
 export type Supplier = Pick<
@@ -88,10 +87,6 @@ const nextRef = (room: string, taken: (string | null)[]) => {
 export const cleanRoom = (title: string) => title.replace(/^\s*\d+(\.\d+)*\s+/, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
 export const categoryForRoom = (room: string) =>
   /appliance/i.test(room) ? "Appliance" : /kitchen|tabletop/i.test(room) ? "Accessories" : "Furniture";
-const qtyOf = (s: string | undefined) => {
-  const n = parseFloat(String(s ?? "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) && n > 0 ? n : null;
-};
 
 export const DONE_STAGES: ProcStage[] = ["Delivered", "Installed", "Closed"];
 
