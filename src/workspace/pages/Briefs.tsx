@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useBriefList, useMembers, type BriefListRow } from "../queries";
+import { useBrief, useBriefList, useLead, useMembers, type BriefListRow } from "../queries";
+import { canSee, type WorkspaceRole } from "../access";
+import BriefEditor from "../BriefEditor";
 import { BRIEF_LABEL, BRIEF_STATUSES, type BriefStatus } from "../briefWorkflow";
 import { BriefActionBar } from "../useBriefActions";
 import BriefStatusPill from "../BriefStatusPill";
@@ -14,6 +16,19 @@ import { useDesignStatuses } from "../designQueries";
 import type { DesignStatus } from "../designSchema";
 
 const DESIGN_STAGES: BriefStatus[] = ["Assigned", "In Design", "Revision Requested", "Design Ready", "Design Approved"];
+
+/** Read-only requirements for roles without the lead page (designers). Same viewer as the project's Brief tab. */
+const ViewRequirements = ({ leadId }: { leadId: string }) => {
+  const [open, setOpen] = useState(false);
+  const { data: lead } = useLead(open ? leadId : undefined);
+  const { data: brief } = useBrief(open ? leadId : undefined);
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>View requirements</Button>
+      {open && lead && brief && <BriefEditor open={open} onOpenChange={setOpen} lead={lead} brief={brief} viewOnly />}
+    </>
+  );
+};
 
 /** Design status chip + button that opens the design package for a lead. */
 const DesignLink = ({ leadId, briefStatus }: { leadId: string; briefStatus: BriefStatus }) => {
@@ -35,11 +50,11 @@ interface CardData {
   budget: number | null; targetDate: string | null; status: BriefStatus;
 }
 
-const BriefCard = ({ d, label }: { d: CardData; label?: string }) => (
-  <Link
-    to={`/workspace/leads/${d.leadId}`}
-    className="block rounded-[var(--radius)] border border-border bg-card p-4 space-y-2 hover:border-primary/50"
-  >
+// Links to the lead page only for roles that can open it; designers never get the lead page (deal records, commercials).
+const BriefCard = ({ d, label }: { d: CardData; label?: string }) => {
+  const { member } = useWorkspace();
+  const body = (
+  <>
     <div className="flex items-start justify-between gap-2">
       <p className="text-foreground min-w-0 truncate">{d.name}</p>
       <BriefStatusPill status={d.status} label={label} />
@@ -49,8 +64,13 @@ const BriefCard = ({ d, label }: { d: CardData; label?: string }) => (
       <span>{aed(d.budget)}</span>
       <span className="text-muted-foreground">Target {shortDate(d.targetDate)}</span>
     </div>
-  </Link>
-);
+  </>
+  );
+  const cls = "block rounded-[var(--radius)] border border-border bg-card p-4 space-y-2";
+  return canSee(member?.role as WorkspaceRole, "leads")
+    ? <Link to={`/workspace/leads/${d.leadId}`} className={`${cls} hover:border-primary/50`}>{body}</Link>
+    : <div className={cls}>{body}</div>;
+};
 
 const Group = ({ title, empty, children, count }: { title: string; empty: string; children: React.ReactNode; count: number }) => (
   <section className="space-y-3">
@@ -96,6 +116,7 @@ const DesignerView = () => {
       {rows.map((b) => (
         <div key={b.id} className="space-y-2">
           <BriefCard d={fromRow(b)} label={DESIGNER_LABEL[b.status as BriefStatus]} />
+          <ViewRequirements leadId={b.lead_id} />
           <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
         </div>
       ))}
