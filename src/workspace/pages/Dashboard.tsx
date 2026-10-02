@@ -31,7 +31,7 @@ const Dashboard = () => {
   const inDesign = myBriefs.filter((b) => b.status !== "Design Approved").length;
   const myOrdered = [...myBriefs.filter((b) => b.status !== "Design Approved"), ...myBriefs.filter((b) => b.status === "Design Approved")];
 
-  // Open post-signing drawings, one row per project, each drawing with its own clock (24h/48h/48h/72h).
+  // Open post-signing drawings, one row per project, each drawing with its own clock (24h/48h/72h/72h).
   const lateDrawings = [...myTasks.filter((t) => t.drawing_kind && !t.done)
     .sort((a, b) => (a.due_at ?? a.due_date ?? "").localeCompare(b.due_at ?? b.due_date ?? ""))
     .reduce((m, t) => m.set(t.project_id!, [...(m.get(t.project_id!) ?? []), t]), new Map<string, typeof myTasks>())]
