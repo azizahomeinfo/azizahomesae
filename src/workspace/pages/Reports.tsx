@@ -38,9 +38,14 @@ const Reports = () => {
     queryKey: ["ws", "report-crs"],
     enabled: isGm,
     queryFn: async () => {
-      const { data, error } = await supabase.from("change_requests").select("cost_delta").eq("status", "Approved");
+      const [{ data, error }, costs] = await Promise.all([
+        supabase.from("change_requests").select("id").eq("status", "Approved"),
+        supabase.rpc("ws_cr_costs", {}),
+      ]);
       if (error) throw new Error(error.message);
-      return (data ?? []).reduce((s, r) => s + Number(r.cost_delta), 0);
+      if (costs.error) throw new Error(costs.error.message);
+      const approved = new Set((data ?? []).map((r) => r.id));
+      return (costs.data ?? []).filter((c) => approved.has(c.id)).reduce((s, c) => s + Number(c.cost_delta), 0);
     },
   });
   if (l1 || l2) return <p className="text-muted-foreground">Loading…</p>;

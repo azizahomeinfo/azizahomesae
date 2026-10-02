@@ -22,8 +22,8 @@ export type Issue = Pick<
 >;
 export type ChangeRequest = Pick<
   T["change_requests"]["Row"],
-  "id" | "project_id" | "title" | "detail" | "raised_on" | "cost_delta" | "days_delta" | "status" | "decided_at" | "decided_by"
->;
+  "id" | "project_id" | "title" | "detail" | "raised_on" | "days_delta" | "status" | "decided_at" | "decided_by"
+> & { cost_delta: number | null };
 export type HandoverItem = Pick<T["handover_items"]["Row"], "id" | "project_id" | "label" | "sort_order" | "done" | "done_at" | "done_by">;
 export type ProjectFile = Pick<
   T["project_files"]["Row"],
@@ -35,7 +35,7 @@ const PROJECT_COLS =
   "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
 const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, due_at, priority, done, done_at, created_at, drawing_kind";
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
-const CR_COLS = "id, project_id, title, detail, raised_on, cost_delta, days_delta, status, decided_at, decided_by";
+const CR_COLS = "id, project_id, title, detail, raised_on, days_delta, status, decided_at, decided_by";
 const HANDOVER_COLS = "id, project_id, label, sort_order, done, done_at, done_by";
 const FILE_COLS = "id, project_id, lead_id, storage_path, file_name, category, size_bytes, uploaded_by, created_at";
 const BUCKET = "workspace";
@@ -246,14 +246,20 @@ export const useSaveIssue = () => {
 
 /* ---------------- change requests ---------------- */
 
+// cost_delta is what the client is charged: no direct SELECT grant, read only via ws_cr_costs (empty for coordinators).
 export const useChangeRequests = (projectId: string | undefined) =>
   useQuery({
     queryKey: pKeys.crs(projectId ?? ""),
     enabled: !!projectId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("change_requests").select(CR_COLS).eq("project_id", projectId!).order("raised_on", { ascending: false });
+      const [{ data, error }, costs] = await Promise.all([
+        supabase.from("change_requests").select(CR_COLS).eq("project_id", projectId!).order("raised_on", { ascending: false }),
+        supabase.rpc("ws_cr_costs", { _project: projectId! }),
+      ]);
       fail(error);
-      return (data ?? []) as ChangeRequest[];
+      fail(costs.error);
+      const cost = new Map((costs.data ?? []).map((c) => [c.id, Number(c.cost_delta)]));
+      return (data ?? []).map((r) => ({ ...r, cost_delta: cost.get(r.id) ?? null })) as ChangeRequest[];
     },
   });
 
@@ -397,3 +403,5 @@ export const SIGNED_CONTRACT = "Signed contract";
 export const SALES_PROPOSAL = "Proposal";
 /** Sales/GM-only categories (enforced by project_files policies); never drive drawing tasks. Stable keys. */
 export const DEAL_RECORD_KINDS = [SIGNED_CONTRACT, SALES_PROPOSAL] as const;
+/** Every file category treated as a deal record (designers and coordinators can't read or upload them; mirrors the DB). */
+export const DEAL_CATEGORIES = [...DEAL_RECORD_KINDS, "Contract", "Quote"] as const;

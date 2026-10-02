@@ -1767,6 +1767,13 @@ export type Database = {
         Returns: Json
       }
       ws_costing_options: { Args: { _costing: string }; Returns: Json }
+      ws_cr_costs: {
+        Args: { _project?: string }
+        Returns: {
+          cost_delta: number
+          id: string
+        }[]
+      }
       ws_create_drawing_tasks: {
         Args: {
           _designer: string

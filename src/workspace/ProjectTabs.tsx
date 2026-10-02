@@ -13,7 +13,7 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, useLeadDealFiles, DRAWING_KINDS, DEAL_RECORD_KINDS,
+  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, useLeadDealFiles, DRAWING_KINDS, DEAL_RECORD_KINDS, DEAL_CATEGORIES,
   type Issue, type Project, type ProjectFile, type FileOwner,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
@@ -282,15 +282,17 @@ export const ChangesTab = ({ project }: { project: Project }) => {
   const [cost, setCost] = useState("0");
   const [days, setDays] = useState("0");
   const isGm = member?.role === "gm";
-  const approvedTotal = crs.filter((c) => c.status === "Approved").reduce((s, c) => s + Number(c.cost_delta), 0);
+  // The coordinator sees the scope and the days, never what the client is charged.
+  const showMoney = member?.role !== "coordinator";
+  const approvedTotal = crs.filter((c) => c.status === "Approved").reduce((s, c) => s + Number(c.cost_delta ?? 0), 0);
 
   const submit = async () => {
     const t = title.trim();
-    const c = Number(cost); const d = Number(days);
+    const c = showMoney ? Number(cost) : 0; const d = Number(days);
     if (!t) return toast.error("Give the change a title");
-    if (Number.isNaN(c) || !Number.isInteger(d)) return toast.error("Cost and days must be numbers (days whole)");
+    if (Number.isNaN(c) || !Number.isInteger(d)) return toast.error(showMoney ? "Cost and days must be numbers (days whole)" : "Days must be a whole number");
     try {
-      await raise.mutateAsync({ project_id: project.id, title: t.slice(0, 300), detail: detail.trim() || null, cost_delta: c, days_delta: d, source: member?.full_name ?? null });
+      await raise.mutateAsync({ project_id: project.id, title: t.slice(0, 300), detail: detail.trim() || null, ...(showMoney ? { cost_delta: c } : {}), days_delta: d, source: member?.full_name ?? null });
       setOpen(false); setTitle(""); setDetail(""); setCost("0"); setDays("0");
     } catch (e) { toast.error(errMsg(e, "Could not raise")); }
   };
@@ -298,7 +300,7 @@ export const ChangesTab = ({ project }: { project: Project }) => {
   return (
     <Card title="Change requests">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm">Approved total: <span className={cn(approvedTotal < 0 && "text-destructive")}>{signedAed(approvedTotal)}</span></p>
+        {showMoney ? <p className="text-sm">Approved total: <span className={cn(approvedTotal < 0 && "text-destructive")}>{signedAed(approvedTotal)}</span></p> : <span />}
         <Button size="sm" onClick={() => setOpen(true)}>Raise change request</Button>
       </div>
       {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : crs.length === 0 ? (
@@ -311,8 +313,8 @@ export const ChangesTab = ({ project }: { project: Project }) => {
                 <p className="break-words text-sm">{c.title}</p>
                 {c.detail && <p className="whitespace-pre-wrap break-words text-xs text-muted-foreground">{c.detail}</p>}
                 <p className="text-xs text-muted-foreground">
-                  <span className={cn(Number(c.cost_delta) < 0 && "text-destructive")}>{signedAed(c.cost_delta)}</span>
-                  {" · "}{c.days_delta > 0 ? `+${c.days_delta}` : c.days_delta < 0 ? `−${-c.days_delta}` : 0} days · raised {shortDate(c.raised_on)}
+                  {showMoney && c.cost_delta != null && <><span className={cn(c.cost_delta < 0 && "text-destructive")}>{signedAed(c.cost_delta)}</span>{" · "}</>}
+                  {c.days_delta > 0 ? `+${c.days_delta}` : c.days_delta < 0 ? `−${-c.days_delta}` : 0} days · raised {shortDate(c.raised_on)}
                 </p>
                 <p className="text-xs">
                   {c.status}
@@ -336,10 +338,10 @@ export const ChangesTab = ({ project }: { project: Project }) => {
             <div className="space-y-1.5"><Label htmlFor="cr-t">Title</Label><Input id="cr-t" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
             <div className="space-y-1.5"><Label htmlFor="cr-d">Detail</Label><Textarea id="cr-d" rows={3} value={detail} onChange={(e) => setDetail(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label htmlFor="cr-c">Cost change (AED)</Label><Input id="cr-c" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
+              {showMoney && <div className="space-y-1.5"><Label htmlFor="cr-c">Cost change (AED)</Label><Input id="cr-c" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} /></div>}
               <div className="space-y-1.5"><Label htmlFor="cr-n">Days change</Label><Input id="cr-n" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} /></div>
             </div>
-            <p className="text-xs text-muted-foreground">Use a negative number for savings or time gained.</p>
+            <p className="text-xs text-muted-foreground">{showMoney ? "Use a negative number for savings or time gained." : "Use a negative number for time gained. Sales or the GM add the cost."}</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
@@ -399,6 +401,9 @@ export const SnaggingTab = ({ project }: { project: Project }) => {
 /* ---------------- files ---------------- */
 
 const FILE_CATEGORIES = [...DRAWING_KINDS, "Contract", "Invoice", "Floor plan", "Quote", "Photo", "Other"];
+// Designers and coordinators can't file deal records (Contract, Quote, …); the database refuses them too.
+const fileCategoriesFor = (role: string | undefined) =>
+  role === "designer" || role === "coordinator" ? FILE_CATEGORIES.filter((c) => !(DEAL_CATEGORIES as readonly string[]).includes(c)) : FILE_CATEGORIES;
 const MAX_FILE = 25 * 1024 * 1024;
 
 export const FilesTab = ({ project }: { project: Project }) => {
@@ -429,7 +434,7 @@ export const FilesTab = ({ project }: { project: Project }) => {
       <div className="flex flex-col gap-2 sm:flex-row">
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="sm:w-44" aria-label="Category"><SelectValue /></SelectTrigger>
-          <SelectContent>{FILE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+          <SelectContent>{fileCategoriesFor(member?.role).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
         <input ref={input} type="file" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
         <Button onClick={() => input.current?.click()} disabled={upload.isPending}>{upload.isPending ? "Uploading…" : "Upload files"}</Button>
