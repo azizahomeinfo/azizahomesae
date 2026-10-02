@@ -288,6 +288,13 @@
       "when": 1790922702985,
       "tag": "0040_coordinator_no_client_price",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790922946023,
+      "tag": "0041_cabinetry_bands_deal_records_cr_costs",
+      "breakpoints": true
     }
   ]
 }
