@@ -11,8 +11,9 @@ import {
 } from "../projectQueries";
 import { PROJECT_STAGES, RiskDot, StagePill, TAB_LABEL, TABS_BY_ROLE, type ProjectStage, type ProjectTab } from "../projectConstants";
 import {
-  BriefTab, ChangesTab, ComingSoon, DesignTab, DrawingsChecklist, FilesTab, IssuesTab, OverviewTab, SignedContractCard, SnaggingTab, TasksTab, TimelineTab,
+  BriefTab, ChangesTab, ComingSoon, DesignTab, DriveFolderField, DrawingsChecklist, FilesTab, IssuesTab, OverviewTab, SignedContractCard, SnaggingTab, TasksTab, TimelineTab,
 } from "../ProjectTabs";
+import AssignDesigner from "../AssignDesigner";
 import { Team } from "./Projects";
 import { FfeTab, ProcurementTab } from "../FfeTab";
 
@@ -133,6 +134,8 @@ const ProjectDetail = () => {
         </div>
       </section>
 
+      <AssignDesigner projectId={project.id} designerId={project.designer_id} />
+      <DriveFolderField project={project} />
       <SignedContractCard project={project} />
       <DrawingsChecklist project={project} />
 
