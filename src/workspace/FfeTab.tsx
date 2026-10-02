@@ -861,9 +861,13 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       )}
       </>)}
 
-      <div className="flex justify-end"><GroupToggle value={groupBy} onChange={setGroupBy} /></div>
-      {shownGroups.map(([room, items]) => {
-        const sub = items.reduce((s, r) => s + lineTotal(r), 0);
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <SearchBox value={search} onChange={setSearch} shown={visibleCount} total={(withCost ? allRows : rows).length} />
+        <GroupToggle value={groupBy} onChange={setGroupBy} />
+      </div>
+      {nothingMatches && <NoMatches q={search} onClear={() => setSearch("")} />}
+      {shownGroups.map(([room, items, whole]) => {
+        const sub = whole.reduce((s, r) => s + lineTotal(r), 0);
         return (
           <section key={room} className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -871,7 +875,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
                 ? <h3 className="font-medium">{room}</h3>
                 : <RoomHeading room={room} canEdit={canEdit} onRename={(to) => renameRoom(room, to)} />}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{items.length} item{items.length === 1 ? "" : "s"}</span>
+                <span className="text-xs text-muted-foreground">{searching ? `${items.length} of ${whole.length}` : whole.length} item{whole.length === 1 ? "" : "s"}</span>
                 {withCost && <span className="text-sm tabular-nums">{aed(sub)}</span>}
                 {canEdit && !byPriority && (
                   <>
@@ -894,7 +898,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         );
       })}
 
-      {showInternal && !(budget && onlyGaps && !shownInternal.length) && (
+      {internalVisible && (
         <section className="rounded-[var(--radius)] border border-dashed border-border bg-card p-4 md:p-6 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -902,7 +906,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
               <p className="text-xs text-muted-foreground">Internal spend — never appears on the proposal or the contract.</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{internalRows.length} item{internalRows.length === 1 ? "" : "s"}</span>
+              <span className="text-xs text-muted-foreground">{searching ? `${shownInternal.length} of ${internalRows.length}` : internalRows.length} item{internalRows.length === 1 ? "" : "s"}</span>
               <span className="text-sm tabular-nums">{aed(internalRows.reduce((s, r) => s + lineTotal(r), 0))}</span>
               {canEdit && <Button size="sm" variant="outline" disabled={add.isPending} onClick={() => addItem(BUILDING_MATERIAL)}><Plus className="h-4 w-4" /> Add material</Button>}
             </div>
