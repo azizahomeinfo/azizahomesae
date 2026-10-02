@@ -81,13 +81,13 @@ export const useSharedDesign = (leadId: string | undefined) =>
     },
   });
 
-/** Client-facing item groups: room, item and qty only — never a cost or a supplier. ffe_items is the only source: no brief fallback, so an empty list shows as empty. */
+/** Client-facing item groups for BOTH the proposal and the contract (buildContract takes these): room, item and qty only — never a cost, a supplier, or an internal (building material) row. ffe_items is the only source: no brief fallback, so an empty list shows as empty. */
 export const useProposalItems = (leadId: string | undefined, _briefFfe?: unknown) =>
   useQuery({
     queryKey: prKeys.items(leadId ?? ""),
     enabled: !!leadId,
     queryFn: async (): Promise<ItemGroup[]> => {
-      const { data, error } = await supabase.from("ffe_items").select("room, item, qty, sort_order").eq("lead_id", leadId!).order("sort_order");
+      const { data, error } = await supabase.from("ffe_items").select("room, item, qty, sort_order").eq("lead_id", leadId!).eq("internal", false).order("sort_order");
       fail(error);
       const m = new Map<string, { item: string; qty: number }[]>();
       for (const i of data ?? []) if (i.item?.trim()) m.set(i.room, [...(m.get(i.room) ?? []), { item: i.item, qty: Number(i.qty) }]);

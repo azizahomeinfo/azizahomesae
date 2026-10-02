@@ -10,7 +10,6 @@ CREATE OR REPLACE FUNCTION public.ws_ffe_internal_section(_room text)
 AS $function$
   SELECT coalesce(btrim(_room), '') ~* '^((building|site)\s+materials?|materials?|internal)\M'
 $function$;
---> statement-breakpoint
 CREATE OR REPLACE FUNCTION public.ws_ffe_internal_trg()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -20,7 +19,6 @@ BEGIN
   NEW.internal := public.ws_ffe_internal_section(NEW.room);
   RETURN NEW;
 END $function$;
---> statement-breakpoint
 ALTER TABLE public.ffe_items ADD COLUMN IF NOT EXISTS internal boolean NOT NULL DEFAULT false;
 GRANT SELECT (internal) ON public.ffe_items TO authenticated;
 -- Deliberately no INSERT/UPDATE grant: internal is derived from the section name, never set by hand.
