@@ -424,7 +424,6 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
   const { data: values } = useProjectValues(role);
   const [note, setNote] = useState("");
   const contract = values?.get(projectId) ?? null;
-  const noSupplier = rows.filter(missingSupplier).length;
   const uncosted = rows.filter((r) => r.unit_cost == null).length;
   const send = () => submit.mutate(projectId, {
     onSuccess: () => toast.success("Sent to the GM for budget approval"), onError: (e) => toast.error(errMsg(e, "Failed")),
@@ -452,8 +451,7 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
         {status !== "Quoted" && (gapRows.length > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">
             <span>
-              {plural(gapRows.length, "item has", "items have")} no supplier yet
-              . Every item needs a supplier before the list can go to the GM. A purchase link is optional.
+              {plural(gapRows.length, "item has", "items have")} no supplier yet. Every item needs a supplier before the list can go to the GM. A purchase link is optional.
             </span>
             <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only items without a supplier"}</Button>
           </div>
