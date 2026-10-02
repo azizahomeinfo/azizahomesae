@@ -21,7 +21,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier,
-  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, missingLink, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe,
+  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, missingLink, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -525,14 +525,14 @@ export const ConfirmBanner = ({ project, hasItems }: { project: Project; hasItem
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p>Confirmed by {nameOf(project.confirmed_by)} on {shortDate(project.confirmed_at)} — procurement open.
           {role === "designer" && " Changes you make now are sent to the coordinator."}</p>
-        {isGm && !backOpen && <Button size="sm" variant="outline" onClick={() => setBackOpen(true)}>Send back to designer</Button>}
+        {(isGm || role === "coordinator") && !backOpen && <Button size="sm" variant="outline" onClick={() => setBackOpen(true)}>Send back to designer</Button>}
       </div>
       {backOpen && (
         <div className="space-y-2">
           <Textarea rows={2} placeholder="What should the designer re-check?" value={note} onChange={(e) => setNote(e.target.value)} />
           <div className="flex gap-2">
             <Button size="sm" disabled={sendBack.isPending || !note.trim()} onClick={() => sendBack.mutate({ projectId: project.id, note }, {
-              onSuccess: () => { toast.success("Sent back — the coordinator was told to hold new orders"); setBackOpen(false); setNote(""); },
+              onSuccess: () => { toast.success("Sent back to the designer — new orders are on hold until it is re-confirmed"); setBackOpen(false); setNote(""); },
               onError: (e) => toast.error(errMsg(e, "Failed")),
             })}>Send back</Button>
             <Button size="sm" variant="outline" onClick={() => setBackOpen(false)}>Cancel</Button>
@@ -691,6 +691,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
           </F>
         )}
       </div>
+      {withCost && r.review && <ReviewPanel row={r} isGm={isGm && !readOnly} canHandBack={!readOnly && (isGm || role === "designer")} />}
       <div className={cn("grid items-start gap-2 text-xs text-muted-foreground", secondaryCols)}>
         <F label="Supplier" className="col-span-2 md:col-span-1">
           <SupplierCombo row={r} disabled={!canEdit} canAdd={canAddSupplier} onChange={(p) => save(r.id, p)} />
@@ -956,6 +957,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
+  const [oosIds, setOosIds] = useState<string[] | null>(null);
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
   const groups = useMemo(() => groupBy === "room" ? byRoom(rows) : byBand(rows), [rows, groupBy]);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
@@ -1020,6 +1022,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
             <Button size="sm" disabled={!bulkStage || update.isPending} onClick={() => bulkStage && apply([...sel], { stage: bulkStage }, `${sel.size} items moved to ${bulkStage}`)}>Apply stage</Button>
             <Input className="h-8 sm:w-36" placeholder="PO ref" value={bulkPo} onChange={(e) => setBulkPo(e.target.value)} aria-label="Bulk PO ref" />
             <Button size="sm" disabled={!bulkPo.trim() || update.isPending} onClick={() => apply([...sel], { po_ref: bulkPo.trim() }, `PO set on ${sel.size} items`)}>Apply PO</Button>
+            <Button size="sm" variant="outline" onClick={() => setOosIds([...sel])}>Out of stock → designer</Button>
             <Button size="sm" variant="ghost" onClick={() => setSel(new Set())}>Clear</Button>
           </div>
         )}
@@ -1044,7 +1047,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                 {items.map((r) => (
                   <tr key={r.id} className="border-t border-border align-top">
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
-                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span>{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy === "priority" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}</td>
+                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy === "priority" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
+                      {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
                     <td className="p-1"><StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} /></td>
@@ -1064,7 +1068,9 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <li key={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm">{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy === "priority" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}</div>
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy === "priority" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
+                    {r.review && r.review_note && <p className="text-xs text-muted-foreground">{r.review_note}</p>}
+                    {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}</div>
                 </div>
                 {bandCell(r)}
                 <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} />
@@ -1082,6 +1088,89 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           </ul>
         </Section>
       ))}
+      <OutOfStockDialog ids={oosIds} onClose={() => setOosIds(null)} onDone={() => setSel(new Set())} />
+    </div>
+  );
+};
+
+/* ---------------- out of stock / GM review ---------------- */
+
+export const ReviewBadge = ({ row }: { row: FfeRow }) => row.review ? (
+  <span title={row.review_note ?? undefined}
+    className={cn("mr-1.5 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium align-middle",
+      row.review === "Out of stock" ? "border-warning/50 bg-warning/15 text-warning" : "border-primary/50 bg-primary/10 text-primary")}>
+    {REVIEW_LABEL[row.review]} · don't buy
+  </span>
+) : null;
+
+const OutOfStockDialog = ({ ids, onClose, onDone }: { ids: string[] | null; onClose: () => void; onDone: () => void }) => {
+  const oos = useFfeOutOfStock();
+  const [note, setNote] = useState("");
+  const close = () => { setNote(""); onClose(); };
+  return (
+    <AlertDialog open={!!ids} onOpenChange={(o) => !o && close()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Send {ids?.length ?? 0} item{ids?.length === 1 ? "" : "s"} back to the designer</AlertDialogTitle>
+          <AlertDialogDescription>The designer picks a replacement; the item stays on hold until then.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <Textarea rows={3} placeholder="What's wrong? e.g. supplier discontinued it" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Out of stock note" />
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <Button disabled={!note.trim() || oos.isPending} onClick={() => ids && oos.mutate({ ids, note: note.trim() }, {
+            onSuccess: (n) => { toast.success(`${n} item(s) sent back to the designer`); onDone(); close(); },
+            onError: (e) => toast.error(errMsg(e, "Could not send back")),
+          })}>Send back</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
+const ReviewPanel = ({ row, isGm, canHandBack }: { row: FfeRow; isGm: boolean; canHandBack: boolean }) => {
+  const { data: members = [] } = useMembers();
+  const reselect = useFfeReselected();
+  const decide = useFfeDecideChange();
+  const [backOpen, setBackOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const prev = (row.review_prev ?? {}) as ReviewPrev;
+  const who = members.find((m) => m.user_id === row.review_by)?.full_name ?? "someone";
+  if (row.review === "Out of stock") return (
+    <div className="space-y-2 rounded-[var(--radius)] border border-warning/40 bg-warning/10 p-3 text-xs text-foreground">
+      <p className="font-medium">{REVIEW_LABEL["Out of stock"]}</p>
+      {row.review_note && <p>{row.review_note}</p>}
+      <p className="text-muted-foreground">Sent by {who}{row.review_at ? ` on ${shortDate(row.review_at)}` : ""}
+        {prev.item && <> · replacing {prev.item}{prev.supplier_name ? ` (${prev.supplier_name})` : ""}</>}</p>
+      {canHandBack && (
+        <Button size="sm" disabled={reselect.isPending} onClick={() => reselect.mutate(row.id, {
+          onSuccess: (msg) => toast.success(msg), onError: (e) => toast.error(errMsg(e, "Could not hand back")),
+        })}>Hand back replacement</Button>
+      )}
+    </div>
+  );
+  return (
+    <div className="space-y-2 rounded-[var(--radius)] border border-primary/40 bg-primary/10 p-3 text-xs text-foreground">
+      <p className="font-medium">{REVIEW_LABEL["Awaiting GM approval"]}</p>
+      {row.review_note && <p>{row.review_note}</p>}
+      {isGm && !backOpen && (
+        <div className="flex gap-2">
+          <Button size="sm" disabled={decide.isPending} onClick={() => decide.mutate({ id: row.id, approve: true, note: "" }, {
+            onSuccess: () => toast.success("Approved — back with the coordinator"), onError: (e) => toast.error(errMsg(e, "Failed")),
+          })}>Approve</Button>
+          <Button size="sm" variant="outline" onClick={() => setBackOpen(true)}>Send back</Button>
+        </div>
+      )}
+      {isGm && backOpen && (
+        <div className="space-y-2">
+          <Textarea rows={2} placeholder="Why? The designer sees this" value={note} onChange={(e) => setNote(e.target.value)} />
+          <div className="flex gap-2">
+            <Button size="sm" disabled={!note.trim() || decide.isPending} onClick={() => decide.mutate({ id: row.id, approve: false, note: note.trim() }, {
+              onSuccess: () => { toast.success("Sent back to the designer"); setBackOpen(false); setNote(""); }, onError: (e) => toast.error(errMsg(e, "Failed")),
+            })}>Send back</Button>
+            <Button size="sm" variant="ghost" onClick={() => setBackOpen(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
