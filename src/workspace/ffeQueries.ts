@@ -139,7 +139,7 @@ export const useSaveSupplier = () => {
 
 /* ---------------- purchasing priority ---------------- */
 
-/** Coarse buying order for the coordinator: large furniture first, decor last. A work queue, not a taxonomy. */
+/** Coarse buying order for the coordinator: cabinetry first, kitchenware & linen last. A work queue, not a taxonomy. */
 /** Buying order; index + 1 is the band number defined by ws_ffe_band. */
 export const PRIORITY_BANDS = ["Cabinetry", "Furniture", "Appliances", "Soft finishing", "Kitchenware & linen"] as const;
 /** 1–5. Derived in the database (ws_ffe_band, set on insert, coordinator overrides stick); 5 only covers a row not yet saved. */
@@ -420,5 +420,29 @@ export const useDecideBudget = () => {
       fail(error);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
+  });
+};
+
+/** Designer (or GM) confirms the converted FF&E list; releases procurement once any budget approval is in. */
+export const useConfirmFfe = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.rpc("ws_confirm_ffe_list", { _project: projectId });
+      fail(error);
+    },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "project"] }); qc.invalidateQueries({ queryKey: pKeys.projects }); },
+  });
+};
+
+/** GM only: send a confirmed list back to the designer to re-check. */
+export const useReturnFfe = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { projectId: string; note: string }) => {
+      const { error } = await supabase.rpc("ws_return_ffe_list", { _project: v.projectId, _note: v.note });
+      fail(error);
+    },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "project"] }); qc.invalidateQueries({ queryKey: pKeys.projects }); },
   });
 };

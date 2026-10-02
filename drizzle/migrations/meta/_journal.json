@@ -295,6 +295,13 @@
       "when": 1790922946023,
       "tag": "0041_cabinetry_bands_deal_records_cr_costs",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790923652920,
+      "tag": "0042_ffe_designer_confirmation_gate",
+      "breakpoints": true
     }
   ]
 }
