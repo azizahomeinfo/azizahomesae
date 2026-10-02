@@ -13,13 +13,13 @@ import { useBrief, useLead, useMembers } from "./queries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
-  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, useLeadDealFiles, DRAWING_KINDS, DEAL_RECORD_KINDS, DEAL_CATEGORIES,
+  useProjectCosts, useProjectValues, useSaveIssue, useTickHandover, useUploadProjectFile, useDeleteProjectFile, useLeadDealFiles, useSetInDrive, useUpdateProject, isDrawingKind, DRAWING_KINDS, DEAL_RECORD_KINDS, DEAL_CATEGORIES,
   type Issue, type Project, type ProjectFile, type FileOwner,
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
-import { DriveLink } from "./DriveLink";
+import { DriveLink, checkDriveUrl } from "./DriveLink";
 import { NewTaskForm, TaskRow, isOverdue, dueTimeLabel, timeLeftLabel } from "./TaskList";
 import CommentThread from "./CommentThread";
 import BriefEditor from "./BriefEditor";
@@ -452,6 +452,7 @@ export const FilesTab = ({ project }: { project: Project }) => {
                   <p className="text-xs text-muted-foreground">
                     {f.category ?? "Other"} · {fileSize(f.size_bytes)} · {members.find((m) => m.user_id === f.uploaded_by)?.full_name ?? "Someone"} · {shortDate(f.created_at)}
                   </p>
+                  {isDrawingKind(f.category) && <InDriveBox file={f} projectId={project.id} />}
                 </div>
                 {url ? (
                   <Button asChild variant="outline" size="sm"><a href={url} target="_blank" rel="noreferrer" download={f.file_name}>Download</a></Button>
@@ -513,6 +514,7 @@ export const FileSlot = ({ owner, category, files, canUpload, accept, versioned 
               <span className="min-w-0 break-all">
                 {f.file_name} · {shortDate(f.created_at)}
                 {versioned && <span className={cn("ml-1", i === 0 ? "text-primary" : "text-muted-foreground")}>· {i === 0 ? "current" : "superseded"}</span>}
+                {owner.projectId && isDrawingKind(f.category) && <InDriveBox file={f} projectId={owner.projectId} />}
               </span>
               <span className="flex gap-1">
                 {urls?.get(f.storage_path) && <Button asChild size="sm" variant="ghost" className="h-7"><a href={urls.get(f.storage_path)} target="_blank" rel="noreferrer">Open</a></Button>}
@@ -537,7 +539,11 @@ export const DrawingsChecklist = ({ project }: { project: Project }) => {
   const drawing = tasks.filter((t) => t.drawing_kind);
   const anyDrawing = files.some((f) => (DRAWING_KINDS as readonly string[]).includes(f.category ?? ""));
   if (!drawing.length && !anyDrawing) return null;
-  const missing = DRAWING_KINDS.filter((k) => !files.some((f) => f.category === k)).length;
+  const stateOf = (k: string) => {
+    const of = files.filter((f) => f.category === k);
+    return !of.length ? "none" : of.some((f) => f.in_drive) ? "done" : "notDrive";
+  };
+  const missing = DRAWING_KINDS.filter((k) => stateOf(k) !== "done").length;
   const late = drawing.some((t) => isOverdue(t));
   const canUpload = member?.role === "designer" || member?.role === "gm";
   return (
@@ -545,14 +551,18 @@ export const DrawingsChecklist = ({ project }: { project: Project }) => {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Drawings</h3>
         <p className={cn("text-xs", late ? "text-destructive" : "text-muted-foreground")}>
-          {missing === 0 ? "All 4 types uploaded" : `${missing} of 4 outstanding${late ? " · overdue" : ""}`}
+          {missing === 0 ? "All 4 done — uploaded and in Drive" : `${missing} of 4 outstanding${late ? " · overdue" : ""}`}
         </p>
       </div>
       <div className="divide-y divide-border">
         {DRAWING_KINDS.map((k) => {
           const t = drawing.find((x) => x.drawing_kind === k);
+          const st = stateOf(k);
           return (
             <div key={k}>
+              <p className={cn("pt-3 text-xs font-medium", st === "done" ? "text-success" : st === "notDrive" ? "text-warning" : "text-muted-foreground")}>
+                {k}: {st === "done" ? "Done" : st === "notDrive" ? "Uploaded — not yet in the client's Drive folder" : "Not uploaded"}
+              </p>
               {t?.due_at && !t.done && (
                 <p className={cn("pt-3 text-xs", isOverdue(t) ? "text-destructive" : "text-muted-foreground")}>
                   Due {dueTimeLabel(t.due_at)} · {timeLeftLabel(t.due_at)}
@@ -563,7 +573,7 @@ export const DrawingsChecklist = ({ project }: { project: Project }) => {
           );
         })}
       </div>
-      <p className="pt-2 text-xs text-muted-foreground">Each drawing task closes when its first file is uploaded and reopens if every file of that type is deleted.</p>
+      <p className="pt-2 text-xs text-muted-foreground">Each drawing task closes only when a file is uploaded here and ticked "Also in the client's Google Drive folder". Un-ticking or deleting it reopens the task. Deadlines are Dubai time, counted from when the project was created.</p>
     </section>
   );
 };
@@ -611,6 +621,64 @@ export const LeadDealCard = ({ lead }: { lead: { id: string; sales_id: string | 
         ))}
       </div>
       <p className="pt-2 text-xs text-muted-foreground">The signed contract and the proposal sent to the client. They move to the project automatically when this lead becomes one.</p>
+    </section>
+  );
+};
+
+/** Bound to project_files.in_drive; the database closes the drawing task only when this is ticked. */
+export const InDriveBox = ({ file, projectId }: { file: ProjectFile; projectId: string }) => {
+  const set = useSetInDrive();
+  const id = `drive-${file.id}`;
+  return (
+    <span className="mt-1 flex flex-col gap-0.5">
+      <span className="flex items-center gap-2">
+        <Checkbox id={id} checked={file.in_drive} disabled={set.isPending}
+          onCheckedChange={(c) => set.mutate({ id: file.id, projectId, inDrive: c === true }, { onError: (e) => toast.error(errMsg(e, "Could not update")) })} />
+        <label htmlFor={id} className="text-xs">Also in the client's Google Drive folder</label>
+      </span>
+      <span className="text-[10px] text-muted-foreground">The drawing task stays open until this is ticked; un-ticking reopens it.</span>
+    </span>
+  );
+};
+
+/** projects.drive_url — GM, designer and coordinator set it; prompted loudly when empty. */
+export const DriveFolderField = ({ project }: { project: Project }) => {
+  const { member } = useWorkspace();
+  const update = useUpdateProject();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(project.drive_url ?? "");
+  const canEdit = member?.role === "gm" || member?.role === "designer" || member?.role === "coordinator";
+  const check = checkDriveUrl(draft);
+  const empty = !project.drive_url;
+  const save = async () => {
+    if (check.error) return toast.error(check.error);
+    try {
+      await update.mutateAsync({ id: project.id, values: { drive_url: check.value } });
+      setEditing(false);
+      toast.success("Drive folder saved");
+    } catch (e) { toast.error(errMsg(e, "Could not save the Drive folder")); }
+  };
+  return (
+    <section className={cn("rounded-[var(--radius)] border p-4 md:p-6 space-y-2", empty ? "border-warning/60 bg-warning/5" : "border-border bg-card")}>
+      <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Client's Google Drive folder</p>
+      {editing || (empty && canEdit) ? (
+        <div className="space-y-1">
+          {empty && <p className="text-sm">Add the client's Drive folder link — every drawing must also be put there before its task closes.</p>}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input type="url" inputMode="url" placeholder="https://drive.google.com/…" value={draft} onChange={(e) => setDraft(e.target.value)} aria-invalid={!!check.error} aria-label="Google Drive folder link" />
+            <Button onClick={save} disabled={update.isPending || !draft.trim()}>Save</Button>
+            {editing && <Button variant="outline" onClick={() => { setEditing(false); setDraft(project.drive_url ?? ""); }}>Cancel</Button>}
+          </div>
+          {check.hint && <p className="text-xs text-muted-foreground">{check.hint}</p>}
+        </div>
+      ) : empty ? (
+        <p className="text-sm text-warning">No Drive folder yet — ask the GM, designer or coordinator to add it.</p>
+      ) : (
+        <div className="flex items-center gap-3">
+          <DriveLink url={project.drive_url} />
+          {canEdit && <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>Change</Button>}
+        </div>
+      )}
     </section>
   );
 };
