@@ -10,7 +10,7 @@ export type Project = Pick<
   | "id" | "code" | "lead_id" | "name" | "client" | "property" | "unit" | "unit_type" | "location" | "drive_url"
   | "sales_id" | "designer_id" | "coordinator_id" | "start_date" | "handover_date" | "actual_handover"
   | "stage" | "risk" | "overall_pct" | "proc_pct" | "received"
-  | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at"
+  | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at" | "confirmed_at" | "confirmed_by"
 >;
 export type Task = Pick<
   T["tasks"]["Row"],
