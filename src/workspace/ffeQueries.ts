@@ -422,3 +422,27 @@ export const useDecideBudget = () => {
     onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
   });
 };
+
+/** Designer (or GM) confirms the converted FF&E list; releases procurement once any budget approval is in. */
+export const useConfirmFfe = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.rpc("ws_confirm_ffe_list", { _project: projectId });
+      fail(error);
+    },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "project"] }); qc.invalidateQueries({ queryKey: pKeys.projects }); },
+  });
+};
+
+/** GM only: send a confirmed list back to the designer to re-check. */
+export const useReturnFfe = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { projectId: string; note: string }) => {
+      const { error } = await supabase.rpc("ws_return_ffe_list", { _project: v.projectId, _note: v.note });
+      fail(error);
+    },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "project"] }); qc.invalidateQueries({ queryKey: pKeys.projects }); },
+  });
+};
