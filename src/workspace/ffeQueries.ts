@@ -13,7 +13,7 @@ export type FfeRow = Pick<
   T["ffe_items"]["Row"],
   | "id" | "project_id" | "lead_id" | "ref" | "room" | "category" | "item" | "dims" | "spec" | "qty" | "unit"
   | "supplier_id" | "supplier_name" | "supplier_contact" | "product_url" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order" | "priority_band"
-  | "review" | "review_note" | "review_by" | "review_at" | "review_prev"
+  | "review" | "review_note" | "review_by" | "review_at" | "review_prev" | "internal"
 > & { unit_cost?: number | null };
 export type ProcStage = T["ffe_items"]["Row"]["stage"];
 export type CostingStatus = T["ffe_costings"]["Row"]["status"];
@@ -30,7 +30,7 @@ export type Snag = Pick<
 const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, payment_terms, rating, status, notes";
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
-  "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order, priority_band, review, review_note, review_by, review_at, review_prev";
+  "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order, priority_band, review, review_note, review_by, review_at, review_prev, internal";
 // options (the quoted client price) is not directly selectable; ws_costing_options withholds it from coordinators.
 const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, purpose";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
@@ -430,6 +430,8 @@ export const useReturnFfe = () => {
 
 /* ---------------- out of stock / GM review (state moves only through these RPCs) ---------------- */
 
+export const BUILDING_MATERIAL = "Building Material";
+export const isInternal = (r: Pick<FfeRow, "internal">) => !!r.internal;
 export const REVIEW_LABEL = { "Out of stock": "Out of stock — designer re-choosing", "Awaiting GM approval": "Waiting for GM approval" } as const;
 export interface ReviewPrev { item?: string; supplier_name?: string | null; product_url?: string | null; qty?: number; unit_cost?: number | null; line_total?: number | null }
 

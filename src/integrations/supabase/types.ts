@@ -540,6 +540,7 @@ export type Database = {
           finish: string | null
           id: string
           installed_on: string | null
+          internal: boolean
           item: string
           lead_id: string | null
           notes: string | null
@@ -576,6 +577,7 @@ export type Database = {
           finish?: string | null
           id?: string
           installed_on?: string | null
+          internal?: boolean
           item: string
           lead_id?: string | null
           notes?: string | null
@@ -612,6 +614,7 @@ export type Database = {
           finish?: string | null
           id?: string
           installed_on?: string | null
+          internal?: boolean
           item?: string
           lead_id?: string | null
           notes?: string | null
@@ -1836,6 +1839,7 @@ export type Database = {
         Args: { _project: string }
         Returns: Record<string, unknown>
       }
+      ws_ffe_internal_section: { Args: { _room: string }; Returns: boolean }
       ws_ffe_line_total: { Args: { _item: string }; Returns: number }
       ws_ffe_out_of_stock: {
         Args: { _items: string[]; _note: string }

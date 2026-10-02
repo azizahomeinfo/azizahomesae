@@ -20,7 +20,7 @@ import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
-  DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier,
+  DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
   projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
@@ -588,7 +588,12 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const { member } = useWorkspace();
   const role = member?.role as WorkspaceRole;
   const withCost = role !== "sales";
-  const { data: rows = [], isLoading } = useFfeItems(ctx.owner, withCost);
+  const { data: allRows = [], isLoading } = useFfeItems(ctx.owner, withCost);
+  // Building materials (internal) render in their own section on a project only. Hiding them from sales is
+  // presentation, not security: the document boundary is the internal filter in useProposalItems.
+  const rows = useMemo(() => allRows.filter((r) => !isInternal(r)), [allRows]);
+  const showInternal = withCost && !!ctx.projectId;
+  const internalRows = useMemo(() => (showInternal ? allRows.filter(isInternal) : []), [allRows, showInternal]);
   const { data: costing } = useCosting(ctx.owner, withCost);
   const { data: members = [] } = useMembers();
   const update = useUpdateFfeItems();
@@ -632,7 +637,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
     });
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
-  if (!rows.length) return (
+  if (!rows.length && !internalRows.length && !showInternal) return (
     <div className="space-y-4">
       {budget && ctx.projectId && <NoListBanner projectId={ctx.projectId} />}
       <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />
@@ -645,13 +650,13 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
 
   const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
-    add.mutate({ owner: ctx.owner, room, existing: rows }, { onSuccess: (id) => setFocusId(id), onError: (e) => toast.error(errMsg(e, "Failed")) });
+    add.mutate({ owner: ctx.owner, room, existing: allRows }, { onSuccess: (id) => setFocusId(id), onError: (e) => toast.error(errMsg(e, "Failed")) });
   const addRoom = () => {
     const t = newRoom.trim();
     if (!t) return;
     const hit = groups.find(([g]) => g.toLowerCase() === t.toLowerCase());
     if (hit) { toast.info(`${hit[0]} already exists`); return; }
-    add.mutate({ owner: ctx.owner, room: t, existing: rows }, {
+    add.mutate({ owner: ctx.owner, room: t, existing: allRows }, {
       onSuccess: (id) => { setNewRoom(""); setAddingRoom(false); setFocusId(id); }, onError: (e) => toast.error(errMsg(e, "Failed")),
     });
   };
@@ -851,6 +856,24 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         );
       })}
 
+      {showInternal && (
+        <section className="rounded-[var(--radius)] border border-dashed border-border bg-card p-4 md:p-6 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="font-medium">{BUILDING_MATERIAL} <span className="text-xs font-normal text-muted-foreground">· internal</span></h3>
+              <p className="text-xs text-muted-foreground">Internal spend — never appears on the proposal or the contract.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{internalRows.length} item{internalRows.length === 1 ? "" : "s"}</span>
+              <span className="text-sm tabular-nums">{aed(internalRows.reduce((s, r) => s + lineTotal(r), 0))}</span>
+              {canEdit && <Button size="sm" variant="outline" disabled={add.isPending} onClick={() => addItem(BUILDING_MATERIAL)}><Plus className="h-4 w-4" /> Add material</Button>}
+            </div>
+          </div>
+          {internalRows.length ? <ul className="space-y-3 md:space-y-0">{internalRows.map(itemRow)}</ul>
+            : <p className="text-sm text-muted-foreground">No building materials yet.</p>}
+        </section>
+      )}
+
       {canEdit && !byPriority && (addingRoom ? (
         <div className="flex gap-2">
           <Input autoFocus placeholder="New section, e.g. Balcony" value={newRoom} onChange={(e) => setNewRoom(e.target.value)} className="sm:w-64" aria-label="New section"
@@ -919,6 +942,9 @@ const StageSelect = ({ value, onChange, disabled }: { value: ProcStage; onChange
     </Select>
   );
 
+const InternalBadge = ({ row }: { row: FfeRow }) => isInternal(row)
+  ? <span className="mr-1 rounded border border-border px-1 py-px text-[10px] text-muted-foreground">Internal</span> : null;
+
 const PhaseBoard = ({ rows, canEdit, onMove }: { rows: FfeRow[]; canEdit: boolean; onMove: (id: string, s: ProcStage) => void }) => {
   const lg = useIsLg();
   const drag = canEdit && lg;
@@ -942,7 +968,7 @@ const PhaseBoard = ({ rows, canEdit, onMove }: { rows: FfeRow[]; canEdit: boolea
             {lg && items.map((r) => (
               <div key={r.id} draggable={drag} onDragStart={(e) => e.dataTransfer.setData("text/plain", r.id)}
                 className={cn("rounded-[var(--radius)] border border-border p-2 text-xs", drag && "cursor-grab")}>
-                <p className="font-medium">{r.item}</p>
+                <p className="font-medium"><InternalBadge row={r} />{r.item}</p>
                 <p className="text-muted-foreground">{r.ref} · {r.room} · {r.stage}</p>
                 {r.eta && <p className={cn(etaLate(r) && "text-destructive")}>ETA {shortDate(r.eta)}</p>}
               </div>
@@ -975,7 +1001,15 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
-  const groups = useMemo(() => groupBy === "room" ? byRoom(rows) : groupBy === "supplier" ? bySupplier(rows) : byBand(rows), [rows, groupBy]);
+  // Building materials are bought like anything else: kept in the supplier view (so "Order all from …" includes them),
+  // otherwise shown as their own group after the client groups.
+  const groups = useMemo(() => {
+    if (groupBy === "supplier") return bySupplier(rows);
+    const client = rows.filter((r) => !isInternal(r));
+    const internal = rows.filter(isInternal);
+    const g = groupBy === "room" ? byRoom(client) : byBand(client);
+    return internal.length ? [...g, [`${BUILDING_MATERIAL} · internal`, internal] as [string, FfeRow[]]] : g;
+  }, [rows, groupBy]);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
     <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
@@ -1087,7 +1121,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                 {items.map((r) => (
                   <tr key={r.id} className="border-t border-border align-top">
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
-                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
+                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
                       {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
@@ -1108,7 +1142,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <li key={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
                     {r.review && r.review_note && <p className="text-xs text-muted-foreground">{r.review_note}</p>}
                     {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}</div>
                 </div>
