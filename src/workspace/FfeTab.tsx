@@ -451,12 +451,12 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
         {status !== "Quoted" && (gapRows.length > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">
             <span>
-              {plural(gapRows.length, "item has", "items have")} no supplier or no unit cost. Every item needs both before the list can go to the GM.
+              {plural(gapRows.length, "item has", "items have")} no supplier yet. Every item needs a supplier before the list can go to the GM.
             </span>
-            <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only items with no supplier or no unit cost"}</Button>
+            <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only items without a supplier"}</Button>
           </div>
         ) : (
-          <p className="text-sm">Every item has a supplier and a unit cost.</p>
+          <p className="text-sm">Every item has a supplier.</p>
         ))}
         {status === "Returned" && costing?.return_note && (
           <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Sent back by GM: {costing.return_note}</p>
