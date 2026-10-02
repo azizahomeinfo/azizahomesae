@@ -1219,6 +1219,10 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         const send = orderAll.items.filter(buyable);
         const held = orderAll.items.filter((r) => r.review).length;
         const finished = orderAll.items.length - send.length - held;
+        // "Order all" always covers the whole supplier group, even mid-search — warn when the search
+        // would make it look narrower than it is.
+        const matched = orderAll.items.filter((r) => matchesSearch(r, search)).length;
+        const searchTrap = searching && matched < send.length;
         return (
           <AlertDialog open onOpenChange={(o) => !o && setOrderAll(null)}>
             <AlertDialogContent>
@@ -1229,6 +1233,11 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                   {held > 0 && ` — ${held} on hold`}{finished > 0 && `${held ? "," : " —"} ${finished} already delivered or closed`}. They move to Ordered.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              {searchTrap && (
+                <p className="rounded-[var(--radius)] border border-warning/50 bg-warning/15 px-3 py-2 text-xs text-warning">
+                  Your search doesn't limit this — all {send.length} items from {orderAll.supplier} will be ordered, not just the {matched} shown.
+                </p>
+              )}
               <Input placeholder="PO ref (optional)" value={orderPo} onChange={(e) => setOrderPo(e.target.value)} aria-label="PO ref for this order" />
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
