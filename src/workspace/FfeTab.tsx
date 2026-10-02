@@ -70,6 +70,31 @@ const bySupplier = (rows: FfeRow[]) => {
 /** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
 const buyable = (r: FfeRow) => !r.review && !DONE_STAGES.includes(r.stage);
 
+/** Every whitespace-separated term must appear somewhere in the row's text fields (never cost). Blank query matches all. */
+export const matchesSearch = (r: FfeRow, q: string) => {
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const hay = [r.ref, r.item, r.room, r.supplier_name, r.spec, r.notes, r.dims, r.po_ref, r.category]
+    .filter(Boolean).join(" ").toLowerCase();
+  return terms.every((t) => hay.includes(t));
+};
+
+/** Search box + "Showing N of M" line. Display only — totals elsewhere stay whole. */
+const SearchBox = ({ value, onChange, shown, total }: { value: string; onChange: (v: string) => void; shown: number; total: number }) => (
+  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+    <Input type="search" aria-label="Search items" placeholder="Search items" value={value}
+      onChange={(e) => onChange(e.target.value)} className="h-8 w-full sm:w-56" />
+    {value.trim() && <span className="text-xs text-muted-foreground whitespace-nowrap">Showing {shown} of {total} items</span>}
+  </div>
+);
+
+const NoMatches = ({ q, onClear }: { q: string; onClear: () => void }) => (
+  <div className="rounded-[var(--radius)] border border-dashed border-border p-6 text-center text-sm text-muted-foreground space-y-2">
+    <p>No items match '{q.trim()}'</p>
+    <Button size="sm" variant="outline" onClick={onClear}>Clear search</Button>
+  </div>
+);
+
 /** Text/number cell that saves 800ms after typing stops. */
 const EditCell = ({
   value, onSave, disabled, type = "text", className, label, placeholder, autoFocus,
