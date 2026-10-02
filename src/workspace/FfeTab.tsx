@@ -616,7 +616,9 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   // Cost only: the GM may correct a unit cost while the package sits with them for quoting.
   const canEditCost = !readOnly && role !== "sales" && (canEdit || isGm);
   const canSubmit = (isGm || role === "designer") && canEdit && rows.length > 0;
-  const grand = rows.reduce((s, r) => s + lineTotal(r), 0);
+  // Money and buyability count every row the viewer may see, materials included (sales never gets internal rows here).
+  const moneyRows = withCost ? allRows : rows;
+  const grand = moneyRows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   // Any grouping other than room: headings are read-only buckets and each row shows its room.
@@ -643,7 +645,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />
     </div>
   );
-  const gapRows = budget ? rows.filter(missingSupplier) : [];
+  const gapRows = budget ? moneyRows.filter(missingSupplier) : [];
+  const shownInternal = budget && onlyGaps ? internalRows.filter(missingSupplier) : internalRows;
   // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
   const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groups;
   const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingSupplier)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
@@ -751,7 +754,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   return (
     <div className="space-y-4">
       {budget && ctx.projectId ? (
-        <BudgetSection projectId={ctx.projectId} name={ctx.name} status={status} costing={costing} rows={rows} gapRows={gapRows}
+        <BudgetSection projectId={ctx.projectId} name={ctx.name} status={status} costing={costing} rows={moneyRows} gapRows={gapRows}
           cost={grand} withCost={withCost} canSubmit={(isGm || role === "designer") && !readOnly}
           isGm={isGm && !readOnly} role={role} onlyGaps={onlyGaps} setOnlyGaps={setOnlyGaps} />
       ) : (<>
@@ -856,7 +859,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         );
       })}
 
-      {showInternal && (
+      {showInternal && !(budget && onlyGaps && !shownInternal.length) && (
         <section className="rounded-[var(--radius)] border border-dashed border-border bg-card p-4 md:p-6 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -869,7 +872,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
               {canEdit && <Button size="sm" variant="outline" disabled={add.isPending} onClick={() => addItem(BUILDING_MATERIAL)}><Plus className="h-4 w-4" /> Add material</Button>}
             </div>
           </div>
-          {internalRows.length ? <ul className="space-y-3 md:space-y-0">{internalRows.map(itemRow)}</ul>
+          {shownInternal.length ? <ul className="space-y-3 md:space-y-0">{shownInternal.map(itemRow)}</ul>
             : <p className="text-sm text-muted-foreground">No building materials yet.</p>}
         </section>
       )}
