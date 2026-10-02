@@ -87,6 +87,44 @@ export const useUpdateLead = () => {
   });
 };
 
+export type LeadDeletePreview = {
+  blocked: string | null; brief: boolean; costing: boolean; ffe_items: number; designs: number; design_images: number;
+  documents: number; proposals: number; contracts: number; tasks: number; comments: number;
+};
+
+export const useLeadDeletePreview = (id: string | undefined, enabled: boolean) =>
+  useQuery({
+    queryKey: ["ws", "lead-delete-preview", id ?? ""],
+    enabled: !!id && enabled,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ws_lead_delete_preview", { _lead: id! });
+      fail(error);
+      return data as unknown as LeadDeletePreview;
+    },
+  });
+
+/** Files first, then the row — done server-side so a sales owner can also remove designers' uploads. */
+export const useDeleteLead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("delete-lead", { body: { leadId: id } });
+      if (error) {
+        let msg = error.message;
+        try { const b = await (error as { context?: Response }).context?.json(); if (b?.error) msg = b.error; } catch { /* keep generic */ }
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      return id;
+    },
+    onSuccess: (id) => {
+      qc.removeQueries({ queryKey: keys.lead(id) });
+      qc.invalidateQueries({ queryKey: ["ws"] });
+    },
+  });
+};
+
 export type CommentParent = { kind: "lead" | "project"; id: string };
 const parentCol = (p: CommentParent) => (p.kind === "lead" ? "lead_id" : "project_id");
 
