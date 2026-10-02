@@ -551,6 +551,11 @@ export type Database = {
           project_id: string | null
           qty: number
           ref: string | null
+          review: Database["public"]["Enums"]["ffe_review"] | null
+          review_at: string | null
+          review_by: string | null
+          review_note: string | null
+          review_prev: Json | null
           room: string
           sku: string | null
           sort_order: number
@@ -582,6 +587,11 @@ export type Database = {
           project_id?: string | null
           qty?: number
           ref?: string | null
+          review?: Database["public"]["Enums"]["ffe_review"] | null
+          review_at?: string | null
+          review_by?: string | null
+          review_note?: string | null
+          review_prev?: Json | null
           room: string
           sku?: string | null
           sort_order?: number
@@ -613,6 +623,11 @@ export type Database = {
           project_id?: string | null
           qty?: number
           ref?: string | null
+          review?: Database["public"]["Enums"]["ffe_review"] | null
+          review_at?: string | null
+          review_by?: string | null
+          review_note?: string | null
+          review_prev?: Json | null
           room?: string
           sku?: string | null
           sort_order?: number
@@ -1807,15 +1822,43 @@ export type Database = {
         Args: { _category: string; _item: string; _room: string }
         Returns: number
       }
+      ws_ffe_change_to_gm: {
+        Args: { _item: string; _newt: number; _oldt: number; _what: string }
+        Returns: undefined
+      }
       ws_ffe_confirmed_edit: { Args: { _project: string }; Returns: undefined }
+      ws_ffe_decide_change: {
+        Args: { _approve: boolean; _item: string; _note: string }
+        Returns: undefined
+      }
       ws_ffe_edit_notify_lead: { Args: { _lead: string }; Returns: undefined }
       ws_ffe_gaps: {
         Args: { _project: string }
         Returns: Record<string, unknown>
       }
+      ws_ffe_line_total: { Args: { _item: string }; Returns: number }
+      ws_ffe_out_of_stock: {
+        Args: { _items: string[]; _note: string }
+        Returns: number
+      }
+      ws_ffe_reselected: { Args: { _item: string }; Returns: string }
       ws_ffe_split_parts: {
         Args: { _category: string; _item: string; _room: string }
         Returns: string[]
+      }
+      ws_ffe_tell_coordinators: {
+        Args: { _body: string; _lead: string; _project: string; _title: string }
+        Returns: undefined
+      }
+      ws_ffe_tell_gm: {
+        Args: {
+          _body: string
+          _lead: string
+          _once: boolean
+          _project: string
+          _title: string
+        }
+        Returns: undefined
       }
       ws_lead_delete_block: {
         Args: { _lead: string; _uid: string }
@@ -1884,6 +1927,7 @@ export type Database = {
       costing_status: "Draft" | "Submitted" | "Returned" | "Quoted"
       cr_status: "Pending Approval" | "Approved" | "Rejected"
       design_status: "Draft" | "Submitted" | "Accepted" | "Rejected"
+      ffe_review: "Out of stock" | "Awaiting GM approval"
       issue_severity: "Low" | "Medium" | "High"
       issue_status: "Open" | "Escalated" | "Resolved"
       lead_status:
@@ -2068,6 +2112,7 @@ export const Constants = {
       costing_status: ["Draft", "Submitted", "Returned", "Quoted"],
       cr_status: ["Pending Approval", "Approved", "Rejected"],
       design_status: ["Draft", "Submitted", "Accepted", "Rejected"],
+      ffe_review: ["Out of stock", "Awaiting GM approval"],
       issue_severity: ["Low", "Medium", "High"],
       issue_status: ["Open", "Escalated", "Resolved"],
       lead_status: [
