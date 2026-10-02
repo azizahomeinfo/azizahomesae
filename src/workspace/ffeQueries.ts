@@ -139,7 +139,7 @@ export const useSaveSupplier = () => {
 
 /* ---------------- purchasing priority ---------------- */
 
-/** Coarse buying order for the coordinator: large furniture first, decor last. A work queue, not a taxonomy. */
+/** Coarse buying order for the coordinator: cabinetry first, kitchenware & linen last. A work queue, not a taxonomy. */
 /** Buying order; index + 1 is the band number defined by ws_ffe_band. */
 export const PRIORITY_BANDS = ["Cabinetry", "Furniture", "Appliances", "Soft finishing", "Kitchenware & linen"] as const;
 /** 1–5. Derived in the database (ws_ffe_band, set on insert, coordinator overrides stick); 5 only covers a row not yet saved. */
