@@ -633,6 +633,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   // Route 2: no contract signed in the system — the list goes designer → GM budget approval → coordinator.
   const budget = !!ctx.projectId && needsBudget === true;
   const [onlyGaps, setOnlyGaps] = useState(false);
+  const [search, setSearch] = useState("");
 
   const status: CostingStatus = costing?.status ?? "Draft";
   const isGm = role === "gm";
@@ -671,10 +672,19 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
     </div>
   );
   const gapRows = budget ? moneyRows.filter(missingBuyability) : [];
-  const shownInternal = budget && onlyGaps ? internalRows.filter(missingBuyability) : internalRows;
+  const searching = !!search.trim();
+  // Search is applied last, after the gap filter; it only changes what is displayed.
+  const gapInternal = budget && onlyGaps ? internalRows.filter(missingBuyability) : internalRows;
+  const shownInternal = gapInternal.filter((r) => matchesSearch(r, search));
   // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
   const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groups;
-  const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingBuyability)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
+  const gapGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingBuyability)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
+  // [heading, shown rows, whole group] — the subtotal always sums the whole group.
+  const shownGroups = gapGroups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
+    .filter(([, l]) => !searching || l.length);
+  const visibleCount = (withCost ? allRows : rows).filter((r) => matchesSearch(r, search)).length;
+  const internalVisible = showInternal && !((budget && onlyGaps) || searching ? !shownInternal.length : false);
+  const nothingMatches = searching && !shownGroups.length && !internalVisible;
 
   const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
