@@ -588,7 +588,12 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const { member } = useWorkspace();
   const role = member?.role as WorkspaceRole;
   const withCost = role !== "sales";
-  const { data: rows = [], isLoading } = useFfeItems(ctx.owner, withCost);
+  const { data: allRows = [], isLoading } = useFfeItems(ctx.owner, withCost);
+  // Building materials (internal) render in their own section on a project only. Hiding them from sales is
+  // presentation, not security: the document boundary is the internal filter in useProposalItems.
+  const rows = useMemo(() => allRows.filter((r) => !isInternal(r)), [allRows]);
+  const showInternal = withCost && !!ctx.projectId;
+  const internalRows = useMemo(() => (showInternal ? allRows.filter(isInternal) : []), [allRows, showInternal]);
   const { data: costing } = useCosting(ctx.owner, withCost);
   const { data: members = [] } = useMembers();
   const update = useUpdateFfeItems();
