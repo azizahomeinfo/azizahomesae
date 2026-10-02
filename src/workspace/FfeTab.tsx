@@ -21,7 +21,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier,
-  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, missingLink, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf,
+  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, missingLink, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -949,6 +949,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
 
   return (
     <div className="space-y-4">
+      <ConfirmBanner project={project} hasItems={rows.length > 0} />
       {awaitingBudget && (
         <p className="rounded-[var(--radius)] border border-warning/40 bg-warning/10 p-3 text-sm">
           Waiting for GM budget approval — don't order yet. You'll be notified when it's approved.
