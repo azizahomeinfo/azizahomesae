@@ -955,10 +955,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
-  const groups = useMemo(() => groupBy === "room" ? byRoom(rows)
-    : PRIORITY_BANDS.map((b, i) => [`${i + 1} · ${b}`, rows.filter((r) => bandOf(r) === i + 1)
-        .sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]).filter(([, l]) => l.length),
-  [rows, groupBy]);
+  const groups = useMemo(() => groupBy === "room" ? byRoom(rows) : byBand(rows), [rows, groupBy]);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
     <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
@@ -997,9 +994,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
           {view === "table" && (
-            <Button size="sm" variant="outline" onClick={() => setGroupBy(groupBy === "priority" ? "room" : "priority")}>
-              {groupBy === "priority" ? "Group by room" : "Group by priority"}
-            </Button>
+            <GroupToggle value={groupBy} onChange={setGroupBy} />
           )}
         </div>
       }>
