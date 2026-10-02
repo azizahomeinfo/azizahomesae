@@ -12,6 +12,7 @@ import AssignQueue, { useAssignQueue } from "../AssignQueue";
 import BriefStatusPill from "../BriefStatusPill";
 import type { BriefStatus } from "../briefWorkflow";
 import { DESIGNER_LABEL, isMineBrief } from "./Briefs";
+import { canSee, type WorkspaceRole } from "../access";
 
 const Dashboard = () => {
   const { member } = useWorkspace();
@@ -40,8 +41,10 @@ const Dashboard = () => {
   const openCount = lateDrawings.reduce((n, g) => n + g.tasks.length, 0);
 
   const now = new Date();
+  const seesLeads = canSee(role as WorkspaceRole, "leads");
   const active = leads.filter((l) => !isClosed(l.status));
-  const due = active
+  // Follow-ups link to the lead page, so only roles that can open it get them.
+  const due = !seesLeads ? [] : active
     .filter((l) => isDue(l.next_follow))
     .sort((a, b) => (a.next_follow ?? "").localeCompare(b.next_follow ?? ""));
   const wonThisMonth = leads.filter((l) => {
@@ -136,7 +139,7 @@ const Dashboard = () => {
             <ul className="divide-y divide-border">
               {myOrdered.map((b) => (
                 <li key={b.id}>
-                  <Link to={`/workspace/leads/${b.lead_id}`} className="flex items-center justify-between gap-3 py-3 hover:text-primary">
+                  <Link to="/workspace/briefs" className="flex items-center justify-between gap-3 py-3 hover:text-primary">
                     <div className="min-w-0">
                       <p className="truncate">{b.leads?.name ?? "—"}</p>
                       <p className="text-xs text-muted-foreground truncate">{[b.leads?.property, b.leads?.unit_type].filter(Boolean).join(" · ") || "—"}</p>

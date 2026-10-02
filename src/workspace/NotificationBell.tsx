@@ -85,8 +85,8 @@ const NotificationBell = () => {
               const cls = cn("block px-4 py-3 hover:bg-muted/20", !n.read && "bg-primary/5");
               return (
                 <li key={n.id}>
-                  {n.lead_id ? (
-                    <Link to={`/workspace/leads/${n.lead_id}`} className={cls} onClick={() => openOne(n.id, n.read)}>{inner}</Link>
+                  {n.lead_id && leadTarget ? (
+                    <Link to={leadTarget(n.lead_id)} className={cls} onClick={() => openOne(n.id, n.read)}>{inner}</Link>
                   ) : (
                     <button type="button" className={cn(cls, "w-full text-left")} onClick={() => openOne(n.id, n.read)}>{inner}</button>
                   )}
