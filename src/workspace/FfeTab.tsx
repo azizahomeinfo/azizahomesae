@@ -21,7 +21,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier,
-  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, missingLink, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingSupplier, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -56,6 +56,19 @@ const byRoom = (rows: FfeRow[]) => {
   for (const r of rows) m.set(r.room, [...(m.get(r.room) ?? []), r]);
   return [...m.entries()];
 };
+
+const NO_SUPPLIER = "No supplier yet";
+const supplierOf = (r: FfeRow) => r.supplier_name?.trim() || NO_SUPPLIER;
+/** Suppliers A→Z, "No supplier yet" last; room then sheet order inside each. */
+const bySupplier = (rows: FfeRow[]) => {
+  const m = new Map<string, FfeRow[]>();
+  for (const r of rows) m.set(supplierOf(r), [...(m.get(supplierOf(r)) ?? []), r]);
+  return [...m.entries()]
+    .sort(([a], [z]) => (a === NO_SUPPLIER ? 1 : 0) - (z === NO_SUPPLIER ? 1 : 0) || a.localeCompare(z))
+    .map(([k, l]) => [k, [...l].sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]);
+};
+/** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
+const buyable = (r: FfeRow) => !r.review && !DONE_STAGES.includes(r.stage);
 
 /** Text/number cell that saves 800ms after typing stops. */
 const EditCell = ({
@@ -106,7 +119,7 @@ const LinkCell = ({ value, onSave, disabled }: { value: string | null; onSave: (
   };
   if (editing) return (
     <div className="space-y-1">
-      <Input autoFocus aria-label="Product link" aria-invalid={!!err} placeholder="https://…" value={v}
+      <Input autoFocus aria-label="Product link" aria-invalid={!!err} placeholder="https://… (optional)" value={v}
         className={cn("h-7 text-xs", err && "border-destructive")}
         onChange={(e) => { setV(e.target.value); if (err) setErr(null); }}
         onBlur={commit}
@@ -121,7 +134,7 @@ const LinkCell = ({ value, onSave, disabled }: { value: string | null; onSave: (
     <div className="flex items-center">
       {open}
       <Button variant="ghost" size="sm" className="h-7 px-1.5 text-xs text-muted-foreground" onClick={() => setEditing(true)}>
-        {value ? <Pencil className="h-3 w-3" aria-label="Edit link" /> : <><Link2 className="h-3.5 w-3.5" /> Add link</>}
+        {value ? <Pencil className="h-3 w-3" aria-label="Edit link" /> : <><Link2 className="h-3.5 w-3.5" /> Add link (optional)</>}
       </Button>
     </div>
   );
@@ -412,7 +425,6 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
   const [note, setNote] = useState("");
   const contract = values?.get(projectId) ?? null;
   const noSupplier = rows.filter(missingSupplier).length;
-  const noLink = rows.filter(missingLink).length;
   const uncosted = rows.filter((r) => r.unit_cost == null).length;
   const send = () => submit.mutate(projectId, {
     onSuccess: () => toast.success("Sent to the GM for budget approval"), onError: (e) => toast.error(errMsg(e, "Failed")),
@@ -440,14 +452,13 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
         {status !== "Quoted" && (gapRows.length > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">
             <span>
-              {plural(gapRows.length, "item isn't", "items aren't")} ready to buy
-              {noSupplier > 0 && ` · ${noSupplier} without a supplier`}
-              {noLink > 0 && ` · ${noLink} without a purchase link`}. Every item needs both before the list can go to the GM.
+              {plural(gapRows.length, "item has", "items have")} no supplier yet
+              . Every item needs a supplier before the list can go to the GM. A purchase link is optional.
             </span>
-            <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only incomplete"}</Button>
+            <Button size="sm" variant="outline" onClick={() => setOnlyGaps(!onlyGaps)}>{onlyGaps ? "Show all items" : "Show only items without a supplier"}</Button>
           </div>
         ) : (
-          <p className="text-sm">Every item has a supplier and a purchase link.</p>
+          <p className="text-sm">Every item has a supplier. A purchase link is optional — trade suppliers are bought by phone or WhatsApp.</p>
         ))}
         {status === "Returned" && costing?.return_note && (
           <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Sent back by GM: {costing.return_note}</p>
@@ -487,11 +498,11 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
 /* ---------------- FF&E costing sheet ---------------- */
 
 /** Room or priority grouping, remembered per user in this browser (designers tend to want room, coordinators priority). */
-type GroupBy = "room" | "priority";
+type GroupBy = "room" | "priority" | "supplier";
 const useFfeGroupBy = (fallback: GroupBy): [GroupBy, (g: GroupBy) => void] => {
   const { member } = useWorkspace();
   const key = `ws.ffe.groupBy.${member?.user_id ?? "anon"}`;
-  const read = (): GroupBy => { try { const v = localStorage.getItem(key); return v === "room" || v === "priority" ? v : fallback; } catch { return fallback; } };
+  const read = (): GroupBy => { try { const v = localStorage.getItem(key); return v === "room" || v === "priority" || v === "supplier" ? v : fallback; } catch { return fallback; } };
   const [g, setG] = useState<GroupBy>(read);
   useEffect(() => { setG(read()); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return [g, (v) => { setG(v); try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } }];
@@ -504,6 +515,7 @@ export const GroupToggle = ({ value, onChange }: { value: GroupBy; onChange: (g:
     <span className="text-xs text-muted-foreground">Group by</span>
     <Button size="sm" variant={value === "room" ? "default" : "outline"} aria-pressed={value === "room"} onClick={() => onChange("room")}>Room</Button>
     <Button size="sm" variant={value === "priority" ? "default" : "outline"} aria-pressed={value === "priority"} onClick={() => onChange("priority")}>Priority</Button>
+    <Button size="sm" variant={value === "supplier" ? "default" : "outline"} aria-pressed={value === "supplier"} onClick={() => onChange("supplier")}>Supplier</Button>
   </div>
 );
 
@@ -604,7 +616,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const grand = rows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
-  const byPriority = groupBy === "priority";
+  // Any grouping other than room: headings are read-only buckets and each row shows its room.
+  const byPriority = groupBy !== "room";
 
   const save = (id: string, values: Partial<FfeRow>) =>
     update.mutate({ owner: ctx.owner, ids: [id], values, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Could not save")) });
@@ -627,10 +640,10 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       <SeedSheet ctx={ctx} canEdit={!readOnly && role !== "sales"} />
     </div>
   );
-  const gapRows = budget ? rows.filter((r) => missingSupplier(r) || missingLink(r)) : [];
+  const gapRows = budget ? rows.filter(missingSupplier) : [];
   // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
-  const baseGroups = byPriority ? byBand(rows) : groups;
-  const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter((r) => missingSupplier(r) || missingLink(r))] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
+  const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groups;
+  const shownGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingSupplier)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
 
   const canAddSupplier = isGm || role === "coordinator" || role === "designer";
   const addItem = (room: string) =>
@@ -662,7 +675,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
 
   const itemRow = (r: FfeRow) => (
     <li key={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
-      budget && (missingSupplier(r) || missingLink(r)) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
+      budget && missingSupplier(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
           <span className="block text-[10px] text-muted-foreground">{r.ref}{byPriority && <> · {r.room}</>}</span>
@@ -703,7 +716,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         <F label="Dims">
           <EditCell label="Dims" value={r.dims} disabled={!canEdit} className="h-7 text-xs" placeholder="Dims" onSave={(v) => save(r.id, { dims: v.trim() || null })} />
         </F>
-        <F label="Link">
+        <F label="Link (optional)">
           <LinkCell value={r.product_url} disabled={!canEdit} onSave={(v) => save(r.id, { product_url: v })} />
         </F>
         <F label="Notes" className="col-span-2 md:col-span-1">
@@ -948,7 +961,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const role = member?.role as WorkspaceRole;
   const canEdit = role === "gm" || role === "coordinator";
   // GM and coordinator buy, so they see cost; nobody else reaches this tab with cost.
-  const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
+  const { data: allRows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
   const { data: needsBudget } = useNeedsBudget(project.id);
   const { data: budgetCosting } = useCosting(projectOwner(project.id), false);
   const update = useUpdateFfeItems();
@@ -958,8 +971,13 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
   const [oosIds, setOosIds] = useState<string[] | null>(null);
+  const [supplierFilter, setSupplierFilter] = useState("all");
+  const [orderAll, setOrderAll] = useState<{ supplier: string; items: FfeRow[] } | null>(null);
+  const [orderPo, setOrderPo] = useState("");
+  const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
+  const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
-  const groups = useMemo(() => groupBy === "room" ? byRoom(rows) : byBand(rows), [rows, groupBy]);
+  const groups = useMemo(() => groupBy === "room" ? byRoom(rows) : groupBy === "supplier" ? bySupplier(rows) : byBand(rows), [rows, groupBy]);
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
     <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
@@ -980,10 +998,21 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
     update.mutate({ owner: projectOwner(project.id), ids, values }, {
       onSuccess: () => ok && toast.success(ok), onError: (e) => toast.error(errMsg(e, "Could not save")),
     });
+  /** Bulk writes skip held rows; say how many were left out, refuse when nothing is left. */
+  const applyBulk = (ids: string[], values: Partial<FfeRow>, ok: (n: number) => string, done?: () => void) => {
+    const byId = new Map(allRows.map((r) => [r.id, r]));
+    const held = ids.filter((id) => byId.get(id)?.review);
+    const send = ids.filter((id) => !byId.get(id)?.review);
+    if (!send.length) { toast.error("Nothing sent — every selected item is on hold"); return; }
+    update.mutate({ owner: projectOwner(project.id), ids: send, values }, {
+      onSuccess: () => { toast.success(ok(send.length) + (held.length ? ` · ${held.length} skipped — on hold` : "")); done?.(); },
+      onError: (e) => toast.error(errMsg(e, "Could not save")),
+    });
+  };
   const toggle = (id: string, on: boolean) => { const n = new Set(sel); if (on) n.add(id); else n.delete(id); setSel(n); };
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
-  if (!rows.length) return <div className="rounded-[var(--radius)] border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No FF&E items yet. Build the costing sheet on the FF&E tab first.</div>;
+  if (!allRows.length) return <div className="rounded-[var(--radius)] border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No FF&E items yet. Build the costing sheet on the FF&E tab first.</div>;
   const awaitingBudget = needsBudget === true && budgetCosting?.status !== "Quoted";
 
   const dateCell = (r: FfeRow, k: "ordered_on" | "eta" | "delivered_on" | "installed_on", label: string) =>
@@ -1001,12 +1030,19 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         </p>
       )}
       <Section title={`Procurement · ${done} of ${rows.length} delivered · ${project.proc_pct}%`} right={
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
           {view === "table" && (
             <GroupToggle value={groupBy} onChange={setGroupBy} />
           )}
+          <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+            <SelectTrigger className="h-8 w-48" aria-label="Filter by supplier"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All suppliers · {allRows.length}</SelectItem>
+              {supplierCounts.map(([k, n]) => <SelectItem key={k} value={k}>{k} · {n}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       }>
         <div className="flex flex-wrap gap-2 text-xs">
@@ -1019,9 +1055,9 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <SelectTrigger className="h-8 sm:w-48" aria-label="Bulk stage"><SelectValue placeholder="Set stage…" /></SelectTrigger>
               <SelectContent>{ALL_STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
-            <Button size="sm" disabled={!bulkStage || update.isPending} onClick={() => bulkStage && apply([...sel], { stage: bulkStage }, `${sel.size} items moved to ${bulkStage}`)}>Apply stage</Button>
+            <Button size="sm" disabled={!bulkStage || update.isPending} onClick={() => bulkStage && applyBulk([...sel], { stage: bulkStage }, (n) => `${n} items moved to ${bulkStage}`)}>Apply stage</Button>
             <Input className="h-8 sm:w-36" placeholder="PO ref" value={bulkPo} onChange={(e) => setBulkPo(e.target.value)} aria-label="Bulk PO ref" />
-            <Button size="sm" disabled={!bulkPo.trim() || update.isPending} onClick={() => apply([...sel], { po_ref: bulkPo.trim() }, `PO set on ${sel.size} items`)}>Apply PO</Button>
+            <Button size="sm" disabled={!bulkPo.trim() || update.isPending} onClick={() => applyBulk([...sel], { po_ref: bulkPo.trim() }, (n) => `PO set on ${n} items`)}>Apply PO</Button>
             <Button size="sm" variant="outline" onClick={() => setOosIds([...sel])}>Out of stock → designer</Button>
             <Button size="sm" variant="ghost" onClick={() => setSel(new Set())}>Clear</Button>
           </div>
@@ -1032,11 +1068,17 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         <PhaseBoard rows={rows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
       ) : groups.map(([room, items]) => (
         <Section key={room} title={`${room} · ${items.length} item${items.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(items.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
+          <div className="flex flex-wrap items-center gap-2">
+          {groupBy === "supplier" && room !== NO_SUPPLIER && (
+            <Button size="sm" variant="outline" disabled={!items.some(buyable) || update.isPending}
+              onClick={() => { setOrderPo(""); setOrderAll({ supplier: room, items }); }}>Order all from {room}</Button>
+          )}
           <label className="flex items-center gap-2 text-xs">
             <Checkbox checked={items.every((r) => sel.has(r.id))}
               onCheckedChange={(c) => { const n = new Set(sel); items.forEach((r) => (c === true ? n.add(r.id) : n.delete(r.id))); setSel(n); }} />
             Select group
           </label>
+          </div>
         ) : undefined}>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
@@ -1047,7 +1089,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                 {items.map((r) => (
                   <tr key={r.id} className="border-t border-border align-top">
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
-                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy === "priority" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
+                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
                       {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
@@ -1068,7 +1110,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <li key={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy === "priority" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
                     {r.review && r.review_note && <p className="text-xs text-muted-foreground">{r.review_note}</p>}
                     {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}</div>
                 </div>
@@ -1089,6 +1131,31 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         </Section>
       ))}
       <OutOfStockDialog ids={oosIds} onClose={() => setOosIds(null)} onDone={() => setSel(new Set())} />
+      {orderAll && (() => {
+        const send = orderAll.items.filter(buyable);
+        const held = orderAll.items.filter((r) => r.review).length;
+        const finished = orderAll.items.length - send.length - held;
+        return (
+          <AlertDialog open onOpenChange={(o) => !o && setOrderAll(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Order all from {orderAll.supplier}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Ordering {send.length} of {orderAll.items.length}
+                  {held > 0 && ` — ${held} on hold`}{finished > 0 && `${held ? "," : " —"} ${finished} already delivered or closed`}. They move to Ordered.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Input placeholder="PO ref (optional)" value={orderPo} onChange={(e) => setOrderPo(e.target.value)} aria-label="PO ref for this order" />
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button disabled={!send.length || update.isPending} onClick={() => applyBulk(send.map((r) => r.id),
+                  orderPo.trim() ? { stage: "Ordered", po_ref: orderPo.trim() } : { stage: "Ordered" },
+                  (n) => `${n} item${n === 1 ? "" : "s"} ordered from ${orderAll.supplier}`, () => setOrderAll(null))}>Order {send.length}</Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        );
+      })()}
     </div>
   );
 };
