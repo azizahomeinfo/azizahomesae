@@ -1126,6 +1126,8 @@ export type Database = {
           actual_handover: string | null
           client: string | null
           code: string
+          confirmed_at: string | null
+          confirmed_by: string | null
           coordinator_id: string | null
           created_at: string
           created_by: string | null
@@ -1162,6 +1164,8 @@ export type Database = {
           actual_handover?: string | null
           client?: string | null
           code?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           coordinator_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1198,6 +1202,8 @@ export type Database = {
           actual_handover?: string | null
           client?: string | null
           code?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           coordinator_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1229,6 +1235,13 @@ export type Database = {
           value?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "workspace_members"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "projects_coordinator_id_fkey"
             columns: ["coordinator_id"]
@@ -1762,6 +1775,7 @@ export type Database = {
           unit_type: string
         }[]
       }
+      ws_confirm_ffe_list: { Args: { _project: string }; Returns: undefined }
       ws_convert_lead: {
         Args: { _handover: string; _lead: string }
         Returns: Json
@@ -1793,6 +1807,7 @@ export type Database = {
         Args: { _category: string; _item: string; _room: string }
         Returns: number
       }
+      ws_ffe_confirmed_edit: { Args: { _project: string }; Returns: undefined }
       ws_ffe_edit_notify_lead: { Args: { _lead: string }; Returns: undefined }
       ws_ffe_gaps: {
         Args: { _project: string }
@@ -1815,6 +1830,15 @@ export type Database = {
       }
       ws_notify_overdue_drawings: { Args: never; Returns: undefined }
       ws_recompute_proc_pct: { Args: { _project: string }; Returns: undefined }
+      ws_release_procurement: {
+        Args: { _project: string; _title: string }
+        Returns: boolean
+      }
+      ws_request_ffe_confirm: { Args: { _project: string }; Returns: undefined }
+      ws_return_ffe_list: {
+        Args: { _note: string; _project: string }
+        Returns: undefined
+      }
       ws_role: {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]
