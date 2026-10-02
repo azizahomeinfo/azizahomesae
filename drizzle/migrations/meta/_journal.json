@@ -309,6 +309,13 @@
       "when": 1790926142707,
       "tag": "0043_ffe_split_compound_items",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1790928000000,
+      "tag": "0044_ffe_out_of_stock_and_gm_review",
+      "breakpoints": true
     }
   ]
 }
