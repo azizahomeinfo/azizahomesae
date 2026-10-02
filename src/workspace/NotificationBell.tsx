@@ -9,10 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "./WorkspaceProvider";
+import { canSee, type WorkspaceRole } from "./access";
 import { keys, useMarkNotificationsRead, useNotifications } from "./queries";
 
 const NotificationBell = () => {
   const { member } = useWorkspace();
+  // Lead notices open the lead page only for roles allowed on it; designers go to their briefs; others just mark read.
+  const role = member?.role as WorkspaceRole | undefined;
+  const leadTarget = canSee(role, "leads") ? (id: string) => `/workspace/leads/${id}`
+    : canSee(role, "briefs") ? () => "/workspace/briefs" : null;
   const uid = member?.user_id;
   const qc = useQueryClient();
   const { data } = useNotifications(uid);
