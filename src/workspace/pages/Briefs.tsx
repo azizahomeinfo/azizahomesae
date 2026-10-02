@@ -139,32 +139,34 @@ const DesignerView = () => {
         const d = fromRow(b);
         const draft = b.status === "Draft";
         return (
-          <ViewRequirements
-            key={b.id}
-            leadId={b.lead_id}
-            trigger={({ open: openReqs, loading }) => (
-              <button
-                type="button"
-                onClick={openReqs}
-                disabled={loading}
-                className="block w-full cursor-pointer space-y-2 rounded-[var(--radius)] border border-border bg-card p-4 text-left hover:border-primary/50 disabled:opacity-60"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-foreground min-w-0 truncate">{d.name}</p>
-                  <BriefStatusPill status={d.status} label={DESIGNER_LABEL[d.status]} />
-                </div>
-                <p className="text-sm text-muted-foreground truncate">{[d.property, d.unitType].filter(Boolean).join(" · ") || "—"}</p>
-                <div className="flex justify-between text-sm">
-                  <span>{aed(d.budget)}</span>
-                  <span className="text-muted-foreground">Target {shortDate(d.targetDate)}</span>
-                </div>
-                {draft && <p className="text-xs text-muted-foreground">Sales hasn't finished this brief yet</p>}
-                <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
-                  {loading ? "Opening…" : "View requirements"}
-                </span>
-              </button>
-            )}
-          />
+          <div key={b.id} className="space-y-2">
+            <ViewRequirements
+              leadId={b.lead_id}
+              trigger={({ open: openReqs, loading }) => (
+                <button
+                  type="button"
+                  onClick={openReqs}
+                  disabled={loading}
+                  className="block w-full cursor-pointer space-y-2 rounded-[var(--radius)] border border-border bg-card p-4 text-left hover:border-primary/50 disabled:opacity-60"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-foreground min-w-0 truncate">{d.name}</p>
+                    <BriefStatusPill status={d.status} label={DESIGNER_LABEL[d.status]} />
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate">{[d.property, d.unitType].filter(Boolean).join(" · ") || "—"}</p>
+                  <div className="flex justify-between text-sm">
+                    <span>{aed(d.budget)}</span>
+                    <span className="text-muted-foreground">Target {shortDate(d.targetDate)}</span>
+                  </div>
+                  {draft && <p className="text-xs text-muted-foreground">Sales hasn't finished this brief yet</p>}
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+                    {loading ? "Opening…" : "View requirements"}
+                  </span>
+                </button>
+              )}
+            />
+            <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
+          </div>
         );
       })}
     </div>
