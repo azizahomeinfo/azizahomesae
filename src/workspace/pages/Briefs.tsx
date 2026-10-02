@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
 import { useBrief, useBriefList, useLead, useMembers, type BriefListRow } from "../queries";
@@ -17,14 +18,34 @@ import type { DesignStatus } from "../designSchema";
 
 const DESIGN_STAGES: BriefStatus[] = ["Assigned", "In Design", "Revision Requested", "Design Ready", "Design Approved"];
 
-/** Read-only requirements for roles without the lead page (designers). Same viewer as the project's Brief tab. */
-const ViewRequirements = ({ leadId }: { leadId: string }) => {
+/**
+ * Opens the read-only requirements viewer for a lead. Every outcome is visible:
+ * loading shows on the trigger, errors and empty results come back as toasts —
+ * a designer must never click and get nothing.
+ */
+const ViewRequirements = ({
+  leadId,
+  trigger,
+}: {
+  leadId: string;
+  trigger: (s: { open: () => void; loading: boolean }) => React.ReactNode;
+}) => {
   const [open, setOpen] = useState(false);
-  const { data: lead } = useLead(open ? leadId : undefined);
-  const { data: brief } = useBrief(open ? leadId : undefined);
+  const { data: lead, isLoading: lLoading, error: lErr } = useLead(open ? leadId : undefined);
+  const { data: brief, isLoading: bLoading, error: bErr } = useBrief(open ? leadId : undefined);
+  const loading = lLoading || bLoading;
+
+  useEffect(() => {
+    if (!open || loading) return;
+    if (lErr) toast.error((lErr as Error).message);
+    else if (bErr) toast.error((bErr as Error).message);
+    else if (!lead) toast.error("You don't have access to this lead.");
+    else if (!brief) toast.error("No requirement brief has been created for this lead yet.");
+  }, [open, loading, lead, brief, lErr, bErr]);
+
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>View requirements</Button>
+      {trigger({ open: () => setOpen(true), loading })}
       {open && lead && brief && <BriefEditor open={open} onOpenChange={setOpen} lead={lead} brief={brief} viewOnly />}
     </>
   );
@@ -111,15 +132,43 @@ const DesignerView = () => {
   if (lErr) return <p className="text-destructive">{(lErr as Error).message}</p>;
   if (lLoading) return <p className="text-muted-foreground">Loading…</p>;
 
+  // The whole card is the trigger for designers — it's the action they'd naturally try.
   const grid = (rows: BriefListRow[]) => (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {rows.map((b) => (
-        <div key={b.id} className="space-y-2">
-          <BriefCard d={fromRow(b)} label={DESIGNER_LABEL[b.status as BriefStatus]} />
-          <ViewRequirements leadId={b.lead_id} />
-          <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
-        </div>
-      ))}
+      {rows.map((b) => {
+        const d = fromRow(b);
+        const draft = b.status === "Draft";
+        return (
+          <div key={b.id} className="space-y-2">
+            <ViewRequirements
+              leadId={b.lead_id}
+              trigger={({ open: openReqs, loading }) => (
+                <button
+                  type="button"
+                  onClick={openReqs}
+                  disabled={loading}
+                  className="block w-full cursor-pointer space-y-2 rounded-[var(--radius)] border border-border bg-card p-4 text-left hover:border-primary/50 disabled:opacity-60"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-foreground min-w-0 truncate">{d.name}</p>
+                    <BriefStatusPill status={d.status} label={DESIGNER_LABEL[d.status]} />
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate">{[d.property, d.unitType].filter(Boolean).join(" · ") || "—"}</p>
+                  <div className="flex justify-between text-sm">
+                    <span>{aed(d.budget)}</span>
+                    <span className="text-muted-foreground">Target {shortDate(d.targetDate)}</span>
+                  </div>
+                  {draft && <p className="text-xs text-muted-foreground">Sales hasn't finished this brief yet</p>}
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+                    {loading ? "Opening…" : "View requirements"}
+                  </span>
+                </button>
+              )}
+            />
+            <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
+          </div>
+        );
+      })}
     </div>
   );
 
