@@ -366,9 +366,9 @@ export const useUpdateSnag = () => {
 
 /* ---------------- budget approval (route 2: contract signed outside the system) ---------------- */
 
-/** An item is not ready to buy until it has both a supplier and a unit cost. */
-export const missingBuyability = (r: Pick<FfeRow, "supplier_id" | "supplier_name" | "unit_cost">) =>
-  (!r.supplier_id && !r.supplier_name?.trim()) || r.unit_cost == null;
+/** An item the coordinator can't buy yet: no supplier. A purchase link is optional, and the unit cost may be filled in when it's bought — neither blocks. */
+export const missingBuyability = (r: Pick<FfeRow, "supplier_id" | "supplier_name">) =>
+  !r.supplier_id && !r.supplier_name?.trim();
 
 /** True when the project has no contract signed in the system, so its FF&E list needs a GM budget approval. */
 export const useNeedsBudget = (projectId: string | null | undefined) =>
