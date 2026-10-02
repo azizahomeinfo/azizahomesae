@@ -18,14 +18,34 @@ import type { DesignStatus } from "../designSchema";
 
 const DESIGN_STAGES: BriefStatus[] = ["Assigned", "In Design", "Revision Requested", "Design Ready", "Design Approved"];
 
-/** Read-only requirements for roles without the lead page (designers). Same viewer as the project's Brief tab. */
-const ViewRequirements = ({ leadId }: { leadId: string }) => {
+/**
+ * Opens the read-only requirements viewer for a lead. Every outcome is visible:
+ * loading shows on the trigger, errors and empty results come back as toasts —
+ * a designer must never click and get nothing.
+ */
+const ViewRequirements = ({
+  leadId,
+  trigger,
+}: {
+  leadId: string;
+  trigger: (s: { open: () => void; loading: boolean }) => React.ReactNode;
+}) => {
   const [open, setOpen] = useState(false);
-  const { data: lead } = useLead(open ? leadId : undefined);
-  const { data: brief } = useBrief(open ? leadId : undefined);
+  const { data: lead, isLoading: lLoading, error: lErr } = useLead(open ? leadId : undefined);
+  const { data: brief, isLoading: bLoading, error: bErr } = useBrief(open ? leadId : undefined);
+  const loading = lLoading || bLoading;
+
+  useEffect(() => {
+    if (!open || loading) return;
+    if (lErr) toast.error((lErr as Error).message);
+    else if (bErr) toast.error((bErr as Error).message);
+    else if (!lead) toast.error("You don't have access to this lead.");
+    else if (!brief) toast.error("No requirement brief has been created for this lead yet.");
+  }, [open, loading, lead, brief, lErr, bErr]);
+
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>View requirements</Button>
+      {trigger({ open: () => setOpen(true), loading })}
       {open && lead && brief && <BriefEditor open={open} onOpenChange={setOpen} lead={lead} brief={brief} viewOnly />}
     </>
   );
