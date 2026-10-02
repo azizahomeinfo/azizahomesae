@@ -27,7 +27,7 @@ export type ChangeRequest = Pick<
 export type HandoverItem = Pick<T["handover_items"]["Row"], "id" | "project_id" | "label" | "sort_order" | "done" | "done_at" | "done_by">;
 export type ProjectFile = Pick<
   T["project_files"]["Row"],
-  "id" | "project_id" | "lead_id" | "storage_path" | "file_name" | "category" | "size_bytes" | "uploaded_by" | "created_at"
+  "id" | "project_id" | "lead_id" | "storage_path" | "file_name" | "category" | "size_bytes" | "uploaded_by" | "created_at" | "in_drive"
 >;
 
 // projects.value is revoked from staff (contract value lives in project_value_private) — never list it here.
@@ -37,7 +37,7 @@ const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, due_at
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, days_delta, status, decided_at, decided_by";
 const HANDOVER_COLS = "id, project_id, label, sort_order, done, done_at, done_by";
-const FILE_COLS = "id, project_id, lead_id, storage_path, file_name, category, size_bytes, uploaded_by, created_at";
+const FILE_COLS = "id, project_id, lead_id, storage_path, file_name, category, size_bytes, uploaded_by, created_at, in_drive";
 const BUCKET = "workspace";
 
 export const pKeys = {
@@ -397,8 +397,41 @@ export const useDeleteProjectFile = () => {
 /* ---------------- drawings (post-signing) ---------------- */
 
 // Category strings are stable identifiers (tasks.drawing_kind, DB triggers, and any future Drive sync key off them).
-// Ordered by deadline (24h, 48h, 48h, 72h — set in ws_drawing_hours).
-export const DRAWING_KINDS = ["Cabinet drawings", "Furniture drawings", "Wall design drawings", "Hanging & light fixtures instructions"] as const;
+// Ordered by deadline; hours mirror ws_drawing_hours, counted from projects.created_at.
+export const DRAWING_KINDS = ["Cabinet drawings", "Furniture drawings", "Wall design drawings", "Hanging items, light fixtures & wall art"] as const;
+export const DRAWING_HOURS: Record<(typeof DRAWING_KINDS)[number], number> = {
+  "Cabinet drawings": 24, "Furniture drawings": 48, "Wall design drawings": 72, "Hanging items, light fixtures & wall art": 72,
+};
+export const isDrawingKind = (c: string | null | undefined) => (DRAWING_KINDS as readonly string[]).includes(c ?? "");
+
+/** Tick "also in the client's Drive folder"; ws_sync_drawing_task closes/reopens the drawing task from it. */
+export const useSetInDrive = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; projectId: string; inDrive: boolean }) => {
+      const { error } = await supabase.from("project_files").update({ in_drive: v.inDrive }).eq("id", v.id);
+      fail(error);
+    },
+    onSettled: (_d, _e, v) => {
+      qc.invalidateQueries({ queryKey: pKeys.files(v.projectId) });
+      invalidateTasks(qc);
+    },
+  });
+};
+
+/** GM-only (enforced in the DB). Pass null to clear. Creates the drawing tasks when a designer is set. */
+export const useAssignDesigner = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { leadId?: string; projectId?: string; designerId: string | null }) => {
+      const { error } = v.projectId
+        ? await supabase.rpc("ws_assign_project_designer", { _project: v.projectId, _designer: v.designerId as string })
+        : await supabase.rpc("ws_assign_lead_designer", { _lead: v.leadId as string, _designer: v.designerId as string });
+      fail(error);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["ws"] }),
+  });
+};
 export const SIGNED_CONTRACT = "Signed contract";
 export const SALES_PROPOSAL = "Proposal";
 /** Sales/GM-only categories (enforced by project_files policies); never drive drawing tasks. Stable keys. */

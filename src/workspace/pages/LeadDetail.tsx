@@ -29,6 +29,7 @@ import DeleteLead from "../DeleteLead";
 import DefGrid from "../DefGrid";
 import { useProjectCode } from "../projectQueries";
 import { LeadDealCard } from "../ProjectTabs";
+import AssignDesigner from "../AssignDesigner";
 
 const PIPE = LEAD_STATUSES.filter((s) => s !== "Lost");
 
@@ -223,6 +224,8 @@ const LeadDetail = () => {
           </div>
         )}
       </section>
+
+      <AssignDesigner leadId={lead.id} designerId={lead.designer_id} />
 
       <LeadDealCard lead={lead} />
 

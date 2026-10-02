@@ -1059,6 +1059,7 @@ export type Database = {
           created_at: string
           file_name: string
           id: string
+          in_drive: boolean
           lead_id: string | null
           project_id: string | null
           size_bytes: number | null
@@ -1070,6 +1071,7 @@ export type Database = {
           created_at?: string
           file_name: string
           id?: string
+          in_drive?: boolean
           lead_id?: string | null
           project_id?: string | null
           size_bytes?: number | null
@@ -1081,6 +1083,7 @@ export type Database = {
           created_at?: string
           file_name?: string
           id?: string
+          in_drive?: boolean
           lead_id?: string | null
           project_id?: string | null
           size_bytes?: number | null
@@ -1777,6 +1780,14 @@ export type Database = {
       is_ws_member: { Args: { _uid: string }; Returns: boolean }
       ws_assign_brief: {
         Args: { _brief: string; _designer: string }
+        Returns: undefined
+      }
+      ws_assign_lead_designer: {
+        Args: { _designer: string; _lead: string }
+        Returns: undefined
+      }
+      ws_assign_project_designer: {
+        Args: { _designer: string; _project: string }
         Returns: undefined
       }
       ws_brief_queue: {

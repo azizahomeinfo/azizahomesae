@@ -330,6 +330,13 @@
       "when": 1790935874882,
       "tag": "0046_ffe_internal_building_materials",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1790937993084,
+      "tag": "0047_drawing_deadlines_drive_and_assignment",
+      "breakpoints": true
     }
   ]
 }
