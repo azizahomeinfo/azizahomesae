@@ -19,16 +19,18 @@ const NONE = "__none";
 export const isOverdue = (t: Pick<Task, "done" | "due_date" | "due_at">) =>
   !t.done && (t.due_at ? new Date(t.due_at).getTime() < Date.now() : !!t.due_date && t.due_date < todayISO());
 
-const sameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-/** "17:40 today", "17:40 tomorrow", "17:40 Sat 3 Oct". */
+// Deadlines are shown in Dubai time whatever the viewer's device clock says.
+const TZ = "Asia/Dubai";
+const dayKey = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: TZ });
+/** "10:23 today", "10:23 tomorrow", "10:23 Sat 03 Oct" — Dubai time. */
 export const dueTimeLabel = (iso: string) => {
   const d = new Date(iso);
-  const hm = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const hm = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
   const now = new Date();
-  const tmr = new Date(now); tmr.setDate(now.getDate() + 1);
-  if (sameDay(d, now)) return `${hm} today`;
-  if (sameDay(d, tmr)) return `${hm} tomorrow`;
-  return `${hm} ${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}`;
+  const tmr = new Date(now.getTime() + 86400000);
+  if (dayKey(d) === dayKey(now)) return `${hm} today (Dubai)`;
+  if (dayKey(d) === dayKey(tmr)) return `${hm} tomorrow (Dubai)`;
+  return `${d.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", timeZone: TZ })} ${hm} (Dubai)`;
 };
 /** "5h 20m left", "1d 4h left", "3h overdue". */
 export const timeLeftLabel = (iso: string) => {
@@ -51,8 +53,8 @@ export const TaskRow = ({ task, projectCode }: { task: Task; projectCode?: strin
         checked={task.done}
         // Drawing tasks follow the uploads on the project; the database refuses a hand tick.
         disabled={!!task.drawing_kind}
-        title={task.drawing_kind ? "Closes when the drawing is uploaded to the project" : undefined}
-        aria-label={task.drawing_kind ? "Closes on upload" : task.done ? "Mark as not done" : "Mark as done"}
+        title={task.drawing_kind ? "Closes when the drawing is uploaded to the project and ticked as in the client's Drive folder" : undefined}
+        aria-label={task.drawing_kind ? "Closes on upload and Drive tick" : task.done ? "Mark as not done" : "Mark as done"}
         onCheckedChange={(c) =>
           toggle.mutate({ id: task.id, done: c === true }, { onError: (e) => toast.error(e instanceof Error ? e.message : "Could not update task") })
         }
@@ -64,6 +66,7 @@ export const TaskRow = ({ task, projectCode }: { task: Task; projectCode?: strin
           {task.due_at ? (
             <span className={cn(overdue && "text-destructive")}>Due {dueTimeLabel(task.due_at)}{!task.done && ` · ${timeLeftLabel(task.due_at)}`}</span>
           ) : task.due_date && <span className={cn(overdue && "text-destructive")}>Due {shortDate(task.due_date)}{overdue && " · overdue"}</span>}
+          {task.drawing_kind && !task.done && <span>Open until uploaded and ticked "in Drive"</span>}
           <span className={cn(task.priority === "High" && "text-destructive")}>{task.priority} priority</span>
           {who && <span>{who}</span>}
         </p>
