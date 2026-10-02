@@ -281,6 +281,13 @@
       "when": 1790922356211,
       "tag": "0039_sales_delete_own_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790922702985,
+      "tag": "0040_coordinator_no_client_price",
+      "breakpoints": true
     }
   ]
 }

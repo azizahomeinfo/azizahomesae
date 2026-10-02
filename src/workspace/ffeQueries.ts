@@ -31,7 +31,8 @@ const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, pay
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
   "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order, priority_band";
-const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, options, purpose";
+// options (the quoted client price) is not directly selectable; ws_costing_options withholds it from coordinators.
+const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, purpose";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
 
 /**
@@ -274,8 +275,10 @@ export const useCosting = (owner: FfeOwner | undefined, withCost: boolean) =>
       const { data, error } = await supabase.from("ffe_costings").select(COSTING_BASE).eq(owner!.col, owner!.id).maybeSingle();
       fail(error);
       if (!data) return null;
-      const d = data as unknown as Costing & { options: Json };
-      const out = { ...d, options: Array.isArray(d.options) ? (d.options as unknown as QuoteOption[]) : [] } as Costing;
+      const { data: opts, error: oErr } = await supabase.rpc("ws_costing_options", { _costing: data.id });
+      fail(oErr);
+      const d = data as unknown as Costing;
+      const out = { ...d, options: Array.isArray(opts) ? (opts as unknown as QuoteOption[]) : [] } as Costing;
       if (!withCost) return out;
       const { data: p, error: pErr } = await supabase.from("ffe_costing_private")
         .select("markup_pct, gm_notes, return_note").eq("costing_id", d.id).maybeSingle();

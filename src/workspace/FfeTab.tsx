@@ -631,9 +631,10 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   );
 
   const hasQuote = !!costing?.quoted_at;
+  // Coordinators never receive the client price (options comes back empty), so the line names only who and when.
   const quotedLine = costing && hasQuote
-    ? `Final quotation set by ${members.find((m) => m.user_id === costing.quoted_by)?.full_name ?? "the GM"} on ${shortDate(costing.quoted_at)} — `
-      + costing.options.map((o) => `${o.label} ${aed(o.amount)}`).join(" · ")
+    ? `Final quotation set by ${members.find((m) => m.user_id === costing.quoted_by)?.full_name ?? "the GM"} on ${shortDate(costing.quoted_at)}`
+      + (costing.options.length ? " — " + costing.options.map((o) => `${o.label} ${aed(o.amount)}`).join(" · ") : ".")
     : "";
 
   return (

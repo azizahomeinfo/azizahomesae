@@ -1766,6 +1766,7 @@ export type Database = {
         Args: { _handover: string; _lead: string }
         Returns: Json
       }
+      ws_costing_options: { Args: { _costing: string }; Returns: Json }
       ws_create_drawing_tasks: {
         Args: {
           _designer: string
