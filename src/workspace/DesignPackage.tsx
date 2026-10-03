@@ -21,7 +21,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { useBrief, useLead, useMembers, type NotifyTarget } from "./queries";
 import {
   isPdf, useDecideDesign, useDeleteImage, useDesignImages, useDesigns, useReorderImages, useSaveDesignNotes,
-  touchSubmittedDesign, useRenameArea, useSignedUrls, useStartDesign, useSubmitDesign, useUpdateImage, useUploadDesignFile,
+  touchSubmittedDesign, useRenameArea, useSignedUrls, useResubmitDesignPackage, useStartDesign, useSubmitDesign, useUpdateImage, useUploadDesignFile,
   type DesignImage, type DesignRow, type UploadStage,
 } from "./designQueries";
 import { DESIGN_AREAS, DESIGN_KINDS, REJECT_REASONS, type DesignKind, type DesignStatus } from "./designSchema";
@@ -511,6 +511,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const start = useStartDesign();
   const submit = useSubmitDesign();
   const decide = useDecideDesign();
+  const resubmit = useResubmitDesignPackage();
+  const [resubmitOpen, setResubmitOpen] = useState(false);
+  const [resubmitNote, setResubmitNote] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -529,6 +532,18 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     && !!me && (selected.designer_id === me || isAssignedDesigner);
   const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
+  const canResubmit = !viewOnly && isLatest && selected?.status === "Submitted" && (isGm || editable);
+  const doResubmit = async () => {
+    if (!selected) return;
+    try {
+      const msg = await resubmit.mutateAsync({ leadId, designId: selected.id, note: resubmitNote });
+      toast.success(msg);
+      setResubmitOpen(false);
+      setResubmitNote("");
+    } catch (e) {
+      toast.error(errMsg(e, "Could not resubmit the design package"));
+    }
+  };
   const canStartFirst = !viewOnly && !latest && isAssignedDesigner && !!brief && ["Assigned", "In Design", "Revision Requested"].includes(brief.status);
   const canStartNext = !viewOnly && !!brief && (
     (latest?.status === "Rejected" && isAssignedDesigner)
@@ -733,7 +748,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         </div>
       </div>
 
-      {tab === "renders" && (editable || canReview || canStartNext) && (
+      {tab === "renders" && (editable || canReview || canStartNext || canResubmit) && (
         <footer className="border-t border-border px-4 py-3 md:px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           {editable && selected?.status === "Draft" && (
             <>
@@ -756,6 +771,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
               </div>
               <Button onClick={doSubmit} disabled={submit.isPending}>{submit.isPending ? "Submitting…" : "Submit design package"}</Button>
             </>
+          )}
+          {canResubmit && (
+            <Button variant="outline" onClick={() => setResubmitOpen(true)} disabled={resubmit.isPending}>Resubmit design package</Button>
           )}
           {canReview && (
             <>
