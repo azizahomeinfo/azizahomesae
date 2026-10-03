@@ -1,3 +1,4 @@
+import { useState } from "react";
 import logo from "@/assets/aziza-logo.png";
 import { shortDate } from "./format";
 import {
@@ -112,21 +113,60 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
   );
 };
 
-const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => (
-  <div className="ppd-page" style={{ padding: "52px 56px 80px" }}>
-    <p className="ppd-eyebrow">{s.eyebrow}</p>
-    <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05 }}>{s.title}</h2>
-    {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)" }}>{s.desc}</p>}
-    <div className="ppd-grow" style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 14 }}>
-      {s.images.map((img: DocImage) => (
-        <div key={img.path} style={{ flex: "1 1 0", minHeight: 0 }}>
-          {url(img.path) ? <img src={url(img.path)} alt={img.caption ?? s.title} className="ppd-img" /> : <div style={{ width: "100%", height: "100%", background: "var(--pp-field)" }} />}
-        </div>
-      ))}
+/*
+ * Fixed image frames, identical on every area page. Page 794 × 1123, padding 52/56/80 → content 682 × 991.
+ * Header worst case (title clamped to 2 lines, description to 3 on two-image pages): 26 eyebrow + 84 title
+ * + 78 description + 22 gap = 210 px, leaving 781. Two true 16:9 frames (2 × 384 + 14) would need 782, so the
+ * two-up frame is 682 × 372 (≈ 1.83:1) → 758 px, 23 px spare above the footer. One-up is 3:2: 682 × 455.
+ * Explicit px sizes (no aspect-ratio) so the frames scale with [data-print-scale] like everything else.
+ */
+const FRAME_W = PAGE_W - 112;
+const FRAME_H_TWO = 372;
+const FRAME_H_ONE = Math.round(FRAME_W / 1.5);
+const MAX_CROP = 0.4;
+
+const clamp = (lines: number) => ({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical" as const, overflow: "hidden" });
+
+/** Fills the frame (cover) unless that would crop > 40% of a side or the page asks for contain; then shown whole on a card. */
+const FramedImage = ({ src, alt, h, fit }: { src: string | null; alt: string; h: number; fit: "cover" | "contain" }) => {
+  const [mode, setMode] = useState<"cover" | "contain" | "failed">(fit);
+  const frame = { width: FRAME_W, height: h, overflow: "hidden" as const, flex: "0 0 auto" };
+  if (!src || mode === "failed") return (
+    <div className="ppd-field" style={{ ...frame, border: "1px solid var(--pp-line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={{ fontSize: 10, letterSpacing: "0.26em", textTransform: "uppercase", color: "var(--pp-label)" }}>{alt}</span>
     </div>
-    <Foot client={doc.cover.client} n={n} />
-  </div>
-);
+  );
+  const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (fit === "contain") return;
+    const { naturalWidth: w, naturalHeight: ih } = e.currentTarget;
+    if (!w || !ih) return;
+    const r = w / ih, f = FRAME_W / h;
+    const lost = r > f ? 1 - f / r : 1 - r / f;
+    setMode(lost > MAX_CROP ? "contain" : "cover");
+  };
+  const img = <img src={src} alt={alt} onLoad={onLoad} onError={() => setMode("failed")} className="ppd-img"
+    style={{ objectFit: mode === "cover" ? "cover" : "contain", objectPosition: "center" }} />;
+  return mode === "cover" ? <div style={frame}>{img}</div> : (
+    <div style={{ ...frame, background: "var(--pp-card)", border: "1px solid var(--pp-line)", padding: 12 }}>{img}</div>
+  );
+};
+
+const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => {
+  const h = s.images.length > 1 ? FRAME_H_TWO : FRAME_H_ONE;
+  return (
+    <div className="ppd-page" style={{ padding: "52px 56px 80px" }}>
+      <p className="ppd-eyebrow">{s.eyebrow}</p>
+      <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05, ...clamp(2) }}>{s.title}</h2>
+      {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(s.images.length > 1 ? 3 : 8) }}>{s.desc}</p>}
+      <div className="ppd-grow" style={{ marginTop: 22, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
+        {s.images.map((img: DocImage) => (
+          <FramedImage key={img.path + s.fit} src={url(img.path) || null} alt={img.caption ?? s.title} h={h} fit={s.fit} />
+        ))}
+      </div>
+      <Foot client={doc.cover.client} n={n} />
+    </div>
+  );
+};
 
 const InvestTable = ({ doc }: { doc: ProposalDocument }) => {
   const inv = doc.investment;
