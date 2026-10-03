@@ -18,6 +18,7 @@ import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, type Project } from
 import type { WorkspaceRole } from "./access";
 import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
+import { useSearchParams } from "react-router-dom";
 import { markReturnItem, useReturnToItem } from "./scrollMemory";
 import { aed, shortDate, todayISO } from "./format";
 import {
@@ -126,10 +127,10 @@ const F = ({ label, className, children }: { label: string; className?: string; 
 const URL_OK = /^https?:\/\/\S+$/i;
 
 /** Read-only product link for procurement rows; remembers the row so returning lands back on it. */
-const ProductLink = ({ row }: { row: { id: string; product_url: string | null } }) =>
+const ProductLink = ({ row, onOpen }: { row: { id: string; product_url: string | null }; onOpen?: (id: string) => void }) =>
   row.product_url ? (
     <a href={row.product_url} target="_blank" rel="noopener noreferrer" aria-label="Open product link" title={row.product_url}
-      className="ml-1 inline-flex align-middle text-muted-foreground hover:text-foreground" onClick={() => markReturnItem(row.id)}>
+      className="ml-1 inline-flex align-middle text-muted-foreground hover:text-foreground" onClick={() => { markReturnItem(row.id); onOpen?.(row.id); }}>
       <ExternalLink className="h-3.5 w-3.5" />
     </a>
   ) : null;
@@ -1101,15 +1102,29 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
   const [oosIds, setOosIds] = useState<string[] | null>(null);
-  const [supplierFilter, setSupplierFilter] = useState("all");
+  // View state lives in the URL (sup, q, item) so a Safari tab discard + remount restores the same list.
+  const [params, setParams] = useSearchParams();
+  const editParams = (fn: (p: URLSearchParams) => void) =>
+    setParams((prev) => { const n = new URLSearchParams(prev); fn(n); return n; }, { replace: true });
+  const supplierFilter = params.get("sup") || "all";
+  const setSupplierFilter = (v: string) => editParams((p) => { if (v === "all") p.delete("sup"); else p.set("sup", v); });
+  const itemId = params.get("item");
+  const setItem = (id: string | null) => editParams((p) => { if (id) p.set("item", id); else p.delete("item"); });
   const [orderAll, setOrderAll] = useState<{ supplier: string; items: FfeRow[] } | null>(null);
   const [orderPo, setOrderPo] = useState("");
-  const [search, setSearchRaw] = useState("");
+  // Input reads local state (instant); the URL `q` is written 300ms after typing stops.
+  const [search, setSearchRaw] = useState(() => params.get("q") ?? "");
+  const qTimer = useRef<number>();
+  useEffect(() => () => window.clearTimeout(qTimer.current), []);
   // Changing the search clears the selection, so a bulk action can never include rows that are out of view.
-  const setSearch = (v: string) => { setSearchRaw(v); setSel(new Set()); };
+  const setSearch = (v: string) => {
+    setSearchRaw(v); setSel(new Set());
+    window.clearTimeout(qTimer.current);
+    qTimer.current = window.setTimeout(() => editParams((p) => { if (v.trim()) p.set("q", v); else p.delete("q"); }), 300);
+  };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
-  useReturnToItem(useMemo(() => allRows.map((r) => r.id), [allRows]));
+  useReturnToItem(useMemo(() => allRows.map((r) => r.id), [allRows]), itemId);
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
   // Building materials are bought like anything else: kept in the supplier view (so "Order all from …" includes them),
   // otherwise shown as their own group after the client groups.
@@ -1125,6 +1140,25 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   // [heading, shown rows, whole group]; search applied last, empty groups hidden while searching.
   const shownGroups = groups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
     .filter(([, l]) => !searching || l.length);
+  // Rows in the order on screen — the buying bar walks these.
+  const flat = view === "board" ? shownRows : shownGroups.flatMap(([, l]) => l);
+  const flatIds = flat.map((r) => r.id).join(",");
+  const barIdx = itemId ? flat.findIndex((r) => r.id === itemId) : -1;
+  const barRow = barIdx >= 0 ? flat[barIdx] : null;
+  // `item` names a row not on screen (filtered out or deleted): drop it quietly.
+  useEffect(() => {
+    if (!isLoading && itemId && !flatIds.split(",").includes(itemId)) setItem(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, itemId, flatIds]);
+  const goTo = (id: string) => {
+    setItem(id);
+    requestAnimationFrame(() => [...document.querySelectorAll<HTMLElement>(`[data-ffe-row="${CSS.escape(id)}"]`)]
+      .find((e) => e.offsetParent !== null)?.scrollIntoView({ block: "center", behavior: "smooth" }));
+  };
+  const rowHi = (r: FfeRow) => r.id === itemId && "ring-2 ring-primary bg-primary/10";
+  const buyBtn = (r: FfeRow) => canEdit && r.id !== itemId ? (
+    <button type="button" className="ml-2 text-[10px] text-primary underline" onClick={() => setItem(r.id)}>Buy</button>
+  ) : null;
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
     <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
@@ -1212,6 +1246,34 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         )}
       </Section>
 
+      {barRow && (
+        <div className="sticky top-0 z-20 space-y-2 rounded-[var(--radius)] border border-primary bg-card p-3 shadow-lg md:flex md:items-center md:gap-3 md:space-y-0" aria-label="Buying bar">
+          <div className="min-w-0 flex-1 text-sm">
+            <span className="text-[10px] text-muted-foreground">{barRow.ref}</span>{" "}
+            <span className="font-medium">{barRow.item}</span> <span className="text-muted-foreground">×{Number(barRow.qty)}</span>
+            <span className="block truncate text-xs text-muted-foreground">{barRow.room} · {supplierOf(barRow)}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {barRow.product_url ? (
+              <Button asChild size="sm" variant="outline">
+                <a href={barRow.product_url} target="_blank" rel="noopener noreferrer" onClick={() => markReturnItem(barRow.id)}>
+                  <ExternalLink className="h-3.5 w-3.5" /> Open product page
+                </a>
+              </Button>
+            ) : <span className="text-xs text-muted-foreground">No product link</span>}
+            {canEdit && (
+              <EditCell key={barRow.id} label="Unit cost" type="number" value={barRow.unit_cost ?? null} className="tabular-nums w-24"
+                placeholder="Unit cost" onSave={(v) => apply([barRow.id], { unit_cost: v.trim() === "" ? null : Number(v) })} />
+            )}
+            <StageSelect value={barRow.stage} disabled={!canEdit} onChange={(stage) => apply([barRow.id], { stage })} />
+          </div>
+          <div className="flex items-center justify-end gap-1">
+            <Button size="sm" variant="ghost" disabled={barIdx <= 0} onClick={() => goTo(flat[barIdx - 1].id)}>‹ Previous</Button>
+            <Button size="sm" variant="ghost" disabled={barIdx >= flat.length - 1} onClick={() => goTo(flat[barIdx + 1].id)}>Next ›</Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Close buying bar" onClick={() => setItem(null)}>✕</Button>
+          </div>
+        </div>
+      )}
       {searching && !shownRows.length && <NoMatches q={search} onClear={() => setSearch("")} />}
       {view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
@@ -1236,9 +1298,9 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               </thead>
               <tbody>
                 {items.map((r) => (
-                  <tr key={r.id} data-ffe-row={r.id} className="border-t border-border align-top">
+                  <tr key={r.id} data-ffe-row={r.id} className={cn("border-t border-border align-top", rowHi(r))}>
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
-                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} />{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
+                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
                       {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
@@ -1256,10 +1318,10 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           </div>
           <ul className="space-y-3 md:hidden">
             {items.map((r) => (
-              <li key={r.id} data-ffe-row={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
+              <li key={r.id} data-ffe-row={r.id} className={cn("space-y-2 rounded-[var(--radius)] border border-border p-3", rowHi(r))}>
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} /></p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}</p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
                     {r.review && r.review_note && <p className="text-xs text-muted-foreground">{r.review_note}</p>}
                     {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}</div>
                 </div>
