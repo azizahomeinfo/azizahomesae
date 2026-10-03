@@ -162,7 +162,6 @@ const FramedImage = ({ src, alt, h, fit }: { src: string | null; alt: string; h:
 };
 
 const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => {
-  const h = s.images.length > 1 ? FRAME_H_TWO : FRAME_H_ONE;
   return (
     <div className="ppd-page" style={{ padding: "52px 56px 80px" }}>
       <p className="ppd-eyebrow">{s.eyebrow}</p>
