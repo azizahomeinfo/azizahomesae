@@ -1938,6 +1938,10 @@ export type Database = {
         Returns: boolean
       }
       ws_request_ffe_confirm: { Args: { _project: string }; Returns: undefined }
+      ws_resubmit_design_package: {
+        Args: { _design: string; _note?: string }
+        Returns: string
+      }
       ws_return_ffe_list: {
         Args: { _note: string; _project: string }
         Returns: undefined

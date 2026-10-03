@@ -2,7 +2,7 @@
 
 - Contracts come from an accepted proposal or directly from the lead; `contracts.source` is derived by `ws_contract_guard` from `proposal_id`, never by the app.
 - Brief visibility follows `can_see_lead` only; the unassigned "Submitted" queue (`ws_brief_queue`) is GM-only.
-- A design version reaches Submitted only via `ws_submit_design_package` (one transaction with the FF&E costing); `ws_design_guard` refuses it unless the lead's costing is exactly Submitted.
+- A design version reaches Submitted only via `ws_submit_design_package` (one transaction with the FF&E costing); `ws_design_guard` refuses it unless the lead's costing is exactly Submitted. A Submitted package is re-sent only via `ws_resubmit_design_package` (designer/GM; same completeness bar; notifies GMs and sales), and the designer/GM may edit FF&E while it is Submitted.
 - A contract reaches Signed only via `ws_sign_contract(contract, handover)` (one transaction); `ws_contract_guard` refuses others.
 - FF&E purchasing band (labels in PRIORITY_BANDS) is defined only by `ws_ffe_band`: names before category, compounds before bare words; bulk re-bands run under `ws.reband` (not marked manual, no sales notice) (trigger `ffe_items_band`); hand changes set `priority_band_manual` and are never recomputed. `ws_ffe_split_parts` splits a compound item per part only when parts differ in band ("Bed + Mattress" stays one row). Unit cost: GM + coordinator on procurement; GM even while Submitted.
 - Brief FF&E jsonb becomes `ffe_items` only via `ws_seed_ffe_from_brief` (called by `ws_assign_brief`, and from the app only through the permission-checked `ws_seed_ffe`; the browser never inserts seed rows); proposals read `ffe_items` only, with no brief fallback.

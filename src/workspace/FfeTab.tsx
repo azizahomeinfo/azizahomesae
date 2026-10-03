@@ -18,6 +18,7 @@ import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, type Project } from
 import type { WorkspaceRole } from "./access";
 import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
+import { markReturnItem, useReturnToItem } from "./scrollMemory";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
@@ -124,15 +125,24 @@ const F = ({ label, className, children }: { label: string; className?: string; 
 
 const URL_OK = /^https?:\/\/\S+$/i;
 
+/** Read-only product link for procurement rows; remembers the row so returning lands back on it. */
+const ProductLink = ({ row }: { row: { id: string; product_url: string | null } }) =>
+  row.product_url ? (
+    <a href={row.product_url} target="_blank" rel="noopener noreferrer" aria-label="Open product link" title={row.product_url}
+      className="ml-1 inline-flex align-middle text-muted-foreground hover:text-foreground" onClick={() => markReturnItem(row.id)}>
+      <ExternalLink className="h-3.5 w-3.5" />
+    </a>
+  ) : null;
+
 /** Product/supplier page. Icon opens it in a new tab; empty shows "Add link". Bad input shows an inline error and is not saved. */
-const LinkCell = ({ value, onSave, disabled }: { value: string | null; onSave: (v: string | null) => void; disabled?: boolean }) => {
+const LinkCell = ({ value, onSave, disabled, rowId }: { value: string | null; onSave: (v: string | null) => void; disabled?: boolean; rowId?: string }) => {
   const [editing, setEditing] = useState(false);
   const [v, setV] = useState(value ?? "");
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { if (!editing) setV(value ?? ""); }, [value, editing]);
   const open = value ? (
     <Button asChild variant="ghost" size="icon" className="h-7 w-7">
-      <a href={value} target="_blank" rel="noopener noreferrer" aria-label="Open product link" title={value}><ExternalLink className="h-3.5 w-3.5" /></a>
+      <a href={value} target="_blank" rel="noopener noreferrer" aria-label="Open product link" title={value} onClick={() => rowId && markReturnItem(rowId)}><ExternalLink className="h-3.5 w-3.5" /></a>
     </Button>
   ) : null;
   if (disabled) return open ?? <span className="text-xs text-muted-foreground">—</span>;
@@ -637,8 +647,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
 
   const status: CostingStatus = costing?.status ?? "Draft";
   const isGm = role === "gm";
-  // Locked only while it sits with the GM. After a quote the designer may edit and resubmit for a new one.
-  const canEdit = !readOnly && role !== "sales" && status !== "Submitted";
+  // While it sits with the GM the designer (and GM) may still adjust it, then resubmit the package. Sales never edits.
+  const canEdit = !readOnly && role !== "sales" && (status !== "Submitted" || isGm || role === "designer");
   // Cost only: the GM may correct a unit cost while the package sits with them for quoting.
   const canEditCost = !readOnly && role !== "sales" && (canEdit || isGm);
   const canSubmit = (isGm || role === "designer") && canEdit && rows.length > 0;
@@ -646,6 +656,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const moneyRows = withCost ? allRows : rows;
   const grand = moneyRows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
+  useReturnToItem(useMemo(() => rows.map((r) => r.id), [rows]));
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   // Any grouping other than room: headings are read-only buckets and each row shows its room.
   const byPriority = groupBy !== "room";
@@ -735,7 +746,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)_minmax(0,.9fr)_minmax(0,1fr)]";
 
   const itemRow = (r: FfeRow) => (
-    <li key={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
+    <li key={r.id} data-ffe-row={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
       budget && missingBuyability(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
@@ -781,7 +792,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
           <EditCell label="Dims" value={r.dims} disabled={!canEdit} className="h-7 text-xs" placeholder="Dims" onSave={(v) => save(r.id, { dims: v.trim() || null })} />
         </F>
         <F label="Link (optional)">
-          <LinkCell value={r.product_url} disabled={!canEdit} onSave={(v) => save(r.id, { product_url: v })} />
+          <LinkCell rowId={r.id} value={r.product_url} disabled={!canEdit} onSave={(v) => save(r.id, { product_url: v })} />
         </F>
         <F label="Notes" className="col-span-2 md:col-span-1">
           <EditCell label="Notes" value={r.notes} disabled={!canEdit} className="h-7 text-xs" placeholder="Notes, finish, colour…"
@@ -839,6 +850,9 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       }>
         {role === "designer" && status === "Draft" && (
           <p className="text-sm text-muted-foreground">Specify every item for this design — supplier, quantity, dimensions and unit cost. A purchase link is optional: most trade suppliers are bought by phone or WhatsApp. The list goes to the GM together with your renders when you press "Submit design package" on the Renders tab; every item needs a unit cost.</p>
+        )}
+        {(role === "designer" || isGm) && !readOnly && status === "Submitted" && (
+          <p className="text-sm text-muted-foreground">With the GM for pricing. You can still adjust and resubmit — use "Resubmit design package" on the Renders tab.</p>
         )}
         {role === "designer" && status === "Returned" && (
           <p className="text-sm text-muted-foreground">The GM returned this list. Fix the costing and resubmit it — the design doesn't need to be shared again.</p>
@@ -1095,6 +1109,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const setSearch = (v: string) => { setSearchRaw(v); setSel(new Set()); };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
+  useReturnToItem(useMemo(() => allRows.map((r) => r.id), [allRows]));
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
   // Building materials are bought like anything else: kept in the supplier view (so "Order all from …" includes them),
   // otherwise shown as their own group after the client groups.
@@ -1221,9 +1236,9 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               </thead>
               <tbody>
                 {items.map((r) => (
-                  <tr key={r.id} className="border-t border-border align-top">
+                  <tr key={r.id} data-ffe-row={r.id} className="border-t border-border align-top">
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
-                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span>{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
+                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} />{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
                       {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
@@ -1241,10 +1256,10 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           </div>
           <ul className="space-y-3 md:hidden">
             {items.map((r) => (
-              <li key={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
+              <li key={r.id} data-ffe-row={r.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} /></p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
                     {r.review && r.review_note && <p className="text-xs text-muted-foreground">{r.review_note}</p>}
                     {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}</div>
                 </div>

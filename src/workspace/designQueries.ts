@@ -349,6 +349,24 @@ export const useSubmitDesign = () => {
   });
 };
 
+/** Designer (or GM) adjusted a shared package: re-checks completeness, puts the costing back with the GM, notifies GM + sales (all in the RPC). */
+export const useResubmitDesignPackage = () => {
+  const inv = useInvalidateAll();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { leadId: string; designId: string; note?: string }) => {
+      const { data, error } = await supabase.rpc("ws_resubmit_design_package", { _design: v.designId, _note: v.note?.trim() || null });
+      fail(error);
+      return (data as string | null) ?? "Design package resubmitted";
+    },
+    onSettled: (_d, _e, v) => {
+      inv(v.leadId);
+      qc.invalidateQueries({ queryKey: ["ws", "costing"] });
+      qc.invalidateQueries({ queryKey: ["ws", "ffe"] });
+    },
+  });
+};
+
 export const useDecideDesign = () => {
   const inv = useInvalidateAll();
   return useMutation({
