@@ -17,7 +17,7 @@ import {
   type ProposalStatus,
 } from "./proposalQueries";
 import {
-  applyDesign, applyQuote, buildDocument, layoutSheets, newId,
+  applyDesign, applyQuote, buildDocument, itemListDiff, layoutSheets, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages } from "./ProposalPages";
@@ -248,6 +248,18 @@ const ProposalDoc = () => {
 
   /* ---- doc editing helpers ---- */
   const d = current;
+  const liveGroups = groups ?? [];
+  const drift = liveGroups.length ? itemListDiff(d.itemList, liveGroups) : null;
+  const driftSummary = drift?.differs
+    ? `${drift.added} ${drift.added === 1 ? "item" : "items"} added, ${drift.removed} removed, ${drift.quantitiesChanged} ${drift.quantitiesChanged === 1 ? "quantity" : "quantities"} changed`
+    : null;
+  const updateItemList = () => {
+    if (row.status !== "Draft" || !liveGroups.length) return;
+    setDraft({
+      ...d,
+      itemList: liveGroups.map((group) => ({ ...group, items: group.items.map((item) => ({ ...item })) })),
+    });
+  };
   const setCover = (p: Partial<ProposalDocument["cover"]>) => change({ ...d, cover: { ...d.cover, ...p } });
   const setToggle = (p: Partial<ProposalDocument["toggles"]>) => change({ ...d, toggles: { ...d.toggles, ...p } });
   const setInv = (p: Partial<ProposalDocument["investment"]>) => change({ ...d, investment: { ...d.investment, ...p } });
@@ -307,6 +319,22 @@ const ProposalDoc = () => {
         </p>
       )}
       {notices.map((n) => <p key={n} className="rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-sm">{n}</p>)}
+      {driftSummary && row.status === "Draft" && (
+        <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="font-medium">The FF&amp;E list has changed since this proposal was built.</p>
+            <p className="text-muted-foreground">{driftSummary}. Updating changes only the item list; prices are not changed.</p>
+          </div>
+          {editable && <Button type="button" variant="outline" className="shrink-0" onClick={updateItemList}>Update item list</Button>}
+        </div>
+      )}
+      {driftSummary && (row.status === "Sent" || row.status === "Accepted") && (
+        <div className="space-y-1 rounded-[var(--radius)] border border-warning/60 bg-warning/10 px-3 py-3 text-sm">
+          <p className="font-medium">The FF&amp;E list has changed since this proposal was sent.</p>
+          <p>This document still shows what the client received — create a new version if the change should reach them.</p>
+          <p className="text-muted-foreground">{driftSummary}.</p>
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* rail */}
