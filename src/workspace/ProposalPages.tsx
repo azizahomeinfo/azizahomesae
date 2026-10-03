@@ -114,20 +114,21 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
 };
 
 /*
- * Fixed image frames, identical on every area page. Page 794 × 1123, padding 52/56/80 → content 682 × 991.
- * Header worst case (title clamped to 2 lines, description to 4 on two-image pages): 26 eyebrow + 84 title
- * + 100 description + 22 gap = 232 px, leaving 759. Two 682 × 362 frames (≈ 1.88:1) + 14 gap = 738 px,
- * 21 px spare above the footer. One-up is 3:2: 682 × 455.
+ * One fixed image frame for every picture in the document: 682 × 362. Page 794 × 1123, padding
+ * 52/56/80 → content 682 × 991. Fixed header (eyebrow, 2-line title, margins, 22 gap) = 144 px,
+ * leaving 847 for description + frames. Two frames + 14 gap = 738 px → description clamps to
+ * 4 lines (89 px, 20 px spare above the footer). One frame = 362 px → description clamps to
+ * 21 lines (465 px, 20 px spare). A lone frame is vertically centred, so the extra room reads
+ * as margin, not a bigger picture.
  * Explicit px sizes (no aspect-ratio) so the frames scale with [data-print-scale] like everything else.
  */
 const FRAME_W = PAGE_W - 112;
-const FRAME_H_TWO = 362;
-const FRAME_H_ONE = Math.round(FRAME_W / 1.5);
+const FRAME_H = 362;
 const MAX_CROP = 0.4;
 
 /** Description clamp limits per image count, and a rough overflow estimate for the editor's warning.
  *  Chars per line ≈ frame width 682 / (13 px font × ~0.5 avg glyph width) ≈ 105. */
-export const DESC_CLAMP = { one: 8, two: 4 } as const;
+export const DESC_CLAMP = { one: 21, two: 4 } as const;
 const DESC_CHARS_PER_LINE = 105;
 export const descClampLines = (images: number) => (images > 1 ? DESC_CLAMP.two : DESC_CLAMP.one);
 /** Estimated characters beyond the clamp (0 when it fits). Rough by design — the warning only needs to be close. */
@@ -161,7 +162,6 @@ const FramedImage = ({ src, alt, h, fit }: { src: string | null; alt: string; h:
 };
 
 const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => {
-  const h = s.images.length > 1 ? FRAME_H_TWO : FRAME_H_ONE;
   return (
     <div className="ppd-page" style={{ padding: "52px 56px 80px" }}>
       <p className="ppd-eyebrow">{s.eyebrow}</p>
@@ -169,7 +169,7 @@ const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc
       {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
       <div className="ppd-grow" style={{ marginTop: 22, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
         {s.images.map((img: DocImage) => (
-          <FramedImage key={img.path + s.fit} src={url(img.path) || null} alt={img.caption ?? s.title} h={h} fit={s.fit} />
+          <FramedImage key={img.path + s.fit} src={url(img.path) || null} alt={img.caption ?? s.title} h={FRAME_H} fit={s.fit} />
         ))}
       </div>
       <Foot client={doc.cover.client} n={n} />
