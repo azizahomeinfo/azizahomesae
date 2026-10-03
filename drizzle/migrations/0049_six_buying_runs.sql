@@ -28,67 +28,87 @@ ALTER TABLE public.ffe_items DROP CONSTRAINT IF EXISTS ffe_items_priority_band_c
 ALTER TABLE public.ffe_items ADD CONSTRAINT ffe_items_priority_band_check
   CHECK (((priority_band IS NULL) OR ((priority_band >= 1) AND (priority_band <= 6))));
 
-CREATE OR REPLACE FUNCTION public.ws_ffe_band(_item text, _category text, _room text)
- RETURNS smallint
+CREATE OR REPLACE FUNCTION public.ws_ffe_online_supplier(_supplier text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT coalesce(btrim(_supplier),'') <> '' AND EXISTS (
+    SELECT 1 FROM public.ffe_online_retailers r WHERE lower(btrim(_supplier)) LIKE '%'||lower(btrim(r.name))||'%')
+$function$
+;
+CREATE OR REPLACE FUNCTION public.ws_ffe_kind(_item text, _category text, _room text)
+ RETURNS text
  LANGUAGE plpgsql
  IMMUTABLE
  SET search_path TO 'public'
 AS $function$
+-- What the item IS. One ruleset, two consumers: ws_ffe_band turns a kind plus the supplier into a
+-- buying run, and ws_ffe_split_parts asks the kind alone, because splitting happens at seed time
+-- when no supplier exists yet. Never duplicate these regexes -- fix them here only.
 DECLARE n text := lower(regexp_replace(coalesce(_item,''), '\s+(above|over|for|behind|beside)\s.*$', '', 'i'));
         c text := lower(coalesce(_category,'') || ' ' || coalesce(_room,''));
 BEGIN
-  -- 4 Soft finishing, highest precedence: the item IS the finish, whatever furniture it names.
-  -- "Decorative - on top tv unit" was Cabinetry because the text contains "tv unit"; "Nightstand
-  -- lamp" because it contains "nightstand".
-  IF n ~ '(decorative|d[eé]cor|wallpaper|wall ?paper|lamps?|bulbs?|sconce|pendant|chandelier|dry flower|faux plant|mattress protector|\mvases?\M)' THEN RETURN 4; END IF;
-  -- 1 Cabinetry: made to measure, longest lead time. Wall designs and bed-head walls are joinery,
-  -- not furniture, and "TV Media Wall Design" is not an appliance.
-  IF n ~ '(tv (unit|console|cabinet|stand)|media (unit|console)|wall[- ]?mounted (cabinet|unit|shel)|cabinet|nightstand|night stand|bedside (table|cabinet|unit|drawer)|dresser|wardrobe|closet|vanit(y|ies)|sideboard|chest of drawers|storage console|console with storage|headboard panel|\mpanel\M|panell?ing|joinery|built[- ]?in|bed wall|bed ?head wall|wall design|feature wall|shoe (rack|unit))' THEN RETURN 1; END IF;
-  IF n ~ '(\mtvs?\M|television|fridge|refrigerator|freezer|washing machine|washer|dishwasher|microwave|\moven\M|cooker|\mhob\M|stove|kettle|coffee machine|coffee maker|toaster|blender|air fryer|\mdryers?\M|hair ?dryer|\miron\M|vacuum|water dispenser)' THEN RETURN 3; END IF;
-  IF n ~ '(towel|\mlinen|bath mat|cookware|cutlery|utensil|dinner set|knife|knives|\mmugs?\M|\mplates?\M|\mbowls?\M|placemat|colander|peeler|opener|grater|kitchenware|tableware|napkin|chopping board|drying rack|ironing board|hanger|\mbins?\M|trash|waste|safety|first aid|fire (extinguisher|blanket)|smoke|scale|ash ?tray|soap|amenit|dispenser|toilet brush)' THEN RETURN 5; END IF;
-  IF n ~ '(curtain|sheer|blind|drape|\mrugs?\M|carpet|lighting|\mlights?\M|mirror|cushion|\mthrows?\M|bedding|duvet|comforter|pillow|\msheets?\M|wall art|artwork|\mplants?\M|\mframes?\M|candle|sculpture|ornament)' THEN RETURN 4; END IF;
-  IF n ~ '\m(beds?|mattress(es)?|sofas?|sectional|couch|tables?|chairs?|armchairs?|stools?|benches|bench|desks?|ottomans?|consoles?|headboards?|bunk|shelf|shelves|shelving|bookcase|outdoor set|balcony set|patio set|loungers?)\M' THEN RETURN 2; END IF;
-  IF n ~ '\mglass' THEN RETURN 5; END IF;
-  IF c ~ '(cabinet|joinery)' THEN RETURN 1; END IF;
-  IF c ~ 'appliance' THEN RETURN 3; END IF;
-  IF c ~ '(kitchenware|tabletop|linen|accessor)' THEN RETURN 5; END IF;
-  IF c ~ 'furniture' THEN RETURN 2; END IF;
-  IF c ~ '(d[eé]cor|soft)' THEN RETURN 4; END IF;
-  RETURN 5;
+  -- The item IS the finish, whatever furniture its name mentions ("Decorative - on top tv unit").
+  IF n ~ '(decorative|d[eé]cor|wallpaper|wall ?paper|lamps?|bulbs?|sconce|pendant|chandelier|dry flower|faux plant|mattress protector|\mvases?\M)' THEN RETURN 'finish'; END IF;
+  IF n ~ '(tv (unit|console|cabinet|stand)|media (unit|console)|wall[- ]?mounted (cabinet|unit|shel)|cabinet|nightstand|night stand|bedside (table|cabinet|unit|drawer)|dresser|wardrobe|closet|vanit(y|ies)|sideboard|chest of drawers|storage console|console with storage|headboard panel|\mpanel\M|panell?ing|joinery|built[- ]?in|bed wall|bed ?head wall|wall design|feature wall|shoe (rack|unit))' THEN RETURN 'cabinetry'; END IF;
+  IF n ~ '(\mtvs?\M|television|fridge|refrigerator|freezer|washing machine|washer|dishwasher|microwave|\moven\M|cooker|\mhob\M|stove|kettle|coffee machine|coffee maker|toaster|blender|air fryer|\mdryers?\M|hair ?dryer|\miron\M|vacuum|water dispenser)' OR c ~ 'appliance' THEN RETURN 'appliance'; END IF;
+  IF n ~ '(towel|\mlinen|bath mat|cookware|cutlery|utensil|dinner set|knife|knives|\mmugs?\M|\mplates?\M|\mbowls?\M|placemat|colander|peeler|opener|grater|kitchenware|tableware|napkin|chopping board|drying rack|ironing board|hanger|\mbins?\M|trash|waste|safety|first aid|fire (extinguisher|blanket)|smoke|scale|ash ?tray|soap|amenit|dispenser|toilet brush|\mglass)' OR c ~ '(kitchenware|tabletop|linen|accessor)' THEN RETURN 'kitchen'; END IF;
+  -- Soft finishing by name, tested BEFORE furniture so a rug or a mirror is not furniture.
+  IF n ~ '(curtain|sheer|blind|drape|\mrugs?\M|carpet|lighting|\mlights?\M|mirror|cushion|\mthrows?\M|bedding|duvet|comforter|pillow|\msheets?\M|wall art|artwork|\mplants?\M|\mframes?\M|candle|sculpture|ornament)' OR c ~ '(d[eé]cor|soft)' THEN RETURN 'soft'; END IF;
+  -- Furniture by NAME only. 'Furniture' is the default category for almost every room, so using
+  -- the category as a fallback filed anything unrecognised -- a light switch -- as furniture.
+  IF n ~ '\m(beds?|mattress(es)?|sofas?|sectional|couch|tables?|chairs?|armchairs?|stools?|benches|bench|desks?|ottomans?|consoles?|headboards?|bunk|shel(f|ves|ving)|shlef|bookcase|outdoor set|balcony set|patio set|loungers?)\M' THEN RETURN 'furniture'; END IF;
+  RETURN 'unknown';
 END $function$
 ;
+-- The 3-argument overload is gone: its defaulted _supplier made 3-argument calls ambiguous and broke brief seeding.
+DROP FUNCTION IF EXISTS public.ws_ffe_band(text,text,text);
 CREATE OR REPLACE FUNCTION public.ws_ffe_band(_item text, _category text, _room text, _supplier text DEFAULT NULL::text)
  RETURNS smallint
  LANGUAGE plpgsql
  STABLE
  SET search_path TO 'public'
 AS $function$
-DECLARE n text := lower(regexp_replace(coalesce(_item,''), '\s+(above|over|for|behind|beside)\s.*$', '', 'i'));
-        c text := lower(coalesce(_category,'') || ' ' || coalesce(_room,''));
+-- Six buying runs: 1 cabinetry, 2 furniture, 3 online furniture, 4 appliances,
+-- 5 Dragon Mart pick-up, 6 household. The kind decides 1/2/4; the supplier decides whether it is
+-- ordered online (3/6) or collected (5), via the GM-maintained ffe_online_retailers list.
+DECLARE kind text := public.ws_ffe_kind(_item, _category, _room);
         online boolean := public.ws_ffe_online_supplier(_supplier);
         sourced boolean := coalesce(btrim(_supplier),'') <> '';
-        is_finish boolean; is_cab boolean; is_app boolean; is_kit boolean; is_soft boolean; is_furn boolean;
 BEGIN
-  -- The item IS the finish, whatever furniture its name mentions.
-  is_finish := n ~ '(decorative|d[eé]cor|wallpaper|wall ?paper|lamps?|bulbs?|sconce|pendant|chandelier|dry flower|faux plant|mattress protector|\mvases?\M)';
-  is_cab  := NOT is_finish AND n ~ '(tv (unit|console|cabinet|stand)|media (unit|console)|wall[- ]?mounted (cabinet|unit|shel)|cabinet|nightstand|night stand|bedside (table|cabinet|unit|drawer)|dresser|wardrobe|closet|vanit(y|ies)|sideboard|chest of drawers|storage console|console with storage|headboard panel|\mpanel\M|panell?ing|joinery|built[- ]?in|bed wall|bed ?head wall|wall design|feature wall|shoe (rack|unit))';
-  is_app  := NOT is_finish AND NOT is_cab
-             AND (n ~ '(\mtvs?\M|television|fridge|refrigerator|freezer|washing machine|washer|dishwasher|microwave|\moven\M|cooker|\mhob\M|stove|kettle|coffee machine|coffee maker|toaster|blender|air fryer|\mdryers?\M|hair ?dryer|\miron\M|vacuum|water dispenser)' OR c ~ 'appliance');
-  is_kit  := NOT is_finish AND NOT is_cab AND NOT is_app
-             AND (n ~ '(towel|\mlinen|bath mat|cookware|cutlery|utensil|dinner set|knife|knives|\mmugs?\M|\mplates?\M|\mbowls?\M|placemat|colander|peeler|opener|grater|kitchenware|tableware|napkin|chopping board|drying rack|ironing board|hanger|\mbins?\M|trash|waste|safety|first aid|fire (extinguisher|blanket)|smoke|scale|ash ?tray|soap|amenit|dispenser|toilet brush|\mglass)' OR c ~ '(kitchenware|tabletop|linen|accessor)');
-  -- Soft finishing by name, tested BEFORE furniture or the category fallback swallowed a rug.
-  is_soft := NOT is_finish AND NOT is_cab AND NOT is_app AND NOT is_kit
-             AND (n ~ '(curtain|sheer|blind|drape|\mrugs?\M|carpet|lighting|\mlights?\M|mirror|cushion|\mthrows?\M|bedding|duvet|comforter|pillow|\msheets?\M|wall art|artwork|\mplants?\M|\mframes?\M|candle|sculpture|ornament)' OR c ~ '(d[eé]cor|soft)');
-  -- Furniture by NAME only. 'Furniture' is the default category for almost every room, so using it
-  -- as a fallback filed anything unrecognised — a light switch — as furniture.
-  is_furn := NOT is_finish AND NOT is_cab AND NOT is_app AND NOT is_kit AND NOT is_soft
-             AND n ~ '\m(beds?|mattress(es)?|sofas?|sectional|couch|tables?|chairs?|armchairs?|stools?|benches|bench|desks?|ottomans?|consoles?|headboards?|bunk|shel(f|ves|ving)|shlef|bookcase|outdoor set|balcony set|patio set|loungers?)\M';
-
-  IF is_cab  THEN RETURN 1; END IF;
-  IF is_furn THEN RETURN CASE WHEN online THEN 3 ELSE 2 END; END IF;
-  IF is_app  THEN RETURN 4; END IF;
+  IF kind = 'cabinetry' THEN RETURN 1; END IF;
+  IF kind = 'furniture' THEN RETURN CASE WHEN online THEN 3 ELSE 2 END; END IF;
+  IF kind = 'appliance' THEN RETURN 4; END IF;
   IF sourced AND NOT online THEN RETURN 5; END IF;
   RETURN 6;
+END $function$
+;
+CREATE OR REPLACE FUNCTION public.ws_ffe_split_parts(_item text, _category text, _room text)
+ RETURNS text[]
+ LANGUAGE plpgsql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$
+DECLARE p text; k text; kept text[] := '{}'; runs text[] := '{}';
+BEGIN
+  IF coalesce(_item,'') !~ '\+' THEN RETURN ARRAY[_item]; END IF;
+  FOREACH p IN ARRAY regexp_split_to_array(_item, '\s*\+\s*') LOOP
+    p := btrim(p);
+    CONTINUE WHEN length(p) < 2;
+    kept := kept || p;
+    k := public.ws_ffe_kind(p, _category, _room);
+    -- No supplier exists at seed time, so finishes, kitchenware and soft furnishing are one run
+    -- here. 'unknown' is a size or variant tacked onto its sibling ("Mattress 90cm(medical) +
+    -- 90cm(soft)"), not a second item, so it never forces a split.
+    IF k IN ('cabinetry','furniture','appliance') THEN runs := runs || k;
+    ELSIF k <> 'unknown' THEN runs := runs || 'other'::text; END IF;
+  END LOOP;
+  IF coalesce(array_length(kept, 1), 0) < 2 THEN RETURN ARRAY[_item]; END IF;
+  -- Same run: one supplier, one order, one row. Keep the bundle as the designer wrote it.
+  IF (SELECT count(DISTINCT r) FROM unnest(runs) r) < 2 THEN RETURN ARRAY[_item]; END IF;
+  RETURN kept;
 END $function$
 ;
 CREATE OR REPLACE FUNCTION public.ws_ffe_band_trg()
@@ -117,14 +137,3 @@ BEGIN
   RETURN NEW;
 END $function$
 ;
-CREATE OR REPLACE FUNCTION public.ws_ffe_online_supplier(_supplier text)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-  SELECT coalesce(btrim(_supplier),'') <> '' AND EXISTS (
-    SELECT 1 FROM public.ffe_online_retailers r WHERE lower(btrim(_supplier)) LIKE '%'||lower(btrim(r.name))||'%')
-$function$
-;
-
