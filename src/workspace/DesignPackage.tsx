@@ -804,6 +804,19 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         </AlertDialogContent>
       </AlertDialog>
 
+      <Dialog open={resubmitOpen} onOpenChange={setResubmitOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resubmit design package</DialogTitle>
+            <DialogDescription>Sends the adjusted FF&E list back to the GM for pricing and tells sales the design changed. Every item still needs a unit cost.</DialogDescription>
+          </DialogHeader>
+          <Textarea value={resubmitNote} onChange={(e) => setResubmitNote(e.target.value)} maxLength={500} rows={3} placeholder="What changed? (optional)" aria-label="What changed?" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResubmitOpen(false)} disabled={resubmit.isPending}>Cancel</Button>
+            <Button onClick={doResubmit} disabled={resubmit.isPending}>{resubmit.isPending ? "Resubmitting…" : "Resubmit"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <RejectDialog open={rejectOpen} onOpenChange={setRejectOpen} pending={decide.isPending} onConfirm={(r, f) => doDecide(false, r, f)} />
     </div>
   );
