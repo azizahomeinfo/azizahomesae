@@ -16,10 +16,11 @@ export const BAR_ROW_HI = "ring-2 ring-primary bg-primary/10";
  * Sticky bar for the row being bought. `rows` is the on-screen order (Previous/Next walk it, ends disabled).
  * If `itemId` isn't on screen (filtered out or deleted) it renders nothing and drops the id quietly.
  * Editing controls come from the caller via `controls`, so each view decides what (if anything) is editable.
+ * `showCost` gates the AED prefix + line total (cost stays invisible to sales) — set it exactly when `controls` shows a cost field.
  */
-export const BuyingBar = ({ rows, itemId, ready, supplierLabel, onSelect, controls }: {
+export const BuyingBar = ({ rows, itemId, ready, supplierLabel, onSelect, controls, showCost }: {
   rows: FfeRow[]; itemId: string | null; ready: boolean; supplierLabel: (r: FfeRow) => string;
-  onSelect: (id: string | null) => void; controls?: (r: FfeRow) => ReactNode;
+  onSelect: (id: string | null) => void; controls?: (r: FfeRow) => ReactNode; showCost?: boolean;
 }) => {
   const ids = rows.map((r) => r.id).join(",");
   const idx = itemId ? rows.findIndex((r) => r.id === itemId) : -1;
@@ -30,8 +31,9 @@ export const BuyingBar = ({ rows, itemId, ready, supplierLabel, onSelect, contro
   if (idx < 0) return null;
   const row = rows[idx];
   const go = (id: string) => { onSelect(id); scrollToRow(id); };
+  const qty = Number(row.qty);
   return (
-    <div className="sticky top-0 z-20 space-y-2 rounded-[var(--radius)] border border-primary bg-card p-3 shadow-lg md:flex md:items-center md:gap-3 md:space-y-0" aria-label="Buying bar">
+    <div className="sticky top-0 z-20 space-y-1.5 rounded-[var(--radius)] border border-primary bg-card p-2 shadow-lg sm:space-y-2 sm:p-3 md:flex md:items-center md:gap-3" aria-label="Buying bar">
       <div className="min-w-0 flex-1 text-sm">
         <span className="text-[10px] text-muted-foreground">{row.ref}</span>{" "}
         <span className="font-medium">{row.item}</span> <span className="text-muted-foreground">×{Number(row.qty)}</span>
