@@ -82,6 +82,7 @@ const isOwnUpload = (p: string) => p.includes("/proposal/");
 
 export const designParts = (design: SourceDesign) => {
   const renders = design.images.filter((i) => !isFloor(i) && !isMood(i) && !isPdfPath(i.storage_path));
+  const mood = design.images.filter((i) => isMood(i) && !isPdfPath(i.storage_path));
   const order: string[] = [];
   const map = new Map<string, DocImage[]>();
   for (const i of renders) {
@@ -91,10 +92,10 @@ export const designParts = (design: SourceDesign) => {
   }
   const floor = design.images.find(isFloor);
   return {
-    hero: renders[0]?.storage_path ?? null,
+    hero: renders[0]?.storage_path ?? mood[0]?.storage_path ?? null,
     areas: order.map((area) => ({ area, images: map.get(area)! })),
     floor: floor ? { path: floor.storage_path, name: floor.file_name } : null,
-    mood: design.images.filter((i) => isMood(i) && !isPdfPath(i.storage_path)).map((i) => ({ path: i.storage_path, caption: i.caption })),
+    mood: mood.map((i) => ({ path: i.storage_path, caption: i.caption })),
   };
 };
 
