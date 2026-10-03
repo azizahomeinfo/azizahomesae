@@ -4,5 +4,5 @@
 - [x] Restore supplier-only gap wording and filtering while keeping links optional.
 - [x] Correct the workspace budget rule to supplier-only.
 - [x] Typecheck and confirm AZ-2635's UI gap count against a read-only database result.
-- [ ] Add the proposal FF&E drift warning with item-list-only Draft updates.
-- [ ] Typecheck and verify the proposal drift states.
+- [x] Add the proposal FF&E drift warning with item-list-only Draft updates.
+- [x] Typecheck and verify the proposal drift states.
