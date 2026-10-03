@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 /** Every sessionStorage access is guarded: Safari private mode throws. */
@@ -14,7 +14,9 @@ const RESTORE_TIMEOUT_MS = 6000;
 
 /** Called when a product link is opened from an FF&E / procurement row. */
 export const markReturnItem = (id: string) => ss.set(RETURN_KEY, id);
-const hasReturnItem = () => !!ss.get(RETURN_KEY);
+/** `?item=` in the URL (procurement buying bar) also counts, and survives where sessionStorage does not. */
+const urlItem = () => { try { return new URLSearchParams(window.location.search).get("item"); } catch { return null; } };
+const hasReturnItem = () => !!urlItem() || !!ss.get(RETURN_KEY);
 
 /**
  * Saves the window scroll per pathname+search and restores it after a remount (e.g. Safari
@@ -24,7 +26,11 @@ const hasReturnItem = () => !!ss.get(RETURN_KEY);
  */
 export const useScrollRestoration = () => {
   const { pathname, search } = useLocation();
-  const key = SCROLL_PREFIX + pathname + search;
+  // `item` and `q` change while working without changing the page's list layout, so they are left out of the key
+  // (otherwise each change would re-key and jump to the top).
+  const p = new URLSearchParams(search); p.delete("item"); p.delete("q");
+  const qs = p.toString();
+  const key = SCROLL_PREFIX + pathname + (qs ? "?" + qs : "");
 
   useEffect(() => {
     try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch { /* ignore */ }
@@ -87,21 +93,26 @@ const HIGHLIGHT = ["ring-2", "ring-primary", "bg-primary/10"];
  * view, highlight it briefly, and clear the marker so later visits don't jump.
  * Rows carry `data-ffe-row={id}`; the desktop table and mobile list both render, so pick the visible one.
  */
-export const useReturnToItem = (ids: string[]) => {
+export const useReturnToItem = (ids: string[], preferId?: string | null) => {
   const sig = ids.join(",");
+  const jumped = useRef<string | null>(null);
   useEffect(() => {
-    const id = ss.get(RETURN_KEY);
+    // A URL `?item=` wins over the sessionStorage marker; it jumps once per id (Next/Prev scroll on their own).
+    const fromUrl = !!preferId;
+    const id = preferId || ss.get(RETURN_KEY);
     if (!id || !ids.includes(id)) return;
+    if (fromUrl && jumped.current === id) return;
     const raf = requestAnimationFrame(() => {
       const el = [...document.querySelectorAll<HTMLElement>(`[data-ffe-row="${CSS.escape(id)}"]`)]
         .find((e) => e.offsetParent !== null);
       if (!el) return;
       ss.del(RETURN_KEY);
+      if (fromUrl) jumped.current = id;
       el.scrollIntoView({ block: "center" });
       el.classList.add("transition-all", "duration-700", ...HIGHLIGHT);
       window.setTimeout(() => el.classList.remove(...HIGHLIGHT), 2500);
     });
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig]);
+  }, [sig, preferId]);
 };
