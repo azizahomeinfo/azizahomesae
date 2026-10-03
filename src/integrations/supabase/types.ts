@@ -506,16 +506,19 @@ export type Database = {
       }
       ffe_item_costs: {
         Row: {
+          from_price_book: boolean
           item_id: string
           unit_cost: number | null
           updated_at: string
         }
         Insert: {
+          from_price_book?: boolean
           item_id: string
           unit_cost?: number | null
           updated_at?: string
         }
         Update: {
+          from_price_book?: boolean
           item_id?: string
           unit_cost?: number | null
           updated_at?: string
@@ -665,6 +668,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ffe_price_book: {
+        Row: {
+          item: string
+          room_class: string
+          source_lead: string | null
+          unit_cost: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          item: string
+          room_class: string
+          source_lead?: string | null
+          unit_cost: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          item?: string
+          room_class?: string
+          source_lead?: string | null
+          unit_cost?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       handover_items: {
         Row: {
@@ -1860,6 +1890,7 @@ export type Database = {
         Args: { _items: string[]; _note: string }
         Returns: number
       }
+      ws_ffe_price: { Args: { _item: string; _room: string }; Returns: number }
       ws_ffe_reselected: { Args: { _item: string }; Returns: string }
       ws_ffe_split_parts: {
         Args: { _category: string; _item: string; _room: string }
@@ -1895,6 +1926,11 @@ export type Database = {
         Returns: undefined
       }
       ws_notify_overdue_drawings: { Args: never; Returns: undefined }
+      ws_price_book_apply: {
+        Args: { _lead: string; _project?: string }
+        Returns: number
+      }
+      ws_price_book_fill_from_lead: { Args: { _lead: string }; Returns: number }
       ws_project_coordinators: { Args: { _project: string }; Returns: string[] }
       ws_recompute_proc_pct: { Args: { _project: string }; Returns: undefined }
       ws_release_procurement: {
@@ -1910,6 +1946,7 @@ export type Database = {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["workspace_role"]
       }
+      ws_room_class: { Args: { _room: string }; Returns: string }
       ws_room_prefix: { Args: { _room: string }; Returns: string }
       ws_seed_ffe: {
         Args: { _lead: string; _project?: string }
