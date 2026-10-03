@@ -337,6 +337,13 @@
       "when": 1790937993084,
       "tag": "0047_drawing_deadlines_drive_and_assignment",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1790937994084,
+      "tag": "0048_ffe_price_book",
+      "breakpoints": true
     }
   ]
 }

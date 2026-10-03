@@ -14,7 +14,7 @@ export type FfeRow = Pick<
   | "id" | "project_id" | "lead_id" | "ref" | "room" | "category" | "item" | "dims" | "spec" | "qty" | "unit"
   | "supplier_id" | "supplier_name" | "supplier_contact" | "product_url" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order" | "priority_band"
   | "review" | "review_note" | "review_by" | "review_at" | "review_prev" | "internal"
-> & { unit_cost?: number | null };
+> & { unit_cost?: number | null; from_price_book?: boolean };
 export type ProcStage = T["ffe_items"]["Row"]["stage"];
 export type CostingStatus = T["ffe_costings"]["Row"]["status"];
 export interface QuoteOption { label: string; desc: string; amount: number }
@@ -153,10 +153,10 @@ export const useFfeItems = (owner: FfeOwner | undefined, withCost: boolean) =>
       const rows = (data ?? []) as unknown as FfeRow[];
       // Cost price lives in ffe_item_costs, which RLS hides from sales entirely.
       if (!withCost || !rows.length) return rows;
-      const { data: costs, error: cErr } = await supabase.from("ffe_item_costs").select("item_id, unit_cost").in("item_id", rows.map((r) => r.id));
+      const { data: costs, error: cErr } = await supabase.from("ffe_item_costs").select("item_id, unit_cost, from_price_book").in("item_id", rows.map((r) => r.id));
       fail(cErr);
-      const m = new Map((costs ?? []).map((c) => [c.item_id, c.unit_cost]));
-      return rows.map((r) => ({ ...r, unit_cost: m.get(r.id) ?? null }));
+      const m = new Map((costs ?? []).map((c) => [c.item_id, c]));
+      return rows.map((r) => ({ ...r, unit_cost: m.get(r.id)?.unit_cost ?? null, from_price_book: !!m.get(r.id)?.from_price_book }));
     },
   });
 
@@ -177,6 +177,32 @@ export const useSeedFfe = () => {
       const { data, error } = await supabase.rpc("ws_seed_ffe", { _lead: v.leadId as string, _project: v.projectId ?? undefined });
       fail(error);
       return data as number;
+    },
+    onSettled: () => invalidateFfe(qc),
+  });
+};
+
+/** GM only (enforced by ws_price_book_fill_from_lead): this lead's costed list becomes the standard price book. */
+export const useSetStandardPrices = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      const { data, error } = await supabase.rpc("ws_price_book_fill_from_lead", { _lead: leadId });
+      fail(error);
+      return (data as number) ?? 0;
+    },
+    onSettled: () => invalidateFfe(qc),
+  });
+};
+
+/** GM or designer: fills standard prices into rows with no cost; never overwrites a cost. */
+export const useApplyStandardPrices = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { leadId: string; projectId: string | null }) => {
+      const { data, error } = await supabase.rpc("ws_price_book_apply", { _lead: v.leadId, _project: v.projectId ?? undefined });
+      fail(error);
+      return (data as number) ?? 0;
     },
     onSettled: () => invalidateFfe(qc),
   });

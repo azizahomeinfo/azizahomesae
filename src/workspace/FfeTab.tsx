@@ -21,7 +21,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  projectOwner, useSeedFfe, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -664,6 +664,26 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       onSuccess: () => { toast.success(ok); done?.(); }, onError: (e) => toast.error(errMsg(e, "Failed")),
     });
 
+  // Standard price book: all cost, so withCost gates it; totals keep reading unit_cost unchanged.
+  const setStd = useSetStandardPrices();
+  const applyStd = useApplyStandardPrices();
+  const [stdOpen, setStdOpen] = useState(false);
+  const stdDefaults = withCost ? moneyRows.filter((r) => r.from_price_book && r.unit_cost != null).length : 0;
+  const stdMissing = withCost ? moneyRows.filter((r) => r.unit_cost == null).length : 0;
+  const leadForStd = ctx.leadId;
+  const applyBtn = withCost && !readOnly && (isGm || role === "designer") && leadForStd && (stdMissing > 0 || stdDefaults > 0) ? (
+    <Button size="sm" variant="outline" disabled={applyStd.isPending}
+      onClick={() => applyStd.mutate({ leadId: leadForStd, projectId: ctx.projectId }, {
+        onSuccess: (n) => n
+          ? toast.success(`${n} item${n === 1 ? "" : "s"} priced from the standard list`)
+          : toast.info("Nothing to fill — every item already has a cost"),
+        onError: (e) => toast.error(errMsg(e, "Could not apply standard prices")),
+      })}>Apply standard prices</Button>
+  ) : null;
+  const unreviewedLine = withCost && stdDefaults > 0 ? (
+    <p className="text-xs text-muted-foreground">{stdDefaults} of {moneyRows.length} costs are standard prices not yet reviewed.</p>
+  ) : null;
+
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (!rows.length && !internalRows.length && !showInternal) return (
     <div className="space-y-4">
@@ -737,6 +757,9 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         {withCost && (
           <F label="Unit cost" className="md:pt-[15px]">
             <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} disabled={!canEditCost} className="tabular-nums" onSave={(v) => save(r.id, { unit_cost: num(v) })} />
+            {r.from_price_book && r.unit_cost != null && (
+              <span className="block text-[10px] text-muted-foreground" title="Pre-filled from the standard prices — check it">standard price</span>
+            )}
           </F>
         )}
         {withCost && (
@@ -796,6 +819,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
       <Section title="Costing" right={
         <div className="flex flex-wrap items-center gap-2">
           <CostingPill status={status} version={hasQuote ? costing?.version : null} />
+          {applyBtn}
           {/* The first submission goes with the renders ("Submit design package"). After that the list alone can go back
               to the GM: when the GM returned it, or to re-quote (e.g. a supplier price changed) — no new design version needed. */}
           {canSubmit && (status === "Returned" || status === "Quoted") && (
@@ -839,6 +863,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
           </div>
         )}
         {withCost && <p className="text-sm">Grand total (cost): <span className="font-medium tabular-nums">{aed(grand)}</span> · {rows.length} items</p>}
+        {unreviewedLine}
         {!withCost && <p className="text-sm">{rows.length} items</p>}
       </Section>
 
@@ -860,6 +885,31 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
             notifyTo([ctx.designerId], `${name} returned the FF&E list for ${ctx.name}`), "Returned to designer")} />
       )}
       </>)}
+      {budget && withCost && (applyBtn || unreviewedLine) && (
+        <div className="flex flex-wrap items-center justify-between gap-2">{unreviewedLine}{applyBtn}</div>
+      )}
+      {isGm && !readOnly && ctx.leadId && (
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" disabled={setStd.isPending} onClick={() => setStdOpen(true)}>Save these as the standard prices</Button>
+        </div>
+      )}
+      <AlertDialog open={stdOpen} onOpenChange={setStdOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save these as the standard prices?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This replaces the standard price for every item on this list, and affects all future leads: their new FF&amp;E lists will be pre-costed from these prices.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => setStd.mutate(ctx.leadId!, {
+              onSuccess: (n) => toast.success(`${n} standard price${n === 1 ? "" : "s"} updated`),
+              onError: (e) => toast.error(errMsg(e, "Could not update the standard prices")),
+            })}>Replace standard prices</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         <SearchBox value={search} onChange={setSearch} shown={visibleCount} total={(withCost ? allRows : rows).length} />
