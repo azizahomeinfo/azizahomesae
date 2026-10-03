@@ -669,6 +669,24 @@ export type Database = {
           },
         ]
       }
+      ffe_online_retailers: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          name: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          name: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       ffe_price_book: {
         Row: {
           item: string
@@ -1866,10 +1884,20 @@ export type Database = {
       }
       ws_drawing_hours: { Args: { _kind: string }; Returns: number }
       ws_drawing_kinds: { Args: never; Returns: string[] }
-      ws_ffe_band: {
-        Args: { _category: string; _item: string; _room: string }
-        Returns: number
-      }
+      ws_ffe_band:
+        | {
+            Args: { _category: string; _item: string; _room: string }
+            Returns: number
+          }
+        | {
+            Args: {
+              _category: string
+              _item: string
+              _room: string
+              _supplier?: string
+            }
+            Returns: number
+          }
       ws_ffe_change_to_gm: {
         Args: { _item: string; _newt: number; _oldt: number; _what: string }
         Returns: undefined
@@ -1886,6 +1914,7 @@ export type Database = {
       }
       ws_ffe_internal_section: { Args: { _room: string }; Returns: boolean }
       ws_ffe_line_total: { Args: { _item: string }; Returns: number }
+      ws_ffe_online_supplier: { Args: { _supplier: string }; Returns: boolean }
       ws_ffe_out_of_stock: {
         Args: { _items: string[]; _note: string }
         Returns: number
