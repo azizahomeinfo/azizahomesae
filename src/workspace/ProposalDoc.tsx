@@ -349,6 +349,20 @@ const ProposalDoc = () => {
                 <Field label="Validity"><Input value={d.cover.validity} onChange={(e) => setCover({ validity: e.target.value })} /></Field>
               </div>
               <Field label="Introduction"><Textarea rows={4} value={d.cover.intro} onChange={(e) => setCover({ intro: e.target.value })} /></Field>
+              {(d.cover.hero || d.moodBoard[0]) && (
+                <ImageStrip
+                  images={[{ path: d.cover.hero ?? d.moodBoard[0]?.path ?? "", caption: null }]}
+                  url={(p) => url(p)}
+                  onRemove={editable && d.cover.hero ? () => setCover({ hero: null }) : undefined}
+                />
+              )}
+              {!d.cover.hero && d.moodBoard[0] && (
+                <p className="text-xs text-muted-foreground">Using the first mood-board image. Upload a cover image to replace it.</p>
+              )}
+              {editable && (
+                <UploadButton label={d.cover.hero ? "Replace cover image" : "Upload cover image"}
+                  onFile={async (f) => { const path = await upload(f); setCover({ hero: path }); }} />
+              )}
             </RailSection>
 
             <RailSection title="Pages">

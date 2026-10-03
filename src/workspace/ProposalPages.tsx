@@ -66,7 +66,7 @@ const Foot = ({ client, n }: { client: string; n: number }) => (
 
 const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   const c = doc.cover;
-  const hero = url(c.hero);
+  const hero = url(c.hero ?? doc.moodBoard[0]?.path);
   const meta: [string, string][] = [
     ["Location", c.location || "—"], ["Date", c.date ? shortDate(c.date) : "—"], ["Validity", c.validity || "—"], ["Scope", c.scope || "—"],
   ];
