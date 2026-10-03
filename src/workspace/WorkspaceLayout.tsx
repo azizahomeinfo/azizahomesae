@@ -9,6 +9,7 @@ import logo from "@/assets/aziza-logo.png";
 import { useWorkspace } from "./WorkspaceProvider";
 import { PAGES_BY_ROLE, PAGE_META, ROLE_LABEL, type WorkspacePage, type WorkspaceRole } from "./access";
 import NotificationBell from "./NotificationBell";
+import { useScrollRestoration } from "./scrollMemory";
 
 const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
@@ -67,6 +68,7 @@ const pageFromPath = (path: string): WorkspacePage => {
 const WorkspaceLayout = () => {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  useScrollRestoration();
   const meta = PAGE_META[pageFromPath(pathname)];
 
   return (
