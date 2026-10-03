@@ -1884,20 +1884,15 @@ export type Database = {
       }
       ws_drawing_hours: { Args: { _kind: string }; Returns: number }
       ws_drawing_kinds: { Args: never; Returns: string[] }
-      ws_ffe_band:
-        | {
-            Args: { _category: string; _item: string; _room: string }
-            Returns: number
-          }
-        | {
-            Args: {
-              _category: string
-              _item: string
-              _room: string
-              _supplier?: string
-            }
-            Returns: number
-          }
+      ws_ffe_band: {
+        Args: {
+          _category: string
+          _item: string
+          _room: string
+          _supplier?: string
+        }
+        Returns: number
+      }
       ws_ffe_change_to_gm: {
         Args: { _item: string; _newt: number; _oldt: number; _what: string }
         Returns: undefined
@@ -1913,6 +1908,10 @@ export type Database = {
         Returns: Record<string, unknown>
       }
       ws_ffe_internal_section: { Args: { _room: string }; Returns: boolean }
+      ws_ffe_kind: {
+        Args: { _category: string; _item: string; _room: string }
+        Returns: string
+      }
       ws_ffe_line_total: { Args: { _item: string }; Returns: number }
       ws_ffe_online_supplier: { Args: { _supplier: string }; Returns: boolean }
       ws_ffe_out_of_stock: {
