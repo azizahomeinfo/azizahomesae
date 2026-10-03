@@ -931,7 +931,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         <SearchBox value={search} onChange={setSearch} shown={visibleCount} total={(withCost ? allRows : rows).length} />
         <GroupToggle value={groupBy} onChange={setGroupBy} />
       </div>
-      <BuyingBar rows={[...shownGroups.flatMap(([, l]) => l), ...(internalVisible ? shownInternal : [])]} itemId={itemId} ready={!isLoading}
+      <BuyingBar rows={[...shownGroups.flatMap(([, l]) => l), ...(internalVisible ? shownInternal : [])]} itemId={itemId} ready={!isLoading} showCost={canEditCost}
         supplierLabel={(r) => r.supplier_name?.trim() || "No supplier"} onSelect={setItem}
         controls={canEditCost ? (r) => (
           <EditCell key={r.id} label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24" placeholder="Unit cost"
@@ -1228,7 +1228,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         )}
       </Section>
 
-      <BuyingBar rows={flat} itemId={itemId} ready={!isLoading} supplierLabel={supplierOf} onSelect={setItem}
+      <BuyingBar rows={flat} itemId={itemId} ready={!isLoading} supplierLabel={supplierOf} onSelect={setItem} showCost={canEdit}
         controls={(r) => <>
           {canEdit && <EditCell key={r.id} label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24"
             placeholder="Unit cost" onSave={(v) => apply([r.id], { unit_cost: v.trim() === "" ? null : Number(v) })} />}
