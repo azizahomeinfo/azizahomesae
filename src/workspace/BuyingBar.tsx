@@ -3,6 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FfeRow } from "./ffeQueries";
 import { markReturnItem } from "./scrollMemory";
+import { aed } from "./format";
 
 export const scrollToRow = (id: string) =>
   requestAnimationFrame(() => [...document.querySelectorAll<HTMLElement>(`[data-ffe-row="${CSS.escape(id)}"]`)]
