@@ -86,7 +86,9 @@ export const useScrollRestoration = () => {
   }, [key]);
 };
 
-const HIGHLIGHT = ["ring-2", "ring-primary", "bg-primary/10"];
+/** Dedicated flash class (see index.css) — never shares classes with the buying bar's BAR_ROW_HI,
+ *  so the timed removal can't strip classes React still believes it applied. */
+const FLASH = "ws-flash";
 
 /**
  * When the list renders and contains the row whose product link was opened, scroll it into
