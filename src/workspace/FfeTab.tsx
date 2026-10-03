@@ -656,6 +656,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const moneyRows = withCost ? allRows : rows;
   const grand = moneyRows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
+  useReturnToItem(useMemo(() => rows.map((r) => r.id), [rows]));
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   // Any grouping other than room: headings are read-only buckets and each row shows its room.
   const byPriority = groupBy !== "room";
@@ -1108,6 +1109,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const setSearch = (v: string) => { setSearchRaw(v); setSel(new Set()); };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
+  useReturnToItem(useMemo(() => allRows.map((r) => r.id), [allRows]));
   // Buying order: band first (cabinetry → kitchenware & linen), then room, then sheet order.
   // Building materials are bought like anything else: kept in the supplier view (so "Order all from …" includes them),
   // otherwise shown as their own group after the client groups.
