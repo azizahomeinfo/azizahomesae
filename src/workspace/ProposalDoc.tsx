@@ -20,7 +20,7 @@ import {
   applyDesign, applyQuote, buildDocument, itemListDiff, layoutSheets, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
-import { PROPOSAL_CSS, ProposalPages } from "./ProposalPages";
+import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
 
 const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
 
@@ -387,6 +387,11 @@ const ProposalDoc = () => {
                   </div>
                   <Input aria-label="Page title" value={p.title} onChange={(e) => setPage(i, { title: e.target.value })} />
                   <Textarea aria-label="Page description" rows={3} value={p.desc} onChange={(e) => setPage(i, { desc: e.target.value })} />
+                  {descOverflowChars(p.desc, p.images.length) > 0 && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Too long for the page — the last ~{descOverflowChars(p.desc, p.images.length)} characters won't appear in the PDF.
+                    </p>
+                  )}
                   <ImageStrip images={p.images} url={(x) => url(x)} onRemove={editable ? (k) => setPage(i, { images: p.images.filter((_, j) => j !== k) }) : undefined} />
                   {editable && <UploadButton label="Add image" onFile={async (f) => { const path = await upload(f); setPage(i, { images: [...p.images, { path, caption: null }] }); }} />}
                 </div>

@@ -216,3 +216,12 @@ All colors MUST be HSL.
   --border-soft: 32 18% 84%;
   --surface-warm: 36 45% 95%;
 }
+
+/* One-shot flash for the row a product link was opened from (sessionStorage path only;
+   the buying bar's own highlight handles the URL path). Dedicated class so the timed
+   removal never strips classes React still owns. */
+.ws-flash {
+  box-shadow: 0 0 0 2px hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
+  transition: box-shadow 0.7s ease, background-color 0.7s ease;
+}

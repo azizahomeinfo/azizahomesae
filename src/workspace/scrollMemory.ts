@@ -86,7 +86,9 @@ export const useScrollRestoration = () => {
   }, [key]);
 };
 
-const HIGHLIGHT = ["ring-2", "ring-primary", "bg-primary/10"];
+/** Dedicated flash class (see index.css) — never shares classes with the buying bar's BAR_ROW_HI,
+ *  so the timed removal can't strip classes React still believes it applied. */
+const FLASH = "ws-flash";
 
 /**
  * When the list renders and contains the row whose product link was opened, scroll it into
@@ -107,10 +109,15 @@ export const useReturnToItem = (ids: string[], preferId?: string | null) => {
         .find((e) => e.offsetParent !== null);
       if (!el) return;
       ss.del(RETURN_KEY);
-      if (fromUrl) jumped.current = id;
       el.scrollIntoView({ block: "center" });
-      el.classList.add("transition-all", "duration-700", ...HIGHLIGHT);
-      window.setTimeout(() => el.classList.remove(...HIGHLIGHT), 2500);
+      if (fromUrl) {
+        // The buying bar already marks this row (BAR_ROW_HI in React's className) — scroll only,
+        // never touch its classes, or the timed removal would wipe the persistent highlight.
+        jumped.current = id;
+        return;
+      }
+      el.classList.add(FLASH);
+      window.setTimeout(() => el.classList.remove(FLASH), 2500);
     });
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
