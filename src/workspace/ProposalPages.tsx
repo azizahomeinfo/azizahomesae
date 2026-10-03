@@ -169,7 +169,7 @@ const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc
       {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
       <div className="ppd-grow" style={{ marginTop: 22, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
         {s.images.map((img: DocImage) => (
-          <FramedImage key={img.path + s.fit} src={url(img.path) || null} alt={img.caption ?? s.title} h={h} fit={s.fit} />
+          <FramedImage key={img.path + s.fit} src={url(img.path) || null} alt={img.caption ?? s.title} h={FRAME_H} fit={s.fit} />
         ))}
       </div>
       <Foot client={doc.cover.client} n={n} />
