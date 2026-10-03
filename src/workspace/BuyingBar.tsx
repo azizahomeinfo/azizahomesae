@@ -39,15 +39,19 @@ export const BuyingBar = ({ rows, itemId, ready, supplierLabel, onSelect, contro
         <span className="font-medium">{row.item}</span> <span className="text-muted-foreground">×{Number(row.qty)}</span>
         <span className="block truncate text-xs text-muted-foreground">{row.room} · {supplierLabel(row)}</span>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {row.product_url ? (
           <Button asChild size="sm" variant="outline">
             <a href={row.product_url} target="_blank" rel="noopener noreferrer" onClick={() => markReturnItem(row.id)}>
               <ExternalLink className="h-3.5 w-3.5" /> Open product page
             </a>
           </Button>
-        ) : <span className="text-xs text-muted-foreground">No product link</span>}
+        ) : null}
+        {showCost && <span className="text-xs text-muted-foreground" aria-hidden>AED</span>}
         {controls?.(row)}
+        {showCost && qty > 1 && row.unit_cost != null && (
+          <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">× {qty} = {aed(Number(row.unit_cost) * qty)}</span>
+        )}
       </div>
       <div className="flex items-center justify-end gap-1">
         <Button size="sm" variant="ghost" disabled={idx <= 0} onClick={() => go(rows[idx - 1].id)}>‹ Previous</Button>
