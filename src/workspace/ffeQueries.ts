@@ -135,11 +135,59 @@ export const useSaveSupplier = () => {
 
 /* ---------------- purchasing priority ---------------- */
 
-/** Coarse buying order for the coordinator: cabinetry first, kitchenware & linen last. A work queue, not a taxonomy. */
-/** Buying order; index + 1 is the band number defined by ws_ffe_band. */
-export const PRIORITY_BANDS = ["Cabinetry", "Furniture", "Appliances", "Soft finishing", "Kitchenware & linen"] as const;
-/** 1–5. Derived in the database (ws_ffe_band, set on insert, coordinator overrides stick); 5 only covers a row not yet saved. */
-export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? 5;
+/** Buying runs for the coordinator; index + 1 is the band number defined by ws_ffe_band. A work queue, not a taxonomy. */
+export const PRIORITY_BANDS = ["Cabinetry", "Furniture", "Online furniture", "Appliances", "Dragon Mart pick-up", "Household"] as const;
+/** 1–6. Derived in the database on write (ws_ffe_band; supplier decides online vs pick-up; hand overrides stick); 6 (the unsorted end) only covers a row not yet saved. */
+export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? PRIORITY_BANDS.length;
+
+/* ---------------- online retailers (GM-maintained; feeds ws_ffe_online_supplier) ---------------- */
+
+export const useOnlineRetailers = (enabled = true) =>
+  useQuery({
+    queryKey: ["ws", "online-retailers"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("ffe_online_retailers").select("name").order("name");
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((r) => r.name);
+    },
+  });
+
+const useRetailerSettled = () => {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["ws", "online-retailers"] });
+    qc.invalidateQueries({ queryKey: ["ws", "ffe"] });
+  };
+};
+
+export const useAddOnlineRetailer = () => {
+  const settled = useRetailerSettled();
+  return useMutation({
+    mutationFn: async (v: { name: string; existing: string[]; by: string | null }) => {
+      const name = v.name.trim().replace(/\s+/g, " ");
+      if (!name) throw new Error("Enter a retailer name");
+      if (name.length > 120) throw new Error("Name is too long");
+      if (v.existing.some((n) => n.toLowerCase() === name.toLowerCase())) throw new Error(`${name} is already on the list`);
+      const { error } = await supabase.from("ffe_online_retailers").insert({ name, added_by: v.by });
+      if (error) throw new Error(error.message);
+      return name;
+    },
+    onSettled: settled,
+  });
+};
+
+export const useRemoveOnlineRetailer = () => {
+  const settled = useRetailerSettled();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const { data, error } = await supabase.from("ffe_online_retailers").delete().eq("name", name).select("name");
+      if (error) throw new Error(error.message);
+      if (!data?.length) throw new Error("You don't have permission to remove retailers");
+    },
+    onSettled: settled,
+  });
+};
 
 /* ---------------- ffe items ---------------- */
 

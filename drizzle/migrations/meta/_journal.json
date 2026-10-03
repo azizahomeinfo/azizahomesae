@@ -344,6 +344,13 @@
       "when": 1790937994084,
       "tag": "0048_ffe_price_book",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1790937995084,
+      "tag": "0049_six_buying_runs",
+      "breakpoints": true
     }
   ]
 }

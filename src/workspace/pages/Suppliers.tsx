@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useSaveSupplier, useSupplierOpenCounts, useSuppliers, type Supplier } from "../ffeQueries";
+import { X } from "lucide-react";
+import { useAddOnlineRetailer, useOnlineRetailers, useRemoveOnlineRetailer, useSaveSupplier, useSupplierOpenCounts, useSuppliers, type Supplier } from "../ffeQueries";
 
 const STATUSES: Supplier["status"][] = ["Preferred", "Approved", "On Watch", "Blocked"];
 const TONE: Record<Supplier["status"], string> = {
@@ -73,6 +74,43 @@ const SupplierDialog = ({ supplier, open, onOpenChange }: { supplier: Supplier |
   );
 };
 
+/** GM only: the names that make a supplier "online" for the buying runs (ws_ffe_online_supplier, substring, case-insensitive). */
+const OnlineRetailers = ({ userId }: { userId: string | null }) => {
+  const { data: names = [], isLoading, error } = useOnlineRetailers();
+  const add = useAddOnlineRetailer();
+  const remove = useRemoveOnlineRetailer();
+  const [v, setV] = useState("");
+  const submit = () => add.mutate({ name: v, existing: names, by: userId }, {
+    onSuccess: (n) => { toast.success(`${n} added`); setV(""); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+  return (
+    <section className="rounded-[var(--radius)] border border-border bg-card p-4 space-y-3">
+      <h2 className="font-heading uppercase text-lg tracking-wide">Online retailers</h2>
+      <p className="text-sm text-muted-foreground">Items from these suppliers are ordered online (buying run 3 or 6). Everything else with a supplier is collected — run 5, Dragon Mart pick-up.</p>
+      <p className="text-xs text-muted-foreground">Existing items keep their run until they are next edited.</p>
+      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : error ? <p className="text-sm text-destructive">{(error as Error).message}</p> : (
+        <ul className="flex flex-wrap gap-2">
+          {names.length === 0 && <li className="text-sm text-muted-foreground">No online retailers yet.</li>}
+          {names.map((n) => (
+            <li key={n} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-sm">
+              {n}
+              <button type="button" aria-label={`Remove ${n}`} disabled={remove.isPending} className="text-muted-foreground hover:text-destructive"
+                onClick={() => remove.mutate(n, { onSuccess: () => toast.success(`${n} removed`), onError: (e) => toast.error(e instanceof Error ? e.message : "Failed") })}>
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form className="flex flex-col gap-2 sm:flex-row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+        <Input value={v} onChange={(e) => setV(e.target.value)} maxLength={120} placeholder="Retailer name, e.g. Home Centre" aria-label="Retailer name" className="sm:max-w-xs" />
+        <Button type="submit" variant="outline" disabled={!v.trim() || add.isPending}>{add.isPending ? "Adding…" : "Add retailer"}</Button>
+      </form>
+    </section>
+  );
+};
+
 const Suppliers = () => {
   const { member } = useWorkspace();
   // Designers source FF&E, so they add and edit suppliers too. Delete (and blocking) stays with the GM.
@@ -126,6 +164,7 @@ const Suppliers = () => {
           </ul>
         </>
       )}
+      {member?.role === "gm" && <OnlineRetailers userId={member.user_id} />}
       {canEdit && <SupplierDialog supplier={editing} open={open} onOpenChange={setOpen} />}
     </div>
   );
