@@ -7,6 +7,43 @@ export interface DocImage { path: string; caption: string | null }
 export interface DocPage { id: string; area: string | null; title: string; desc: string; images: DocImage[] }
 export interface ItemGroup { room: string; items: { item: string; qty: number }[] }
 
+export interface ItemListDiff { added: number; removed: number; quantitiesChanged: number; differs: boolean }
+
+/** Compare proposal item content without treating room or item ordering as a change. */
+export const itemListDiff = (stored: ItemGroup[], live: ItemGroup[]): ItemListDiff => {
+  const collect = (groups: ItemGroup[]) => {
+    const map = new Map<string, number[]>();
+    for (const group of groups) {
+      for (const row of group.items) {
+        const key = JSON.stringify([group.room, row.item]);
+        map.set(key, [...(map.get(key) ?? []), Number(row.qty)]);
+      }
+    }
+    for (const quantities of map.values()) quantities.sort((a, b) => a - b);
+    return map;
+  };
+  const before = collect(stored);
+  const after = collect(live);
+  let added = 0;
+  let removed = 0;
+  let quantitiesChanged = 0;
+  for (const key of new Set([...before.keys(), ...after.keys()])) {
+    const oldQuantities = [...(before.get(key) ?? [])];
+    const newQuantities = [...(after.get(key) ?? [])];
+    for (let i = oldQuantities.length - 1; i >= 0; i -= 1) {
+      const match = newQuantities.indexOf(oldQuantities[i] ?? 0);
+      if (match < 0) continue;
+      oldQuantities.splice(i, 1);
+      newQuantities.splice(match, 1);
+    }
+    const changed = Math.min(oldQuantities.length, newQuantities.length);
+    quantitiesChanged += changed;
+    removed += oldQuantities.length - changed;
+    added += newQuantities.length - changed;
+  }
+  return { added, removed, quantitiesChanged, differs: added + removed + quantitiesChanged > 0 };
+};
+
 export interface ProposalDocument {
   v: 2;
   designId: string | null;
