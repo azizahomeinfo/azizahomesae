@@ -109,10 +109,15 @@ export const useReturnToItem = (ids: string[], preferId?: string | null) => {
         .find((e) => e.offsetParent !== null);
       if (!el) return;
       ss.del(RETURN_KEY);
-      if (fromUrl) jumped.current = id;
       el.scrollIntoView({ block: "center" });
-      el.classList.add("transition-all", "duration-700", ...HIGHLIGHT);
-      window.setTimeout(() => el.classList.remove(...HIGHLIGHT), 2500);
+      if (fromUrl) {
+        // The buying bar already marks this row (BAR_ROW_HI in React's className) — scroll only,
+        // never touch its classes, or the timed removal would wipe the persistent highlight.
+        jumped.current = id;
+        return;
+      }
+      el.classList.add(FLASH);
+      window.setTimeout(() => el.classList.remove(FLASH), 2500);
     });
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps

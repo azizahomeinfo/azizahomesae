@@ -115,15 +115,24 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
 
 /*
  * Fixed image frames, identical on every area page. Page 794 × 1123, padding 52/56/80 → content 682 × 991.
- * Header worst case (title clamped to 2 lines, description to 3 on two-image pages): 26 eyebrow + 84 title
- * + 78 description + 22 gap = 210 px, leaving 781. Two true 16:9 frames (2 × 384 + 14) would need 782, so the
- * two-up frame is 682 × 372 (≈ 1.83:1) → 758 px, 23 px spare above the footer. One-up is 3:2: 682 × 455.
+ * Header worst case (title clamped to 2 lines, description to 4 on two-image pages): 26 eyebrow + 84 title
+ * + 100 description + 22 gap = 232 px, leaving 759. Two 682 × 362 frames (≈ 1.88:1) + 14 gap = 738 px,
+ * 21 px spare above the footer. One-up is 3:2: 682 × 455.
  * Explicit px sizes (no aspect-ratio) so the frames scale with [data-print-scale] like everything else.
  */
 const FRAME_W = PAGE_W - 112;
-const FRAME_H_TWO = 372;
+const FRAME_H_TWO = 362;
 const FRAME_H_ONE = Math.round(FRAME_W / 1.5);
 const MAX_CROP = 0.4;
+
+/** Description clamp limits per image count, and a rough overflow estimate for the editor's warning.
+ *  Chars per line ≈ frame width 682 / (13 px font × ~0.5 avg glyph width) ≈ 105. */
+export const DESC_CLAMP = { one: 8, two: 4 } as const;
+const DESC_CHARS_PER_LINE = 105;
+export const descClampLines = (images: number) => (images > 1 ? DESC_CLAMP.two : DESC_CLAMP.one);
+/** Estimated characters beyond the clamp (0 when it fits). Rough by design — the warning only needs to be close. */
+export const descOverflowChars = (desc: string, images: number) =>
+  Math.max(0, desc.length - descClampLines(images) * DESC_CHARS_PER_LINE);
 
 const clamp = (lines: number) => ({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical" as const, overflow: "hidden" });
 
