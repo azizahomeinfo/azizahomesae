@@ -18,7 +18,8 @@ import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, type Project } from
 import type { WorkspaceRole } from "./access";
 import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
-import { useSearchParams } from "react-router-dom";
+import { useFfeViewParams } from "./ffeViewParams";
+import { BuyingBar, BAR_ROW_HI } from "./BuyingBar";
 import { markReturnItem, useReturnToItem } from "./scrollMemory";
 import { aed, shortDate, todayISO } from "./format";
 import {
@@ -136,14 +137,14 @@ const ProductLink = ({ row, onOpen }: { row: { id: string; product_url: string |
   ) : null;
 
 /** Product/supplier page. Icon opens it in a new tab; empty shows "Add link". Bad input shows an inline error and is not saved. */
-const LinkCell = ({ value, onSave, disabled, rowId }: { value: string | null; onSave: (v: string | null) => void; disabled?: boolean; rowId?: string }) => {
+const LinkCell = ({ value, onSave, disabled, rowId, onOpen }: { value: string | null; onSave: (v: string | null) => void; disabled?: boolean; rowId?: string; onOpen?: (id: string) => void }) => {
   const [editing, setEditing] = useState(false);
   const [v, setV] = useState(value ?? "");
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { if (!editing) setV(value ?? ""); }, [value, editing]);
   const open = value ? (
     <Button asChild variant="ghost" size="icon" className="h-7 w-7">
-      <a href={value} target="_blank" rel="noopener noreferrer" aria-label="Open product link" title={value} onClick={() => rowId && markReturnItem(rowId)}><ExternalLink className="h-3.5 w-3.5" /></a>
+      <a href={value} target="_blank" rel="noopener noreferrer" aria-label="Open product link" title={value} onClick={() => { if (rowId) { markReturnItem(rowId); onOpen?.(rowId); } }}><ExternalLink className="h-3.5 w-3.5" /></a>
     </Button>
   ) : null;
   if (disabled) return open ?? <span className="text-xs text-muted-foreground">—</span>;
@@ -643,8 +644,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const { data: needsBudget } = useNeedsBudget(ctx.projectId);
   // Route 2: no contract signed in the system — the list goes designer → GM budget approval → coordinator.
   const budget = !!ctx.projectId && needsBudget === true;
-  const [onlyGaps, setOnlyGaps] = useState(false);
-  const [search, setSearch] = useState("");
+  // Search, only-gaps and the buying-bar row live in the URL so a tab discard + remount keeps them.
+  const { search, setSearch, onlyGaps, setOnlyGaps, itemId, setItem } = useFfeViewParams();
 
   const status: CostingStatus = costing?.status ?? "Draft";
   const isGm = role === "gm";
@@ -657,7 +658,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
   const moneyRows = withCost ? allRows : rows;
   const grand = moneyRows.reduce((s, r) => s + lineTotal(r), 0);
   const groups = useMemo(() => byRoom(rows), [rows]);
-  useReturnToItem(useMemo(() => rows.map((r) => r.id), [rows]));
+  useReturnToItem(useMemo(() => allRows.map((r) => r.id), [allRows]), itemId);
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   // Any grouping other than room: headings are read-only buckets and each row shows its room.
   const byPriority = groupBy !== "room";
@@ -748,7 +749,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
 
   const itemRow = (r: FfeRow) => (
     <li key={r.id} data-ffe-row={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
-      budget && missingBuyability(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3")}>
+      budget && missingBuyability(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3", r.id === itemId && BAR_ROW_HI)}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
           <span className="block text-[10px] text-muted-foreground">{r.ref}{byPriority && <> · {r.room}</>}</span>
@@ -793,7 +794,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
           <EditCell label="Dims" value={r.dims} disabled={!canEdit} className="h-7 text-xs" placeholder="Dims" onSave={(v) => save(r.id, { dims: v.trim() || null })} />
         </F>
         <F label="Link (optional)">
-          <LinkCell rowId={r.id} value={r.product_url} disabled={!canEdit} onSave={(v) => save(r.id, { product_url: v })} />
+          <LinkCell rowId={r.id} onOpen={setItem} value={r.product_url} disabled={!canEdit} onSave={(v) => save(r.id, { product_url: v })} />
         </F>
         <F label="Notes" className="col-span-2 md:col-span-1">
           <EditCell label="Notes" value={r.notes} disabled={!canEdit} className="h-7 text-xs" placeholder="Notes, finish, colour…"
@@ -930,6 +931,12 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         <SearchBox value={search} onChange={setSearch} shown={visibleCount} total={(withCost ? allRows : rows).length} />
         <GroupToggle value={groupBy} onChange={setGroupBy} />
       </div>
+      <BuyingBar rows={[...shownGroups.flatMap(([, l]) => l), ...(internalVisible ? shownInternal : [])]} itemId={itemId} ready={!isLoading}
+        supplierLabel={(r) => r.supplier_name?.trim() || "No supplier"} onSelect={setItem}
+        controls={canEditCost ? (r) => (
+          <EditCell key={r.id} label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24" placeholder="Unit cost"
+            onSave={(v) => save(r.id, { unit_cost: num(v) })} />
+        ) : undefined} />
       {nothingMatches && <NoMatches q={search} onClear={() => setSearch("")} />}
       {shownGroups.map(([room, items, whole]) => {
         const sub = whole.reduce((s, r) => s + lineTotal(r), 0);
@@ -1103,25 +1110,13 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [bulkPo, setBulkPo] = useState("");
   const [oosIds, setOosIds] = useState<string[] | null>(null);
   // View state lives in the URL (sup, q, item) so a Safari tab discard + remount restores the same list.
-  const [params, setParams] = useSearchParams();
-  const editParams = (fn: (p: URLSearchParams) => void) =>
-    setParams((prev) => { const n = new URLSearchParams(prev); fn(n); return n; }, { replace: true });
-  const supplierFilter = params.get("sup") || "all";
-  const setSupplierFilter = (v: string) => editParams((p) => { if (v === "all") p.delete("sup"); else p.set("sup", v); });
-  const itemId = params.get("item");
-  const setItem = (id: string | null) => editParams((p) => { if (id) p.set("item", id); else p.delete("item"); });
+  const view_ = useFfeViewParams();
+  const { supplier: supplierFilter, setSupplier: setSupplierFilter, itemId, setItem } = view_;
   const [orderAll, setOrderAll] = useState<{ supplier: string; items: FfeRow[] } | null>(null);
   const [orderPo, setOrderPo] = useState("");
-  // Input reads local state (instant); the URL `q` is written 300ms after typing stops.
-  const [search, setSearchRaw] = useState(() => params.get("q") ?? "");
-  const qTimer = useRef<number>();
-  useEffect(() => () => window.clearTimeout(qTimer.current), []);
+  const search = view_.search;
   // Changing the search clears the selection, so a bulk action can never include rows that are out of view.
-  const setSearch = (v: string) => {
-    setSearchRaw(v); setSel(new Set());
-    window.clearTimeout(qTimer.current);
-    qTimer.current = window.setTimeout(() => editParams((p) => { if (v.trim()) p.set("q", v); else p.delete("q"); }), 300);
-  };
+  const setSearch = (v: string) => { view_.setSearch(v); setSel(new Set()); };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
   useReturnToItem(useMemo(() => allRows.map((r) => r.id), [allRows]), itemId);
@@ -1142,20 +1137,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
     .filter(([, l]) => !searching || l.length);
   // Rows in the order on screen — the buying bar walks these.
   const flat = view === "board" ? shownRows : shownGroups.flatMap(([, l]) => l);
-  const flatIds = flat.map((r) => r.id).join(",");
-  const barIdx = itemId ? flat.findIndex((r) => r.id === itemId) : -1;
-  const barRow = barIdx >= 0 ? flat[barIdx] : null;
-  // `item` names a row not on screen (filtered out or deleted): drop it quietly.
-  useEffect(() => {
-    if (!isLoading && itemId && !flatIds.split(",").includes(itemId)) setItem(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, itemId, flatIds]);
-  const goTo = (id: string) => {
-    setItem(id);
-    requestAnimationFrame(() => [...document.querySelectorAll<HTMLElement>(`[data-ffe-row="${CSS.escape(id)}"]`)]
-      .find((e) => e.offsetParent !== null)?.scrollIntoView({ block: "center", behavior: "smooth" }));
-  };
-  const rowHi = (r: FfeRow) => r.id === itemId && "ring-2 ring-primary bg-primary/10";
+  const rowHi = (r: FfeRow) => r.id === itemId && BAR_ROW_HI;
   const buyBtn = (r: FfeRow) => canEdit && r.id !== itemId ? (
     <button type="button" className="ml-2 text-[10px] text-primary underline" onClick={() => setItem(r.id)}>Buy</button>
   ) : null;
@@ -1246,34 +1228,12 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         )}
       </Section>
 
-      {barRow && (
-        <div className="sticky top-0 z-20 space-y-2 rounded-[var(--radius)] border border-primary bg-card p-3 shadow-lg md:flex md:items-center md:gap-3 md:space-y-0" aria-label="Buying bar">
-          <div className="min-w-0 flex-1 text-sm">
-            <span className="text-[10px] text-muted-foreground">{barRow.ref}</span>{" "}
-            <span className="font-medium">{barRow.item}</span> <span className="text-muted-foreground">×{Number(barRow.qty)}</span>
-            <span className="block truncate text-xs text-muted-foreground">{barRow.room} · {supplierOf(barRow)}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {barRow.product_url ? (
-              <Button asChild size="sm" variant="outline">
-                <a href={barRow.product_url} target="_blank" rel="noopener noreferrer" onClick={() => markReturnItem(barRow.id)}>
-                  <ExternalLink className="h-3.5 w-3.5" /> Open product page
-                </a>
-              </Button>
-            ) : <span className="text-xs text-muted-foreground">No product link</span>}
-            {canEdit && (
-              <EditCell key={barRow.id} label="Unit cost" type="number" value={barRow.unit_cost ?? null} className="tabular-nums w-24"
-                placeholder="Unit cost" onSave={(v) => apply([barRow.id], { unit_cost: v.trim() === "" ? null : Number(v) })} />
-            )}
-            <StageSelect value={barRow.stage} disabled={!canEdit} onChange={(stage) => apply([barRow.id], { stage })} />
-          </div>
-          <div className="flex items-center justify-end gap-1">
-            <Button size="sm" variant="ghost" disabled={barIdx <= 0} onClick={() => goTo(flat[barIdx - 1].id)}>‹ Previous</Button>
-            <Button size="sm" variant="ghost" disabled={barIdx >= flat.length - 1} onClick={() => goTo(flat[barIdx + 1].id)}>Next ›</Button>
-            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Close buying bar" onClick={() => setItem(null)}>✕</Button>
-          </div>
-        </div>
-      )}
+      <BuyingBar rows={flat} itemId={itemId} ready={!isLoading} supplierLabel={supplierOf} onSelect={setItem}
+        controls={(r) => <>
+          {canEdit && <EditCell key={r.id} label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24"
+            placeholder="Unit cost" onSave={(v) => apply([r.id], { unit_cost: v.trim() === "" ? null : Number(v) })} />}
+          <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} />
+        </>} />
       {searching && !shownRows.length && <NoMatches q={search} onClear={() => setSearch("")} />}
       {view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
