@@ -273,25 +273,26 @@ export const MAX_IMAGES_PER_PAGE = 2;
 export type Sheet =
   | { kind: "cover" }
   | { kind: "floor" }
-  | { kind: "area"; eyebrow: string; title: string; desc: string | null; images: DocImage[] }
+  | { kind: "area"; eyebrow: string; title: string; desc: string | null; images: DocImage[]; fit: "cover" | "contain" }
   | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean }
   | { kind: "invest" };
 
 export const layoutSheets = (doc: ProposalDocument) => {
   const sheets: Sheet[] = [{ kind: "cover" }];
   if (doc.toggles.floorPlan) sheets.push({ kind: "floor" });
-  const areaPage = (eyebrow: string, title: string, desc: string, images: DocImage[]) => {
+  // Render pages fill their frames; the mood board (a collage) is shown whole on a card.
+  const areaPage = (eyebrow: string, title: string, desc: string, images: DocImage[], fit: "cover" | "contain" = "cover") => {
     const chunks: DocImage[][] = [];
     for (let i = 0; i < images.length; i += MAX_IMAGES_PER_PAGE) chunks.push(images.slice(i, i + MAX_IMAGES_PER_PAGE));
     if (!chunks.length) chunks.push([]);
     chunks.forEach((imgs, k) => sheets.push({
       kind: "area", eyebrow: chunks.length > 1 ? `${eyebrow} · ${k + 1} of ${chunks.length}` : eyebrow,
-      title, desc: k === 0 ? desc : null, images: imgs,
+      title, desc: k === 0 ? desc : null, images: imgs, fit,
     }));
   };
   doc.pages.forEach((p, i) => areaPage(`Area ${String(i + 1).padStart(2, "0")}`, p.title, p.desc, p.images));
   if (doc.toggles.moodBoard && doc.moodBoard.length) {
-    areaPage("Design direction", "Mood board", "The palette, textures and references guiding the design.", doc.moodBoard);
+    areaPage("Design direction", "Mood board", "The palette, textures and references guiding the design.", doc.moodBoard, "contain");
   }
   const groups = doc.itemList.filter((g) => g.items.length);
   const showItems = doc.toggles.itemList && groups.length > 0;
