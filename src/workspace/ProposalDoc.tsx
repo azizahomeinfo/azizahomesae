@@ -17,7 +17,7 @@ import {
   type ProposalStatus,
 } from "./proposalQueries";
 import {
-  applyDesign, applyQuote, buildDocument, itemListDiff, layoutSheets, newId,
+  applyDesign, applyQuote, buildDocument, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
@@ -66,11 +66,23 @@ const Chip = ({ label, text, mark }: { label: string; text: string; mark: Mark }
   </div>
 );
 
-const ImageStrip = ({ images, url, onRemove }: {
-  images: DocImage[]; url: (p: string) => string | undefined; onRemove?: (i: number) => void;
+const imageLabel = (image: DocImage) => {
+  if (image.caption?.trim()) return image.caption.trim();
+  const fileName = image.path.split("/").pop() || "picture";
+  try { return decodeURIComponent(fileName); } catch { return fileName; }
+};
+
+const ImageStrip = ({ images, url, onRemove, onMove, moveDisabled }: {
+  images: DocImage[];
+  url: (p: string) => string | undefined;
+  onRemove?: (i: number) => void;
+  onMove?: (i: number, direction: -1 | 1) => void;
+  moveDisabled?: (i: number, direction: -1 | 1) => boolean;
 }) => (
   <div className="flex flex-wrap gap-2">
-    {images.map((img, i) => (
+    {images.map((img, i) => {
+      const label = imageLabel(img);
+      return (
         <div key={img.path} className="w-32 space-y-1">
           <div className="relative h-20 w-32 overflow-hidden rounded border border-border bg-muted/20">
             {url(img.path) && <img src={url(img.path)} alt="" className="h-full w-full object-cover" />}
@@ -81,8 +93,21 @@ const ImageStrip = ({ images, url, onRemove }: {
               </button>
             )}
           </div>
+          {onMove && (
+            <div className="flex justify-center gap-1">
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7"
+                aria-label={`Move ${label} up`} disabled={moveDisabled?.(i, -1)} onClick={() => onMove(i, -1)}>
+                <ArrowUp className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7"
+                aria-label={`Move ${label} down`} disabled={moveDisabled?.(i, 1)} onClick={() => onMove(i, 1)}>
+                <ArrowDown className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
-    ))}
+      );
+    })}
   </div>
 );
 
@@ -274,6 +299,48 @@ const ProposalDoc = () => {
     [pages[i], pages[j]] = [pages[j], pages[i]];
     change({ ...d, pages });
   };
+  const movePicture = (source: { page: number | "mood"; image: number }, direction: -1 | 1) => {
+    const pages = d.pages.map((page) => ({ ...page, images: [...page.images] }));
+    const moodBoard = [...d.moodBoard];
+    const sourceImages = source.page === "mood" ? moodBoard : pages[source.page]?.images;
+    if (!sourceImages) return;
+    const image = sourceImages[source.image];
+    if (!image) return;
+
+    const neighbour = source.image + direction;
+    if (neighbour >= 0 && neighbour < sourceImages.length) {
+      [sourceImages[source.image], sourceImages[neighbour]] = [sourceImages[neighbour], sourceImages[source.image]];
+      change({ ...d, pages, moodBoard });
+      return;
+    }
+
+    let targetImages: DocImage[] | undefined;
+    if (source.page === "mood") {
+      if (direction < 0 && pages.length) targetImages = pages[pages.length - 1]?.images;
+    } else if (direction < 0 && source.page > 0) {
+      targetImages = pages[source.page - 1]?.images;
+    } else if (direction > 0 && source.page < pages.length - 1) {
+      targetImages = pages[source.page + 1]?.images;
+    } else if (direction > 0 && source.page === pages.length - 1) {
+      targetImages = moodBoard;
+    }
+    if (!targetImages) return;
+    if (targetImages !== moodBoard && targetImages.length >= MAX_IMAGES_PER_PAGE) {
+      toast.error(`That page already has ${MAX_IMAGES_PER_PAGE} pictures. Move one out before adding another.`);
+      return;
+    }
+    sourceImages.splice(source.image, 1);
+    if (direction < 0) targetImages.push(image);
+    else targetImages.unshift(image);
+    change({ ...d, pages, moodBoard });
+  };
+  const pictureMoveDisabled = (source: { page: number | "mood"; image: number }, direction: -1 | 1) => {
+    if (direction < 0) return source.page === 0 && source.image === 0;
+    if (source.page === "mood") return source.image === d.moodBoard.length - 1;
+    return source.page === d.pages.length - 1 && source.image === d.pages[source.page]?.images.length - 1 && d.moodBoard.length === 0
+      ? false
+      : false;
+  };
   const setGroup = (i: number, p: Partial<ProposalDocument["itemList"][number]>) => change({ ...d, itemList: d.itemList.map((g, j) => (j === i ? { ...g, ...p } : g)) });
   const upload = async (f: File) => (await uploadToWorkspace(`designs/${lead.id}/proposal`, f)).path;
   const layout = layoutSheets(d);
@@ -410,7 +477,10 @@ const ProposalDoc = () => {
                       Too long for the page — the last ~{descOverflowChars(p.desc, p.images.length)} characters won't appear in the PDF.
                     </p>
                   )}
-                  <ImageStrip images={p.images} url={(x) => url(x)} onRemove={editable ? (k) => setPage(i, { images: p.images.filter((_, j) => j !== k) }) : undefined} />
+                  <ImageStrip images={p.images} url={(x) => url(x)}
+                    onRemove={editable ? (k) => setPage(i, { images: p.images.filter((_, j) => j !== k) }) : undefined}
+                    onMove={editable ? (k, direction) => movePicture({ page: i, image: k }, direction) : undefined}
+                    moveDisabled={(k, direction) => pictureMoveDisabled({ page: i, image: k }, direction)} />
                   {editable && <UploadButton label="Add image" onFile={async (f) => { const path = await upload(f); setPage(i, { images: [...p.images, { path, caption: null }] }); }} />}
                 </div>
               ))}
@@ -424,7 +494,9 @@ const ProposalDoc = () => {
             {d.moodBoard.length > 0 && (
               <RailSection title="Mood board">
                 <p className="text-xs text-muted-foreground">Images supplied with the accepted design.</p>
-                <ImageStrip images={d.moodBoard} url={(x) => url(x)} />
+                <ImageStrip images={d.moodBoard} url={(x) => url(x)}
+                  onMove={editable ? (k, direction) => movePicture({ page: "mood", image: k }, direction) : undefined}
+                  moveDisabled={(k, direction) => pictureMoveDisabled({ page: "mood", image: k }, direction)} />
               </RailSection>
             )}
 
