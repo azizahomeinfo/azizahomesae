@@ -68,7 +68,7 @@ const pageFromPath = (path: string): WorkspacePage => {
 const WorkspaceLayout = () => {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  useScrollRestoration();
+  const { nudge, goBack } = useScrollRestoration();
   const meta = PAGE_META[pageFromPath(pathname)];
 
   return (
@@ -103,6 +103,12 @@ const WorkspaceLayout = () => {
             </div>
           </header>
           <Outlet />
+          {/* Bottom of screen: the buying bar is sticky at the top, so this never covers it. */}
+          {nudge != null && (
+            <Button onClick={goBack} className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full shadow-lg">
+              ↓ Back to where you were
+            </Button>
+          )}
         </main>
       </div>
     </div>
