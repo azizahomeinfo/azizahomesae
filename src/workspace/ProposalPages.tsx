@@ -80,7 +80,7 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: COVER_HERO_MAX_H, display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
           <div style={{ position: "relative", lineHeight: 0, maxWidth: "100%", maxHeight: "100%" }}>
             <img src={hero} alt="" style={{ display: "block", maxWidth: "100%", maxHeight: COVER_HERO_MAX_H, width: "auto", height: "auto", objectFit: "contain", objectPosition: "top center" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 72%, hsl(38 65% 98% / 0.6) 88%, hsl(38 65% 98%) 100%)" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 72%, color-mix(in srgb, var(--pp-bg) 60%, transparent) 88%, var(--pp-bg) 100%)" }} />
           </div>
         </div>
       )}
