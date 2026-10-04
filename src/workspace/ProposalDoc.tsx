@@ -347,7 +347,7 @@ const ProposalDoc = () => {
           {canEdit && <Button variant="outline" onClick={openContract}>Generate contract</Button>}
           {d.finalAt && !dirty
             ? <Button disabled={withdrawn} onClick={requestPrint}>Download PDF</Button>
-            : canEdit && <Button onClick={finalise} disabled={save.isPending}>Finalise &amp; download</Button>}
+            : canEdit && <Button onClick={() => void finalise()} disabled={save.isPending}>Finalise &amp; download</Button>}
         </div>
       </div>
 
