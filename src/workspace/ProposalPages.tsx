@@ -27,7 +27,7 @@ export const PROPOSAL_CSS = `
 .ppd-eyebrow { font-size: 11.5px; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pp-olive); margin: 0 0 12px; }
 .ppd-foot { position: absolute; left: 56px; right: 56px; bottom: 28px; display: flex; justify-content: space-between;
   font-size: 9px; font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pp-label); }
-.ppd-cap { flex: none; height: ${'${'}AREA_CAPTION_H}px; padding-top: 6px; font-size: 10px; line-height: 14px; letter-spacing: 0.08em; text-align: center; color: var(--pp-label);
+.ppd-cap { flex: none; height: 20px; padding-top: 6px; font-size: 10px; line-height: 14px; letter-spacing: 0.08em; text-align: center; color: var(--pp-label);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppd-note { position: absolute; left: 56px; right: 56px; bottom: 50px; font-size: 9.5px; line-height: 1.5; font-style: italic; text-align: center; color: var(--pp-label); margin: 0; }
 .ppd-img { width: 100%; height: 100%; object-fit: contain; display: block; }
