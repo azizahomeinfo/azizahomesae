@@ -86,7 +86,7 @@ const ImageStrip = ({ images, url, onRemove, onMove, moveDisabled, onCaption }: 
       return (
         <div key={img.path} className="w-32 space-y-1">
           <div className="relative h-20 w-32 overflow-hidden rounded border border-border bg-muted/20">
-            {url(img.path) && <img src={url(img.path)} alt="" className="h-full w-full object-cover" />}
+            {url(img.path) && <img src={url(img.path)} alt="" className="h-full w-full object-contain" />}
             {onRemove && (
               <button type="button" aria-label="Remove image" onClick={() => onRemove(i)}
                 className="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-full bg-background/90 text-foreground">
