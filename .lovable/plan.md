@@ -1,17 +1,18 @@
-# Uniform proposal image frames and crop warnings
+# One room per proposal page
 
-## Build
-- Remove the render/mood-board fit distinction so every area picture fills the existing 682 × 362 frame edge to edge with centered `cover` cropping.
-- Keep lone and paired frames vertically centred with the existing even gutter; keep the muted broken-image placeholder without a card, border, or padding.
-- Add one shared crop calculation based on each image’s natural dimensions and the 682 × 362 frame. Flag loss above 25%.
-- Show the measured crop percentage beside each render thumbnail and add a read-only Mood board section with the same warnings.
-- Before finalising or downloading, show a confirmation listing the affected page names and image count. Continue prints normally; cancel returns to editing.
-
-## Constraints
-- Frontend only; no SQL or schema changes.
-- Leave the cover, floor plan, item list, investment content, and print rules unchanged.
-- Run the TypeScript check and verify the proposal editor in the preview without saving data.
+## Changes
+- Preserve an image’s room when its kind changes to Mood board; keep Floor plan behavior unchanged.
+- Add an Area selector to each editable design thumbnail, using standard and current custom areas plus Mood Board.
+- Update submission guidance so mood-board images are filed within their room area.
+- Group proposal images by room, ordering renders before mood-board-kind images and rooms by the canonical area sequence.
+- Keep only generic Mood Board images on the trailing mood-board page and preserve the current hero fallback.
+- Refresh saved proposal pages by area without losing edited titles, descriptions, proposal uploads, or hand-created pages.
 
 ## Technical details
-- Keep measured crop state keyed by storage path in the proposal editor and reuse a pure crop-percentage helper in preview rendering.
-- Remove `fit` from the `Sheet` area variant and from `layoutSheets`; mood-board pages use the same area-page construction as render pages.
+- Reuse the existing image update mutation and shared change notification callback.
+- Keep two images per generated page; pagination labels remain unchanged.
+- Add focused model checks for mixed render/mood images, custom area order, generic Mood Board handling, and saved-page merging where practical.
+- Run the TypeScript check and preview diagnostics, then verify the move-to-room flow in the preview without leaving test data changed.
+
+## Scope
+- Frontend only. No SQL, schema changes, or data migration.
