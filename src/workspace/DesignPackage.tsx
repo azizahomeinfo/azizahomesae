@@ -59,9 +59,9 @@ function useAutosave(value: string, initial: string, enabled: boolean, save: (v:
 /* ---------------- thumbnail ---------------- */
 
 const Thumb = ({
-  img, url, editable, onOpen, onMove, canLeft, canRight, onDragStartId, onDropOn, onChanged,
+  img, url, editable, onOpen, onMove, canLeft, canRight, onDragStartId, onDropOn, onChanged, areas,
 }: {
-  img: DesignImage; url?: string; editable: boolean; onOpen: () => void; onChanged: () => void;
+  img: DesignImage; url?: string; editable: boolean; onOpen: () => void; onChanged: () => void; areas: string[];
   onMove: (dir: -1 | 1) => void; canLeft: boolean; canRight: boolean;
   onDragStartId: (id: string) => void; onDropOn: (id: string) => void;
 }) => {
@@ -75,15 +75,22 @@ const Thumb = ({
   );
   useAutosave(caption, img.caption ?? "", editable, saveCaption);
   const pdf = isPdf(img);
-  // The kind decides what counts toward "renders" and "mood board" at submission. Changing it moves the file into the
-  // matching area (Mood Board / Floor Plan) so a later area rename can't silently flip it back.
+  // The kind decides what counts toward "renders" and "mood board" at submission. A mood board keeps its room so the
+  // proposal can show it beside that room's renders; only a floor plan moves into its own (roomless) Floor Plan area.
   const setKind = (kind: DesignKind) => {
     if (kind === img.kind) return;
-    const fixed = img.room === "Mood Board" || img.room === "Floor Plan";
-    const room = kind === "Mood board" ? "Mood Board" : kind === "Floor plan" ? "Floor Plan" : fixed ? "Other" : img.room;
+    const room = kind === "Floor plan" ? "Floor Plan" : img.room === "Floor Plan" ? "Other" : img.room;
     update.mutate({ id: img.id, designId: img.design_id, patch: { kind, room } }, {
       onSuccess: () => { toast.success(`Marked as ${kind}`); onChanged(); },
       onError: (e) => toast.error(errMsg(e, "Could not change the kind")),
+    });
+  };
+  const areaOptions = [...new Set([...(DESIGN_AREAS as readonly string[]), ...areas, "Mood Board", areaOf(img)])];
+  const setRoom = (room: string) => {
+    if (room === areaOf(img)) return;
+    update.mutate({ id: img.id, designId: img.design_id, patch: { room } }, {
+      onSuccess: () => { toast.success(`Moved to ${room}`); onChanged(); },
+      onError: (e) => toast.error(errMsg(e, "Could not move the file")),
     });
   };
 
@@ -131,6 +138,10 @@ const Thumb = ({
             <Select value={img.kind} onValueChange={(v) => setKind(v as DesignKind)}>
               <SelectTrigger className="h-8 text-xs" aria-label={`Kind of ${img.file_name || "file"}`}><span className="text-muted-foreground mr-1">Kind:</span><SelectValue /></SelectTrigger>
               <SelectContent>{DESIGN_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={areaOf(img)} onValueChange={setRoom}>
+              <SelectTrigger className="h-8 text-xs" aria-label={`Area of ${img.file_name || "file"}`}><span className="text-muted-foreground mr-1">Area:</span><SelectValue /></SelectTrigger>
+              <SelectContent>{areaOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
             </Select>
             <div className="flex items-center justify-between gap-1">
               <div className="flex gap-1">
