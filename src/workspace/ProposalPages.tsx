@@ -135,7 +135,7 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
       <h2 className="ppd-serif" style={{ fontSize: 44, letterSpacing: "0.04em", lineHeight: 1.05 }}>Floor plan</h2>
       {f.text && <p style={{ fontSize: 13, lineHeight: 1.75, whiteSpace: "pre-line", margin: "14px 0 0", color: "var(--pp-muted)" }}>{f.text}</p>}
       <div className="ppd-grow" style={{ marginTop: 24, background: "var(--pp-card)", border: "1px solid var(--pp-line)", padding: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {src ? <img src={src} alt="Floor plan" className="ppd-img" /> : (
+        {src ? <img src={src} alt="Floor plan" style={{ display: "block", maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", minHeight: 0, minWidth: 0 }} /> : (
           <p style={{ fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--pp-label)", margin: 0 }}>Floor plan to be added by the designer</p>
         )}
       </div>
@@ -170,37 +170,45 @@ export const descOverflowChars = (desc: string, images: number) =>
 
 const clamp = (lines: number) => ({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical" as const, overflow: "hidden" });
 
-/** Every area image is shown whole, centred directly on the proposal page with no visible card. */
-const FramedImage = ({ src, alt }: { src: string | null; alt: string }) => {
+/** Every area image is shown whole: the picture is sized by max-width/max-height against an explicit pixel slot, so its box is exactly the picture's shape and it cannot overflow or be cropped. */
+const FramedImage = ({ src, alt, w, h }: { src: string | null; alt: string; w: number; h: number }) => {
   const [failed, setFailed] = useState(false);
-  const frame = { width: "100%", height: "100%", overflow: "hidden" as const };
+  const slot = { width: w, height: h, display: "flex", alignItems: "center", justifyContent: "center" } as const;
   if (!src || failed) return (
-    <div className="ppd-field" style={{ ...frame, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div className="ppd-field" style={slot}>
       <span style={{ fontSize: 10, letterSpacing: "0.26em", textTransform: "uppercase", color: "var(--pp-label)" }}>{alt}</span>
     </div>
   );
   return (
-    <div style={frame}>
-      <img src={src} alt={alt} onError={() => setFailed(true)} className="ppd-img"
-        style={{ objectFit: "contain", objectPosition: "center" }} />
+    <div style={slot}>
+      <img src={src} alt={alt} onError={() => setFailed(true)}
+        style={{ display: "block", maxWidth: w, maxHeight: h, width: "auto", height: "auto" }} />
     </div>
   );
 };
 
+/** Pixel size of each picture (caption line excluded) for a page holding `count` pictures. */
+export const areaSlot = (count: number) => {
+  const columns = count >= 4 ? 2 : 1;
+  const rows = Math.max(1, Math.ceil(count / columns));
+  const media = count <= 1 ? AREA_SINGLE_H : AREA_MEDIA_H;
+  const cellH = Math.floor((media - AREA_MEDIA_GAP * (rows - 1)) / rows);
+  const w = Math.floor((AREA_FRAME_W - AREA_MEDIA_GAP * (columns - 1)) / columns);
+  return { columns, rows, media, w, h: cellH - AREA_CAPTION_H };
+};
+
 const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => {
-  const columns = s.images.length >= 4 ? 2 : 1;
-  const rows = Math.max(1, Math.ceil(s.images.length / columns));
-  const mediaHeight = s.images.length <= 1 ? AREA_SINGLE_H : AREA_MEDIA_H;
+  const { columns, w, h } = areaSlot(s.images.length);
   return (
     <div className="ppd-page" style={{ padding: "52px 56px 80px" }}>
       <p className="ppd-eyebrow">{s.eyebrow}</p>
       <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05, ...clamp(2) }}>{s.title}</h2>
       {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
-      <div className="ppd-grow" style={{ display: "flex", alignItems: "center", marginTop: 22 }}>
-        <div style={{ width: AREA_FRAME_W, height: mediaHeight, display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`, gap: AREA_MEDIA_GAP }}>
+      <div className="ppd-grow" style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 22 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, ${w}px)`, gridAutoRows: `${h + AREA_CAPTION_H}px`, gap: AREA_MEDIA_GAP }}>
         {s.images.map((img: DocImage) => (
-          <div key={img.path} style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <div style={{ flex: "1 1 auto", minHeight: 0 }}><FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} /></div>
+          <div key={img.path} style={{ display: "flex", flexDirection: "column" }}>
+            <FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} w={w} h={h} />
             <div className="ppd-cap">{img.caption?.trim() || ""}</div>
           </div>
         ))}
