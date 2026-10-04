@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import logo from "@/assets/aziza-logo.png";
 import { shortDate } from "./format";
 import {
@@ -67,38 +67,6 @@ const Foot = ({ client, n }: { client: string; n: number }) => (
   <div className="ppd-foot"><span>Aziza Home · Proposal for {client}</span><span>{String(n).padStart(2, "0")}</span></div>
 );
 
-/** Cover picture: shown whole, centred in the cream between the logo and the title block. */
-const CoverHero = ({ src }: { src: string }) => {
-  const box = useRef<HTMLDivElement>(null);
-  const [room, setRoom] = useState<{ w: number; h: number } | null>(null);
-  const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const read = () => setRoom({ w: el.offsetWidth, h: el.offsetHeight });
-    read();
-    const ro = new ResizeObserver(read);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  // Whole-pixel size so the picture and its veil share exact edges (no sub-pixel seam).
-  const size = room && nat ? (() => {
-    const k = Math.min(room.w / nat.w, room.h / nat.h);
-    return { w: Math.floor(nat.w * k), h: Math.floor(nat.h * k) };
-  })() : null;
-  return (
-    <div ref={box} style={{ flex: "1 1 auto", minHeight: 0, position: "relative", margin: "28px 0 32px" }}>
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ position: "relative", lineHeight: 0, width: size?.w, height: size?.h, opacity: size ? 1 : 0 }}>
-          <img src={src} alt="" onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
-            style={{ display: "block", width: size ? "100%" : "auto", height: size ? "100%" : "auto", maxWidth: size ? undefined : 1, objectFit: "contain" }} />
-          <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: -1, background: "linear-gradient(to bottom, transparent 0%, transparent 78%, var(--pp-bg) 100%)" }} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   const c = doc.cover;
   const hero = url(c.hero ?? doc.moodBoard[0]?.path);
@@ -106,10 +74,12 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
     ["Location", c.location || "—"], ["Date", c.date ? shortDate(c.date) : "—"], ["Validity", c.validity || "—"], ["Scope", c.scope || "—"],
   ];
   return (
-    <div className="ppd-page" style={{ paddingTop: 62 }}>
-      <img src={logo} alt="Aziza Home" style={{ flex: "none", marginLeft: 70, width: 147, height: 147, objectFit: "contain" }} />
-      {hero ? <CoverHero src={hero} /> : <div className="ppd-grow" />}
-      <div style={{ flex: "none", padding: "0 70px 58px" }}>
+    <div className="ppd-page">
+      {/* The cover is deliberately full-bleed and cropped at the client's request. */}
+      {hero && <img src={hero} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+      {hero && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 30%, hsl(38 65% 98% / 0.85) 50%, hsl(38 65% 98%) 58%, hsl(38 65% 98%) 100%)" }} />}
+      <img src={logo} alt="Aziza Home" style={{ position: "absolute", top: 62, left: 70, width: 147, height: 147, objectFit: "contain" }} />
+      <div style={{ position: "absolute", left: 70, right: 70, bottom: 58 }}>
         <p className="ppd-eyebrow">Interior design proposal</p>
         <h1 className="ppd-serif" style={{ fontSize: 64, lineHeight: 1.02, letterSpacing: "0.02em" }}>Proposal for<br />{c.client}</h1>
         {c.intro && <p style={{ fontSize: 15.5, lineHeight: 1.7, maxWidth: 600, margin: "22px 0 0", color: "var(--pp-muted)" }}>{c.intro}</p>}
@@ -145,23 +115,18 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
 };
 
 /*
- * Page 794 × 1123 with 56 px side padding gives 682 px of media width. The 52/80 px vertical
- * padding leaves 991 px; after the fixed header allowance, 724 px is reserved for a multi-image
- * block. With 14 px gutters this gives 355 px slots for two images and 232 px for three. A lone
- * image keeps the previous 362 px slot so its 21-line description allowance remains valid.
- * Four to six images use the same 724 px block in two columns. Explicit px sizes keep screen and
- * print identical under [data-print-scale].
+ * Page 794 × 1123 with 56 px side padding gives 682 px of media width. The media grid flexes into
+ * the exact height left after the clamped heading and description. An 88 px bottom inset leaves a
+ * safety gap above a two-line availability note; captions consume their own 20 px inside each row.
  */
 export const AREA_FRAME_W = PAGE_W - 112;
-export const AREA_SINGLE_H = 362;
-export const AREA_MEDIA_H = 724;
 export const AREA_MEDIA_GAP = 14;
 /** Caption line under every picture slot — always reserved, so a page with captions sizes its pictures exactly like one without. */
 export const AREA_CAPTION_H = 20;
 
 /** Description clamp limits per image count, and a rough overflow estimate for the editor's warning.
  *  Chars per line ≈ frame width 682 / (13 px font × ~0.5 avg glyph width) ≈ 105. */
-export const DESC_CLAMP = { one: 21, two: 4 } as const;
+export const DESC_CLAMP = { one: 8, two: 2 } as const;
 const DESC_CHARS_PER_LINE = 105;
 export const descClampLines = (images: number) => (images > 1 ? DESC_CLAMP.two : DESC_CLAMP.one);
 /** Estimated characters beyond the clamp (0 when it fits). Rough by design — the warning only needs to be close. */
@@ -171,9 +136,9 @@ export const descOverflowChars = (desc: string, images: number) =>
 const clamp = (lines: number) => ({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical" as const, overflow: "hidden" });
 
 /** Every area image is shown whole: the picture is sized by max-width/max-height against an explicit pixel slot, so its box is exactly the picture's shape and it cannot overflow or be cropped. */
-const FramedImage = ({ src, alt, w, h }: { src: string | null; alt: string; w: number; h: number }) => {
+const FramedImage = ({ src, alt }: { src: string | null; alt: string }) => {
   const [failed, setFailed] = useState(false);
-  const slot = { width: w, height: h, display: "flex", alignItems: "center", justifyContent: "center" } as const;
+  const slot = { width: "100%", flex: "1 1 auto", minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" } as const;
   if (!src || failed) return (
     <div className="ppd-field" style={slot}>
       <span style={{ fontSize: 10, letterSpacing: "0.26em", textTransform: "uppercase", color: "var(--pp-label)" }}>{alt}</span>
@@ -182,33 +147,32 @@ const FramedImage = ({ src, alt, w, h }: { src: string | null; alt: string; w: n
   return (
     <div style={slot}>
       <img src={src} alt={alt} onError={() => setFailed(true)}
-        style={{ display: "block", maxWidth: w, maxHeight: h, width: "auto", height: "auto" }} />
+        style={{ display: "block", maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectPosition: "center" }} />
     </div>
   );
 };
 
-/** Pixel size of each picture (caption line excluded) for a page holding `count` pictures. */
-export const areaSlot = (count: number) => {
+/** Grid shape for a page holding `count` pictures; row heights come from the page's remaining space. */
+export const areaGrid = (count: number) => {
   const columns = count >= 4 ? 2 : 1;
   const rows = Math.max(1, Math.ceil(count / columns));
-  const media = count <= 1 ? AREA_SINGLE_H : AREA_MEDIA_H;
-  const cellH = Math.floor((media - AREA_MEDIA_GAP * (rows - 1)) / rows);
   const w = Math.floor((AREA_FRAME_W - AREA_MEDIA_GAP * (columns - 1)) / columns);
-  return { columns, rows, media, w, h: cellH - AREA_CAPTION_H };
+  return { columns, rows, w };
 };
 
 const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => {
-  const { columns, w, h } = areaSlot(s.images.length);
+  const multi = s.images.length > 1;
+  const { columns, rows, w } = areaGrid(s.images.length);
   return (
-    <div className="ppd-page" style={{ padding: "52px 56px 80px" }}>
+    <div className="ppd-page" style={{ padding: "52px 56px 88px" }}>
       <p className="ppd-eyebrow">{s.eyebrow}</p>
-      <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05, ...clamp(2) }}>{s.title}</h2>
+      <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05, ...clamp(multi ? 1 : 2) }}>{s.title}</h2>
       {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
-      <div className="ppd-grow" style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 22 }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, ${w}px)`, gridAutoRows: `${h + AREA_CAPTION_H}px`, gap: AREA_MEDIA_GAP }}>
+      <div className="ppd-grow" style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: multi ? 12 : 22 }}>
+        <div style={{ width: "100%", height: "100%", display: "grid", gridTemplateColumns: `repeat(${columns}, ${w}px)`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`, gap: AREA_MEDIA_GAP }}>
         {s.images.map((img: DocImage) => (
-          <div key={img.path} style={{ display: "flex", flexDirection: "column" }}>
-            <FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} w={w} h={h} />
+          <div key={img.path} style={{ minHeight: 0, display: "flex", flexDirection: "column" }}>
+            <FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} />
             <div className="ppd-cap">{img.caption?.trim() || ""}</div>
           </div>
         ))}
