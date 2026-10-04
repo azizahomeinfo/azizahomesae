@@ -168,13 +168,13 @@ const ProposalDoc = () => {
       found.push(`Prices and items updated from GM quotation V${quote.version} — save to keep`);
     }
     if (design && doc.designId !== design.id) {
-      doc = applyDesign(doc, design, style);
+      doc = applyDesign(doc, design);
       found.push(`Images refreshed from design V${design.version} — save to keep`);
     }
     setDraft(found.length ? doc : null);
     setNotices(found);
     setAttempted(false);
-  }, [row, ready, quote, design, groups, style]);
+  }, [row, ready, quote, design, groups]);
 
   const current = row ? (draft ?? row.doc) : null;
   const paths = current ? [
@@ -221,7 +221,7 @@ const ProposalDoc = () => {
   };
   const generate = async () => {
     try {
-      const doc = buildDocument({ lead, style, design: design ?? null, quote, groups: groups ?? [] });
+      const doc = buildDocument({ lead, design: design ?? null, quote, groups: groups ?? [] });
       const nextVersion = proposals.reduce((m, p) => Math.max(m, p.version), 0) + 1;
       const id = await create.mutateAsync({ leadId: lead.id, doc, by: member.user_id, nextVersion });
       synced.current = id; setSelectedId(id); setDraft(null); setNotices([]);
