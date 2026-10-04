@@ -1,4 +1,5 @@
 import type { QuoteOption } from "./ffeQueries";
+import { DESIGN_AREAS } from "./designSchema";
 
 /* ---------------- document shape (stored in proposals.line_items) ---------------- */
 
@@ -76,26 +77,36 @@ export interface SourceDesign { id: string; version: number; status: string; ima
 
 const isPdfPath = (p: string) => p.toLowerCase().endsWith(".pdf");
 const isFloor = (i: SourceImage) => i.kind === "Floor plan" || i.room === "Floor Plan";
-const isMood = (i: SourceImage) => i.kind === "Mood board" || i.room === "Mood Board";
+/** Mood-board kind: ordered after renders within its room. */
+const isMoodKind = (i: SourceImage) => i.kind === "Mood board";
+/** Filed in the generic Mood Board area (no room of its own): goes to the trailing mood-board page. */
+const isRoomless = (i: SourceImage) => i.room === "Mood Board";
 /** Images sales uploaded inside the editor live under designs/<lead>/proposal/… and survive a design refresh. */
 const isOwnUpload = (p: string) => p.includes("/proposal/");
+const AREA_RANK = new Map((DESIGN_AREAS as readonly string[]).map((a, i) => [a.toLowerCase(), i]));
 
 export const designParts = (design: SourceDesign) => {
-  const renders = design.images.filter((i) => !isFloor(i) && !isMood(i) && !isPdfPath(i.storage_path));
-  const mood = design.images.filter((i) => isMood(i) && !isPdfPath(i.storage_path));
+  const usable = design.images.filter((i) => !isFloor(i) && !isPdfPath(i.storage_path));
+  const roomed = usable.filter((i) => !isRoomless(i));
+  const renders = usable.filter((i) => !isMoodKind(i));
+  const moodKind = usable.filter(isMoodKind);
   const order: string[] = [];
   const map = new Map<string, DocImage[]>();
-  for (const i of renders) {
+  // Renders first, then mood boards, within each room.
+  for (const i of [...roomed.filter((x) => !isMoodKind(x)), ...roomed.filter(isMoodKind)]) {
     const a = i.room ?? "Other";
     if (!map.has(a)) { map.set(a, []); order.push(a); }
     map.get(a)!.push({ path: i.storage_path, caption: i.caption });
   }
+  // Canonical areas first; custom areas keep their first-seen order (sort is stable).
+  const rank = (a: string) => AREA_RANK.get(a.toLowerCase()) ?? DESIGN_AREAS.length;
+  order.sort((a, b) => rank(a) - rank(b));
   const floor = design.images.find(isFloor);
   return {
-    hero: renders[0]?.storage_path ?? mood[0]?.storage_path ?? null,
+    hero: renders[0]?.storage_path ?? moodKind[0]?.storage_path ?? null,
     areas: order.map((area) => ({ area, images: map.get(area)! })),
     floor: floor ? { path: floor.storage_path, name: floor.file_name } : null,
-    mood: mood.map((i) => ({ path: i.storage_path, caption: i.caption })),
+    mood: usable.filter(isRoomless).map((i) => ({ path: i.storage_path, caption: i.caption })),
   };
 };
 

@@ -59,9 +59,9 @@ function useAutosave(value: string, initial: string, enabled: boolean, save: (v:
 /* ---------------- thumbnail ---------------- */
 
 const Thumb = ({
-  img, url, editable, onOpen, onMove, canLeft, canRight, onDragStartId, onDropOn, onChanged,
+  img, url, editable, onOpen, onMove, canLeft, canRight, onDragStartId, onDropOn, onChanged, areas,
 }: {
-  img: DesignImage; url?: string; editable: boolean; onOpen: () => void; onChanged: () => void;
+  img: DesignImage; url?: string; editable: boolean; onOpen: () => void; onChanged: () => void; areas: string[];
   onMove: (dir: -1 | 1) => void; canLeft: boolean; canRight: boolean;
   onDragStartId: (id: string) => void; onDropOn: (id: string) => void;
 }) => {
@@ -75,15 +75,22 @@ const Thumb = ({
   );
   useAutosave(caption, img.caption ?? "", editable, saveCaption);
   const pdf = isPdf(img);
-  // The kind decides what counts toward "renders" and "mood board" at submission. Changing it moves the file into the
-  // matching area (Mood Board / Floor Plan) so a later area rename can't silently flip it back.
+  // The kind decides what counts toward "renders" and "mood board" at submission. A mood board keeps its room so the
+  // proposal can show it beside that room's renders; only a floor plan moves into its own (roomless) Floor Plan area.
   const setKind = (kind: DesignKind) => {
     if (kind === img.kind) return;
-    const fixed = img.room === "Mood Board" || img.room === "Floor Plan";
-    const room = kind === "Mood board" ? "Mood Board" : kind === "Floor plan" ? "Floor Plan" : fixed ? "Other" : img.room;
+    const room = kind === "Floor plan" ? "Floor Plan" : img.room === "Floor Plan" ? "Other" : img.room;
     update.mutate({ id: img.id, designId: img.design_id, patch: { kind, room } }, {
       onSuccess: () => { toast.success(`Marked as ${kind}`); onChanged(); },
       onError: (e) => toast.error(errMsg(e, "Could not change the kind")),
+    });
+  };
+  const areaOptions = [...new Set([...(DESIGN_AREAS as readonly string[]), ...areas, "Mood Board", areaOf(img)])];
+  const setRoom = (room: string) => {
+    if (room === areaOf(img)) return;
+    update.mutate({ id: img.id, designId: img.design_id, patch: { room } }, {
+      onSuccess: () => { toast.success(`Moved to ${room}`); onChanged(); },
+      onError: (e) => toast.error(errMsg(e, "Could not move the file")),
     });
   };
 
@@ -131,6 +138,10 @@ const Thumb = ({
             <Select value={img.kind} onValueChange={(v) => setKind(v as DesignKind)}>
               <SelectTrigger className="h-8 text-xs" aria-label={`Kind of ${img.file_name || "file"}`}><span className="text-muted-foreground mr-1">Kind:</span><SelectValue /></SelectTrigger>
               <SelectContent>{DESIGN_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={areaOf(img)} onValueChange={setRoom}>
+              <SelectTrigger className="h-8 text-xs" aria-label={`Area of ${img.file_name || "file"}`}><span className="text-muted-foreground mr-1">Area:</span><SelectValue /></SelectTrigger>
+              <SelectContent>{areaOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
             </Select>
             <div className="flex items-center justify-between gap-1">
               <div className="flex gap-1">
@@ -246,9 +257,9 @@ const RejectDialog = ({
 interface QueueItem { key: string; name: string; area: string; stage: UploadStage | "error" }
 
 const AreaSection = ({
-  area, images, urls, editable, uploads, onFiles, onOpen, onReorder, onRename, onChanged,
+  area, images, urls, editable, uploads, onFiles, onOpen, onReorder, onRename, onChanged, areas,
 }: {
-  area: string; images: DesignImage[]; urls: Map<string, string>; editable: boolean; uploads: QueueItem[];
+  areas: string[]; area: string; images: DesignImage[]; urls: Map<string, string>; editable: boolean; uploads: QueueItem[];
   onRename: (from: string, to: string) => void; onChanged: () => void;
   onFiles: (area: string, files: File[]) => void; onOpen: (img: DesignImage) => void;
   onReorder: (area: string, ordered: string[]) => void;
@@ -327,7 +338,7 @@ const AreaSection = ({
           <Thumb
             key={img.id} img={img} url={urls.get(img.storage_path)} editable={editable}
             onOpen={() => onOpen(img)} onMove={(d) => move(img.id, d)} canLeft={i > 0} canRight={i < images.length - 1}
-            onDragStartId={(id) => { dragId.current = id; }} onDropOn={dropOn} onChanged={onChanged}
+            onDragStartId={(id) => { dragId.current = id; }} onDropOn={dropOn} onChanged={onChanged} areas={areas}
           />
         ))}
         {uploads.map((u) => (
@@ -461,7 +472,7 @@ const VersionView = ({
             <AreaSection
               key={area} area={area} images={list} urls={urls} editable={editable}
               uploads={queue.filter((q) => q.area === area)} onFiles={onFiles} onReorder={onReorder}
-              onRename={onRename} onChanged={onChanged}
+              onRename={onRename} onChanged={onChanged} areas={byArea.map(([a]) => a)}
               onOpen={(img) => setLightbox(viewable.findIndex((v) => v.id === img.id))}
             />
           ))}
@@ -562,7 +573,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const checks = [
     { ok: nRenders + nMood > 0,
       label: nRenders + nMood ? `Images · ${[nRenders && `${nRenders} render${nRenders === 1 ? "" : "s"}`, nMood && `${nMood} mood board`].filter(Boolean).join(", ")}` : "Renders or mood board",
-      fix: "Upload at least one render or mood board image on the Renders tab — renders go into a room area, mood boards into \u201c+ Add area \u2192 Mood Board\u201d. You can change a file's Kind with the menu under it." },
+      fix: "Upload at least one render or mood board image on the Renders tab — file renders and any mood board that illustrates one room in that room's area; use the \u201cMood Board\u201d area only for a mood board covering the whole scheme. Change a file's Kind or Area with the menus under it." },
     { ok: pkgItems.length > 0 && nUncosted === 0,
       label: pkgItems.length === 0 ? "FF&E list" : nUncosted ? `FF&E costed · ${nUncosted} missing` : `FF&E costed · ${pkgItems.length}`,
       fix: pkgItems.length === 0 ? "Add the FF&E items on the FF&E tab." : `Enter a unit cost for ${nUncosted} item${nUncosted === 1 ? "" : "s"} on the FF&E tab.` },

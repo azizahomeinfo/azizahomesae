@@ -9,3 +9,4 @@
 - [x] Unify proposal area images as edge-to-edge 682 × 362 cover frames.
 - [x] Add shared crop measurement, rail warnings, and pre-download confirmation.
 - [x] Typecheck and preview-check an existing Sukhrob proposal.
+- [x] One room per proposal page: mood boards keep room, per-image Area menu, room grouping.
