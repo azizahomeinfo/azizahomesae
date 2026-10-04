@@ -72,11 +72,15 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   ];
   return (
     <div className="ppd-page">
-      {hero && <img src={hero} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "62%", objectFit: "contain", objectPosition: "top center" }} />}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "linear-gradient(to bottom, transparent 0%, transparent 34%, hsl(38 65% 98% / 0.85) 50%, hsl(38 65% 98%) 58%, hsl(38 65% 98%) 100%)",
-      }} />
+      {hero && (
+        // Whole picture, top-anchored on the page cream; the veil sits on the picture's own lower edge so the join fades into the text area at any aspect ratio.
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: COVER_HERO_MAX_H, display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+          <div style={{ position: "relative", lineHeight: 0, maxWidth: "100%", maxHeight: "100%" }}>
+            <img src={hero} alt="" style={{ display: "block", maxWidth: "100%", maxHeight: COVER_HERO_MAX_H, width: "auto", height: "auto", objectFit: "contain", objectPosition: "top center" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 72%, hsl(38 65% 98% / 0.6) 88%, hsl(38 65% 98%) 100%)" }} />
+          </div>
+        </div>
+      )}
       <img src={logo} alt="Aziza Home" style={{ position: "absolute", top: 62, left: 70, width: 147, height: 147, objectFit: "contain" }} />
       <div style={{ position: "absolute", left: 70, right: 70, bottom: 58 }}>
         <p className="ppd-eyebrow">Interior design proposal</p>
