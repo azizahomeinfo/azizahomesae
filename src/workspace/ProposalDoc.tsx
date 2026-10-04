@@ -17,7 +17,7 @@ import {
   type ProposalStatus,
 } from "./proposalQueries";
 import {
-  applyDesign, applyQuote, buildDocument, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
+  applyDesign, applyQuote, buildDocument, defaultDesc, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
@@ -154,7 +154,6 @@ const ProposalDoc = () => {
   const synced = useRef<string | null>(null);
 
   const row = proposals.find((p) => p.id === selectedId) ?? proposals[0];
-  const style = (brief?.style as { primaryStyle?: string } | null)?.primaryStyle?.trim() || lead?.style?.trim() || "Contemporary";
   const quote = costing?.status === "Quoted" ? { version: costing.version, options: costing.options } : null;
   const ready = !designLoading && !costingLoading && !itemsLoading && !propLoading;
 
@@ -169,13 +168,13 @@ const ProposalDoc = () => {
       found.push(`Prices and items updated from GM quotation V${quote.version} — save to keep`);
     }
     if (design && doc.designId !== design.id) {
-      doc = applyDesign(doc, design, style);
+      doc = applyDesign(doc, design);
       found.push(`Images refreshed from design V${design.version} — save to keep`);
     }
     setDraft(found.length ? doc : null);
     setNotices(found);
     setAttempted(false);
-  }, [row, ready, quote, design, groups, style]);
+  }, [row, ready, quote, design, groups]);
 
   const current = row ? (draft ?? row.doc) : null;
   const paths = current ? [
@@ -222,7 +221,7 @@ const ProposalDoc = () => {
   };
   const generate = async () => {
     try {
-      const doc = buildDocument({ lead, style, design: design ?? null, quote, groups: groups ?? [] });
+      const doc = buildDocument({ lead, design: design ?? null, quote, groups: groups ?? [] });
       const nextVersion = proposals.reduce((m, p) => Math.max(m, p.version), 0) + 1;
       const id = await create.mutateAsync({ leadId: lead.id, doc, by: member.user_id, nextVersion });
       synced.current = id; setSelectedId(id); setDraft(null); setNotices([]);
@@ -458,7 +457,7 @@ const ProposalDoc = () => {
               {editable && design && (
                 <div className="space-y-1">
                   <Button type="button" variant="outline" size="sm" className="w-full"
-                    onClick={() => change(applyDesign(d, design, style))}>
+                    onClick={() => change(applyDesign(d, design))}>
                     Refresh images from the design
                   </Button>
                   <p className="text-xs text-muted-foreground">Rebuilds the render pages from the current design images.</p>
@@ -478,6 +477,9 @@ const ProposalDoc = () => {
                   </div>
                   <Input aria-label="Page title" value={p.title} onChange={(e) => setPage(i, { title: e.target.value })} />
                   <Textarea aria-label="Page description" rows={3} value={p.desc} onChange={(e) => setPage(i, { desc: e.target.value })} />
+                  {p.desc === defaultDesc() && (
+                    <p className="text-xs text-muted-foreground">Placeholder — write a line about this room before sending.</p>
+                  )}
                   {descOverflowChars(p.desc, p.images.length) > 0 && (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
                       Too long for the page — the last ~{descOverflowChars(p.desc, p.images.length)} characters won't appear in the PDF.

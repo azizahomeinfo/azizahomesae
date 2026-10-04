@@ -70,8 +70,11 @@ export const DEFAULT_TERMS =
 export const DEFAULT_IMAGES_NOTE =
   "These are concept images. Final items depend on availability in the market at the time we execute the design — we will keep the result as close to these as possible.";
 
-export const defaultDesc = (style: string, area: string) =>
-  `${style} ${area.toLowerCase()} designed around the client brief — furniture, lighting and finishes selected to match the renders shown.`;
+/** Opening line for a new render page. Deliberately free of interpolated fields: `style` is sales'
+ *  free text (it has held "Elite or Regal from our catalogue") and reads as nonsense mid-sentence.
+ *  It is a placeholder — sales replaces it with copy written for the room. */
+export const defaultDesc = () =>
+  "Designed around your brief — every piece, finish and light chosen to match the renders shown.";
 
 export const newId = () => crypto.randomUUID();
 
@@ -116,7 +119,7 @@ export const designParts = (design: SourceDesign) => {
 };
 
 /** Refresh images from a design version, keeping every title and description sales has written. */
-export const applyDesign = (doc: ProposalDocument, design: SourceDesign, style: string): ProposalDocument => {
+export const applyDesign = (doc: ProposalDocument, design: SourceDesign): ProposalDocument => {
   const parts = designParts(design);
   // Captions sales has edited survive a refresh, matched by picture path.
   const edited = new Map<string, string | null>();
@@ -134,7 +137,7 @@ export const applyDesign = (doc: ProposalDocument, design: SourceDesign, style: 
   }
   for (const a of d.areas) {
     if (seen.has(a.area)) continue;
-    pages.push({ id: newId(), area: a.area, title: a.area, desc: defaultDesc(style, a.area), images: a.images });
+    pages.push({ id: newId(), area: a.area, title: a.area, desc: defaultDesc(), images: a.images });
   }
   const keepFloor = doc.floorPlan.path && isOwnUpload(doc.floorPlan.path);
   return {
@@ -159,7 +162,6 @@ export const applyQuote = (doc: ProposalDocument, quote: { version: number; opti
 
 export const buildDocument = (v: {
   lead: { name: string; property: string | null; building: string | null; location: string | null; unit_type: string | null; scope: string | null; budget: number | null };
-  style: string;
   design: SourceDesign | null;
   quote: { version: number; options: QuoteOption[] } | null;
   groups: ItemGroup[];
@@ -189,7 +191,7 @@ export const buildDocument = (v: {
     imagesNote: DEFAULT_IMAGES_NOTE,
     finalAt: null,
   };
-  if (v.design) doc = applyDesign(doc, v.design, v.style);
+  if (v.design) doc = applyDesign(doc, v.design);
   if (v.quote) doc = applyQuote(doc, v.quote, v.groups);
   return doc;
 };
