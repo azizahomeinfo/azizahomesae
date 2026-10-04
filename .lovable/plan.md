@@ -1,13 +1,14 @@
-# Move proposal pictures between pages
+# Remove proposal picture captions
 
 ## Changes
-- Add accessible up/down controls to every render-page and mood-board thumbnail when the proposal is editable.
-- Treat render pages followed by the mood board as one ordered picture sequence, moving across page boundaries without changing page titles, descriptions, or page order.
-- Refuse moves into a render page that already contains six pictures and explain the limit in a toast.
-- Route every successful move through the existing document change path so the draft becomes unsaved and finalisation clears.
+- Remove the caption line from all room and mood-board pages while retaining captions as image alternative text.
+- Return the removed caption space to the image slots and document why captions are intentionally not printed.
+- Remove caption editing fields and their callbacks from the proposal rail while preserving image movement, removal, and thumbnails.
 
 ## Validation
 - Run the TypeScript check and confirm the preview build is healthy.
+- Check both Sukhrob proposals on screen and in print for image ratio, containment, note/footer spacing, and caption absence.
+- Capture the B2814 Bedrooms page without saving proposal data and report one-, two-, and three-picture sizes.
 
 ## Scope
-- Frontend only; no SQL or schema changes. The default one-page-per-room grouping remains unchanged.
+- Frontend only; no SQL or proposal data changes.
