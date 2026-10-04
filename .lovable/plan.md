@@ -1,18 +1,13 @@
-# One room per proposal page
+# Move proposal pictures between pages
 
 ## Changes
-- Preserve an image’s room when its kind changes to Mood board; keep Floor plan behavior unchanged.
-- Add an Area selector to each editable design thumbnail, using standard and current custom areas plus Mood Board.
-- Update submission guidance so mood-board images are filed within their room area.
-- Group proposal images by room, ordering renders before mood-board-kind images and rooms by the canonical area sequence.
-- Keep only generic Mood Board images on the trailing mood-board page and preserve the current hero fallback.
-- Refresh saved proposal pages by area without losing edited titles, descriptions, proposal uploads, or hand-created pages.
+- Add accessible up/down controls to every render-page and mood-board thumbnail when the proposal is editable.
+- Treat render pages followed by the mood board as one ordered picture sequence, moving across page boundaries without changing page titles, descriptions, or page order.
+- Refuse moves into a render page that already contains six pictures and explain the limit in a toast.
+- Route every successful move through the existing document change path so the draft becomes unsaved and finalisation clears.
 
-## Technical details
-- Reuse the existing image update mutation and shared change notification callback.
-- Keep two images per generated page; pagination labels remain unchanged.
-- Add focused model checks for mixed render/mood images, custom area order, generic Mood Board handling, and saved-page merging where practical.
-- Run the TypeScript check and preview diagnostics, then verify the move-to-room flow in the preview without leaving test data changed.
+## Validation
+- Run the TypeScript check and confirm the preview build is healthy.
 
 ## Scope
-- Frontend only. No SQL, schema changes, or data migration.
+- Frontend only; no SQL or schema changes. The default one-page-per-room grouping remains unchanged.
