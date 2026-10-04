@@ -455,6 +455,15 @@ const ProposalDoc = () => {
             </RailSection>
 
             <RailSection title="Render pages">
+              {editable && design && (
+                <div className="space-y-1">
+                  <Button type="button" variant="outline" size="sm" className="w-full"
+                    onClick={() => change(applyDesign(d, design, style))}>
+                    Refresh images from the design
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Rebuilds the render pages from the current design images.</p>
+                </div>
+              )}
               {d.pages.map((p, i) => (
                 <div key={p.id} className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                   <div className="flex items-center justify-between gap-1">
