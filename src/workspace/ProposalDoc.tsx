@@ -335,11 +335,13 @@ const ProposalDoc = () => {
     change({ ...d, pages, moodBoard });
   };
   const pictureMoveDisabled = (source: { page: number | "mood"; image: number }, direction: -1 | 1) => {
-    if (direction < 0) return source.page === 0 && source.image === 0;
-    if (source.page === "mood") return source.image === d.moodBoard.length - 1;
-    return source.page === d.pages.length - 1 && source.image === d.pages[source.page]?.images.length - 1 && d.moodBoard.length === 0
-      ? false
-      : false;
+    const renderCount = d.pages.reduce((sum, page) => sum + page.images.length, 0);
+    const offset = source.page === "mood"
+      ? renderCount
+      : d.pages.slice(0, source.page).reduce((sum, page) => sum + page.images.length, 0);
+    const position = offset + source.image;
+    const total = renderCount + d.moodBoard.length;
+    return direction < 0 ? position === 0 : position === total - 1;
   };
   const setGroup = (i: number, p: Partial<ProposalDocument["itemList"][number]>) => change({ ...d, itemList: d.itemList.map((g, j) => (j === i ? { ...g, ...p } : g)) });
   const upload = async (f: File) => (await uploadToWorkspace(`designs/${lead.id}/proposal`, f)).path;
