@@ -15,3 +15,4 @@
 - [x] Add cross-page proposal picture movement with the six-picture limit.
 - [x] Audit proposal rendering so only the cover hero and editor thumbnails use cover fitting.
 - [x] Typecheck and confirm preview diagnostics.
+- [ ] Remove proposal picture captions from client pages and editor controls; verify image sizing, print ratios, and note spacing.

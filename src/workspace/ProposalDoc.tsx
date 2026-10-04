@@ -72,8 +72,7 @@ const imageLabel = (image: DocImage) => {
   try { return decodeURIComponent(fileName); } catch { return fileName; }
 };
 
-const ImageStrip = ({ images, url, onRemove, onMove, moveDisabled, onCaption }: {
-  onCaption?: (i: number, caption: string) => void;
+const ImageStrip = ({ images, url, onRemove, onMove, moveDisabled }: {
   images: DocImage[];
   url: (p: string) => string | undefined;
   onRemove?: (i: number) => void;
@@ -105,10 +104,6 @@ const ImageStrip = ({ images, url, onRemove, onMove, moveDisabled, onCaption }: 
                 <ArrowDown className="h-3.5 w-3.5" />
               </Button>
             </div>
-          )}
-          {onCaption && (
-            <Input aria-label={`Caption for ${label}`} placeholder="Caption" className="h-7 px-2 text-xs"
-              value={img.caption ?? ""} onChange={(e) => onCaption(i, e.target.value)} />
           )}
         </div>
       );
@@ -491,8 +486,7 @@ const ProposalDoc = () => {
                   <ImageStrip images={p.images} url={(x) => url(x)}
                     onRemove={editable ? (k) => setPage(i, { images: p.images.filter((_, j) => j !== k) }) : undefined}
                     onMove={editable ? (k, direction) => movePicture({ page: i, image: k }, direction) : undefined}
-                    moveDisabled={(k, direction) => pictureMoveDisabled({ page: i, image: k }, direction)}
-                    onCaption={(k, caption) => setPage(i, { images: p.images.map((im, j) => (j === k ? { ...im, caption: caption || null } : im)) })} />
+                    moveDisabled={(k, direction) => pictureMoveDisabled({ page: i, image: k }, direction)} />
                   {editable && <UploadButton label="Add image" onFile={async (f) => { const path = await upload(f); setPage(i, { images: [...p.images, { path, caption: null }] }); }} />}
                 </div>
               ))}
@@ -508,8 +502,7 @@ const ProposalDoc = () => {
                 <p className="text-xs text-muted-foreground">Images supplied with the accepted design.</p>
                 <ImageStrip images={d.moodBoard} url={(x) => url(x)}
                   onMove={editable ? (k, direction) => movePicture({ page: "mood", image: k }, direction) : undefined}
-                  moveDisabled={(k, direction) => pictureMoveDisabled({ page: "mood", image: k }, direction)}
-                  onCaption={(k, caption) => change({ ...d, moodBoard: d.moodBoard.map((im, j) => (j === k ? { ...im, caption: caption || null } : im)) })} />
+                  moveDisabled={(k, direction) => pictureMoveDisabled({ page: "mood", image: k }, direction)} />
               </RailSection>
             )}
 
