@@ -154,7 +154,6 @@ const ProposalDoc = () => {
   const synced = useRef<string | null>(null);
 
   const row = proposals.find((p) => p.id === selectedId) ?? proposals[0];
-  const style = (brief?.style as { primaryStyle?: string } | null)?.primaryStyle?.trim() || lead?.style?.trim() || "Contemporary";
   const quote = costing?.status === "Quoted" ? { version: costing.version, options: costing.options } : null;
   const ready = !designLoading && !costingLoading && !itemsLoading && !propLoading;
 

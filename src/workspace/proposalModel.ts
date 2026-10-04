@@ -191,7 +191,7 @@ export const buildDocument = (v: {
     imagesNote: DEFAULT_IMAGES_NOTE,
     finalAt: null,
   };
-  if (v.design) doc = applyDesign(doc, v.design, v.style);
+  if (v.design) doc = applyDesign(doc, v.design);
   if (v.quote) doc = applyQuote(doc, v.quote, v.groups);
   return doc;
 };
