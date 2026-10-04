@@ -59,11 +59,16 @@ export interface ProposalDocument {
   investment: { options: QuoteOption[]; vat: number; down: number; terms: string };
   /** combine: null = decide automatically. */
   toggles: { floorPlan: boolean; moodBoard: boolean; itemList: boolean; investment: boolean; combine: boolean | null };
+  /** Small line at the foot of every picture page (render pages and mood board). */
+  imagesNote: string;
   finalAt: string | null;
 }
 
 export const DEFAULT_TERMS =
   "Price includes everything — design, procurement, delivery, installation and styling, handed over move-in ready. Images are design renders; final items depend on market availability — we will keep the result as close to the renders as possible. Quotation valid 14 days from the date above.";
+
+export const DEFAULT_IMAGES_NOTE =
+  "These are concept images. Final items depend on availability in the market at the time we execute the design — we will keep the result as close to these as possible.";
 
 export const defaultDesc = (style: string, area: string) =>
   `${style} ${area.toLowerCase()} designed around the client brief — furniture, lighting and finishes selected to match the renders shown.`;
@@ -112,7 +117,12 @@ export const designParts = (design: SourceDesign) => {
 
 /** Refresh images from a design version, keeping every title and description sales has written. */
 export const applyDesign = (doc: ProposalDocument, design: SourceDesign, style: string): ProposalDocument => {
-  const d = designParts(design);
+  const parts = designParts(design);
+  // Captions sales has edited survive a refresh, matched by picture path.
+  const edited = new Map<string, string | null>();
+  for (const i of [...doc.pages.flatMap((p) => p.images), ...doc.moodBoard]) edited.set(i.path, i.caption);
+  const keep = (imgs: DocImage[]) => imgs.map((i) => (edited.has(i.path) ? { ...i, caption: edited.get(i.path) ?? null } : i));
+  const d = { ...parts, areas: parts.areas.map((a) => ({ ...a, images: keep(a.images) })), mood: keep(parts.mood) };
   const seen = new Set<string>();
   const pages: DocPage[] = [];
   for (const p of doc.pages) {
@@ -176,6 +186,7 @@ export const buildDocument = (v: {
       vat: 5, down: 80, terms: DEFAULT_TERMS,
     },
     toggles: { floorPlan: true, moodBoard: true, itemList: true, investment: true, combine: null },
+    imagesNote: DEFAULT_IMAGES_NOTE,
     finalAt: null,
   };
   if (v.design) doc = applyDesign(doc, v.design, v.style);
@@ -186,7 +197,7 @@ export const buildDocument = (v: {
 /** Proposals saved before the rebuild used a different shape; lift them into v2 on read. */
 export const normalizeDoc = (raw: unknown): ProposalDocument => {
   const d = (raw ?? {}) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-  if (d.v === 2) return d as ProposalDocument;
+  if (d.v === 2) return { ...(d as ProposalDocument), imagesNote: typeof d.imagesNote === "string" ? d.imagesNote : DEFAULT_IMAGES_NOTE };
   const c = d.cover ?? {};
   const inv = d.investment ?? {};
   return {
@@ -205,6 +216,7 @@ export const normalizeDoc = (raw: unknown): ProposalDocument => {
       floorPlan: d.toggles?.floorPlan ?? true, moodBoard: d.toggles?.moodBoard ?? true,
       itemList: d.toggles?.itemList ?? true, investment: d.toggles?.investment ?? true, combine: null,
     },
+    imagesNote: DEFAULT_IMAGES_NOTE,
     finalAt: null,
   };
 };
