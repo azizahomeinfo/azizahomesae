@@ -12,3 +12,6 @@
 - [x] One room per proposal page: mood boards keep room, per-image Area menu, room grouping.
 - [x] Fit up to six room images on one proposal page without cropping.
 - [x] Remove obsolete proposal crop warnings and download confirmation.
+- [x] Add cross-page proposal picture movement with the six-picture limit.
+- [x] Audit proposal rendering so only the cover hero and editor thumbnails use cover fitting.
+- [x] Typecheck and confirm preview diagnostics.
