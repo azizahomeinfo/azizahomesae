@@ -122,9 +122,17 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
  * as margin, not a bigger picture.
  * Explicit px sizes (no aspect-ratio) so the frames scale with [data-print-scale] like everything else.
  */
-const FRAME_W = PAGE_W - 112;
-const FRAME_H = 362;
-const MAX_CROP = 0.4;
+export const AREA_FRAME_W = PAGE_W - 112;
+export const AREA_FRAME_H = 362;
+export const CROP_WARNING_THRESHOLD = 0.25;
+
+/** Percentage of the source image discarded by a centred cover crop into the proposal frame. */
+export const imageCropPercent = (naturalWidth: number, naturalHeight: number) => {
+  if (!naturalWidth || !naturalHeight) return 0;
+  const sourceRatio = naturalWidth / naturalHeight;
+  const frameRatio = AREA_FRAME_W / AREA_FRAME_H;
+  return Math.round(100 * (sourceRatio > frameRatio ? 1 - frameRatio / sourceRatio : 1 - sourceRatio / frameRatio));
+};
 
 /** Description clamp limits per image count, and a rough overflow estimate for the editor's warning.
  *  Chars per line ≈ frame width 682 / (13 px font × ~0.5 avg glyph width) ≈ 105. */
@@ -137,27 +145,24 @@ export const descOverflowChars = (desc: string, images: number) =>
 
 const clamp = (lines: number) => ({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical" as const, overflow: "hidden" });
 
-/** Fills the frame (cover) unless that would crop > 40% of a side or the page asks for contain; then shown whole on a card. */
-const FramedImage = ({ src, alt, h, fit }: { src: string | null; alt: string; h: number; fit: "cover" | "contain" }) => {
-  const [mode, setMode] = useState<"cover" | "contain" | "failed">(fit);
-  const frame = { width: FRAME_W, height: h, overflow: "hidden" as const, flex: "0 0 auto" };
-  if (!src || mode === "failed") return (
-    <div className="ppd-field" style={{ ...frame, border: "1px solid var(--pp-line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+/** Every area image fills the same edge-to-edge frame; crop risk is surfaced in the editor before download. */
+const FramedImage = ({ src, alt }: { src: string | null; alt: string }) => {
+  const [failed, setFailed] = useState(false);
+  const [crop, setCrop] = useState(0);
+  const frame = { width: AREA_FRAME_W, height: AREA_FRAME_H, overflow: "hidden" as const, flex: "0 0 auto" };
+  if (!src || failed) return (
+    <div className="ppd-field" style={{ ...frame, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <span style={{ fontSize: 10, letterSpacing: "0.26em", textTransform: "uppercase", color: "var(--pp-label)" }}>{alt}</span>
     </div>
   );
   const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    if (fit === "contain") return;
-    const { naturalWidth: w, naturalHeight: ih } = e.currentTarget;
-    if (!w || !ih) return;
-    const r = w / ih, f = FRAME_W / h;
-    const lost = r > f ? 1 - f / r : 1 - r / f;
-    setMode(lost > MAX_CROP ? "contain" : "cover");
+    setCrop(imageCropPercent(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight));
   };
-  const img = <img src={src} alt={alt} onLoad={onLoad} onError={() => setMode("failed")} className="ppd-img"
-    style={{ objectFit: mode === "cover" ? "cover" : "contain", objectPosition: "center" }} />;
-  return mode === "cover" ? <div style={frame}>{img}</div> : (
-    <div style={{ ...frame, background: "var(--pp-card)", border: "1px solid var(--pp-line)", padding: 12 }}>{img}</div>
+  return (
+    <div style={frame} data-crop-percent={crop}>
+      <img src={src} alt={alt} onLoad={onLoad} onError={() => setFailed(true)} className="ppd-img"
+        style={{ objectFit: "cover", objectPosition: "center" }} />
+    </div>
   );
 };
 
@@ -169,7 +174,7 @@ const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc
       {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
       <div className="ppd-grow" style={{ marginTop: 22, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
         {s.images.map((img: DocImage) => (
-          <FramedImage key={img.path + s.fit} src={url(img.path) || null} alt={img.caption ?? s.title} h={FRAME_H} fit={s.fit} />
+          <FramedImage key={img.path} src={url(img.path) || null} alt={img.caption ?? s.title} />
         ))}
       </div>
       <Foot client={doc.cover.client} n={n} />
