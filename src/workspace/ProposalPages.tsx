@@ -27,8 +27,6 @@ export const PROPOSAL_CSS = `
 .ppd-eyebrow { font-size: 11.5px; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pp-olive); margin: 0 0 12px; }
 .ppd-foot { position: absolute; left: 56px; right: 56px; bottom: 28px; display: flex; justify-content: space-between;
   font-size: 9px; font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pp-label); }
-.ppd-cap { flex: none; height: 20px; padding-top: 6px; font-size: 10px; line-height: 14px; letter-spacing: 0.08em; text-align: center; color: var(--pp-label);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppd-note { position: absolute; left: 56px; right: 56px; bottom: 50px; font-size: 9.5px; line-height: 1.5; font-style: italic; text-align: center; color: var(--pp-label); margin: 0; }
 .ppd-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .ppd-grow { flex: 1 1 auto; min-height: 0; }
@@ -117,12 +115,10 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
 /*
  * Page 794 × 1123 with 56 px side padding gives 682 px of media width. The media grid flexes into
  * the exact height left after the clamped heading and description. An 88 px bottom inset leaves a
- * safety gap above a two-line availability note; captions consume their own 20 px inside each row.
+ * safety gap above a two-line availability note.
  */
 export const AREA_FRAME_W = PAGE_W - 112;
 export const AREA_MEDIA_GAP = 14;
-/** Caption line under every picture slot — always reserved, so a page with captions sizes its pictures exactly like one without. */
-export const AREA_CAPTION_H = 20;
 
 /** Description clamp limits per image count, and a rough overflow estimate for the editor's warning.
  *  Chars per line ≈ frame width 682 / (13 px font × ~0.5 avg glyph width) ≈ 105. */
@@ -172,8 +168,8 @@ const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc
         <div style={{ width: "100%", height: "100%", display: "grid", gridTemplateColumns: `repeat(${columns}, ${w}px)`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`, gap: AREA_MEDIA_GAP }}>
         {s.images.map((img: DocImage) => (
           <div key={img.path} style={{ minHeight: 0, display: "flex", flexDirection: "column" }}>
+            {/* Captions are deliberately not printed because the room name is already in the artwork. */}
             <FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} />
-            <div className="ppd-cap">{img.caption?.trim() || ""}</div>
           </div>
         ))}
         </div>
