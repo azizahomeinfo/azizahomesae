@@ -457,7 +457,7 @@ const ProposalDoc = () => {
               {editable && design && (
                 <div className="space-y-1">
                   <Button type="button" variant="outline" size="sm" className="w-full"
-                    onClick={() => change(applyDesign(d, design, style))}>
+                    onClick={() => change(applyDesign(d, design))}>
                     Refresh images from the design
                   </Button>
                   <p className="text-xs text-muted-foreground">Rebuilds the render pages from the current design images.</p>
@@ -477,6 +477,9 @@ const ProposalDoc = () => {
                   </div>
                   <Input aria-label="Page title" value={p.title} onChange={(e) => setPage(i, { title: e.target.value })} />
                   <Textarea aria-label="Page description" rows={3} value={p.desc} onChange={(e) => setPage(i, { desc: e.target.value })} />
+                  {p.desc === defaultDesc() && (
+                    <p className="text-xs text-muted-foreground">Placeholder — write a line about this room before sending.</p>
+                  )}
                   {descOverflowChars(p.desc, p.images.length) > 0 && (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
                       Too long for the page — the last ~{descOverflowChars(p.desc, p.images.length)} characters won't appear in the PDF.
