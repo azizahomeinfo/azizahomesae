@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 /** Every sessionStorage access is guarded: Safari private mode throws. */
@@ -10,7 +10,41 @@ const ss = {
 
 const SCROLL_PREFIX = "ws-scroll:";
 const RETURN_KEY = "ws-return-item";
-const RESTORE_TIMEOUT_MS = 6000;
+const RESTORE_TIMEOUT_MS = 15000;
+const SCROLL_TTL_MS = 2 * 60 * 60 * 1000;
+const NEAR_PX = 200;
+const NUDGE_MS = 10000;
+
+/**
+ * Scroll positions live in localStorage, not sessionStorage: iOS Safari discards backgrounded tabs and
+ * the recreated tab has lost its sessionStorage. Entries are `{ y, at }` and expire after 2 hours.
+ */
+const pos = {
+  get: (k: string): number => {
+    try {
+      const raw = window.localStorage.getItem(k);
+      if (!raw) return 0;
+      const v = JSON.parse(raw) as { y?: number; at?: number };
+      if (typeof v.y !== "number" || typeof v.at !== "number" || Date.now() - v.at > SCROLL_TTL_MS) {
+        window.localStorage.removeItem(k);
+        return 0;
+      }
+      return v.y;
+    } catch { return 0; }
+  },
+  set: (k: string, y: number) => {
+    try { window.localStorage.setItem(k, JSON.stringify({ y: Math.round(y), at: Date.now() })); } catch { /* unavailable */ }
+  },
+  sweep: () => {
+    try {
+      const ls = window.localStorage;
+      for (let i = ls.length - 1; i >= 0; i--) {
+        const k = ls.key(i);
+        if (k?.startsWith(SCROLL_PREFIX)) pos.get(k); // get() drops expired/invalid entries
+      }
+    } catch { /* unavailable */ }
+  },
+};
 
 /** Called when a product link is opened from an FF&E / procurement row. */
 export const markReturnItem = (id: string) => ss.set(RETURN_KEY, id);
@@ -22,7 +56,10 @@ const hasReturnItem = () => !!urlItem() || !!ss.get(RETURN_KEY);
  * Saves the window scroll per pathname+search and restores it after a remount (e.g. Safari
  * discarded the backgrounded tab). Lists load async, so restoring immediately would land at 0:
  * we wait until the page is tall enough to reach the saved offset (re-checked on every DOM
- * change), and give up on timeout or as soon as the user scrolls/touches themselves.
+ * change). A tap does not cancel — only a real user scroll (wheel, key, touchmove, or the page
+ * moving away from the top) does, or the 15s timeout.
+ * Returns `nudge`: the saved offset when restore failed/was cancelled and the user is still far
+ * from it, so the layout can offer a one-tap "Back to where you were".
  */
 export const useScrollRestoration = () => {
   const { pathname, search } = useLocation();
@@ -31,45 +68,66 @@ export const useScrollRestoration = () => {
   const p = new URLSearchParams(search); p.delete("item"); p.delete("q");
   const qs = p.toString();
   const key = SCROLL_PREFIX + pathname + (qs ? "?" + qs : "");
+  const [nudge, setNudge] = useState<number | null>(null);
 
   useEffect(() => {
     try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch { /* ignore */ }
+    pos.sweep();
   }, []);
 
   useEffect(() => {
-    const save = () => ss.set(key, String(Math.round(window.scrollY)));
+    setNudge(null);
+    const target = pos.get(key);
+    let done = target <= 0 || hasReturnItem();
+    // Until restore finishes or the user really scrolls, don't overwrite the saved offset with 0.
+    let armed = done;
+    const save = () => { if (armed) pos.set(key, window.scrollY); };
     let t: number | undefined;
-    const onScroll = () => { window.clearTimeout(t); t = window.setTimeout(save, 150); };
+    let nudgeTimer: number | undefined;
+    let obs: MutationObserver | null = null;
+    let timer: number | undefined;
+
+    const offerNudge = () => {
+      if (target > NEAR_PX && Math.abs(window.scrollY - target) > NEAR_PX) {
+        setNudge(target);
+        window.clearTimeout(nudgeTimer);
+        nudgeTimer = window.setTimeout(() => setNudge(null), NUDGE_MS);
+      }
+    };
+    const finish = (restored: boolean) => {
+      if (done) return;
+      done = true;
+      obs?.disconnect();
+      window.clearTimeout(timer);
+      window.removeEventListener("wheel", cancel);
+      window.removeEventListener("touchmove", cancel);
+      window.removeEventListener("keydown", cancel);
+      if (!restored) offerNudge();
+    };
+    const cancel = () => { armed = true; finish(false); };
+    const onScroll = () => {
+      // A scroll while restoring that isn't ours and isn't near the target = the user took over.
+      if (!done && window.scrollY > 50 && Math.abs(window.scrollY - target) > NEAR_PX) cancel();
+      if (done) armed = true;
+      window.clearTimeout(t); t = window.setTimeout(save, 150);
+    };
     const onVis = () => { if (document.visibilityState === "hidden") save(); };
     window.addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("pagehide", save);
 
-    // Restore — unless a row marker is pending; the item jump is more precise and wins.
-    const target = Number(ss.get(key)) || 0;
-    let done = target <= 0 || hasReturnItem();
-    let obs: MutationObserver | null = null;
-    let timer: number | undefined;
-    const stop = () => {
-      done = true;
-      obs?.disconnect();
-      window.clearTimeout(timer);
-      window.removeEventListener("wheel", stop);
-      window.removeEventListener("touchstart", stop);
-      window.removeEventListener("keydown", stop);
-    };
     const tryRestore = () => {
       if (done) return;
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (max >= target) { window.scrollTo(0, target); stop(); }
+      if (max >= target) { window.scrollTo(0, target); armed = true; finish(true); }
     };
     if (!done) {
-      window.addEventListener("wheel", stop, { passive: true });
-      window.addEventListener("touchstart", stop, { passive: true });
-      window.addEventListener("keydown", stop);
+      window.addEventListener("wheel", cancel, { passive: true });
+      window.addEventListener("touchmove", cancel, { passive: true });
+      window.addEventListener("keydown", cancel);
       obs = new MutationObserver(() => requestAnimationFrame(tryRestore));
       obs.observe(document.body, { childList: true, subtree: true });
-      timer = window.setTimeout(stop, RESTORE_TIMEOUT_MS);
+      timer = window.setTimeout(() => finish(false), RESTORE_TIMEOUT_MS);
       requestAnimationFrame(tryRestore);
     } else if (target <= 0 && !hasReturnItem()) {
       window.scrollTo(0, 0);
@@ -77,14 +135,31 @@ export const useScrollRestoration = () => {
 
     return () => {
       save(); // navigating away
-      stop();
+      done = true;
+      obs?.disconnect();
+      window.clearTimeout(timer);
       window.clearTimeout(t);
+      window.clearTimeout(nudgeTimer);
+      window.removeEventListener("wheel", cancel);
+      window.removeEventListener("touchmove", cancel);
+      window.removeEventListener("keydown", cancel);
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("pagehide", save);
     };
   }, [key]);
+
+  // Hide the nudge once the user is near the saved spot.
+  useEffect(() => {
+    if (nudge == null) return;
+    const check = () => { if (Math.abs(window.scrollY - nudge) <= NEAR_PX) setNudge(null); };
+    window.addEventListener("scroll", check, { passive: true });
+    return () => window.removeEventListener("scroll", check);
+  }, [nudge]);
+
+  return { nudge, goBack: () => { if (nudge != null) window.scrollTo({ top: nudge, behavior: "smooth" }); setNudge(null); } };
 };
+
 
 /** Dedicated flash class (see index.css) — never shares classes with the buying bar's BAR_ROW_HI,
  *  so the timed removal can't strip classes React still believes it applied. */
