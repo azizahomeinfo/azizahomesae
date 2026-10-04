@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import logo from "@/assets/aziza-logo.png";
 import { shortDate } from "./format";
 import {
@@ -27,6 +27,9 @@ export const PROPOSAL_CSS = `
 .ppd-eyebrow { font-size: 11.5px; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pp-olive); margin: 0 0 12px; }
 .ppd-foot { position: absolute; left: 56px; right: 56px; bottom: 28px; display: flex; justify-content: space-between;
   font-size: 9px; font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pp-label); }
+.ppd-cap { flex: none; height: 20px; padding-top: 6px; font-size: 10px; line-height: 14px; letter-spacing: 0.08em; text-align: center; color: var(--pp-label);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ppd-note { position: absolute; left: 56px; right: 56px; bottom: 50px; font-size: 9.5px; line-height: 1.5; font-style: italic; text-align: center; color: var(--pp-label); margin: 0; }
 .ppd-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .ppd-grow { flex: 1 1 auto; min-height: 0; }
 .ppd-cols { column-count: 3; column-gap: 32px; column-rule: 1px solid var(--pp-line-soft); column-fill: balance; }
@@ -64,8 +67,37 @@ const Foot = ({ client, n }: { client: string; n: number }) => (
   <div className="ppd-foot"><span>Aziza Home · Proposal for {client}</span><span>{String(n).padStart(2, "0")}</span></div>
 );
 
-/** Tallest the whole cover picture may stand, keeping it clear of the title block. */
-const COVER_HERO_MAX_H = 600;
+/** Cover picture: shown whole, centred in the cream between the logo and the title block. */
+const CoverHero = ({ src }: { src: string }) => {
+  const box = useRef<HTMLDivElement>(null);
+  const [room, setRoom] = useState<{ w: number; h: number } | null>(null);
+  const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const read = () => setRoom({ w: el.offsetWidth, h: el.offsetHeight });
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  // Whole-pixel size so the picture and its veil share exact edges (no sub-pixel seam).
+  const size = room && nat ? (() => {
+    const k = Math.min(room.w / nat.w, room.h / nat.h);
+    return { w: Math.floor(nat.w * k), h: Math.floor(nat.h * k) };
+  })() : null;
+  return (
+    <div ref={box} style={{ flex: "1 1 auto", minHeight: 0, position: "relative", margin: "28px 0 32px" }}>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "relative", lineHeight: 0, width: size?.w, height: size?.h, opacity: size ? 1 : 0 }}>
+          <img src={src} alt="" onLoad={(e) => setNat({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+            style={{ display: "block", width: size ? "100%" : "auto", height: size ? "100%" : "auto", maxWidth: size ? undefined : 1, objectFit: "contain" }} />
+          <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: -1, background: "linear-gradient(to bottom, transparent 0%, transparent 78%, var(--pp-bg) 100%)" }} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   const c = doc.cover;
@@ -74,18 +106,10 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
     ["Location", c.location || "—"], ["Date", c.date ? shortDate(c.date) : "—"], ["Validity", c.validity || "—"], ["Scope", c.scope || "—"],
   ];
   return (
-    <div className="ppd-page">
-      {hero && (
-        // Whole picture, top-anchored on the page cream; the veil sits on the picture's own lower edge so the join fades into the text area at any aspect ratio.
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: COVER_HERO_MAX_H, display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
-          <div style={{ position: "relative", lineHeight: 0, maxWidth: "100%", maxHeight: "100%" }}>
-            <img src={hero} alt="" style={{ display: "block", maxWidth: "100%", maxHeight: COVER_HERO_MAX_H, width: "auto", height: "auto", objectFit: "contain", objectPosition: "top center" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 72%, color-mix(in srgb, var(--pp-bg) 60%, transparent) 88%, var(--pp-bg) 100%)" }} />
-          </div>
-        </div>
-      )}
-      <img src={logo} alt="Aziza Home" style={{ position: "absolute", top: 62, left: 70, width: 147, height: 147, objectFit: "contain" }} />
-      <div style={{ position: "absolute", left: 70, right: 70, bottom: 58 }}>
+    <div className="ppd-page" style={{ paddingTop: 62 }}>
+      <img src={logo} alt="Aziza Home" style={{ flex: "none", marginLeft: 70, width: 147, height: 147, objectFit: "contain" }} />
+      {hero ? <CoverHero src={hero} /> : <div className="ppd-grow" />}
+      <div style={{ flex: "none", padding: "0 70px 58px" }}>
         <p className="ppd-eyebrow">Interior design proposal</p>
         <h1 className="ppd-serif" style={{ fontSize: 64, lineHeight: 1.02, letterSpacing: "0.02em" }}>Proposal for<br />{c.client}</h1>
         {c.intro && <p style={{ fontSize: 15.5, lineHeight: 1.7, maxWidth: 600, margin: "22px 0 0", color: "var(--pp-muted)" }}>{c.intro}</p>}
@@ -132,6 +156,8 @@ export const AREA_FRAME_W = PAGE_W - 112;
 export const AREA_SINGLE_H = 362;
 export const AREA_MEDIA_H = 724;
 export const AREA_MEDIA_GAP = 14;
+/** Caption line under every picture slot — always reserved, so a page with captions sizes its pictures exactly like one without. */
+export const AREA_CAPTION_H = 20;
 
 /** Description clamp limits per image count, and a rough overflow estimate for the editor's warning.
  *  Chars per line ≈ frame width 682 / (13 px font × ~0.5 avg glyph width) ≈ 105. */
@@ -173,10 +199,14 @@ const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc
       <div className="ppd-grow" style={{ display: "flex", alignItems: "center", marginTop: 22 }}>
         <div style={{ width: AREA_FRAME_W, height: mediaHeight, display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`, gap: AREA_MEDIA_GAP }}>
         {s.images.map((img: DocImage) => (
-          <FramedImage key={img.path} src={url(img.path) || null} alt={img.caption ?? s.title} />
+          <div key={img.path} style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <div style={{ flex: "1 1 auto", minHeight: 0 }}><FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} /></div>
+            <div className="ppd-cap">{img.caption?.trim() || ""}</div>
+          </div>
         ))}
         </div>
       </div>
+      {doc.imagesNote?.trim() && <p className="ppd-note">{doc.imagesNote.trim()}</p>}
       <Foot client={doc.cover.client} n={n} />
     </div>
   );
