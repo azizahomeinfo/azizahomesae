@@ -325,7 +325,7 @@ const ProposalDoc = () => {
       targetImages = moodBoard;
     }
     if (!targetImages) return;
-    if (targetImages !== moodBoard && targetImages.length >= MAX_IMAGES_PER_PAGE) {
+    if (targetImages.length >= MAX_IMAGES_PER_PAGE) {
       toast.error(`That page already has ${MAX_IMAGES_PER_PAGE} pictures. Move one out before adding another.`);
       return;
     }
