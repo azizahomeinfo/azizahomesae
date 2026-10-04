@@ -64,6 +64,9 @@ const Foot = ({ client, n }: { client: string; n: number }) => (
   <div className="ppd-foot"><span>Aziza Home · Proposal for {client}</span><span>{String(n).padStart(2, "0")}</span></div>
 );
 
+/** Tallest the whole cover picture may stand, keeping it clear of the title block. */
+const COVER_HERO_MAX_H = 600;
+
 const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   const c = doc.cover;
   const hero = url(c.hero ?? doc.moodBoard[0]?.path);
