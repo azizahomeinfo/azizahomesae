@@ -280,7 +280,8 @@ export const paginateItems = (groups: ItemGroup[]) => {
 export const autoCombine = (usedWeight: number, optionCount: number) =>
   Math.ceil(usedWeight / 3) + (8 + 10 * Math.ceil(optionCount / 2) + 5) <= 38;
 
-export const MAX_IMAGES_PER_PAGE = 2;
+/** A room stays on one proposal sheet unless it has more than six pictures. */
+export const MAX_IMAGES_PER_PAGE = 6;
 
 export type Sheet =
   | { kind: "cover" }

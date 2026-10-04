@@ -114,25 +114,17 @@ const FloorPage = ({ doc, url, n }: { doc: ProposalDocument; url: Url; n: number
 };
 
 /*
- * One fixed image frame for every picture in the document: 682 × 362. Page 794 × 1123, padding
- * 52/56/80 → content 682 × 991. Fixed header (eyebrow, 2-line title, margins, 22 gap) = 144 px,
- * leaving 847 for description + frames. Two frames + 14 gap = 738 px → description clamps to
- * 4 lines (89 px, 20 px spare above the footer). One frame = 362 px → description clamps to
- * 21 lines (465 px, 20 px spare). A lone frame is vertically centred, so the extra room reads
- * as margin, not a bigger picture.
- * Explicit px sizes (no aspect-ratio) so the frames scale with [data-print-scale] like everything else.
+ * Page 794 × 1123 with 56 px side padding gives 682 px of media width. The 52/80 px vertical
+ * padding leaves 991 px; after the fixed header allowance, 724 px is reserved for a multi-image
+ * block. With 14 px gutters this gives 355 px slots for two images and 232 px for three. A lone
+ * image keeps the previous 362 px slot so its 21-line description allowance remains valid.
+ * Four to six images use the same 724 px block in two columns. Explicit px sizes keep screen and
+ * print identical under [data-print-scale].
  */
 export const AREA_FRAME_W = PAGE_W - 112;
-export const AREA_FRAME_H = 362;
-export const CROP_WARNING_THRESHOLD = 0.25;
-
-/** Percentage of the source image discarded by a centred cover crop into the proposal frame. */
-export const imageCropPercent = (naturalWidth: number, naturalHeight: number) => {
-  if (!naturalWidth || !naturalHeight) return 0;
-  const sourceRatio = naturalWidth / naturalHeight;
-  const frameRatio = AREA_FRAME_W / AREA_FRAME_H;
-  return Math.round(100 * (sourceRatio > frameRatio ? 1 - frameRatio / sourceRatio : 1 - sourceRatio / frameRatio));
-};
+export const AREA_SINGLE_H = 362;
+export const AREA_MEDIA_H = 724;
+export const AREA_MEDIA_GAP = 14;
 
 /** Description clamp limits per image count, and a rough overflow estimate for the editor's warning.
  *  Chars per line ≈ frame width 682 / (13 px font × ~0.5 avg glyph width) ≈ 105. */
@@ -145,37 +137,38 @@ export const descOverflowChars = (desc: string, images: number) =>
 
 const clamp = (lines: number) => ({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical" as const, overflow: "hidden" });
 
-/** Every area image fills the same edge-to-edge frame; crop risk is surfaced in the editor before download. */
+/** Every area image is shown whole, centred directly on the proposal page with no visible card. */
 const FramedImage = ({ src, alt }: { src: string | null; alt: string }) => {
   const [failed, setFailed] = useState(false);
-  const [crop, setCrop] = useState(0);
-  const frame = { width: AREA_FRAME_W, height: AREA_FRAME_H, overflow: "hidden" as const, flex: "0 0 auto" };
+  const frame = { width: "100%", height: "100%", overflow: "hidden" as const };
   if (!src || failed) return (
     <div className="ppd-field" style={{ ...frame, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <span style={{ fontSize: 10, letterSpacing: "0.26em", textTransform: "uppercase", color: "var(--pp-label)" }}>{alt}</span>
     </div>
   );
-  const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    setCrop(imageCropPercent(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight));
-  };
   return (
-    <div style={frame} data-crop-percent={crop}>
-      <img src={src} alt={alt} onLoad={onLoad} onError={() => setFailed(true)} className="ppd-img"
-        style={{ objectFit: "cover", objectPosition: "center" }} />
+    <div style={frame}>
+      <img src={src} alt={alt} onError={() => setFailed(true)} className="ppd-img"
+        style={{ objectFit: "contain", objectPosition: "center" }} />
     </div>
   );
 };
 
 const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => {
+  const columns = s.images.length >= 4 ? 2 : 1;
+  const rows = Math.max(1, Math.ceil(s.images.length / columns));
+  const mediaHeight = s.images.length <= 1 ? AREA_SINGLE_H : AREA_MEDIA_H;
   return (
     <div className="ppd-page" style={{ padding: "52px 56px 80px" }}>
       <p className="ppd-eyebrow">{s.eyebrow}</p>
       <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05, ...clamp(2) }}>{s.title}</h2>
       {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
-      <div className="ppd-grow" style={{ marginTop: 22, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
+      <div className="ppd-grow" style={{ display: "flex", alignItems: "center", marginTop: 22 }}>
+        <div style={{ width: AREA_FRAME_W, height: mediaHeight, display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`, gap: AREA_MEDIA_GAP }}>
         {s.images.map((img: DocImage) => (
           <FramedImage key={img.path} src={url(img.path) || null} alt={img.caption ?? s.title} />
         ))}
+        </div>
       </div>
       <Foot client={doc.cover.client} n={n} />
     </div>
