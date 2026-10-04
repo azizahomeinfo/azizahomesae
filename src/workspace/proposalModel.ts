@@ -137,7 +137,7 @@ export const applyDesign = (doc: ProposalDocument, design: SourceDesign): Propos
   }
   for (const a of d.areas) {
     if (seen.has(a.area)) continue;
-    pages.push({ id: newId(), area: a.area, title: a.area, desc: defaultDesc(style, a.area), images: a.images });
+    pages.push({ id: newId(), area: a.area, title: a.area, desc: defaultDesc(), images: a.images });
   }
   const keepFloor = doc.floorPlan.path && isOwnUpload(doc.floorPlan.path);
   return {
@@ -162,7 +162,6 @@ export const applyQuote = (doc: ProposalDocument, quote: { version: number; opti
 
 export const buildDocument = (v: {
   lead: { name: string; property: string | null; building: string | null; location: string | null; unit_type: string | null; scope: string | null; budget: number | null };
-  style: string;
   design: SourceDesign | null;
   quote: { version: number; options: QuoteOption[] } | null;
   groups: ItemGroup[];
