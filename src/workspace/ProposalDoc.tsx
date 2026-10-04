@@ -3,10 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowUp, Lock, Plus, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -24,9 +20,7 @@ import {
   applyDesign, applyQuote, buildDocument, itemListDiff, layoutSheets, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
-import {
-  CROP_WARNING_THRESHOLD, PROPOSAL_CSS, ProposalPages, descOverflowChars, imageCropPercent,
-} from "./ProposalPages";
+import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
 
 const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
 
@@ -72,13 +66,11 @@ const Chip = ({ label, text, mark }: { label: string; text: string; mark: Mark }
   </div>
 );
 
-const ImageStrip = ({ images, url, onRemove, cropByPath }: {
-  images: DocImage[]; url: (p: string) => string | undefined; onRemove?: (i: number) => void; cropByPath?: Record<string, number>;
+const ImageStrip = ({ images, url, onRemove }: {
+  images: DocImage[]; url: (p: string) => string | undefined; onRemove?: (i: number) => void;
 }) => (
   <div className="flex flex-wrap gap-2">
-    {images.map((img, i) => {
-      const crop = cropByPath?.[img.path] ?? 0;
-      return (
+    {images.map((img, i) => (
         <div key={img.path} className="w-32 space-y-1">
           <div className="relative h-20 w-32 overflow-hidden rounded border border-border bg-muted/20">
             {url(img.path) && <img src={url(img.path)} alt="" className="h-full w-full object-cover" />}
@@ -89,12 +81,8 @@ const ImageStrip = ({ images, url, onRemove, cropByPath }: {
               </button>
             )}
           </div>
-          {crop > CROP_WARNING_THRESHOLD * 100 && (
-            <p className="text-xs leading-snug text-warning">Crops ~{crop}% — replace with a wide picture</p>
-          )}
         </div>
-      );
-    })}
+    ))}
   </div>
 );
 
@@ -138,8 +126,6 @@ const ProposalDoc = () => {
   const [notices, setNotices] = useState<string[]>([]);
   const [attempted, setAttempted] = useState(false);
   const [picking, setPicking] = useState<number | null>(null);
-  const [cropByPath, setCropByPath] = useState<Record<string, number>>({});
-  const [pendingOutput, setPendingOutput] = useState<"finalise" | "print" | null>(null);
   const synced = useRef<string | null>(null);
 
   const row = proposals.find((p) => p.id === selectedId) ?? proposals[0];
@@ -172,24 +158,6 @@ const ProposalDoc = () => {
   ].filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf")) : [];
   const { data: urls } = useSignedUrls(paths);
   const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
-
-  useEffect(() => {
-    if (!current || !urls) return;
-    const areaPaths = [...current.pages.flatMap((page) => page.images.map((image) => image.path)), ...current.moodBoard.map((image) => image.path)];
-    let active = true;
-    for (const path of new Set(areaPaths)) {
-      const src = urls.get(path);
-      if (!src) continue;
-      const image = new Image();
-      image.onload = () => {
-        if (!active) return;
-        const crop = imageCropPercent(image.naturalWidth, image.naturalHeight);
-        setCropByPath((previous) => previous[path] === crop ? previous : { ...previous, [path]: crop });
-      };
-      image.src = src;
-    }
-    return () => { active = false; };
-  }, [current, urls]);
 
   const back = <Link to="/workspace/proposals" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> All proposals</Link>;
   if (isLoading) return <div className="space-y-4">{back}<p className="text-muted-foreground">Loading…</p></div>;
@@ -236,7 +204,7 @@ const ProposalDoc = () => {
       toast.success(`Proposal V${nextVersion} created`);
     } catch (e) { toast.error(errMsg(e, "Could not generate proposal")); }
   };
-  const finalise = async (confirmedCrop = false) => {
+  const finalise = async () => {
     if (!current) return;
     if (!designOk || !quoteOk) {
       setAttempted(true);
@@ -244,7 +212,6 @@ const ProposalDoc = () => {
       toast.error(`Can't finalise yet — design must be accepted and GM quotation set. Still missing: ${missing}.`);
       return;
     }
-    if (!confirmedCrop && cropWarnings.length) { setPendingOutput("finalise"); return; }
     const ok = await persist({ ...current, finalAt: new Date().toISOString() });
     if (ok) window.setTimeout(() => window.print(), 300);
   };
@@ -285,14 +252,6 @@ const ProposalDoc = () => {
 
   /* ---- doc editing helpers ---- */
   const d = current;
-  const cropWarnings = [
-    ...d.pages.flatMap((page, pageIndex) => page.images.map((image) => ({
-      path: image.path, page: `Area ${String(pageIndex + 1).padStart(2, "0")} · ${page.title}`, crop: cropByPath[image.path] ?? 0,
-    }))),
-    ...(d.toggles.moodBoard ? d.moodBoard.map((image) => ({ path: image.path, page: "Mood board", crop: cropByPath[image.path] ?? 0 })) : []),
-  ].filter((warning) => warning.crop > CROP_WARNING_THRESHOLD * 100);
-  const cropPages = [...new Set(cropWarnings.map((warning) => warning.page))];
-  const requestPrint = () => cropWarnings.length ? setPendingOutput("print") : window.print();
   const liveGroups = groups ?? [];
   const drift = liveGroups.length ? itemListDiff(d.itemList, liveGroups) : null;
   const driftSummary = drift?.differs
@@ -346,7 +305,7 @@ const ProposalDoc = () => {
           {row.status === "Accepted" && row.accepted_option && <span className="self-center text-xs text-muted-foreground">Client chose {row.accepted_option.label}</span>}
           {canEdit && <Button variant="outline" onClick={openContract}>Generate contract</Button>}
           {d.finalAt && !dirty
-            ? <Button disabled={withdrawn} onClick={requestPrint}>Download PDF</Button>
+            ? <Button disabled={withdrawn} onClick={() => window.print()}>Download PDF</Button>
             : canEdit && <Button onClick={() => void finalise()} disabled={save.isPending}>Finalise &amp; download</Button>}
         </div>
       </div>
@@ -451,7 +410,7 @@ const ProposalDoc = () => {
                       Too long for the page — the last ~{descOverflowChars(p.desc, p.images.length)} characters won't appear in the PDF.
                     </p>
                   )}
-                  <ImageStrip images={p.images} url={(x) => url(x)} cropByPath={cropByPath} onRemove={editable ? (k) => setPage(i, { images: p.images.filter((_, j) => j !== k) }) : undefined} />
+                  <ImageStrip images={p.images} url={(x) => url(x)} onRemove={editable ? (k) => setPage(i, { images: p.images.filter((_, j) => j !== k) }) : undefined} />
                   {editable && <UploadButton label="Add image" onFile={async (f) => { const path = await upload(f); setPage(i, { images: [...p.images, { path, caption: null }] }); }} />}
                 </div>
               ))}
@@ -465,7 +424,7 @@ const ProposalDoc = () => {
             {d.moodBoard.length > 0 && (
               <RailSection title="Mood board">
                 <p className="text-xs text-muted-foreground">Images supplied with the accepted design.</p>
-                <ImageStrip images={d.moodBoard} url={(x) => url(x)} cropByPath={cropByPath} />
+                <ImageStrip images={d.moodBoard} url={(x) => url(x)} />
               </RailSection>
             )}
 
@@ -552,29 +511,6 @@ const ProposalDoc = () => {
         </div>
       )}
 
-      <AlertDialog open={pendingOutput !== null} onOpenChange={(open) => { if (!open) setPendingOutput(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Some pictures will be cropped</AlertDialogTitle>
-            <AlertDialogDescription>
-              {cropWarnings.length} {cropWarnings.length === 1 ? "picture loses" : "pictures lose"} more than 25% in the PDF frame.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
-            {cropPages.map((page) => <li key={page}>{page}</li>)}
-          </ul>
-          <p className="text-sm text-muted-foreground">Continue if the crop is intentional, or go back and replace the pictures.</p>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Go back</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              const action = pendingOutput;
-              setPendingOutput(null);
-              if (action === "finalise") void finalise(true);
-              if (action === "print") window.print();
-            }}>Continue anyway</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
