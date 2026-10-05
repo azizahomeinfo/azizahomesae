@@ -18,6 +18,9 @@ export interface ContractDocument {
   deposit: number; delivery: number;
   optionLabel: string | null;
   sections: CSection[];
+  /** Set by ws_sync_contract_items at signing (DB-only). */
+  itemsSyncedAt?: string;
+  sectionsAtIssue?: CSection[];
   clauses: Clause[];
 }
 
