@@ -160,7 +160,7 @@ export const applyDesign = (doc: ProposalDocument, design: SourceDesign): Propos
   }
   for (const a of d.areas) {
     if (seen.has(a.area)) continue;
-    pages.push({ id: newId(), area: a.area, title: a.area, desc: defaultDesc(), images: a.images });
+    pages.push({ id: newId(), area: a.area, title: a.area, desc: defaultDesc(a.area), images: a.images });
   }
   const keepFloor = doc.floorPlan.path && isOwnUpload(doc.floorPlan.path);
   return {
