@@ -1632,6 +1632,7 @@ export type Database = {
       tasks: {
         Row: {
           assignee_id: string | null
+          auto_kind: string | null
           created_at: string
           created_by: string | null
           detail: string | null
@@ -1649,6 +1650,7 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          auto_kind?: string | null
           created_at?: string
           created_by?: string | null
           detail?: string | null
@@ -1666,6 +1668,7 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          auto_kind?: string | null
           created_at?: string
           created_by?: string | null
           detail?: string | null
@@ -1856,6 +1859,17 @@ export type Database = {
           unit_type: string
         }[]
       }
+      ws_buy_task: {
+        Args: {
+          _detail: string
+          _drawing?: string
+          _due: string
+          _kind: string
+          _project: string
+          _title: string
+        }
+        Returns: undefined
+      }
       ws_confirm_ffe_list: { Args: { _project: string }; Returns: undefined }
       ws_convert_lead: {
         Args: { _handover: string; _lead: string }
@@ -1938,6 +1952,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      ws_handover_due: {
+        Args: { _days_before: number; _handover: string }
+        Returns: string
+      }
+      ws_handover_tasks: { Args: { _project: string }; Returns: undefined }
       ws_lead_delete_block: {
         Args: { _lead: string; _uid: string }
         Returns: string
