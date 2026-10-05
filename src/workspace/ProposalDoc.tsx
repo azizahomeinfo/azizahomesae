@@ -135,6 +135,8 @@ const UploadButton = ({ label, onFile, disabled }: { label: string; onFile: (f: 
 
 const ProposalDoc = () => {
   const { leadId } = useParams();
+  // Rail scrolls itself on desktop (lg:overflow-y-auto); keep its place per proposal.
+  const railScrollRef = useKeepScroll(leadId ? `proposal-rail:${leadId}` : null);
   const navigate = useNavigate();
   const { member } = useWorkspace();
   const { data: lead, isLoading } = useLead(leadId);

@@ -134,6 +134,7 @@ interface Props {
 }
 
 const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Props) => {
+  const briefScrollRef = useKeepScroll(open ? `brief:${lead.id}` : null);
   const isMobile = useIsMobile();
   const status = brief.status as BriefStatus;
   const actor = useActor(lead.sales_id, brief.designer_id);
