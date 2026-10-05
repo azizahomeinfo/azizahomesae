@@ -73,14 +73,21 @@ const windowScroller = (): Scroller => ({
   observe: document.body,
 });
 
-const elementScroller = (el: HTMLElement): Scroller => ({
-  getY: () => el.scrollTop,
-  setY: (y) => { el.scrollTop = y; },
-  maxY: () => el.scrollHeight - el.clientHeight,
-  events: el,
-  observe: el,
-  visible: () => el.isConnected && el.offsetParent !== null,
-});
+const elementScroller = (el: HTMLElement): Scroller => {
+  // A detached element reads scrollTop 0, and React detaches before effect cleanup runs — so the teardown save
+  // uses the last offset seen while it was on screen.
+  let last = el.scrollTop;
+  el.addEventListener("scroll", () => { if (el.offsetParent !== null) last = el.scrollTop; }, { passive: true });
+  return {
+    getY: () => (el.isConnected && el.offsetParent !== null ? el.scrollTop : last),
+    setY: (y) => { el.scrollTop = y; last = y; },
+    maxY: () => el.scrollHeight - el.clientHeight,
+    events: el,
+    observe: el,
+    // Hidden but still mounted (display:none tab) reads 0: skip. Detached = unmounting: save the cached offset.
+    visible: () => !el.isConnected || el.offsetParent !== null,
+  };
+};
 
 /**
  * The one restore engine, shared by the window (useScrollRestoration) and containers (useKeepScroll).
