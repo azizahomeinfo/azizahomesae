@@ -24,6 +24,7 @@ import { editRights, type BriefStatus } from "./briefWorkflow";
 import { checkDriveUrl, DriveLink } from "./DriveLink";
 import { useSaveBrief, useUpdateLead, type BriefDocColumns, type BriefRow, type Lead } from "./queries";
 import { BriefActionBar, useActor } from "./useBriefActions";
+import { useKeepScroll } from "./scrollMemory";
 import BriefStatusPill from "./BriefStatusPill";
 import { aed, shortDate } from "./format";
 import DefGrid from "./DefGrid";
@@ -303,7 +304,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
           </ol>
         </nav>
 
-        <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 space-y-6">
+        <div ref={briefScrollRef} className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 space-y-6">
           <Section i={0} note="From the lead — always current. Change it on the lead, not here.">
             {/* Read live from the lead, never copied into the brief, so it cannot go stale. */}
             <div className="space-y-3">
