@@ -1,14 +1,16 @@
-# Remove proposal picture captions
+# Coordinator orientation
 
-## Changes
-- Remove the caption line from all room and mood-board pages while retaining captions as image alternative text.
-- Return the removed caption space to the image slots and document why captions are intentionally not printed.
-- Remove caption editing fields and their callbacks from the proposal rail while preserving image movement, removal, and thumbnails.
+## Build
+- Add a role-aware guide content model keyed by workspace role, populated only for coordinators.
+- Create the “How my job works” page with the supplied handbook copy, clear card sections, and links to Projects, Tasks, and Suppliers.
+- Add `/workspace/guide` to workspace routing, page metadata, and coordinator navigation only.
 
-## Validation
-- Run the TypeScript check and confirm the preview build is healthy.
-- Check both Sukhrob proposals on screen and in print for image ratio, containment, note/footer spacing, and caption absence.
-- Capture the B2814 Bedrooms page without saving proposal data and report one-, two-, and three-picture sizes.
+## Verification
+- Run the project TypeScript check.
+- Verify coordinator visibility and confirm the guide is absent for GM, sales, and designer roles.
+- Open the guide at 390px and capture a screenshot to check mobile readability.
 
-## Scope
-- Frontend only; no SQL or proposal data changes.
+## Technical details
+- Keep access enforcement consistent with the existing workspace `Guard` and `PAGES_BY_ROLE` patterns.
+- Store guide sections in `GUIDES: Record<WorkspaceRole, Section[]>`, leaving non-coordinator arrays empty without rendering placeholder copy.
+- This is frontend-only; no database or permission changes.
