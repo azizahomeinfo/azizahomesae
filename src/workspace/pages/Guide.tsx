@@ -84,6 +84,37 @@ const Guide = () => {
         </section>
       )}
 
+      {role === "coordinator" && (
+        <section className="rounded-[var(--radius)] border border-border bg-card p-4 sm:p-5">
+          <h2 className="font-heading text-lg uppercase tracking-wide text-foreground">Your deadlines</h2>
+          <div className="mt-2 space-y-3 text-sm leading-6 text-muted-foreground sm:text-[15px] sm:leading-7">
+            <p>These tasks appear on <Link to="/workspace/tasks" className={workspaceLink}>Tasks</Link> by themselves; you never create them.</p>
+            <div>
+              <h3 className="font-semibold text-foreground">From the moment the FF&amp;E list is confirmed.</h3>
+              <p>Online and large furniture — Pan Home, Home Centre, Home Box and the big pieces — ordered <strong className="font-semibold text-foreground">within 24 hours</strong>. Everything else on the list ordered <strong className="font-semibold text-foreground">within 72 hours</strong>.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">When a drawing lands.</h3>
+              <p>Each drawing the designer uploads creates its own task: order everything that drawing specifies <strong className="font-semibold text-foreground">within 24 hours</strong> of it arriving.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Counting back from the handover date.</h3>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[var(--radius)] border border-border p-3">
+                  <p className="font-semibold text-foreground">Three days before</p>
+                  <p>Every item delivered on site; Ali booked for the light fixtures, the wall art and the appliance installation; the wallpaper arranged, if the project has any.</p>
+                </div>
+                <div className="rounded-[var(--radius)] border border-border p-3">
+                  <p className="font-semibold text-foreground">Two days before</p>
+                  <p>The operations team unpacks and sets everything up, and you are on site doing the quality check.</p>
+                </div>
+              </div>
+            </div>
+            <p className="italic">These dates move by themselves if the handover date changes.</p>
+          </div>
+        </section>
+      )}
+
       <div className="space-y-3">
         {sections.map((section) => (
           <section key={section.title} className="rounded-[var(--radius)] border border-border bg-card p-4 sm:p-5">
