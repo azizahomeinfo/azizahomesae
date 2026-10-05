@@ -25,6 +25,7 @@ import CommentThread from "./CommentThread";
 import BriefEditor from "./BriefEditor";
 import BriefStatusPill from "./BriefStatusPill";
 import DesignPackage from "./DesignPackage";
+import { useDesignParam } from "./designParams";
 import DesignStatusPill from "./DesignStatusPill";
 import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
@@ -123,7 +124,7 @@ export const BriefTab = ({ project }: { project: Project }) => {
 
 export const DesignTab = ({ project }: { project: Project }) => {
   const { data: designs = [], isLoading } = useDesigns(project.lead_id ?? undefined);
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useDesignParam(project.lead_id);
   if (!project.lead_id) return <Card title="Design"><p className="text-sm text-muted-foreground">No design — this project was created directly.</p></Card>;
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   const accepted = designs.find((d) => d.status === "Accepted");

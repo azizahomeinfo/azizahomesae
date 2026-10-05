@@ -18,6 +18,7 @@ import type { BriefStatus } from "../briefWorkflow";
 import BriefStatusPill from "../BriefStatusPill";
 import BriefEditor from "../BriefEditor";
 import DesignPackage from "../DesignPackage";
+import { useDesignParam } from "../designParams";
 import { LEAD_STATUSES, LEAD_STATUS_HELP, type LeadStatus } from "../constants";
 import { aed, shortDate } from "../format";
 import StatusPill from "../StatusPill";
@@ -44,7 +45,7 @@ const LeadDetail = () => {
   const { data: brief } = useBrief(id);
   const createBrief = useCreateBrief();
   const [briefOpen, setBriefOpen] = useState(false);
-  const [designOpen, setDesignOpen] = useState(false);
+  const { open: designOpen, setOpen: setDesignOpen } = useDesignParam(id);
   const [editOpen, setEditOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [lostReason, setLostReason] = useState("");

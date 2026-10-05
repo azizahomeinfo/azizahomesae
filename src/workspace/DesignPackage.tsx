@@ -28,6 +28,8 @@ import { DESIGN_AREAS, DESIGN_KINDS, REJECT_REASONS, type DesignKind, type Desig
 import DesignStatusPill from "./DesignStatusPill";
 import { FfeSheet } from "./FfeTab";
 import { leadOwner, useFfeItems } from "./ffeQueries";
+import { useDesignParam } from "./designParams";
+import { useKeepScroll } from "./scrollMemory";
 
 interface Props {
   leadId: string;
@@ -561,9 +563,11 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     || (latest?.status === "Accepted" && (isGm || isAssignedDesigner || (!!lead && lead.sales_id === me)))
   );
   const [reopenOpen, setReopenOpen] = useState(false);
-  // The designer specs FF&E against the renders, so both live in this dialog.
-  const [tab, setTab] = useState<"renders" | "ffe">("renders");
-  useEffect(() => { if (open) setTab("renders"); }, [open]);
+  // The designer specs FF&E against the renders, so both live in this dialog. The tab is in the URL (`dtab`) so a
+  // remount returns to it; opening clears it (renders). Each tab's scroller is kept separately.
+  const { tab, setTab } = useDesignParam(leadId);
+  const ffeScrollRef = useKeepScroll(open ? `design:${leadId}:ffe` : null);
+  const rendersScrollRef = useKeepScroll(open ? `design:${leadId}:renders` : null);
   // Live checklist mirroring ws_submit_design_package, so the gap is visible while uploading, not after pressing Submit.
   const { data: pkgImages = [] } = useDesignImages(open && selected?.status === "Draft" ? selected.id : undefined);
   const { data: pkgItems = [] } = useFfeItems(open && selected?.status === "Draft" ? leadOwner(leadId) : undefined, member?.role !== "sales");
@@ -683,7 +687,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
       </div>
 
       {tab === "ffe" && (
-        <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+        <div ref={ffeScrollRef} className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
           <div className="mx-auto max-w-6xl">
             {lead ? (
               <FfeSheet
@@ -715,7 +719,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         </nav>
       )}
 
-      <div className={cn("flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6", tab !== "renders" && "hidden")}>
+      <div ref={rendersScrollRef} className={cn("flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6", tab !== "renders" && "hidden")}>
         <div className="mx-auto max-w-6xl space-y-6">
           {isLoading ? (
             <p className="text-muted-foreground">Loading…</p>

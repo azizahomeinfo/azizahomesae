@@ -12,6 +12,7 @@ import { uploadToWorkspace, useSignedUrls } from "./designQueries";
 import { leadOwner, useCosting } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { shortDate } from "./format";
+import { useKeepScroll } from "./scrollMemory";
 import {
   useCreateProposal, useLeadProposals, useProposalItems, useProposalStatus, useSaveProposal, useSharedDesign,
   type ProposalStatus,
@@ -134,6 +135,8 @@ const UploadButton = ({ label, onFile, disabled }: { label: string; onFile: (f: 
 
 const ProposalDoc = () => {
   const { leadId } = useParams();
+  // Rail scrolls itself on desktop (lg:overflow-y-auto); keep its place per proposal.
+  const railScrollRef = useKeepScroll(leadId ? `proposal-rail:${leadId}` : null);
   const navigate = useNavigate();
   const { member } = useWorkspace();
   const { data: lead, isLoading } = useLead(leadId);
@@ -405,7 +408,7 @@ const ProposalDoc = () => {
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* rail */}
-        <aside className="rounded-[var(--radius)] border border-border bg-card px-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+        <aside ref={railScrollRef} className="rounded-[var(--radius)] border border-border bg-card px-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
           <fieldset disabled={!editable} className="min-w-0 disabled:opacity-80">
             <RailSection title="Cover">
               <Field label="Client"><Input value={d.cover.client} onChange={(e) => setCover({ client: e.target.value })} /></Field>
