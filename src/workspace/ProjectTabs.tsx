@@ -26,6 +26,7 @@ import BriefEditor from "./BriefEditor";
 import BriefStatusPill from "./BriefStatusPill";
 import DesignPackage from "./DesignPackage";
 import { useDesignParam } from "./designParams";
+import DesignImagesView from "./DesignImagesView";
 import DesignStatusPill from "./DesignStatusPill";
 import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
@@ -123,6 +124,15 @@ export const BriefTab = ({ project }: { project: Project }) => {
 };
 
 export const DesignTab = ({ project }: { project: Project }) => {
+  const { member } = useWorkspace();
+  if (member?.role === "coordinator") {
+    // Images only (renders + mood board), read-only — never the design package with its FF&E tab and actions.
+    return <Card title="Design">{project.lead_id ? <DesignImagesView leadId={project.lead_id} /> : <p className="text-sm text-muted-foreground">No design — this project was created directly.</p>}</Card>;
+  }
+  return <PackageDesignTab project={project} />;
+};
+
+const PackageDesignTab = ({ project }: { project: Project }) => {
   const { data: designs = [], isLoading } = useDesigns(project.lead_id ?? undefined);
   const { open, setOpen } = useDesignParam(project.lead_id);
   if (!project.lead_id) return <Card title="Design"><p className="text-sm text-muted-foreground">No design — this project was created directly.</p></Card>;

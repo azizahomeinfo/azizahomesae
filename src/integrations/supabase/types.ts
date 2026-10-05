@@ -1876,6 +1876,10 @@ export type Database = {
         Args: { _handover: string; _lead: string }
         Returns: Json
       }
+      ws_coordinator_on_lead: {
+        Args: { _lead: string; _uid: string }
+        Returns: boolean
+      }
       ws_costing_options: { Args: { _costing: string }; Returns: Json }
       ws_cr_costs: {
         Args: { _project?: string }
