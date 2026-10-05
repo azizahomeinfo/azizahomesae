@@ -16,3 +16,4 @@
 - [x] Audit proposal rendering so only the cover hero and editor thumbnails use cover fitting.
 - [x] Typecheck and confirm preview diagnostics.
 - [x] Remove proposal picture captions from client pages and editor controls; verify image sizing, print ratios, and note spacing.
+- [ ] Add and verify the coordinator-only workspace orientation guide.
