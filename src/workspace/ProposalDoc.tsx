@@ -18,7 +18,7 @@ import {
   type ProposalStatus,
 } from "./proposalQueries";
 import {
-  applyDesign, applyQuote, buildDocument, defaultDesc, isDefaultDesc, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
+  applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
@@ -480,8 +480,8 @@ const ProposalDoc = () => {
                   </div>
                   <Input aria-label="Page title" value={p.title} onChange={(e) => setPage(i, { title: e.target.value })} />
                   <Textarea aria-label="Page description" rows={3} value={p.desc} onChange={(e) => setPage(i, { desc: e.target.value })} />
-                  {p.desc === defaultDesc() && (
-                    <p className="text-xs text-muted-foreground">Placeholder — write a line about this room before sending.</p>
+                  {isDefaultDesc(p.desc, p.area) && (
+                    <p className="text-xs text-muted-foreground">Default text — worth replacing with a line about this room.</p>
                   )}
                   {descOverflowChars(p.desc, p.images.length) > 0 && (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
