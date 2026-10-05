@@ -17,6 +17,7 @@ import Tasks from "./pages/Tasks";
 import ProjectDetail from "./pages/ProjectDetail";
 import Settings from "./pages/Settings";
 import Suppliers from "./pages/Suppliers";
+import Guide from "./pages/Guide";
 import Reports from "./pages/Reports";
 import ProposalDoc from "./ProposalDoc";
 import ContractDoc from "./ContractDoc";
@@ -63,6 +64,7 @@ const Gate = () => {
         <Route path="projects/:code" element={<Guard page="projects" role={role}><ProjectDetail /></Guard>} />
         <Route path="tasks" element={<Guard page="tasks" role={role}><Tasks /></Guard>} />
         <Route path="suppliers" element={<Guard page="suppliers" role={role}><Suppliers /></Guard>} />
+        <Route path="guide" element={<Guard page="guide" role={role}><Guide /></Guard>} />
         <Route path="settings" element={<Guard page="settings" role={role}><Settings /></Guard>} />
         <Route path="*" element={<Navigate to="/workspace" replace />} />
       </Route>

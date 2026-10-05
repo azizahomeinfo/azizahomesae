@@ -1,10 +1,11 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useWorkspace } from "../WorkspaceProvider";
 import type { WorkspaceRole } from "../access";
 
 type Section = {
   title: string;
-  content: React.ReactNode;
+  content: ReactNode;
 };
 
 const workspaceLink = "font-medium text-primary underline-offset-4 hover:underline";
