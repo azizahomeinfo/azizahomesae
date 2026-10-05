@@ -1871,6 +1871,7 @@ export type Database = {
         Returns: undefined
       }
       ws_confirm_ffe_list: { Args: { _project: string }; Returns: undefined }
+      ws_contract_sections: { Args: { _lead: string }; Returns: Json }
       ws_convert_lead: {
         Args: { _handover: string; _lead: string }
         Returns: Json
@@ -2016,6 +2017,7 @@ export type Database = {
         Args: { _design: string }
         Returns: undefined
       }
+      ws_sync_contract_items: { Args: { _contract: string }; Returns: number }
       ws_sync_drawing_task: {
         Args: { _kind: string; _project: string }
         Returns: undefined

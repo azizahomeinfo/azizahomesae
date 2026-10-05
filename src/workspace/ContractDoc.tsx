@@ -16,6 +16,7 @@ import { useLeadProposals, useProposalItems } from "./proposalQueries";
 import { useCreateContract, useLeadContracts, useSaveContract, useSignContract, type ContractStatus } from "./contractQueries";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { shortDate } from "./format";
 import {
   CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
@@ -334,6 +335,7 @@ const ContractDoc = () => {
           {canEdit && row.status === "Issued" && <Button variant="outline" onClick={() => { setHandover(lead.target_date ?? ""); setSignOpen(true); }}>Mark signed</Button>}
           {editable && <Button variant="outline" disabled={!draft || save.isPending} onClick={persist}>Save</Button>}
           <Button onClick={print}>Save as PDF / Print</Button>
+          {canEdit && row.status === "Issued" && <p className="basis-full text-xs text-muted-foreground">Marking this signed will re-take the item list from the current FF&amp;E list.</p>}
         </div>
       </div>
 
@@ -396,6 +398,7 @@ const ContractDoc = () => {
           </Section>
 
           <Section title="Goods (item table)">
+            {d.itemsSyncedAt && <p className="text-xs text-muted-foreground">Item list taken from the FF&amp;E list when the contract was signed — {shortDate(d.itemsSyncedAt)}.</p>}
             {d.sections.map((s, i) => (
               <div key={s.id} className="space-y-2 rounded-[var(--radius)] border border-border p-2">
                 <div className="flex items-center gap-1">
