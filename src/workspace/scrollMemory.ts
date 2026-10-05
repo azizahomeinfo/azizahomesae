@@ -61,6 +61,8 @@ interface Scroller {
   events: Window | HTMLElement;
   /** Where content growth is observed. */
   observe: Node;
+  /** False while hidden (display:none reads 0 and must not overwrite the saved offset). */
+  visible?: () => boolean;
 }
 
 const windowScroller = (): Scroller => ({
@@ -77,6 +79,7 @@ const elementScroller = (el: HTMLElement): Scroller => ({
   maxY: () => el.scrollHeight - el.clientHeight,
   events: el,
   observe: el,
+  visible: () => el.isConnected && el.offsetParent !== null,
 });
 
 /**
@@ -92,7 +95,7 @@ const keepScroll = (sc: Scroller, key: string, onGiveUp: (target: number) => voi
   let done = target <= 0 || hasReturnItem();
   // Until restore finishes or the user really scrolls, don't overwrite the saved offset with 0.
   let armed = done;
-  const save = () => { if (armed) pos.set(key, sc.getY()); };
+  const save = () => { if (armed && (sc.visible?.() ?? true)) pos.set(key, sc.getY()); };
   let t: number | undefined;
   let obs: MutationObserver | null = null;
   let timer: number | undefined;
