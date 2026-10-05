@@ -12,6 +12,7 @@ import BriefStatusPill from "../BriefStatusPill";
 import { aed, shortDate } from "../format";
 import { Button } from "@/components/ui/button";
 import DesignPackage from "../DesignPackage";
+import { useDesignParam } from "../designParams";
 import DesignStatusPill from "../DesignStatusPill";
 import { useDesignStatuses } from "../designQueries";
 import type { DesignStatus } from "../designSchema";
@@ -54,7 +55,7 @@ const ViewRequirements = ({
 /** Design status chip + button that opens the design package for a lead. */
 const DesignLink = ({ leadId, briefStatus }: { leadId: string; briefStatus: BriefStatus }) => {
   const { data: statuses } = useDesignStatuses();
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useDesignParam(leadId);
   if (!DESIGN_STAGES.includes(briefStatus)) return null;
   const d = statuses?.get(leadId);
   return (

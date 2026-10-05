@@ -44,7 +44,7 @@ const LeadDetail = () => {
   const { data: brief } = useBrief(id);
   const createBrief = useCreateBrief();
   const [briefOpen, setBriefOpen] = useState(false);
-  const [designOpen, setDesignOpen] = useState(false);
+  const { open: designOpen, setOpen: setDesignOpen } = useDesignParam(id);
   const [editOpen, setEditOpen] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [lostReason, setLostReason] = useState("");
