@@ -18,7 +18,7 @@ import {
   type ProposalStatus,
 } from "./proposalQueries";
 import {
-  applyDesign, applyQuote, buildDocument, defaultDesc, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
+  applyDesign, applyQuote, buildDocument, defaultDesc, isDefaultDesc, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";

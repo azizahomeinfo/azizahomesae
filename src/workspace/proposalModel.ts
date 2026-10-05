@@ -70,11 +70,34 @@ export const DEFAULT_TERMS =
 export const DEFAULT_IMAGES_NOTE =
   "These are concept images. Final items depend on availability in the market at the time we execute the design — we will keep the result as close to these as possible.";
 
-/** Opening line for a new render page. Deliberately free of interpolated fields: `style` is sales'
- *  free text (it has held "Elite or Regal from our catalogue") and reads as nonsense mid-sentence.
+/** Opening line for a new render page, chosen by the room's area (not the page title —
+ *  sales can rename a title). `area: null` = a page sales added; it gets the generic line.
+ *  Deliberately free of interpolated fields: `style` is sales' free text (it has held
+ *  "Elite or Regal from our catalogue") and reads as nonsense mid-sentence.
  *  It is a placeholder — sales replaces it with copy written for the room. */
-export const defaultDesc = () =>
-  "Designed around your brief — every piece, finish and light chosen to match the renders shown.";
+const DEFAULT_DESCS: Array<[RegExp, string]> = [
+  [/living|dining/i, "Where the home gathers. Seating arranged for conversation, a table that holds a long dinner, and light layered so the room works as well at breakfast as it does late in the evening."],
+  [/bedroom/i, "A room with one job: rest. Quiet layers, storage that stays out of sight, and lighting soft enough to wind down by."],
+  [/kitchen/i, "Built for daily use — hard-wearing surfaces, storage within reach, and everything where your hand expects it."],
+  [/bath/i, "Calm, practical and hotel-fresh — finishes chosen to look as good on the hundredth morning as on the first."],
+  [/entrance|foyer|hallway/i, "The first thing anyone sees, and the place keys, shoes and bags actually land."],
+  [/balcony|terrace/i, "Outdoor seating made for Dubai evenings — comfortable, weather-honest and easy to keep."],
+  [/maid/i, "Compact and complete: everything needed for comfort, nothing wasted on space."],
+];
+const GENERIC_DESC =
+  "Designed around your brief — every piece, finish and light chosen to work together in this room.";
+
+export const defaultDesc = (area: string | null) => {
+  if (area) {
+    for (const [pattern, text] of DEFAULT_DESCS) {
+      if (pattern.test(area)) return text;
+    }
+  }
+  return GENERIC_DESC;
+};
+
+/** True when a page still carries the default line for its area (one source of truth for the rail's hint). */
+export const isDefaultDesc = (desc: string, area: string | null) => desc === defaultDesc(area);
 
 export const newId = () => crypto.randomUUID();
 
