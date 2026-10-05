@@ -25,7 +25,7 @@ export const TABS_BY_ROLE: Record<WorkspaceRole, ProjectTab[]> = {
   gm: ALL_TABS,
   sales: ["overview", "brief", "timeline", "changes", "files"],
   designer: ["overview", "brief", "design", "ffe", "timeline", "tasks", "issues", "changes", "files"],
-  coordinator: ["overview", "brief", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "snagging", "files"],
+  coordinator: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "snagging", "files"],
 };
 
 export const RISK_DOT: Record<string, string> = { Green: "bg-primary", Yellow: "bg-secondary", Red: "bg-destructive" };
