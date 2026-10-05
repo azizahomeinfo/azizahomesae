@@ -25,6 +25,7 @@ import CommentThread from "./CommentThread";
 import BriefEditor from "./BriefEditor";
 import BriefStatusPill from "./BriefStatusPill";
 import DesignPackage from "./DesignPackage";
+import { useDesignParam } from "./designParams";
 import DesignStatusPill from "./DesignStatusPill";
 import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";

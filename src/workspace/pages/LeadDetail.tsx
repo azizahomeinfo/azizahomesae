@@ -18,6 +18,7 @@ import type { BriefStatus } from "../briefWorkflow";
 import BriefStatusPill from "../BriefStatusPill";
 import BriefEditor from "../BriefEditor";
 import DesignPackage from "../DesignPackage";
+import { useDesignParam } from "../designParams";
 import { LEAD_STATUSES, LEAD_STATUS_HELP, type LeadStatus } from "../constants";
 import { aed, shortDate } from "../format";
 import StatusPill from "../StatusPill";
