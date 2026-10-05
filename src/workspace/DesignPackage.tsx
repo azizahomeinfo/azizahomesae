@@ -172,7 +172,7 @@ const Thumb = ({
 
 /* ---------------- lightbox ---------------- */
 
-const Lightbox = ({
+export const Lightbox = ({
   items, index, urls, onIndex, onClose,
 }: { items: DesignImage[]; index: number | null; urls: Map<string, string>; onIndex: (i: number) => void; onClose: () => void }) => {
   useEffect(() => {
