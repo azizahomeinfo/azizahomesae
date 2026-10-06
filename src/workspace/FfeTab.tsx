@@ -63,6 +63,9 @@ const byRoom = (rows: FfeRow[]) => {
 
 const NO_SUPPLIER = "No supplier yet";
 const supplierOf = (r: FfeRow) => r.supplier_name?.trim() || NO_SUPPLIER;
+/** Room + spec on one muted line for the procurement rows: "Guest Bedroom 1 · 80*80 · Bugatti E149A beige". */
+const specSub = (r: FfeRow, withRoom: boolean): string =>
+  [withRoom ? r.room : null, r.dims, r.spec, r.notes].map((p) => p?.trim()).filter(Boolean).join(" · ");
 /** Suppliers A→Z, "No supplier yet" last; room then sheet order inside each. */
 const bySupplier = (rows: FfeRow[]) => {
   const m = new Map<string, FfeRow[]>();
