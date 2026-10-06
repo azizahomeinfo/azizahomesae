@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { BookPlus, Check, ChevronsUpDown, ExternalLink, Link2, Pencil, Plus, Trash2 } from "lucide-react";
+import { BookPlus, Check, ChevronsUpDown, Download, ExternalLink, Link2, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
