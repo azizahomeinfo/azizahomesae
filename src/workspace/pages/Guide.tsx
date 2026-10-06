@@ -31,7 +31,7 @@ export const GUIDES: Record<WorkspaceRole, Section[]> = {
       title: "The order you buy in",
       content: (
         <>
-          Six buying runs, in this order: <strong className="font-semibold text-foreground">1 Cabinetry</strong> (made to measure, longest lead time — start it on day one), <strong className="font-semibold text-foreground">2 Furniture</strong> (trade suppliers), <strong className="font-semibold text-foreground">3 Online furniture</strong> (Home Centre, Home Box, Pan Home, Ikea, Danube…), <strong className="font-semibold text-foreground">4 Appliances</strong>, <strong className="font-semibold text-foreground">5 Dragon Mart pick-up</strong> (anything you collect yourself), <strong className="font-semibold text-foreground">6 Household</strong>. Switch the grouping to Priority to see them. The run is worked out from the item and its supplier; if one is filed wrong you can change it on the row.
+          Six buying runs, in this order: <strong className="font-semibold text-foreground">1 Cabinetry</strong> (made to measure, longest lead time — start it on day one), <strong className="font-semibold text-foreground">2 Furniture</strong> (trade suppliers), <strong className="font-semibold text-foreground">3 Online furniture</strong> (Home Centre, Home Box, Pan Home, Ikea, Danube…), <strong className="font-semibold text-foreground">4 Appliances</strong>, <strong className="font-semibold text-foreground">5 Dragon Mart pick-up</strong> (anything you collect yourself, including all the wall and building material), <strong className="font-semibold text-foreground">6 Household</strong>. Switch the grouping to Priority to see them. The run is worked out from the item and its supplier; if one is filed wrong you can change it on the row.
         </>
       ),
     },
@@ -98,19 +98,16 @@ const Guide = () => {
               <p>Each drawing the designer uploads creates its own task: order everything that drawing specifies <strong className="font-semibold text-foreground">within 24 hours</strong> of it arriving.</p>
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Counting back from the handover date.</h3>
-              <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[var(--radius)] border border-border p-3">
-                  <p className="font-semibold text-foreground">Three days before</p>
-                  <p>Every item delivered on site; Ali booked for the light fixtures, the wall art and the appliance installation; the wallpaper arranged, if the project has any.</p>
-                </div>
-                <div className="rounded-[var(--radius)] border border-border p-3">
-                  <p className="font-semibold text-foreground">Two days before</p>
-                  <p>The operations team unpacks and sets everything up, and you are on site doing the quality check.</p>
-                </div>
-              </div>
+              <h3 className="font-semibold text-foreground">The site run, before handover.</h3>
+              <ol className="mt-2 list-decimal space-y-1 pl-5">
+                <li><strong className="font-semibold text-foreground">Wall design work</strong> — the contractor finishes the walls. Delivery follows; on a tight programme they can overlap, but the walls lead.</li>
+                <li><strong className="font-semibold text-foreground">Everything delivered on site.</strong></li>
+                <li><strong className="font-semibold text-foreground">Ali, and the wallpaper</strong> — hanging items, light fixtures, wall art and the small installations. Wallpaper runs the same day.</li>
+                <li><strong className="font-semibold text-foreground">Operations</strong> — final unpack and cleaning.</li>
+                <li><strong className="font-semibold text-foreground">You on site</strong> — the quality check.</li>
+              </ol>
             </div>
-            <p className="italic">These dates move by themselves if the handover date changes.</p>
+            <p className="italic">These dates move by themselves if the handover date changes. Nothing is ever scheduled on handover day itself.</p>
           </div>
         </section>
       )}
