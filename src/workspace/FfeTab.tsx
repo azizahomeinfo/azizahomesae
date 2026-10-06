@@ -14,7 +14,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useBrief, useMembers } from "./queries";
-import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, type Project } from "./projectQueries";
+import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, useUpdateProject, type Project } from "./projectQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import type { WorkspaceRole } from "./access";
 import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -1103,6 +1104,14 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const { data: needsBudget } = useNeedsBudget(project.id);
   const { data: budgetCosting } = useCosting(projectOwner(project.id), false);
   const update = useUpdateFfeItems();
+  const updateProject = useUpdateProject();
+  const qc = useQueryClient();
+  // Empty clears the override, returning to the three-day rule; ws_handover_tasks reschedules the run in the DB.
+  const setOnSiteBy = (v: string | null) => updateProject.mutate({ id: project.id, values: { on_site_by: v } }, {
+    onSuccess: () => { toast.success(v ? `On site by ${shortDate(v)}` : "Back to three days before handover");
+      qc.invalidateQueries({ queryKey: ["ws", "project"] }); qc.invalidateQueries({ queryKey: ["ws", "tasks"] }); qc.invalidateQueries({ queryKey: ["ws", "my-tasks"] }); },
+    onError: (e) => toast.error(errMsg(e, "Could not save")),
+  });
   const [view, setView] = useState<"table" | "board" | "delivery">("table");
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   const [sel, setSel] = useState<Set<string>>(new Set());
@@ -1239,7 +1248,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       {view === "delivery" ? (
         <DeliveryView rows={shownRows} total={allRows.length} filtered={supplierFilter !== "all" || searching}
           filterLabel={[supplierFilter !== "all" && supplierFilter, searching && `“${search.trim()}”`].filter(Boolean).join(" · ")}
-          handover={project.handover_date} canEdit={canEdit} rowHi={rowHi}
+          handover={project.handover_date} override={project.on_site_by} onSetOnSite={setOnSiteBy} canEdit={canEdit} rowHi={rowHi}
           onEta={(id, eta) => apply([id], { eta })} />
       ) : view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
@@ -1357,12 +1366,12 @@ const pl = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const isDelivered = (r: FfeRow) => !!r.delivered_on || DONE_STAGES.includes(r.stage);
 
 /** Everything must be on site three days before handover (the coordinator's `delivered` deadline). No money here. */
-const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, rowHi, onEta }: {
-  rows: FfeRow[]; total: number; filtered: boolean; filterLabel: string; handover: string | null; canEdit: boolean;
+const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, onSetOnSite, canEdit, rowHi, onEta }: {
+  rows: FfeRow[]; total: number; filtered: boolean; filterLabel: string; handover: string | null; override: string | null; onSetOnSite: (v: string | null) => void; canEdit: boolean;
   rowHi: (r: FfeRow) => string | false; onEta: (id: string, eta: string | null) => void;
 }) => {
   const [showDelivered, setShowDelivered] = useState(false);
-  const onSiteBy = handover ? addDays(handover, -3) : null;
+  const onSiteBy = override ?? (handover ? addDays(handover, -3) : null);
   const today = todayISO();
   const open = rows.filter((r) => !isDelivered(r));
   const delivered = rows.filter(isDelivered);
@@ -1408,7 +1417,12 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, r
     <div className="space-y-4">
       <div className={cn("rounded-[var(--radius)] border p-4 space-y-1",
         late.length ? "border-destructive/60 bg-destructive/10" : "border-success/60 bg-success/10")}>
-        <p className="text-xs text-muted-foreground">Handover {shortDate(handover)} · everything on site by {shortDate(onSiteBy)}</p>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>Handover {shortDate(handover)} · everything on site by {shortDate(onSiteBy)}{override ? " (set for this job)" : " — the standard three days before handover"}</span>
+          {canEdit && <Input type="date" aria-label="On site by" value={override ?? ""} className="h-8 w-40 text-sm"
+            onChange={(e) => onSetOnSite(e.target.value || null)} />}
+        </div>
+        {canEdit && <p className="text-xs text-muted-foreground">Normally three days before handover. Change it only when the job is compressed. Clear the date to go back to that.</p>}
         <p className={cn("text-lg font-semibold", late.length ? "text-destructive" : "text-success")}>
           {late.length ? `${pl(late.length, "item")} ${late.length === 1 ? "is" : "are"} due after ${late.length === 1 ? "it" : "they"} must be on site`
             : `On track — everything due before ${shortDate(onSiteBy)}`}

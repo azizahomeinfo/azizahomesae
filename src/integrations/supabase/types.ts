@@ -1213,6 +1213,7 @@ export type Database = {
           next_due: string | null
           next_due_date: string | null
           notes: string | null
+          on_site_by: string | null
           overall_pct: number
           pay_status: Database["public"]["Enums"]["pay_status"]
           proc_pct: number
@@ -1251,6 +1252,7 @@ export type Database = {
           next_due?: string | null
           next_due_date?: string | null
           notes?: string | null
+          on_site_by?: string | null
           overall_pct?: number
           pay_status?: Database["public"]["Enums"]["pay_status"]
           proc_pct?: number
@@ -1289,6 +1291,7 @@ export type Database = {
           next_due?: string | null
           next_due_date?: string | null
           notes?: string | null
+          on_site_by?: string | null
           overall_pct?: number
           pay_status?: Database["public"]["Enums"]["pay_status"]
           proc_pct?: number
