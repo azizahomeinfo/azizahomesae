@@ -25,7 +25,7 @@ import { markReturnItem, useReturnToItem } from "./scrollMemory";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -568,7 +568,7 @@ const useFfeGroupBy = (fallback: GroupBy): [GroupBy, (g: GroupBy) => void] => {
   useEffect(() => { setG(read()); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return [g, (v) => { setG(v); try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } }];
 };
-const byBand = (rows: FfeRow[]) => PRIORITY_BANDS.map((b, i) => [`${i + 1} · ${b}`, rows.filter((r) => bandOf(r) === i + 1)
+const byBand = (rows: FfeRow[]) => PRIORITY_BANDS.map((_, i) => [`${i + 1} · ${bandLabel(i + 1)}`, rows.filter((r) => bandOf(r) === i + 1)
   .sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]).filter(([, l]) => l.length);
 
 export const GroupToggle = ({ value, onChange }: { value: GroupBy; onChange: (g: GroupBy) => void }) => (
@@ -832,10 +832,10 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         <F label="Priority" className="col-span-2 md:col-span-1">
           {canEdit ? (
             <Select value={String(bandOf(r))} onValueChange={(v) => save(r.id, { priority_band: Number(v) })}>
-              <SelectTrigger className="h-7 text-xs" aria-label={`Priority for ${r.item}`}><SelectValue /></SelectTrigger>
-              <SelectContent>{PRIORITY_BANDS.map((b, i) => <SelectItem key={b} value={String(i + 1)}>{i + 1} · {b}</SelectItem>)}</SelectContent>
+              <SelectTrigger className="h-7 text-xs" aria-label={`Priority for ${r.item}`}><SelectValue>{bandOf(r)} · {bandLabel(bandOf(r))}</SelectValue></SelectTrigger>
+              <SelectContent>{PRIORITY_BANDS.map((_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1} · {bandLabel(i + 1)}</SelectItem>)}</SelectContent>
             </Select>
-          ) : <p className="flex h-7 items-center text-xs">{bandOf(r)} · {PRIORITY_BANDS[bandOf(r) - 1]}</p>}
+          ) : <p className="flex h-7 items-center text-xs">{bandOf(r)} · {bandLabel(bandOf(r))}</p>}
         </F>
       </div>
     </li>
@@ -1186,10 +1186,10 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
     <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
-      <SelectTrigger className="h-8 w-44" aria-label={`Priority for ${r.item}`}><SelectValue /></SelectTrigger>
-      <SelectContent>{PRIORITY_BANDS.map((b, i) => <SelectItem key={b} value={String(i + 1)}>{i + 1} · {b}</SelectItem>)}</SelectContent>
+      <SelectTrigger className="h-8 w-44" aria-label={`Priority for ${r.item}`}><SelectValue>{bandOf(r)} · {bandLabel(bandOf(r))}</SelectValue></SelectTrigger>
+      <SelectContent>{PRIORITY_BANDS.map((_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1} · {bandLabel(i + 1)}</SelectItem>)}</SelectContent>
     </Select>
-  ) : <span className="text-xs whitespace-nowrap">{bandOf(r)} · {PRIORITY_BANDS[bandOf(r) - 1]}</span>;
+  ) : <span className="text-xs whitespace-nowrap">{bandOf(r)} · {bandLabel(bandOf(r))}</span>;
   // Editable unit cost (the coordinator learns the real price when buying); read-only line total beneath.
   const costCell = (r: FfeRow) => canEdit ? (
     <div>
