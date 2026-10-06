@@ -19,7 +19,7 @@ export const GUIDES: Record<WorkspaceRole, Section[]> = {
       title: "Where you work",
       content: (
         <>
-          <Link to="/workspace" className={workspaceLink}>Dashboard</Link> — what needs you today. <Link to="/workspace/projects" className={workspaceLink}>Projects</Link> → a project → Procurement — your main screen; the FF&amp;E tab beside it is the designer&apos;s costed list, Procurement is the buying view. <Link to="/workspace/tasks" className={workspaceLink}>Tasks</Link> — anything with your name and a deadline. <Link to="/workspace/suppliers" className={workspaceLink}>Suppliers</Link> — who we buy from, their terms, and the online-retailer list.
+          <Link to="/workspace" className={workspaceLink}>Dashboard</Link> — what needs you today. <Link to="/workspace/projects" className={workspaceLink}>Projects</Link> → a project → Procurement — your main screen; the FF&amp;E tab beside it is the designer&apos;s costed list, Procurement is the buying view. The <strong className="font-semibold text-foreground">Download list</strong> button on that screen gives you the whole item list to tick off on your final inspection walk-through. <Link to="/workspace/tasks" className={workspaceLink}>Tasks</Link> — anything with your name and a deadline. <Link to="/workspace/suppliers" className={workspaceLink}>Suppliers</Link> — who we buy from, their terms, and the online-retailer list.
         </>
       ),
     },
@@ -31,7 +31,7 @@ export const GUIDES: Record<WorkspaceRole, Section[]> = {
       title: "The order you buy in",
       content: (
         <>
-          Six buying runs, in this order: <strong className="font-semibold text-foreground">1 Cabinetry</strong> (made to measure, longest lead time — start it on day one), <strong className="font-semibold text-foreground">2 Furniture</strong> (trade suppliers), <strong className="font-semibold text-foreground">3 Online furniture</strong> (Home Centre, Home Box, Pan Home, Ikea, Danube…), <strong className="font-semibold text-foreground">4 Appliances</strong>, <strong className="font-semibold text-foreground">5 Dragon Mart pick-up</strong> (anything you collect yourself, including all the wall and building material), <strong className="font-semibold text-foreground">6 Household</strong>. Switch the grouping to Priority to see them. The run is worked out from the item and its supplier; if one is filed wrong you can change it on the row.
+          Nine buying runs, in this order: <strong className="font-semibold text-foreground">1 Cabinetry</strong> (24h — made to measure, longest lead time, start it on day one), <strong className="font-semibold text-foreground">2 Furniture</strong> (24h, trade suppliers), <strong className="font-semibold text-foreground">3 Curtains</strong> (24h), <strong className="font-semibold text-foreground">4 Online furniture</strong> (48h — Home Centre, Home Box, Pan Home, Ikea, Danube…), <strong className="font-semibold text-foreground">5 Appliances</strong> (48h), <strong className="font-semibold text-foreground">6 Dragon Mart pick-up</strong> (day 4 — anything you collect yourself, including all the wall and building material in the same trip), <strong className="font-semibold text-foreground">7 Household</strong> (day 5), <strong className="font-semibold text-foreground">8 Switches</strong> (the day the contractor goes in), <strong className="font-semibold text-foreground">9 Wallpaper</strong> (ordered by day 5, installed on delivery day). Runs 1 and 2 go to the factory as one order — cabinetry and furniture are ordered together. Switch the grouping to Priority to see them. The run is worked out from the item and its supplier; if one is filed wrong you can change it on the row.
         </>
       ),
     },
@@ -53,7 +53,7 @@ export const GUIDES: Record<WorkspaceRole, Section[]> = {
     },
     {
       title: "Building Material",
-      content: <>An internal section for paint, adhesive, fixings and the like. Real purchases for you; it never appears on the client&apos;s proposal or contract.</>,
+      content: <>An internal section for paint, adhesive, fixings and the like. Real purchases for you; it never appears on the client&apos;s proposal or contract. It is bought on the <strong className="font-semibold text-foreground">Dragon Mart pick-up run (6)</strong>, collected in the same trip as the Dragon Mart items. A switch listed in this section is still bought on the switch run, to the contractor&apos;s count.</>,
     },
     {
       title: "What you can't see, and why",
