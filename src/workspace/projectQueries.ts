@@ -10,7 +10,7 @@ export type Project = Pick<
   | "id" | "code" | "lead_id" | "name" | "client" | "property" | "unit" | "unit_type" | "location" | "drive_url"
   | "sales_id" | "designer_id" | "coordinator_id" | "start_date" | "handover_date" | "actual_handover"
   | "stage" | "risk" | "overall_pct" | "proc_pct" | "received"
-  | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at" | "confirmed_at" | "confirmed_by"
+  | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at" | "confirmed_at" | "confirmed_by" | "on_site_by"
 >;
 export type Task = Pick<
   T["tasks"]["Row"],
@@ -32,7 +32,7 @@ export type ProjectFile = Pick<
 
 // projects.value is revoked from staff (contract value lives in project_value_private) — never list it here.
 const PROJECT_COLS =
-  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at";
+  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at, on_site_by";
 const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, due_at, priority, done, done_at, created_at, drawing_kind";
 const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
 const CR_COLS = "id, project_id, title, detail, raised_on, days_delta, status, decided_at, decided_by";
