@@ -32,6 +32,7 @@ import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
 import { useSnags } from "./ffeQueries";
 import { SnagList } from "./SnagList";
+import { CoordinatorCountdown } from "./CoordinatorCountdown";
 
 const Card = ({ title, children, className }: { title: string; children: ReactNode; className?: string }) => (
   <section className={cn("rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3", className)}>
@@ -179,8 +180,12 @@ export const TimelineTab = ({ project }: { project: Project }) => {
 /* ---------------- tasks ---------------- */
 
 export const TasksTab = ({ project }: { project: Project }) => {
-  const { data: tasks = [], isLoading } = useProjectTasks(project.id);
+  const { member } = useWorkspace();
+  const { data: tasks = [], isLoading, error } = useProjectTasks(project.id);
+  const countdown = member?.role === "coordinator" || member?.role === "gm";
   return (
+    <div className="space-y-6">
+    {countdown && <CoordinatorCountdown project={project} tasks={tasks} loading={isLoading} error={error} />}
     <Card title="Tasks">
       <NewTaskForm project={project} />
       {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : tasks.length === 0 ? (
@@ -189,6 +194,7 @@ export const TasksTab = ({ project }: { project: Project }) => {
         <ul className="divide-y divide-border">{tasks.map((t) => <TaskRow key={t.id} task={t} />)}</ul>
       )}
     </Card>
+    </div>
   );
 };
 
