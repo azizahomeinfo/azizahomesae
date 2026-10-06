@@ -1169,6 +1169,14 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   // [heading, shown rows, whole group]; search applied last, empty groups hidden while searching.
   const shownGroups = groups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
     .filter(([, l]) => !searching || l.length);
+  // Inspection export: the whole list in the same on-screen order, ignoring any active filter/search.
+  const exportRows = useMemo(() => {
+    if (groupBy === "supplier") return bySupplier(allRows).flatMap(([, l]) => l);
+    const client = allRows.filter((r) => !isInternal(r));
+    const internal = allRows.filter(isInternal);
+    const g = groupBy === "room" ? byRoom(client) : byBand(client);
+    return [...g.flatMap(([, l]) => l), ...internal];
+  }, [allRows, groupBy]);
   // Rows in the order on screen — the buying bar walks these.
   const flat = view !== "table" ? shownRows : shownGroups.flatMap(([, l]) => l);
   const rowHi = (r: FfeRow) => r.id === itemId && BAR_ROW_HI;
@@ -1232,6 +1240,13 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
           <Button size="sm" variant={view === "delivery" ? "default" : "outline"} onClick={() => setView("delivery")}>Delivery</Button>
+          {canEdit && (
+            <Button size="sm" variant="outline" disabled={!allRows.length}
+              title={allRows.length ? "Downloads the whole list, not the current filter" : "No items to download yet"}
+              onClick={() => downloadFfeCsv(project.code, exportRows)}>
+              <Download className="mr-1 h-3.5 w-3.5" />Download list
+            </Button>
+          )}
           {view === "table" && (
             <GroupToggle value={groupBy} onChange={setGroupBy} />
           )}
