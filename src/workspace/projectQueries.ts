@@ -34,12 +34,16 @@ const FILE_FIELDS = [
 ] as const;
 export type ProjectFile = Pick<T["project_files"]["Row"], (typeof FILE_FIELDS)[number]>;
 
-const PROJECT_COLS = PROJECT_FIELDS.join(", ");
-const TASK_COLS = TASK_FIELDS.join(", ");
-const ISSUE_COLS = ISSUE_FIELDS.join(", ");
-const CR_COLS = CR_FIELDS.join(", ");
-const HANDOVER_COLS = HANDOVER_FIELDS.join(", ");
-const FILE_COLS = FILE_FIELDS.join(", ");
+// join() widens to string; Join keeps the literal so the supabase client can parse the columns.
+type Join<A extends readonly string[], S extends string> = A extends readonly [infer H extends string, ...infer R extends string[]]
+  ? R extends [] ? H : `${H}${S}${Join<R, S>}`
+  : "";
+const PROJECT_COLS = PROJECT_FIELDS.join(", ") as Join<typeof PROJECT_FIELDS, ", ">;
+const TASK_COLS = TASK_FIELDS.join(", ") as Join<typeof TASK_FIELDS, ", ">;
+const ISSUE_COLS = ISSUE_FIELDS.join(", ") as Join<typeof ISSUE_FIELDS, ", ">;
+const CR_COLS = CR_FIELDS.join(", ") as Join<typeof CR_FIELDS, ", ">;
+const HANDOVER_COLS = HANDOVER_FIELDS.join(", ") as Join<typeof HANDOVER_FIELDS, ", ">;
+const FILE_COLS = FILE_FIELDS.join(", ") as Join<typeof FILE_FIELDS, ", ">;
 const BUCKET = "workspace";
 
 export const pKeys = {
