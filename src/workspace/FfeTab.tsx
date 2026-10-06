@@ -1103,7 +1103,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const { data: needsBudget } = useNeedsBudget(project.id);
   const { data: budgetCosting } = useCosting(projectOwner(project.id), false);
   const update = useUpdateFfeItems();
-  const [view, setView] = useState<"table" | "board">("table");
+  const [view, setView] = useState<"table" | "board" | "delivery">("table");
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
@@ -1136,7 +1136,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const shownGroups = groups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
     .filter(([, l]) => !searching || l.length);
   // Rows in the order on screen — the buying bar walks these.
-  const flat = view === "board" ? shownRows : shownGroups.flatMap(([, l]) => l);
+  const flat = view !== "table" ? shownRows : shownGroups.flatMap(([, l]) => l);
   const rowHi = (r: FfeRow) => r.id === itemId && BAR_ROW_HI;
   const buyBtn = (r: FfeRow) => canEdit && r.id !== itemId ? (
     <button type="button" className="ml-2 text-[10px] text-primary underline" onClick={() => setItem(r.id)}>Buy</button>
@@ -1197,6 +1197,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <SearchBox value={search} onChange={setSearch} shown={shownRows.length} total={rows.length} />
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
+          <Button size="sm" variant={view === "delivery" ? "default" : "outline"} onClick={() => setView("delivery")}>Delivery</Button>
           {view === "table" && (
             <GroupToggle value={groupBy} onChange={setGroupBy} />
           )}
@@ -1228,14 +1229,19 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         )}
       </Section>
 
-      <BuyingBar rows={flat} itemId={itemId} ready={!isLoading} supplierLabel={supplierOf} onSelect={setItem} showCost={canEdit}
+      <BuyingBar rows={flat} itemId={itemId} ready={!isLoading} supplierLabel={supplierOf} onSelect={setItem} showCost={canEdit && view !== "delivery"}
         controls={(r) => <>
-          {canEdit && <EditCell key={r.id} label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24"
+          {canEdit && view !== "delivery" && <EditCell key={r.id} label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24"
             placeholder="Unit cost" onSave={(v) => apply([r.id], { unit_cost: v.trim() === "" ? null : Number(v) })} />}
           <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} />
         </>} />
       {searching && !shownRows.length && <NoMatches q={search} onClear={() => setSearch("")} />}
-      {view === "board" ? (
+      {view === "delivery" ? (
+        <DeliveryView rows={shownRows} total={allRows.length} filtered={supplierFilter !== "all" || searching}
+          filterLabel={[supplierFilter !== "all" && supplierFilter, searching && `“${search.trim()}”`].filter(Boolean).join(" · ")}
+          handover={project.handover_date} canEdit={canEdit} rowHi={rowHi}
+          onEta={(id, eta) => apply([id], { eta })} />
+      ) : view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
       ) : shownGroups.map(([room, items, whole]) => (
         <Section key={room} title={`${room} · ${searching ? `${items.length} of ${whole.length}` : whole.length} item${whole.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(whole.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
@@ -1336,6 +1342,145 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           </AlertDialog>
         );
       })()}
+    </div>
+  );
+};
+
+/* ---------------- delivery timeline ---------------- */
+
+const addDays = (iso: string, n: number) => {
+  const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10);
+};
+const daysBetween = (a: string, b: string) =>
+  Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+const pl = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const isDelivered = (r: FfeRow) => !!r.delivered_on || DONE_STAGES.includes(r.stage);
+
+/** Everything must be on site three days before handover (the coordinator's `delivered` deadline). No money here. */
+const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, rowHi, onEta }: {
+  rows: FfeRow[]; total: number; filtered: boolean; filterLabel: string; handover: string | null; canEdit: boolean;
+  rowHi: (r: FfeRow) => string | false; onEta: (id: string, eta: string | null) => void;
+}) => {
+  const [showDelivered, setShowDelivered] = useState(false);
+  const onSiteBy = handover ? addDays(handover, -3) : null;
+  const today = todayISO();
+  const open = rows.filter((r) => !isDelivered(r));
+  const delivered = rows.filter(isDelivered);
+  const late = onSiteBy ? open.filter((r) => r.eta && r.eta > onSiteBy).sort((a, b) => (b.eta! < a.eta! ? -1 : b.eta! > a.eta! ? 1 : 0)) : [];
+  const noEta = open.filter((r) => r.ordered_on && !r.eta);
+  const notOrdered = open.filter((r) => !r.ordered_on);
+  const notOrderedBySup = bySupplier(notOrdered);
+  const dated = open.filter((r) => r.eta).sort((a, b) => a.eta!.localeCompare(b.eta!));
+  const dates = [...new Set(dated.map((r) => r.eta!))];
+
+  const etaCell = (r: FfeRow) => canEdit ? (
+    <Input type="date" aria-label={`ETA for ${r.item}`} value={r.eta ?? ""}
+      className={cn("h-8 w-36 text-sm", onSiteBy && r.eta && r.eta > onSiteBy && "text-destructive")}
+      onChange={(e) => onEta(r.id, e.target.value || null)} />
+  ) : <span className={cn("text-sm whitespace-nowrap", onSiteBy && r.eta && r.eta > onSiteBy && "text-destructive")}>{shortDate(r.eta)}</span>;
+
+  const Row = ({ r, extra }: { r: FfeRow; extra?: ReactNode }) => (
+    <li data-ffe-row={r.id} className={cn("flex flex-col gap-2 border-t border-border py-2 first:border-t-0 sm:flex-row sm:items-center sm:justify-between", r.review && "opacity-80", rowHi(r))}>
+      <div className="min-w-0">
+        <p className="text-sm break-words"><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>
+        <p className="text-xs text-muted-foreground">{r.room} · {supplierOf(r)}{r.review_note && r.review ? ` · ${r.review_note}` : ""}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">{extra}{etaCell(r)}</div>
+    </li>
+  );
+  const Group = ({ title, tone, children }: { title: string; tone?: "destructive" | "warning"; children: ReactNode }) => (
+    <section className={cn("rounded-[var(--radius)] border bg-card p-3 md:p-4 space-y-2",
+      tone === "destructive" ? "border-destructive/50" : tone === "warning" ? "border-warning/50" : "border-border")}>
+      <h3 className={cn("text-sm font-medium", tone === "destructive" && "text-destructive", tone === "warning" && "text-warning")}>{title}</h3>
+      {children}
+    </section>
+  );
+
+  const scope = filtered ? `Showing ${rows.length} of ${total} items (${filterLabel}) — not the whole project.` : `Whole project · ${rows.length} items.`;
+  if (!onSiteBy) return (
+    <div className="rounded-[var(--radius)] border border-warning/50 bg-warning/10 p-4 space-y-1">
+      <p className="text-base font-medium">No handover date set — there is no on-site deadline to measure against.</p>
+      <p className="text-xs text-muted-foreground">{scope}</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className={cn("rounded-[var(--radius)] border p-4 space-y-1",
+        late.length ? "border-destructive/60 bg-destructive/10" : "border-success/60 bg-success/10")}>
+        <p className="text-xs text-muted-foreground">Handover {shortDate(handover)} · everything on site by {shortDate(onSiteBy)}</p>
+        <p className={cn("text-lg font-semibold", late.length ? "text-destructive" : "text-success")}>
+          {late.length ? `${pl(late.length, "item")} ${late.length === 1 ? "is" : "are"} due after ${late.length === 1 ? "it" : "they"} must be on site`
+            : `On track — everything due before ${shortDate(onSiteBy)}`}
+        </p>
+        {!late.length && (noEta.length > 0 || notOrdered.length > 0) && (
+          <p className="text-sm text-warning">…of the dates known: {noEta.length} ordered without a date, {notOrdered.length} not ordered yet.</p>
+        )}
+        <p className="text-xs text-muted-foreground">{scope}</p>
+      </div>
+
+      {late.length > 0 && (
+        <Group title={`Arriving too late · ${late.length}`} tone="destructive">
+          <ul>{late.map((r) => <Row key={r.id} r={r} extra={<span className="text-xs font-medium text-destructive whitespace-nowrap">{pl(daysBetween(onSiteBy, r.eta!), "day")} late</span>} />)}</ul>
+        </Group>
+      )}
+      {noEta.length > 0 && (
+        <Group title={`No delivery date yet · ${noEta.length}`} tone="warning">
+          <ul>{noEta.map((r) => <Row key={r.id} r={r} extra={<span className="text-xs text-muted-foreground whitespace-nowrap">Ordered {shortDate(r.ordered_on)}</span>} />)}</ul>
+        </Group>
+      )}
+      {notOrdered.length > 0 && (
+        <Group title={`Not ordered yet · ${notOrdered.length}`} tone="warning">
+          {(() => { const left = daysBetween(today, onSiteBy); return (
+            <p className={cn("text-xs", left < 0 ? "text-destructive" : "text-muted-foreground")}>
+              {left < 0 ? `On-site deadline passed ${pl(-left, "day")} ago.` : `${pl(left, "day")} left until everything must be on site.`}
+            </p>); })()}
+          {notOrderedBySup.map(([sup, list]) => (
+            <div key={sup} className="space-y-1 pt-2">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{sup} · {list.length}</p>
+              <ul>{list.map((r) => <Row key={r.id} r={r} />)}</ul>
+            </div>
+          ))}
+        </Group>
+      )}
+
+      <Group title={`Timeline · ${dated.length} with a date`}>
+        {!dates.length && <p className="text-sm text-muted-foreground">No delivery dates yet.</p>}
+        <ol className="space-y-3">
+          {(() => {
+            const out: ReactNode[] = []; let marked = false;
+            const marker = (
+              <li key="deadline" className="flex items-center gap-2 py-1" aria-label="On-site deadline">
+                <span className="h-px flex-1 bg-destructive" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-destructive whitespace-nowrap">On site by {shortDate(onSiteBy)}</span>
+                <span className="h-px flex-1 bg-destructive" />
+              </li>
+            );
+            for (const d of dates) {
+              if (!marked && d > onSiteBy) { out.push(marker); marked = true; }
+              const list = dated.filter((r) => r.eta === d);
+              out.push(
+                <li key={d} className="space-y-1">
+                  <p className={cn("text-xs font-medium", d > onSiteBy ? "text-destructive" : "text-foreground")}>{shortDate(d)} · {pl(list.length, "item")}</p>
+                  <ul className="border-l border-border pl-3">{list.map((r) => <Row key={r.id} r={r} />)}</ul>
+                </li>,
+              );
+            }
+            if (!marked) out.push(marker);
+            return out;
+          })()}
+        </ol>
+      </Group>
+
+      {delivered.length > 0 && (
+        <Group title={`Already delivered · ${delivered.length}`}>
+          <Button size="sm" variant="outline" onClick={() => setShowDelivered(!showDelivered)}>{showDelivered ? "Hide" : "Show"} delivered items</Button>
+          {showDelivered && <ul>{delivered.map((r) => (
+            <li key={r.id} className="border-t border-border py-2 text-sm first:border-t-0">
+              {r.item} <span className="text-muted-foreground">×{Number(r.qty)} · {r.room} · {supplierOf(r)} · delivered {shortDate(r.delivered_on)}</span>
+            </li>))}</ul>}
+        </Group>
+      )}
     </div>
   );
 };
