@@ -136,8 +136,21 @@ export const useSaveSupplier = () => {
 /* ---------------- purchasing priority ---------------- */
 
 /** Buying runs for the coordinator; index + 1 is the band number defined by ws_ffe_band. A work queue, not a taxonomy. */
-export const PRIORITY_BANDS = ["Cabinetry", "Furniture", "Online furniture", "Appliances", "Dragon Mart pick-up", "Household"] as const;
-/** 1–6. Derived in the database on write (ws_ffe_band; supplier decides online vs pick-up; hand overrides stick); 6 (the unsorted end) only covers a row not yet saved. */
+export const PRIORITY_BANDS = [
+  "Cabinetry",            // 1
+  "Furniture",            // 2
+  "Curtains",             // 3
+  "Online furniture",     // 4
+  "Appliances",           // 5
+  "Dragon Mart pick-up",  // 6 — includes all wall and building material
+  "Household",            // 7
+  "Switches",             // 8
+  "Wallpaper",            // 9
+] as const;
+/** Safe during band-definition rollouts, including invalid or unknown band numbers. */
+export const bandLabel = (n: number): string =>
+  PRIORITY_BANDS.find((_, i) => i + 1 === n) ?? "Unsorted";
+/** Derived in the database on write (ws_ffe_band; hand overrides stick); the final band covers a row not yet saved. */
 export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? PRIORITY_BANDS.length;
 
 /** The designer's spec — dims, spec, notes — read-only wherever the item is bought. Empty parts are dropped. */
