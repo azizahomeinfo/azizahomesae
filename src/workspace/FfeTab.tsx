@@ -1353,8 +1353,8 @@ const addDays = (iso: string, n: number) => {
 };
 const daysBetween = (a: string, b: string) =>
   Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+const pl = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const isDelivered = (r: FfeRow) => !!r.delivered_on || DONE_STAGES.includes(r.stage);
-const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 /** Everything must be on site three days before handover (the coordinator's `delivered` deadline). No money here. */
 const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, rowHi, onEta }: {
@@ -1410,7 +1410,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, r
         late.length ? "border-destructive/60 bg-destructive/10" : "border-success/60 bg-success/10")}>
         <p className="text-xs text-muted-foreground">Handover {shortDate(handover)} · everything on site by {shortDate(onSiteBy)}</p>
         <p className={cn("text-lg font-semibold", late.length ? "text-destructive" : "text-success")}>
-          {late.length ? `${plural(late.length, "item")} ${late.length === 1 ? "is" : "are"} due after ${late.length === 1 ? "it" : "they"} must be on site`
+          {late.length ? `${pl(late.length, "item")} ${late.length === 1 ? "is" : "are"} due after ${late.length === 1 ? "it" : "they"} must be on site`
             : `On track — everything due before ${shortDate(onSiteBy)}`}
         </p>
         {!late.length && (noEta.length > 0 || notOrdered.length > 0) && (
@@ -1421,7 +1421,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, r
 
       {late.length > 0 && (
         <Group title={`Arriving too late · ${late.length}`} tone="destructive">
-          <ul>{late.map((r) => <Row key={r.id} r={r} extra={<span className="text-xs font-medium text-destructive whitespace-nowrap">{plural(daysBetween(onSiteBy, r.eta!), "day")} late</span>} />)}</ul>
+          <ul>{late.map((r) => <Row key={r.id} r={r} extra={<span className="text-xs font-medium text-destructive whitespace-nowrap">{pl(daysBetween(onSiteBy, r.eta!), "day")} late</span>} />)}</ul>
         </Group>
       )}
       {noEta.length > 0 && (
@@ -1433,7 +1433,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, r
         <Group title={`Not ordered yet · ${notOrdered.length}`} tone="warning">
           {(() => { const left = daysBetween(today, onSiteBy); return (
             <p className={cn("text-xs", left < 0 ? "text-destructive" : "text-muted-foreground")}>
-              {left < 0 ? `On-site deadline passed ${plural(-left, "day")} ago.` : `${plural(left, "day")} left until everything must be on site.`}
+              {left < 0 ? `On-site deadline passed ${pl(-left, "day")} ago.` : `${pl(left, "day")} left until everything must be on site.`}
             </p>); })()}
           {notOrderedBySup.map(([sup, list]) => (
             <div key={sup} className="space-y-1 pt-2">
@@ -1461,7 +1461,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, canEdit, r
               const list = dated.filter((r) => r.eta === d);
               out.push(
                 <li key={d} className="space-y-1">
-                  <p className={cn("text-xs font-medium", d > onSiteBy ? "text-destructive" : "text-foreground")}>{shortDate(d)} · {plural(list.length, "item")}</p>
+                  <p className={cn("text-xs font-medium", d > onSiteBy ? "text-destructive" : "text-foreground")}>{shortDate(d)} · {pl(list.length, "item")}</p>
                   <ul className="border-l border-border pl-3">{list.map((r) => <Row key={r.id} r={r} />)}</ul>
                 </li>,
               );
