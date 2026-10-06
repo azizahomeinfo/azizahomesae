@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { BookPlus, Check, ChevronsUpDown, ExternalLink, Link2, Pencil, Plus, Trash2 } from "lucide-react";
+import { BookPlus, Check, ChevronsUpDown, Download, ExternalLink, Link2, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
@@ -76,6 +76,28 @@ const bySupplier = (rows: FfeRow[]) => {
 };
 /** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
 const buyable = (r: FfeRow) => !r.review && !DONE_STAGES.includes(r.stage);
+
+// ---- Final-inspection CSV -------------------------------------------------
+// A paper checklist for the walk-through: no money columns for anybody, and
+// rows are built field by field so a future FfeRow column can never leak in.
+const CSV_HEADER = ["Check", "Ref", "Room", "Item", "Qty", "Unit", "Dims", "Spec", "Notes", "Supplier", "Stage", "ETA", "Delivered"];
+const csvCell = (v: string | number | null | undefined) => {
+  const s = (v === null || v === undefined ? "" : String(v)).replace(/[\r\n]+/g, " ");
+  return `"${s.replace(/"/g, '""')}"`;
+};
+const ffeCsvRow = (r: FfeRow) => [
+  "", r.ref, r.room, r.item, r.qty, r.unit, r.dims, r.spec, r.notes, supplierOf(r), r.stage, r.eta, r.delivered_on,
+].map(csvCell).join(",");
+const downloadFfeCsv = (code: string, rows: FfeRow[]) => {
+  const body = [CSV_HEADER.map(csvCell).join(","), ...rows.map(ffeCsvRow)].join("\r\n");
+  const blob = new Blob(["\uFEFF" + body], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${code} FF&E ${todayISO()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 /** Every whitespace-separated term must appear somewhere in the row's text fields (never cost). Blank query matches all. */
 export const matchesSearch = (r: FfeRow, q: string) => {
@@ -1147,6 +1169,14 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   // [heading, shown rows, whole group]; search applied last, empty groups hidden while searching.
   const shownGroups = groups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
     .filter(([, l]) => !searching || l.length);
+  // Inspection export: the whole list in the same on-screen order, ignoring any active filter/search.
+  const exportRows = useMemo(() => {
+    if (groupBy === "supplier") return bySupplier(allRows).flatMap(([, l]) => l);
+    const client = allRows.filter((r) => !isInternal(r));
+    const internal = allRows.filter(isInternal);
+    const g = groupBy === "room" ? byRoom(client) : byBand(client);
+    return [...g.flatMap(([, l]) => l), ...internal];
+  }, [allRows, groupBy]);
   // Rows in the order on screen — the buying bar walks these.
   const flat = view !== "table" ? shownRows : shownGroups.flatMap(([, l]) => l);
   const rowHi = (r: FfeRow) => r.id === itemId && BAR_ROW_HI;
@@ -1210,6 +1240,13 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>Table</Button>
           <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Phase board</Button>
           <Button size="sm" variant={view === "delivery" ? "default" : "outline"} onClick={() => setView("delivery")}>Delivery</Button>
+          {canEdit && (
+            <Button size="sm" variant="outline" disabled={!allRows.length}
+              title={allRows.length ? "Downloads the whole list, not the current filter" : "No items to download yet"}
+              onClick={() => downloadFfeCsv(project.code, exportRows)}>
+              <Download className="mr-1 h-3.5 w-3.5" />Download list
+            </Button>
+          )}
           {view === "table" && (
             <GroupToggle value={groupBy} onChange={setGroupBy} />
           )}
