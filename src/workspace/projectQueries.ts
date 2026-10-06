@@ -5,39 +5,41 @@ import { keys } from "./queries";
 import { PROJECT_STAGES, type ProjectStage } from "./projectConstants";
 
 type T = Database["public"]["Tables"];
-export type Project = Pick<
-  T["projects"]["Row"],
-  | "id" | "code" | "lead_id" | "name" | "client" | "property" | "unit" | "unit_type" | "location" | "drive_url"
-  | "sales_id" | "designer_id" | "coordinator_id" | "start_date" | "handover_date" | "actual_handover"
-  | "stage" | "risk" | "overall_pct" | "proc_pct" | "received"
-  | "next_due" | "next_due_date" | "pay_status" | "created_at" | "updated_at" | "confirmed_at" | "confirmed_by" | "on_site_by"
->;
-export type Task = Pick<
-  T["tasks"]["Row"],
-  "id" | "project_id" | "lead_id" | "title" | "assignee_id" | "due_date" | "due_at" | "priority" | "done" | "done_at" | "created_at" | "drawing_kind"
->;
-export type Issue = Pick<
-  T["issues"]["Row"],
-  "id" | "project_id" | "title" | "detail" | "severity" | "owner_id" | "raised_on" | "status" | "resolved_at"
->;
-export type ChangeRequest = Pick<
-  T["change_requests"]["Row"],
-  "id" | "project_id" | "title" | "detail" | "raised_on" | "days_delta" | "status" | "decided_at" | "decided_by"
-> & { cost_delta: number | null };
-export type HandoverItem = Pick<T["handover_items"]["Row"], "id" | "project_id" | "label" | "sort_order" | "done" | "done_at" | "done_by">;
-export type ProjectFile = Pick<
-  T["project_files"]["Row"],
-  "id" | "project_id" | "lead_id" | "storage_path" | "file_name" | "category" | "size_bytes" | "uploaded_by" | "created_at" | "in_drive"
->;
+// Each type is derived from its field list, and each select string is built from the same
+// list, so a field in the type that isn't selected is impossible. projects.value is revoked
+// from staff (contract value lives in project_value_private) — never list it here.
+const PROJECT_FIELDS = [
+  "id", "code", "lead_id", "name", "client", "property", "unit", "unit_type", "location", "drive_url",
+  "sales_id", "designer_id", "coordinator_id", "start_date", "handover_date", "actual_handover",
+  "stage", "risk", "overall_pct", "proc_pct", "received",
+  "next_due", "next_due_date", "pay_status", "created_at", "updated_at", "confirmed_at", "confirmed_by", "on_site_by",
+] as const;
+export type Project = Pick<T["projects"]["Row"], (typeof PROJECT_FIELDS)[number]>;
+const TASK_FIELDS = [
+  "id", "project_id", "lead_id", "title", "assignee_id", "due_date", "due_at", "priority", "done", "done_at", "created_at", "drawing_kind", "auto_kind",
+] as const;
+export type Task = Pick<T["tasks"]["Row"], (typeof TASK_FIELDS)[number]>;
+const ISSUE_FIELDS = [
+  "id", "project_id", "title", "detail", "severity", "owner_id", "raised_on", "status", "resolved_at",
+] as const;
+export type Issue = Pick<T["issues"]["Row"], (typeof ISSUE_FIELDS)[number]>;
+const CR_FIELDS = [
+  "id", "project_id", "title", "detail", "raised_on", "days_delta", "status", "decided_at", "decided_by",
+] as const;
+export type ChangeRequest = Pick<T["change_requests"]["Row"], (typeof CR_FIELDS)[number]> & { cost_delta: number | null };
+const HANDOVER_FIELDS = ["id", "project_id", "label", "sort_order", "done", "done_at", "done_by"] as const;
+export type HandoverItem = Pick<T["handover_items"]["Row"], (typeof HANDOVER_FIELDS)[number]>;
+const FILE_FIELDS = [
+  "id", "project_id", "lead_id", "storage_path", "file_name", "category", "size_bytes", "uploaded_by", "created_at", "in_drive",
+] as const;
+export type ProjectFile = Pick<T["project_files"]["Row"], (typeof FILE_FIELDS)[number]>;
 
-// projects.value is revoked from staff (contract value lives in project_value_private) — never list it here.
-const PROJECT_COLS =
-  "id, code, lead_id, name, client, property, unit, unit_type, location, sales_id, designer_id, coordinator_id, start_date, handover_date, actual_handover, stage, risk, overall_pct, proc_pct, received, next_due, next_due_date, pay_status, drive_url, created_at, updated_at, on_site_by";
-const TASK_COLS = "id, project_id, lead_id, title, assignee_id, due_date, due_at, priority, done, done_at, created_at, drawing_kind";
-const ISSUE_COLS = "id, project_id, title, detail, severity, owner_id, raised_on, status, resolved_at";
-const CR_COLS = "id, project_id, title, detail, raised_on, days_delta, status, decided_at, decided_by";
-const HANDOVER_COLS = "id, project_id, label, sort_order, done, done_at, done_by";
-const FILE_COLS = "id, project_id, lead_id, storage_path, file_name, category, size_bytes, uploaded_by, created_at, in_drive";
+const PROJECT_COLS = PROJECT_FIELDS.join(", ");
+const TASK_COLS = TASK_FIELDS.join(", ");
+const ISSUE_COLS = ISSUE_FIELDS.join(", ");
+const CR_COLS = CR_FIELDS.join(", ");
+const HANDOVER_COLS = HANDOVER_FIELDS.join(", ");
+const FILE_COLS = FILE_FIELDS.join(", ");
 const BUCKET = "workspace";
 
 export const pKeys = {
