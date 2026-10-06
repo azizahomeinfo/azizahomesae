@@ -90,7 +90,7 @@ const ffeCsvRow = (r: FfeRow) => [
 ].map(csvCell).join(",");
 const downloadFfeCsv = (code: string, rows: FfeRow[]) => {
   const body = [CSV_HEADER.map(csvCell).join(","), ...rows.map(ffeCsvRow)].join("\r\n");
-  const blob = new Blob(["﻿" + body], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["﻿" + body], { type: "text/csv;charset=utf-8" }); // ﻿
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
