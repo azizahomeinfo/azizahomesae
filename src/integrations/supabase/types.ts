@@ -1197,6 +1197,7 @@ export type Database = {
           code: string
           confirmed_at: string | null
           confirmed_by: string | null
+          contractor_in: string | null
           coordinator_id: string | null
           created_at: string
           created_by: string | null
@@ -1236,6 +1237,7 @@ export type Database = {
           code?: string
           confirmed_at?: string | null
           confirmed_by?: string | null
+          contractor_in?: string | null
           coordinator_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1275,6 +1277,7 @@ export type Database = {
           code?: string
           confirmed_at?: string | null
           confirmed_by?: string | null
+          contractor_in?: string | null
           coordinator_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1981,6 +1984,7 @@ export type Database = {
         Returns: undefined
       }
       ws_notify_overdue_drawings: { Args: never; Returns: undefined }
+      ws_order_tasks: { Args: { _project: string }; Returns: undefined }
       ws_price_book_apply: {
         Args: { _lead: string; _project?: string }
         Returns: number

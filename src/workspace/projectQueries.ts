@@ -12,11 +12,11 @@ const PROJECT_FIELDS = [
   "id", "code", "lead_id", "name", "client", "property", "unit", "unit_type", "location", "drive_url",
   "sales_id", "designer_id", "coordinator_id", "start_date", "handover_date", "actual_handover",
   "stage", "risk", "overall_pct", "proc_pct", "received",
-  "next_due", "next_due_date", "pay_status", "created_at", "updated_at", "confirmed_at", "confirmed_by", "on_site_by",
+  "next_due", "next_due_date", "pay_status", "created_at", "updated_at", "confirmed_at", "confirmed_by", "on_site_by", "contractor_in",
 ] as const;
 export type Project = Pick<T["projects"]["Row"], (typeof PROJECT_FIELDS)[number]>;
 const TASK_FIELDS = [
-  "id", "project_id", "lead_id", "title", "assignee_id", "due_date", "due_at", "priority", "done", "done_at", "created_at", "drawing_kind", "auto_kind",
+  "id", "project_id", "lead_id", "title", "detail", "assignee_id", "due_date", "due_at", "priority", "done", "done_at", "created_at", "drawing_kind", "auto_kind",
 ] as const;
 export type Task = Pick<T["tasks"]["Row"], (typeof TASK_FIELDS)[number]>;
 const ISSUE_FIELDS = [

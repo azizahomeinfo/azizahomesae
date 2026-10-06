@@ -16,6 +16,7 @@ import {
 import AssignDesigner from "../AssignDesigner";
 import { Team } from "./Projects";
 import { FfeTab, ProcurementTab } from "../FfeTab";
+import { ProjectSiteDetails } from "../CoordinatorCountdown";
 
 const ProjectDetail = () => {
   const { code } = useParams();
@@ -96,6 +97,8 @@ const ProjectDetail = () => {
           <Team ids={[project.sales_id, project.designer_id, project.coordinator_id]} />
         </div>
       </div>
+
+      {(role === "coordinator" || role === "gm") && <ProjectSiteDetails key={project.id} project={project} />}
 
       <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-4">
         <div className="grid gap-4 lg:grid-cols-[1fr_16rem]">
