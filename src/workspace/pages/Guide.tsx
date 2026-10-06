@@ -19,7 +19,7 @@ export const GUIDES: Record<WorkspaceRole, Section[]> = {
       title: "Where you work",
       content: (
         <>
-          <Link to="/workspace" className={workspaceLink}>Dashboard</Link> — what needs you today. <Link to="/workspace/projects" className={workspaceLink}>Projects</Link> → a project → Procurement — your main screen; the FF&amp;E tab beside it is the designer&apos;s costed list, Procurement is the buying view. <Link to="/workspace/tasks" className={workspaceLink}>Tasks</Link> — anything with your name and a deadline. <Link to="/workspace/suppliers" className={workspaceLink}>Suppliers</Link> — who we buy from, their terms, and the online-retailer list.
+          <Link to="/workspace" className={workspaceLink}>Dashboard</Link> — what needs you today. <Link to="/workspace/projects" className={workspaceLink}>Projects</Link> → a project → Procurement — your main screen; the FF&amp;E tab beside it is the designer&apos;s costed list, Procurement is the buying view. The <strong className="font-semibold text-foreground">Download list</strong> button on that screen gives you the whole item list to tick off on your final inspection walk-through. <Link to="/workspace/tasks" className={workspaceLink}>Tasks</Link> — anything with your name and a deadline. <Link to="/workspace/suppliers" className={workspaceLink}>Suppliers</Link> — who we buy from, their terms, and the online-retailer list.
         </>
       ),
     },
@@ -31,7 +31,7 @@ export const GUIDES: Record<WorkspaceRole, Section[]> = {
       title: "The order you buy in",
       content: (
         <>
-          Six buying runs, in this order: <strong className="font-semibold text-foreground">1 Cabinetry</strong> (made to measure, longest lead time — start it on day one), <strong className="font-semibold text-foreground">2 Furniture</strong> (trade suppliers), <strong className="font-semibold text-foreground">3 Online furniture</strong> (Home Centre, Home Box, Pan Home, Ikea, Danube…), <strong className="font-semibold text-foreground">4 Appliances</strong>, <strong className="font-semibold text-foreground">5 Dragon Mart pick-up</strong> (anything you collect yourself, including all the wall and building material), <strong className="font-semibold text-foreground">6 Household</strong>. Switch the grouping to Priority to see them. The run is worked out from the item and its supplier; if one is filed wrong you can change it on the row.
+          Nine buying runs, in this order: <strong className="font-semibold text-foreground">1 Cabinetry</strong> (24h — made to measure, longest lead time, start it on day one), <strong className="font-semibold text-foreground">2 Furniture</strong> (24h, trade suppliers), <strong className="font-semibold text-foreground">3 Curtains</strong> (24h), <strong className="font-semibold text-foreground">4 Online furniture</strong> (48h — Home Centre, Home Box, Pan Home, Ikea, Danube…), <strong className="font-semibold text-foreground">5 Appliances</strong> (48h), <strong className="font-semibold text-foreground">6 Dragon Mart pick-up</strong> (day 4 — anything you collect yourself, including all the wall and building material in the same trip), <strong className="font-semibold text-foreground">7 Household</strong> (day 5), <strong className="font-semibold text-foreground">8 Switches</strong> (the day the contractor goes in), <strong className="font-semibold text-foreground">9 Wallpaper</strong> (ordered by day 5, installed on delivery day). Runs 1 and 2 go to the factory as one order — cabinetry and furniture are ordered together. Switch the grouping to Priority to see them. The run is worked out from the item and its supplier; if one is filed wrong you can change it on the row.
         </>
       ),
     },
@@ -53,7 +53,7 @@ export const GUIDES: Record<WorkspaceRole, Section[]> = {
     },
     {
       title: "Building Material",
-      content: <>An internal section for paint, adhesive, fixings and the like. Real purchases for you; it never appears on the client&apos;s proposal or contract.</>,
+      content: <>An internal section for paint, adhesive, fixings and the like. Real purchases for you; it never appears on the client&apos;s proposal or contract. It is bought on the <strong className="font-semibold text-foreground">Dragon Mart pick-up run (6)</strong>, collected in the same trip as the Dragon Mart items. A switch listed in this section is still bought on the switch run, to the contractor&apos;s count.</>,
     },
     {
       title: "What you can't see, and why",
@@ -91,7 +91,14 @@ const Guide = () => {
             <p>These tasks appear on <Link to="/workspace/tasks" className={workspaceLink}>Tasks</Link> by themselves; you never create them.</p>
             <div>
               <h3 className="font-semibold text-foreground">From the moment the FF&amp;E list is confirmed.</h3>
-              <p>Online and large furniture — Pan Home, Home Centre, Home Box and the big pieces — ordered <strong className="font-semibold text-foreground">within 24 hours</strong>. Everything else on the list ordered <strong className="font-semibold text-foreground">within 72 hours</strong>.</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>Cabinetry and furniture ordered <strong className="font-semibold text-foreground">together within 24 hours</strong> — and ask the factory for a delivery date and put it on the rows as the ETA, because the whole site programme is built on that date.</li>
+                <li>The <strong className="font-semibold text-foreground">curtain supplier told within 24 hours</strong> and brought to the apartment to measure.</li>
+                <li><strong className="font-semibold text-foreground">Online furniture and appliances within 48 hours.</strong></li>
+                <li><strong className="font-semibold text-foreground">Dragon Mart pick-up on day 4</strong> — the Dragon Mart items and all the wall and building material in one trip.</li>
+                <li><strong className="font-semibold text-foreground">Household items and the wallpaper ordered by day 5.</strong></li>
+                <li><strong className="font-semibold text-foreground">Switches on the day the contractor goes in</strong> — ask him how many he needs, order them, book a porter and get them to the apartment.</li>
+              </ul>
             </div>
             <div>
               <h3 className="font-semibold text-foreground">When a drawing lands.</h3>
@@ -100,14 +107,16 @@ const Guide = () => {
             <div>
               <h3 className="font-semibold text-foreground">The site run, before handover.</h3>
               <ol className="mt-2 list-decimal space-y-1 pl-5">
-                <li><strong className="font-semibold text-foreground">Wall design work</strong> — the contractor finishes the walls. Delivery follows; on a tight programme they can overlap, but the walls lead.</li>
+                <li><strong className="font-semibold text-foreground">Wall design work finished</strong> — the contractor can only start once the cabinetry is in, so his date follows the factory&apos;s delivery date.</li>
+                <li><strong className="font-semibold text-foreground">Your first visit inside</strong> — the day he finishes: check the wall work, check what is already in the apartment and list what is still missing.</li>
+                <li><strong className="font-semibold text-foreground">The designer&apos;s drawings for where everything goes</strong> — lights, wall art and mirrors, in your hands before any hanging starts.</li>
                 <li><strong className="font-semibold text-foreground">Everything delivered on site.</strong></li>
-                <li><strong className="font-semibold text-foreground">Ali, and the wallpaper</strong> — hanging items, light fixtures, wall art and the small installations. Wallpaper runs the same day.</li>
-                <li><strong className="font-semibold text-foreground">Operations</strong> — final unpack and cleaning.</li>
-                <li><strong className="font-semibold text-foreground">You on site</strong> — the quality check.</li>
+                <li><strong className="font-semibold text-foreground">Ali and the wallpaper — the same day as the delivery</strong>, working to those drawings: light fixtures, wall art, mirrors and the small installations.</li>
+                <li><strong className="font-semibold text-foreground">Operations — final unpack and cleaning</strong>, the day after delivery. This must finish <strong className="font-semibold text-foreground">at least two days before handover</strong>, so there is a day left to rectify anything wrong.</li>
+                <li><strong className="font-semibold text-foreground">Your final visit</strong> — download the item list from Procurement and walk the apartment against it item by item, raising a snag for anything missing or wrong.</li>
               </ol>
             </div>
-            <p className="italic">These dates move by themselves if the handover date changes. Nothing is ever scheduled on handover day itself.</p>
+            <p className="italic">These dates move by themselves when the handover date changes, and nothing is ever scheduled on handover day itself. On a compressed job the later steps stack onto the last day available, and the project page shows a warning when the clean cannot finish two days before handover.</p>
           </div>
         </section>
       )}
