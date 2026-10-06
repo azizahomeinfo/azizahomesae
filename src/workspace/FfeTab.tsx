@@ -77,6 +77,28 @@ const bySupplier = (rows: FfeRow[]) => {
 /** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
 const buyable = (r: FfeRow) => !r.review && !DONE_STAGES.includes(r.stage);
 
+// ---- Final-inspection CSV -------------------------------------------------
+// A paper checklist for the walk-through: no money columns for anybody, and
+// rows are built field by field so a future FfeRow column can never leak in.
+const CSV_HEADER = ["Check", "Ref", "Room", "Item", "Qty", "Unit", "Dims", "Spec", "Notes", "Supplier", "Stage", "ETA", "Delivered"];
+const csvCell = (v: string | number | null | undefined) => {
+  const s = (v === null || v === undefined ? "" : String(v)).replace(/[\r\n]+/g, " ");
+  return `"${s.replace(/"/g, '""')}"`;
+};
+const ffeCsvRow = (r: FfeRow) => [
+  "", r.ref, r.room, r.item, r.qty, r.unit, r.dims, r.spec, r.notes, supplierOf(r), r.stage, r.eta, r.delivered_on,
+].map(csvCell).join(",");
+const downloadFfeCsv = (code: string, rows: FfeRow[]) => {
+  const body = [CSV_HEADER.map(csvCell).join(","), ...rows.map(ffeCsvRow)].join("\r\n");
+  const blob = new Blob(["﻿" + body], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${code} FF&E ${todayISO()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 /** Every whitespace-separated term must appear somewhere in the row's text fields (never cost). Blank query matches all. */
 export const matchesSearch = (r: FfeRow, q: string) => {
   const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
