@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FfeRow } from "./ffeQueries";
+import { specLine } from "./ffeQueries";
 import { markReturnItem } from "./scrollMemory";
 import { aed } from "./format";
 
