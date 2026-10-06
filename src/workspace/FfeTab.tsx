@@ -1278,7 +1278,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                 {items.map((r) => (
                   <tr key={r.id} data-ffe-row={r.id} className={cn("border-t border-border align-top", rowHi(r))}>
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
-                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}{groupBy !== "room" && <span className="block text-[10px] text-muted-foreground">{r.room}</span>}
+                    <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}{(() => { const line = specSub(r, groupBy !== "room"); return line ? <span className="block max-w-64 truncate text-[10px] text-muted-foreground">{line}</span> : null; })()}
                       {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
@@ -1299,7 +1299,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <li key={r.id} data-ffe-row={r.id} className={cn("space-y-2 rounded-[var(--radius)] border border-border p-3", rowHi(r))}>
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
-                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}</p>{groupBy !== "room" && <p className="text-[10px] text-muted-foreground">{r.room}</p>}
+                  <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}</p>{(() => { const line = specSub(r, groupBy !== "room"); return line ? <p className="max-w-64 truncate text-[10px] text-muted-foreground">{line}</p> : null; })()}
                     {r.review && r.review_note && <p className="text-xs text-muted-foreground">{r.review_note}</p>}
                     {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}</div>
                 </div>
