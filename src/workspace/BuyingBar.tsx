@@ -38,6 +38,8 @@ export const BuyingBar = ({ rows, itemId, ready, supplierLabel, onSelect, contro
         <span className="text-[10px] text-muted-foreground">{row.ref}</span>{" "}
         <span className="font-medium">{row.item}</span> <span className="text-muted-foreground">×{Number(row.qty)}</span>
         <span className="block truncate text-xs text-muted-foreground">{row.room} · {supplierLabel(row)}</span>
+        {/* Spec wraps rather than truncating: a cut-off model number is worse than a taller bar. */}
+        {(() => { const line = specLine(row); return line ? <span className="block text-xs text-muted-foreground">{line}</span> : null; })()}
       </div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {row.product_url ? (

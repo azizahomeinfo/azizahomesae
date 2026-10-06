@@ -140,6 +140,10 @@ export const PRIORITY_BANDS = ["Cabinetry", "Furniture", "Online furniture", "Ap
 /** 1–6. Derived in the database on write (ws_ffe_band; supplier decides online vs pick-up; hand overrides stick); 6 (the unsorted end) only covers a row not yet saved. */
 export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? PRIORITY_BANDS.length;
 
+/** The designer's spec — dims, spec, notes — read-only wherever the item is bought. Empty parts are dropped. */
+export const specLine = (r: Pick<FfeRow, "dims" | "spec" | "notes">): string =>
+  [r.dims, r.spec, r.notes].map((p) => p?.trim()).filter(Boolean).join(" · ");
+
 /* ---------------- online retailers (GM-maintained; feeds ws_ffe_online_supplier) ---------------- */
 
 export const useOnlineRetailers = (enabled = true) =>
