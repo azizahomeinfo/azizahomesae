@@ -149,7 +149,7 @@ export const PRIORITY_BANDS = [
 ] as const;
 /** Safe during band-definition rollouts, including invalid or unknown band numbers. */
 export const bandLabel = (n: number): string =>
-  Number.isInteger(n) && n > 0 ? PRIORITY_BANDS.at(n - 1) ?? "Unsorted" : "Unsorted";
+  PRIORITY_BANDS.find((_, i) => i + 1 === n) ?? "Unsorted";
 /** Derived in the database on write (ws_ffe_band; hand overrides stick); the final band covers a row not yet saved. */
 export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? PRIORITY_BANDS.length;
 
