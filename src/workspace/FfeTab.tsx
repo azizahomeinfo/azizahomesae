@@ -22,6 +22,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { useFfeViewParams } from "./ffeViewParams";
 import { BuyingBar, BAR_ROW_HI } from "./BuyingBar";
 import { markReturnItem, useReturnToItem } from "./scrollMemory";
+import { CollapseAllButton, CollapseChevron, collapseKey, sectionDomId, useCollapsedGroups } from "./collapsedGroups";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
@@ -320,12 +321,17 @@ const RoomHeading = ({ room, canEdit, onRename }: { room: string; canEdit: boole
   );
 };
 
-const Section = ({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) => (
+/** `collapse` turns the title into a toggle; `right` controls stay usable while collapsed. */
+const Section = ({ title, right, children, collapse }: { title: string; right?: ReactNode; children: ReactNode; collapse?: { open: boolean; id: string; onToggle: () => void } }) => (
   <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">{title}</h3>{right}
+      {collapse ? (
+        <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+          <CollapseChevron open={collapse.open} controls={collapse.id} label={title} onClick={collapse.onToggle}>{title}</CollapseChevron>
+        </h3>
+      ) : <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">{title}</h3>}{right}
     </div>
-    {children}
+    {collapse ? (collapse.open && <div id={collapse.id} className="space-y-3">{children}</div>) : children}
   </section>
 );
 
@@ -700,6 +706,7 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   // Any grouping other than room: headings are read-only buckets and each row shows its room.
   const byPriority = groupBy !== "room";
+  const sheetCollapse = useCollapsedGroups(collapseKey("sheet", ctx.owner, groupBy), { searching: !!search.trim(), itemId });
 
   const save = (id: string, values: Partial<FfeRow>) =>
     update.mutate({ owner: ctx.owner, ids: [id], values, existing: rows }, { onError: (e) => toast.error(errMsg(e, "Could not save")) });
@@ -969,6 +976,8 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
       <div className="flex flex-wrap items-center justify-end gap-2">
         <SearchBox value={search} onChange={setSearch} shown={visibleCount} total={(withCost ? allRows : rows).length} />
         <GroupToggle value={groupBy} onChange={setGroupBy} />
+        <CollapseAllButton allCollapsed={sheetCollapse.allCollapsed(shownGroups.map(([g]) => g))}
+          onCollapse={() => sheetCollapse.collapseAll(shownGroups.map(([g]) => g))} onExpand={sheetCollapse.expandAll} />
       </div>
       {rowBorder && <p className="text-xs text-muted-foreground">Amber = not ordered and no delivery date.</p>}
       <BuyingBar rows={[...shownGroups.flatMap(([, l]) => l), ...(internalVisible ? shownInternal : [])]} itemId={itemId} ready={!isLoading} showCost={canEditCost}
@@ -980,12 +989,17 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
       {nothingMatches && <NoMatches q={search} onClear={() => setSearch("")} />}
       {shownGroups.map(([room, items, whole]) => {
         const sub = whole.reduce((s, r) => s + lineTotal(r), 0);
+        const open = sheetCollapse.isOpen(room, items);
+        const secId = sectionDomId("sheet", room);
+        const toggle = () => sheetCollapse.toggle(room);
         return (
           <section key={room} className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              {byPriority
-                ? <h3 className="font-medium">{room}</h3>
-                : <RoomHeading room={room} canEdit={canEdit} onRename={(to) => renameRoom(room, to)} />}
+              {byPriority || !canEdit
+                ? <h3 className={byPriority ? "font-medium" : "text-[11px] uppercase tracking-[0.25em] text-muted-foreground"}>
+                    <CollapseChevron open={open} controls={secId} label={room} onClick={toggle}>{room}</CollapseChevron></h3>
+                : <div className="flex items-center gap-1"><CollapseChevron open={open} controls={secId} label={room} onClick={toggle} />
+                    <RoomHeading room={room} canEdit={canEdit} onRename={(to) => renameRoom(room, to)} /></div>}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">{searching ? `${items.length} of ${whole.length}` : whole.length} item{whole.length === 1 ? "" : "s"}</span>
                 {withCost && <span className="text-sm tabular-nums">{aed(sub)}</span>}
@@ -997,6 +1011,7 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
                 )}
               </div>
             </div>
+            {open && <div id={secId} className="space-y-3">
             <div className={cn("hidden gap-2 text-[10px] uppercase tracking-wider text-muted-foreground md:grid", primaryCols)}>
               <span>Item</span><span>Qty</span>{withCost && <><span>Unit cost</span><span className="text-right">Line total</span></>}<span />
             </div>
@@ -1006,6 +1021,7 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
                 <span className="text-muted-foreground">Subtotal&nbsp;</span><span className="tabular-nums font-medium">{aed(sub)}</span>
               </div>
             )}
+            </div>}
           </section>
         );
       })}
@@ -1188,6 +1204,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
     const g = groupBy === "room" ? byRoom(client) : byBand(client);
     return [...g.flatMap(([, l]) => l), ...internal];
   }, [allRows, groupBy]);
+  const procCollapse = useCollapsedGroups(collapseKey("proc", projectOwner(project.id), groupBy), { searching, itemId });
   // Rows in the order on screen — the buying bar walks these.
   const flat = view !== "table" ? shownRows : shownGroups.flatMap(([, l]) => l);
   const rowHi = (r: FfeRow) => r.id === itemId && BAR_ROW_HI;
@@ -1257,7 +1274,11 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
             </Button>
           )}
           {view === "table" && (
-            <GroupToggle value={groupBy} onChange={setGroupBy} />
+            <>
+              <GroupToggle value={groupBy} onChange={setGroupBy} />
+              <CollapseAllButton allCollapsed={procCollapse.allCollapsed(shownGroups.map(([g]) => g))}
+                onCollapse={() => procCollapse.collapseAll(shownGroups.map(([g]) => g))} onExpand={procCollapse.expandAll} />
+            </>
           )}
           <Select value={supplierFilter} onValueChange={setSupplierFilter}>
             <SelectTrigger className="h-8 w-48" aria-label="Filter by supplier"><SelectValue /></SelectTrigger>
@@ -1304,7 +1325,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       ) : view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
       ) : shownGroups.map(([room, items, whole]) => (
-        <Section key={room} title={`${room} · ${searching ? `${items.length} of ${whole.length}` : whole.length} item${whole.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(whole.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
+        <Section key={room} collapse={{ open: procCollapse.isOpen(room, items), id: sectionDomId("proc", room), onToggle: () => procCollapse.toggle(room) }} title={`${room} · ${searching ? `${items.length} of ${whole.length}` : whole.length} item${whole.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(whole.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
           {groupBy === "supplier" && room !== NO_SUPPLIER && (
             <Button size="sm" variant="outline" disabled={!whole.some(buyable) || update.isPending}
