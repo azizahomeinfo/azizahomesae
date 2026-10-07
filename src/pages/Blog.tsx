@@ -21,7 +21,7 @@ const Blog = () => {
     {
       id: "cost-to-furnish-apartment-dubai",
       title: "How Much Does It Cost to Furnish an Apartment in Dubai? (2026 Price Guide)",
-      excerpt: "Real numbers for studios to 3-bedroom apartments — package prices from AED 22,500, what's included in each tier, the hidden costs of DIY furnishing, and how to budget by rental strategy.",
+      excerpt: "Real numbers for studios to 3-bedroom apartments — package prices from AED 26,000, what's included in each tier, the hidden costs of DIY furnishing, and how to budget by rental strategy.",
       image: blogCostGuide,
       date: "July 10, 2026",
       readTime: "8 min read",

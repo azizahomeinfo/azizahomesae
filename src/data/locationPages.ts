@@ -159,7 +159,7 @@ export const locationPages: LocationPageData[] = [
     faqs: [
       {
         q: "What does it cost to furnish a Downtown Dubai apartment?",
-        a: "Packages start from AED 22,500 for a studio and from AED 30,000 for a 1BR (Essential tier). Most Downtown owners choose Premium or Luxury tiers to match the building standard — a full quotation depends on layout and scope.",
+        a: "Packages start from AED 26,000 for a studio and from AED 34,500 for a 1BR (Essential tier). Most Downtown owners choose Premium or Luxury tiers to match the building standard — a full quotation depends on layout and scope.",
       },
       {
         q: "Do you furnish apartments in Burj Khalifa and Address buildings?",
@@ -228,7 +228,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "What does furnishing a Business Bay 1BR cost?",
-        a: "1-bedroom packages start from AED 30,000 (Essential), AED 36,500 (Premium) and AED 65,800 (Luxury), excluding appliances and VAT. Premium is the most common choice for Bay rentals.",
+        a: "1-bedroom packages start from AED 34,500 (Essential), AED 42,000 (Premium) and AED 76,000 (Luxury), excluding appliances and VAT. Premium is the most common choice for Bay rentals.",
       },
       {
         q: "Can you furnish for both long-term rental and Airbnb?",
@@ -730,7 +730,7 @@ export const locationPages: LocationPageData[] = [
     faqs: [
       {
         q: "What does it cost to furnish an Arabian Ranches villa?",
-        a: "Villas are quoted individually because sizes range widely — a 3BR townhouse-style villa and a 6BR Saheel home are very different projects. As a reference point, our apartment packages start from AED 52,500 for a 3-bedroom layout; villa projects are scoped after a consultation.",
+        a: "Villas are quoted individually because sizes range widely — a 3BR townhouse-style villa and a 6BR Saheel home are very different projects. As a reference point, our apartment packages start from AED 60,500 for a 3-bedroom layout; villa projects are scoped after a consultation.",
       },
       {
         q: "How long does a full villa take?",
@@ -888,8 +888,8 @@ export const getLocationPage = (slug: string | undefined): LocationPageData | un
 
 /** Shared starting-price table (matches /investors-furnishing-dubai) */
 export const locationPricing = [
-  { layout: "Studio", essential: "from AED 22,500", premium: "from AED 26,500", luxury: "from AED 45,500" },
-  { layout: "1 Bedroom", essential: "from AED 30,000", premium: "from AED 36,500", luxury: "from AED 65,800" },
-  { layout: "2 Bedroom", essential: "from AED 40,000", premium: "from AED 55,000", luxury: "from AED 85,500" },
-  { layout: "3 Bedroom", essential: "from AED 52,500", premium: "from AED 72,800", luxury: "from AED 99,600" },
+  { layout: "Studio", essential: "from AED 26,000", premium: "from AED 30,500", luxury: "from AED 52,500" },
+  { layout: "1 Bedroom", essential: "from AED 34,500", premium: "from AED 42,000", luxury: "from AED 76,000" },
+  { layout: "2 Bedroom", essential: "from AED 46,000", premium: "from AED 63,500", luxury: "from AED 98,500" },
+  { layout: "3 Bedroom", essential: "from AED 60,500", premium: "from AED 84,000", luxury: "from AED 115,000" },
 ];

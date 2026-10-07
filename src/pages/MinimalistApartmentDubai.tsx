@@ -80,7 +80,7 @@ const faqs = [
   },
   {
     q: "What does a minimalist apartment in Dubai cost?",
-    a: "Our minimalist packages start from AED 22,500 for a studio. Full pricing depends on apartment size, finishes, and whether you choose Essential, Premium, or Luxury.",
+    a: "Our minimalist packages start from AED 26,000 for a studio. Full pricing depends on apartment size, finishes, and whether you choose Essential, Premium, or Luxury.",
   },
 ];
 

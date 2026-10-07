@@ -37,10 +37,10 @@ const packages: Package[] = [
     description: "Including all furniture, decorative wall frames, rugs, lights, and decorative items on top of tables for each apartment. Everything you need to create a complete and stylish living space.",
     image: package1,
     prices: {
-      studio: "22,500 AED",
-      "1b": "30,000 AED",
-      "2b": "40,000 AED",
-      "3b": "52,500 AED",
+      studio: "26,000 AED",
+      "1b": "34,500 AED",
+      "2b": "46,000 AED",
+      "3b": "60,500 AED",
     },
   },
   {
@@ -50,10 +50,10 @@ const packages: Package[] = [
     image: package2,
     badge: "Most Popular",
     prices: {
-      studio: "26,500 AED",
-      "1b": "36,500 AED",
-      "2b": "55,000 AED",
-      "3b": "72,800 AED",
+      studio: "30,500 AED",
+      "1b": "42,000 AED",
+      "2b": "63,500 AED",
+      "3b": "84,000 AED",
     },
   },
   {
@@ -62,10 +62,10 @@ const packages: Package[] = [
     description: "Including everything from the Essential package plus all wall well designs throughout your apartment. The ultimate transformation with comprehensive interior design coverage for a truly luxurious living experience.",
     image: package3,
     prices: {
-      studio: "45,500 AED",
-      "1b": "65,800 AED",
-      "2b": "85,500 AED",
-      "3b": "99,600 AED",
+      studio: "52,500 AED",
+      "1b": "76,000 AED",
+      "2b": "98,500 AED",
+      "3b": "115,000 AED",
     },
   },
 ];
@@ -96,7 +96,7 @@ const PackagesOverview = () => {
           { name: "Packages", url: "https://www.azizahomes.com/packages" }
         ]}
         pageTitle="Packages"
-        pageDescription="Choose from Aziza Home's curated furnishing packages: Essential (from 22,500 AED), Premium (from 26,500 AED), and Luxury (from 45,500 AED). Complete furniture packages for Dubai properties."
+        pageDescription="Choose from Aziza Home's curated furnishing packages: Essential (from 26,000 AED), Premium (from 30,500 AED), and Luxury (from 52,500 AED). Complete furniture packages for Dubai properties."
       />
       <Navigation />
       

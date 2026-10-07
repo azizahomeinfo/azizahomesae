@@ -308,9 +308,9 @@ export const IntakeFormDialog = ({ open, onOpenChange }: IntakeFormDialogProps) 
                     <SelectValue placeholder="Select budget" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="50k_100k">AED 50,000 - 100,000</SelectItem>
-                    <SelectItem value="100k_200k">AED 100,000 - 200,000</SelectItem>
-                    <SelectItem value="200k_plus">AED 200,000+</SelectItem>
+                    <SelectItem value="57k_115k">AED 57,500 - 115,000</SelectItem>
+                    <SelectItem value="115k_230k">AED 115,000 - 230,000</SelectItem>
+                    <SelectItem value="230k_plus">AED 230,000+</SelectItem>
                     <SelectItem value="flexible">Flexible</SelectItem>
                   </SelectContent>
                 </Select>

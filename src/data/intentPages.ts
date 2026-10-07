@@ -152,7 +152,7 @@ export const intentPages: IntentPageData[] = [
     faqs: [
       {
         q: "How much does it cost to furnish a villa in Dubai?",
-        a: "Villas are quoted individually after a design consultation, because a 3BR townhouse and a 6BR standalone villa are very different scopes. As a reference, our largest standard apartment package (3-bedroom) starts from AED 52,500; villa projects scale from there by room count and tier.",
+        a: "Villas are quoted individually after a design consultation, because a 3BR townhouse and a 6BR standalone villa are very different scopes. As a reference, our largest standard apartment package (3-bedroom) starts from AED 60,500; villa projects scale from there by room count and tier.",
       },
       {
         q: "How long does a full villa take to furnish?",
