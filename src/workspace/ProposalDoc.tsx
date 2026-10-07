@@ -189,6 +189,11 @@ const ProposalDoc = () => {
   ].filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf")) : [];
   const { data: urls } = useSignedUrls(paths);
   const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
+  // Two directions now: pull the FF&E list into the proposal, or push the proposal's edits back into it.
+  // Drift alone cannot say which side moved, so both are offered and the wording stays neutral.
+  // These MUST stay above the early returns below — hooks after a conditional return crash the page.
+  const syncFfe = useSyncFfeFromProposal();
+  const [syncPlan, setSyncPlan] = useState<FfeSyncPlan | null>(null);
 
   const back = <Link to="/workspace/proposals" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> All proposals</Link>;
   if (isLoading) return <div className="space-y-4">{back}<p className="text-muted-foreground">Loading…</p></div>;
@@ -288,10 +293,6 @@ const ProposalDoc = () => {
   const driftSummary = drift?.differs
     ? `${drift.added} ${drift.added === 1 ? "item" : "items"} added, ${drift.removed} removed, ${drift.quantitiesChanged} ${drift.quantitiesChanged === 1 ? "quantity" : "quantities"} changed`
     : null;
-  // Two directions now: pull the FF&E list into the proposal, or push the proposal's edits back into it.
-  // Drift alone cannot say which side moved, so both are offered and the wording stays neutral.
-  const syncFfe = useSyncFfeFromProposal();
-  const [syncPlan, setSyncPlan] = useState<FfeSyncPlan | null>(null);
   const previewSync = async () => {
     try {
       const plan = await syncFfe.mutateAsync({ proposalId: row.id, leadId, dry: true });
