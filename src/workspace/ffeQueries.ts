@@ -14,6 +14,7 @@ export type FfeRow = Pick<
   | "id" | "project_id" | "lead_id" | "ref" | "room" | "category" | "item" | "dims" | "spec" | "qty" | "unit"
   | "supplier_id" | "supplier_name" | "supplier_contact" | "product_url" | "stage" | "po_ref" | "ordered_on" | "eta" | "delivered_on" | "installed_on" | "notes" | "sort_order" | "priority_band"
   | "review" | "review_note" | "review_by" | "review_at" | "review_prev" | "internal"
+  | "from_sales_at"
 > & { unit_cost?: number | null; from_price_book?: boolean };
 export type ProcStage = T["ffe_items"]["Row"]["stage"];
 export type CostingStatus = T["ffe_costings"]["Row"]["status"];
@@ -30,7 +31,7 @@ export type Snag = Pick<
 const SUPPLIER_COLS = "id, name, category, contact, phone, email, lead_time, payment_terms, rating, status, notes";
 // Sales never receive cost price: the column is not even requested for them.
 const FFE_BASE =
-  "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order, priority_band, review, review_note, review_by, review_at, review_prev, internal";
+  "id, project_id, lead_id, ref, room, category, item, dims, spec, qty, unit, supplier_id, supplier_name, supplier_contact, product_url, stage, po_ref, ordered_on, eta, delivered_on, installed_on, notes, sort_order, priority_band, review, review_note, review_by, review_at, review_prev, internal, from_sales_at";
 // options (the quoted client price) is not directly selectable; ws_costing_options withholds it from coordinators.
 const COSTING_BASE = "id, project_id, lead_id, status, version, submitted_at, quoted_at, quoted_by, purpose";
 const SNAG_COLS = "id, project_id, ref, ref_seq, area, description, owner_id, status, photo_path, fixed_on, created_at";
@@ -461,9 +462,34 @@ export const useUpdateSnag = () => {
 export const missingBuyability = (r: Pick<FfeRow, "supplier_id" | "supplier_name">) =>
   !r.supplier_id && !r.supplier_name?.trim();
 
+/**
+ * Sales added this row by syncing a proposal and it still is not specced: no supplier, no cost, or only
+ * an unreviewed price-book default. Derived, so it clears itself the moment the designer does the work —
+ * there is nothing to tick off. Only meaningful where cost is loaded (designer/GM), not for sales.
+ */
+export const needsSpec = (r: FfeRow) =>
+  !!r.from_sales_at && (missingBuyability(r) || r.unit_cost == null || !!r.from_price_book);
+
 /** Nothing is happening with this item: not ordered, no ETA, not delivered. The coordinator cannot say when it will arrive. */
 export const notMoving = (r: Pick<FfeRow, "ordered_on" | "eta" | "delivered_on" | "stage" | "review">) =>
   !r.ordered_on && !r.eta && !r.delivered_on && !DONE_STAGES.includes(r.stage) && !r.review;
+
+/**
+ * FF&E lists sitting with the GM for a quotation. The dashboard only counted submitted *designs*, so a
+ * list sent back for re-pricing on an already-accepted design showed nowhere — the GM got a notification
+ * and no standing signal. Keyed on the costing, not the design, which is the thing being quoted.
+ */
+export const useCostingsAwaitingQuote = (enabled = true) =>
+  useQuery({
+    queryKey: ["ws", "costings-awaiting-quote"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ffe_costings").select("lead_id, project_id, leads(name)").eq("status", "Submitted");
+      fail(error);
+      return (data ?? []) as { lead_id: string | null; project_id: string | null; leads: { name: string } | null }[];
+    },
+  });
 
 /** True when the project has no contract signed in the system, so its FF&E list needs a GM budget approval. */
 export const useNeedsBudget = (projectId: string | null | undefined) =>

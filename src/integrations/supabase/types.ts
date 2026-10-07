@@ -541,6 +541,7 @@ export type Database = {
           dims: string | null
           eta: string | null
           finish: string | null
+          from_sales_at: string | null
           id: string
           installed_on: string | null
           internal: boolean
@@ -578,6 +579,7 @@ export type Database = {
           dims?: string | null
           eta?: string | null
           finish?: string | null
+          from_sales_at?: string | null
           id?: string
           installed_on?: string | null
           internal?: boolean
@@ -615,6 +617,7 @@ export type Database = {
           dims?: string | null
           eta?: string | null
           finish?: string | null
+          from_sales_at?: string | null
           id?: string
           installed_on?: string | null
           internal?: boolean

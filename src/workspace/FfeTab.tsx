@@ -27,7 +27,7 @@ import { CollapseAllButton, CollapseChevron, collapseKey, sectionDomId, useColla
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -794,13 +794,22 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
     : "grid-cols-[1fr_auto] md:grid-cols-[minmax(0,1fr)_4.5rem_2.25rem]";
   const secondaryCols = "grid-cols-2 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,.8fr)_6rem_minmax(0,1.4fr)_minmax(0,.9fr)_minmax(0,1fr)]";
 
+  const specCount = withCost ? rows.filter(needsSpec).length : 0;
+
   const itemRow = (r: FfeRow) => (
     <li key={r.id} data-ffe-row={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
       rowBorder ? rowBorder(r) : budget && missingBuyability(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3",
-      rowBorder?.(r) && "md:border-l-4 md:pl-3", r.id === itemId && BAR_ROW_HI)}>
+      rowBorder?.(r) && "md:border-l-4 md:pl-3",
+      withCost && needsSpec(r) && "border-l-4 border-l-primary md:border-l-4 md:pl-3",
+      r.id === itemId && BAR_ROW_HI)}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
           <span className="block text-[10px] text-muted-foreground">{r.ref}{byPriority && <> · {r.room}</>}</span>
+          {withCost && needsSpec(r) && (
+            <span className="mb-1 inline-flex rounded-full border border-primary/50 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+              Added by sales · needs {[missingBuyability(r) && "a supplier", (r.unit_cost == null || r.from_price_book) && "a cost"].filter(Boolean).join(" and ")}
+            </span>
+          )}
           <EditCell label="Item" value={r.item} disabled={!canEdit} autoFocus={focusId === r.id}
             onSave={(v) => v.trim() && save(r.id, { item: v.trim() })} />
         </F>
@@ -905,10 +914,17 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
           <p className="text-sm text-muted-foreground">With the GM for pricing. You can still adjust and resubmit — use "Resubmit design package" on the Renders tab.</p>
         )}
         {role === "designer" && status === "Returned" && (
-          <p className="text-sm text-muted-foreground">The GM returned this list. Fix the costing and resubmit it — the design doesn't need to be shared again.</p>
+          <p className="text-sm text-muted-foreground">This list was sent back for costing. Fix the costing and resubmit it — the design doesn't need to be shared again.</p>
         )}
         {status === "Returned" && costing?.return_note && (
           <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Returned by GM: {costing.return_note}</p>
+        )}
+        {/* Sales synced items in from the proposal; they arrive with no supplier and no real cost. */}
+        {withCost && specCount > 0 && (
+          <p className="rounded-[var(--radius)] border border-primary/50 bg-primary/10 p-3 text-sm">
+            <strong className="font-medium">{specCount} item{specCount === 1 ? "" : "s"} added by sales need a supplier and a cost.</strong>{" "}
+            They came from a change to the proposal and are marked in the list below. The GM can't set a new price until they are done.
+          </p>
         )}
         {status === "Quoted" && quotedLine && (
           <p className="rounded-[var(--radius)] border border-success/40 bg-success/10 p-3 text-sm tabular-nums">
