@@ -1203,7 +1203,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
     if (groupBy === "supplier") return bySupplier(allRows).flatMap(([, l]) => l);
     const client = allRows.filter((r) => !isInternal(r));
     const internal = allRows.filter(isInternal);
-    const g = groupBy === "room" ? byRoom(client) : byBand(client);
+    const g = groupBy === "room" ? byRoom(client) : groupBy === "type" ? byItemType(client) : byBand(client);
     return [...g.flatMap(([, l]) => l), ...internal];
   }, [allRows, groupBy]);
   const procCollapse = useCollapsedGroups(collapseKey("proc", projectOwner(project.id), groupBy), { searching, itemId });
