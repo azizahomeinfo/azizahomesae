@@ -22,8 +22,9 @@ const write = (key: string, s: Set<string>) => {
   } catch { /* storage unavailable */ }
 };
 
-export const collapseKey = (surface: "sheet" | "proc", owner: string, groupBy: string) =>
-  `ws.ffe.collapsed.${surface}.${owner}.${groupBy}`;
+/** e.g. `ws.ffe.collapsed.proc.project_id:<uuid>.supplier` */
+export const collapseKey = (surface: "sheet" | "proc", owner: { col: string; id: string }, groupBy: string) =>
+  `ws.ffe.collapsed.${surface}.${owner.col}:${owner.id}.${groupBy}`;
 
 /**
  * `isOpen(group, rows)`: a collapsed section is still forced open while a search has matches in it, or while it
