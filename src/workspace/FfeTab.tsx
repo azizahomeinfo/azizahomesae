@@ -646,14 +646,14 @@ const useOrderingBorder = (project: Project) => {
 
 export const FfeTab = ({ project }: { project: Project }) => {
   const { data: rows = [] } = useFfeItems(projectOwner(project.id), false);
-  const { orderingBorder } = useOrderingBorder(project);
+  const { orderingBorder, orderingExpected } = useOrderingBorder(project);
   return (
     <div className="space-y-4">
       <ConfirmBanner project={project} hasItems={rows.length > 0} />
       <FfeSheet ctx={{
         owner: projectOwner(project.id), leadId: project.lead_id, projectId: project.id, name: project.name,
         designerId: project.designer_id, salesId: project.sales_id,
-      }} rowBorder={orderingBorder} />
+      }} rowBorder={orderingExpected ? orderingBorder : undefined} />
     </div>
   );
 };
