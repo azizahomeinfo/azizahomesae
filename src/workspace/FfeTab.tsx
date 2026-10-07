@@ -1150,20 +1150,18 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       qc.invalidateQueries({ queryKey: ["ws", "project"] }); qc.invalidateQueries({ queryKey: ["ws", "tasks"] }); qc.invalidateQueries({ queryKey: ["ws", "my-tasks"] }); },
     onError: (e) => toast.error(errMsg(e, "Could not save")),
   });
-  const [view, setView] = useState<"table" | "board" | "delivery">("table");
   const [groupBy, setGroupBy] = useFfeGroupBy(role === "coordinator" ? "priority" : "room");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
   const [oosIds, setOosIds] = useState<string[] | null>(null);
-  // View state lives in the URL (sup, q, item) so a Safari tab discard + remount restores the same list.
-  const view_ = useFfeViewParams();
-  const { supplier: supplierFilter, setSupplier: setSupplierFilter, itemId, setItem } = view_;
+  // View state lives in the URL (view, sup, q, item, showdel) so a Safari tab discard + remount restores the same screen.
+  const urlState = useFfeViewParams();
+  const { view, setView, showDelivered, setShowDelivered, supplier: supplierFilter, setSupplier: setSupplierFilter, itemId, setItem, search } = urlState;
   const [orderAll, setOrderAll] = useState<{ supplier: string; items: FfeRow[] } | null>(null);
   const [orderPo, setOrderPo] = useState("");
-  const search = view_.search;
   // Changing the search clears the selection, so a bulk action can never include rows that are out of view.
-  const setSearch = (v: string) => { view_.setSearch(v); setSel(new Set()); };
+  const setSearch = (v: string) => { urlState.setSearch(v); setSel(new Set()); };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
   const rows = useMemo(() => supplierFilter === "all" ? allRows : allRows.filter((r) => supplierOf(r) === supplierFilter), [allRows, supplierFilter]);
   useReturnToItem(useMemo(() => allRows.map((r) => r.id), [allRows]), itemId);
@@ -1301,7 +1299,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         <DeliveryView rows={shownRows} total={allRows.length} filtered={supplierFilter !== "all" || searching}
           filterLabel={[supplierFilter !== "all" && supplierFilter, searching && `“${search.trim()}”`].filter(Boolean).join(" · ")}
           handover={project.handover_date} override={project.on_site_by} onSetOnSite={setOnSiteBy} canEdit={canEdit} rowHi={rowHi} orderingBorder={orderingBorder}
-          onEta={(id, eta) => apply([id], { eta })} />
+          onEta={(id, eta) => apply([id], { eta })}
+          showDelivered={showDelivered} onShowDelivered={setShowDelivered} onOpen={setItem} />
       ) : view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
       ) : shownGroups.map(([room, items, whole]) => (
@@ -1418,12 +1417,16 @@ const pl = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const isDelivered = (r: FfeRow) => !!r.delivered_on || DONE_STAGES.includes(r.stage);
 
 /** Everything must be on site three days before handover (the coordinator's `delivered` deadline). No money here. */
-const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, onSetOnSite, canEdit, rowHi, orderingBorder, onEta }: {
+const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, onSetOnSite, canEdit, rowHi, orderingBorder, onEta, showDelivered, onShowDelivered, onOpen }: {
   rows: FfeRow[]; total: number; filtered: boolean; filterLabel: string; handover: string | null; override: string | null; onSetOnSite: (v: string | null) => void; canEdit: boolean;
   rowHi: (r: FfeRow) => string | false; onEta: (id: string, eta: string | null) => void;
   orderingBorder: (r: FfeRow) => string | false;
+  /** URL-backed (`showdel=1`) so a Safari tab discard keeps the delivered group open. */
+  showDelivered: boolean; onShowDelivered: (v: boolean) => void;
+  /** Same callback the Procurement rows give ProductLink: records `?item=` for the return jump. */
+  onOpen: (id: string) => void;
 }) => {
-  const [showDelivered, setShowDelivered] = useState(false);
+  const setShowDelivered = onShowDelivered;
   const onSiteBy = override ?? (handover ? addDays(handover, -3) : null);
   const today = todayISO();
   const open = rows.filter((r) => !isDelivered(r));
@@ -1444,7 +1447,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, 
   const Row = ({ r, extra }: { r: FfeRow; extra?: ReactNode }) => (
     <li data-ffe-row={r.id} className={cn("flex flex-col gap-2 border-t border-border py-2 first:border-t-0 sm:flex-row sm:items-center sm:justify-between", orderingBorder(r), orderingBorder(r) && "pl-3", r.review && "opacity-80", rowHi(r))}>
       <div className="min-w-0">
-        <p className="text-sm break-words"><ReviewBadge row={r} />{r.item}<ProductLink row={r} /> <span className="text-muted-foreground">×{Number(r.qty)}</span></p>
+        <p className="text-sm break-words"><ReviewBadge row={r} />{r.item}<ProductLink row={r} onOpen={onOpen} /> <span className="text-muted-foreground">×{Number(r.qty)}</span></p>
         <p className="text-xs text-muted-foreground">{r.room} · {supplierOf(r)}{r.review_note && r.review ? ` · ${r.review_note}` : ""}</p>
         {r.eta && !r.ordered_on && <p className="text-xs text-muted-foreground">no order date recorded</p>}
       </div>
