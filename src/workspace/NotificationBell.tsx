@@ -9,18 +9,21 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "./WorkspaceProvider";
-import { canSee, type WorkspaceRole } from "./access";
+import { type WorkspaceRole } from "./access";
 import { keys, useMarkNotificationsRead, useNotifications } from "./queries";
+import { useProjects } from "./projectQueries";
+import { notificationTarget } from "./notificationTarget";
 
 const NotificationBell = () => {
   const { member } = useWorkspace();
-  // Lead notices open the lead page only for roles allowed on it; designers go to their briefs; others just mark read.
   const role = member?.role as WorkspaceRole | undefined;
-  const leadTarget = canSee(role, "leads") ? (id: string) => `/workspace/leads/${id}`
-    : canSee(role, "briefs") ? () => "/workspace/briefs" : null;
   const uid = member?.user_id;
   const qc = useQueryClient();
   const { data } = useNotifications(uid);
+  // Notifications carry a project UUID but the route takes the code, so the list is the lookup.
+  // Must stay above the early return below — a hook after one crashes the page.
+  const { data: projects = [] } = useProjects();
+  const codeOf = (id: string) => projects.find((p) => p.id === id)?.code;
   const markRead = useMarkNotificationsRead();
   const [open, setOpen] = useState(false);
 
@@ -88,10 +91,11 @@ const NotificationBell = () => {
                 </>
               );
               const cls = cn("block px-4 py-3 hover:bg-muted/20", !n.read && "bg-primary/5");
+              const to = notificationTarget(n, role, codeOf);
               return (
                 <li key={n.id}>
-                  {n.lead_id && leadTarget ? (
-                    <Link to={leadTarget(n.lead_id)} className={cls} onClick={() => openOne(n.id, n.read)}>{inner}</Link>
+                  {to ? (
+                    <Link to={to} className={cls} onClick={() => openOne(n.id, n.read)}>{inner}</Link>
                   ) : (
                     <button type="button" className={cn(cls, "w-full text-left")} onClick={() => openOne(n.id, n.read)}>{inner}</button>
                   )}
