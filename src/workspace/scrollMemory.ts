@@ -164,7 +164,7 @@ const keepScroll = (sc: Scroller, key: string, onGiveUp: (target: number) => voi
 /** URL params that change while working without changing the page's list layout — kept out of the window key
  *  (otherwise each change would re-key and jump the page to the top). `design`/`dtab` drive the design-package
  *  dialog, which scrolls its own container. */
-const VOLATILE_PARAMS = ["item", "q", "design", "dtab"];
+const VOLATILE_PARAMS = ["item", "q", "design", "dtab", "showdel"];
 
 /**
  * Saves/restores the window scroll per pathname+search (see keepScroll).
