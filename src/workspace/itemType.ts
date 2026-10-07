@@ -13,11 +13,12 @@ type Bucket = { label: string; terms: string[]; not?: RegExp };
 
 const BUCKETS: Bucket[] = [
   { label: "Bulbs", terms: ["bulb"] },
-  { label: "Wall design & panelling", terms: ["wall design", "bed head wall", "bedhead wall", "fluted panel", "panelling", "paneling", "joinery", "built-in", "built in", "feature wall"] },
+  { label: "Wall design & panelling", terms: ["wall design", "bed head wall", "bedhead wall", "bed head", "bedhead", "fluted panel", "panelling", "paneling", "joinery", "built-in", "built in", "feature wall"] },
   { label: "Wallpaper", terms: ["wallpaper", "wall paper"] },
   // "bed frame" / "frame bed" is a bed, not a picture frame.
   { label: "Wall art", terms: ["wall art", "artwork", "art decor", "print", "poster", "frame"], not: /\bbed\b.*\bframe|\bframe\b.*\bbed\b/ },
-  { label: "Mirrors", terms: ["mirror"] },
+  // "wardrobe with full length mirror" is a wardrobe; the mirror is a feature of it.
+  { label: "Mirrors", terms: ["mirror"], not: /wardrobe|closet|cabinet|dresser|vanity|sideboard/ },
   { label: "Ceiling lights", terms: ["ceiling pendant", "ceiling light", "chandelier", "pendant"] },
   { label: "Wall lights", terms: ["wall lamp", "wall sconce", "sconce"] },
   { label: "Floor lamps", terms: ["floor lamp"] },
