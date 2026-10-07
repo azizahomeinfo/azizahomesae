@@ -95,6 +95,40 @@ export const useProposalItems = (leadId: string | undefined, _briefFfe?: unknown
     },
   });
 
+/** What syncing the proposal's item list into the FF&E list would do (or did). */
+export interface FfeSyncPlan {
+  added: { room: string; item: string; qty: number }[];
+  removed: { room: string; item: string; had_supplier: boolean; had_cost: boolean }[];
+  changed: { room: string; item: string; from: number; to: number }[];
+  n_added: number; n_removed: number; n_changed: number;
+  sent_to: "designer" | "gm" | "nobody";
+  applied: boolean;
+}
+
+/**
+ * Push the proposal's item list into the FF&E list, which is the source of truth for cost. Run it with
+ * dry = true first to show exactly what will change: removals delete the row, losing the designer's
+ * supplier, cost and dimensions, so the confirmation must name them. Applying moves the costing off
+ * "Quoted", which is what stops the proposal being downloaded until the new price is set.
+ */
+export const useSyncFfeFromProposal = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { proposalId: string; leadId: string; dry: boolean }): Promise<FfeSyncPlan> => {
+      const { data, error } = await supabase.rpc("ws_sync_ffe_from_proposal", { _proposal: v.proposalId, _dry: v.dry });
+      fail(error);
+      return data as unknown as FfeSyncPlan;
+    },
+    onSuccess: (plan, v) => {
+      if (!plan.applied) return;
+      invalidate(qc, v.leadId);
+      qc.invalidateQueries({ queryKey: ["ws", "ffe"] });
+      qc.invalidateQueries({ queryKey: ["ws", "costing"] });
+      qc.invalidateQueries({ queryKey: ["ws", "notifications"] });
+    },
+  });
+};
+
 const totalOf = (doc: ProposalDocument) => (doc.investment.options[0] ? Number(doc.investment.options[0].amount) : null);
 
 /* ---------------- mutations ---------------- */

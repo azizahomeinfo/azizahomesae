@@ -2033,6 +2033,10 @@ export type Database = {
         Args: { _kind: string; _project: string }
         Returns: undefined
       }
+      ws_sync_ffe_from_proposal: {
+        Args: { _dry?: boolean; _proposal: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"

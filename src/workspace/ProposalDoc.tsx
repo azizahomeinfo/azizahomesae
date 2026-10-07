@@ -15,8 +15,12 @@ import { shortDate } from "./format";
 import { useKeepScroll } from "./scrollMemory";
 import {
   useCreateProposal, useLeadProposals, useProposalItems, useProposalStatus, useSaveProposal, useSharedDesign,
-  type ProposalStatus,
+  useSyncFfeFromProposal, type FfeSyncPlan, type ProposalStatus,
 } from "./proposalQueries";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
   type DocImage, type ProposalDocument,
@@ -284,6 +288,27 @@ const ProposalDoc = () => {
   const driftSummary = drift?.differs
     ? `${drift.added} ${drift.added === 1 ? "item" : "items"} added, ${drift.removed} removed, ${drift.quantitiesChanged} ${drift.quantitiesChanged === 1 ? "quantity" : "quantities"} changed`
     : null;
+  // Two directions now: pull the FF&E list into the proposal, or push the proposal's edits back into it.
+  // Drift alone cannot say which side moved, so both are offered and the wording stays neutral.
+  const syncFfe = useSyncFfeFromProposal();
+  const [syncPlan, setSyncPlan] = useState<FfeSyncPlan | null>(null);
+  const previewSync = async () => {
+    try {
+      const plan = await syncFfe.mutateAsync({ proposalId: row.id, leadId, dry: true });
+      if (!plan.n_added && !plan.n_removed && !plan.n_changed) { toast.info("The FF&E list already matches this proposal."); return; }
+      setSyncPlan(plan);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not check the FF&E list"); }
+  };
+  const applySync = async () => {
+    try {
+      const plan = await syncFfe.mutateAsync({ proposalId: row.id, leadId, dry: false });
+      setSyncPlan(null);
+      toast.success(plan.sent_to === "designer"
+        ? `FF&E list updated — ${plan.n_added} new item${plan.n_added === 1 ? "" : "s"} sent to the designer to spec and cost`
+        : "FF&E list updated — sent to the GM for a new quotation");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not update the FF&E list"); }
+  };
+
   const updateItemList = () => {
     if (row.status !== "Draft" || !liveGroups.length) return;
     setDraft({
@@ -392,10 +417,17 @@ const ProposalDoc = () => {
       {driftSummary && row.status === "Draft" && (
         <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="font-medium">The FF&amp;E list has changed since this proposal was built.</p>
-            <p className="text-muted-foreground">{driftSummary}. Updating changes only the item list; prices are not changed.</p>
+            <p className="font-medium">This proposal and the FF&amp;E list are different.</p>
+            <p className="text-muted-foreground">{driftSummary}. Take the FF&amp;E list if the designer changed it; send yours to the FF&amp;E list if you changed the proposal after client feedback — that one re-prices the job.</p>
           </div>
-          {editable && <Button type="button" variant="outline" className="shrink-0" onClick={updateItemList}>Update item list</Button>}
+          {editable && (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={updateItemList}>Take the FF&amp;E list</Button>
+              <Button type="button" onClick={() => void previewSync()} disabled={syncFfe.isPending}>
+                {syncFfe.isPending ? "Checking…" : "Send to FF&E list"}
+              </Button>
+            </div>
+          )}
         </div>
       )}
       {driftSummary && (row.status === "Sent" || row.status === "Accepted") && (
@@ -405,6 +437,59 @@ const ProposalDoc = () => {
           <p className="text-muted-foreground">{driftSummary}.</p>
         </div>
       )}
+
+      {/* Removals delete the row and the designer's work on it, so the confirmation names every one. */}
+      <AlertDialog open={!!syncPlan} onOpenChange={(o) => !o && setSyncPlan(null)}>
+        <AlertDialogContent className="max-h-[85vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send these changes to the FF&amp;E list?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The FF&amp;E list is what the coordinator buys from and what the cost is worked out from. After this,
+              {syncPlan?.sent_to === "designer"
+                ? " the new items go to the designer to give each one a supplier and a cost, then the GM sets the new price."
+                : " the GM sets the new price."}
+              {" "}This proposal cannot be downloaded or sent until that new price arrives.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 text-sm">
+            {!!syncPlan?.n_removed && (
+              <div className="rounded-[var(--radius)] border border-destructive/50 bg-destructive/10 p-3 space-y-1">
+                <p className="font-medium text-destructive">{syncPlan.n_removed} item{syncPlan.n_removed === 1 ? "" : "s"} will be deleted from the FF&amp;E list</p>
+                <p className="text-xs text-muted-foreground">This cannot be undone. Anything the designer recorded against these — supplier, cost, dimensions — is lost. If you only renamed an item, cancel and rename it on the FF&amp;E list instead, or it will be deleted and re-added empty.</p>
+                <ul className="list-disc pl-5">
+                  {syncPlan.removed.map((r, i) => (
+                    <li key={i}>{r.room} · {r.item}{(r.had_supplier || r.had_cost) && <span className="text-destructive"> — has {[r.had_supplier && "a supplier", r.had_cost && "a cost"].filter(Boolean).join(" and ")}</span>}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {!!syncPlan?.n_added && (
+              <div className="space-y-1">
+                <p className="font-medium">{syncPlan.n_added} item{syncPlan.n_added === 1 ? "" : "s"} will be added, uncosted</p>
+                <ul className="list-disc pl-5 text-muted-foreground">
+                  {syncPlan.added.map((r, i) => <li key={i}>{r.room} · {r.item} ×{r.qty}</li>)}
+                </ul>
+              </div>
+            )}
+            {!!syncPlan?.n_changed && (
+              <div className="space-y-1">
+                <p className="font-medium">{syncPlan.n_changed} quantit{syncPlan.n_changed === 1 ? "y" : "ies"} will change</p>
+                <ul className="list-disc pl-5 text-muted-foreground">
+                  {syncPlan.changed.map((r, i) => <li key={i}>{r.room} · {r.item}: {r.from} → {r.to}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void applySync()} disabled={syncFfe.isPending}>
+              {syncFfe.isPending ? "Updating…" : "Update the FF&E list"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* rail */}
