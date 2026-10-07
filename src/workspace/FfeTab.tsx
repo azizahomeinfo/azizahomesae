@@ -25,7 +25,7 @@ import { markReturnItem, useReturnToItem } from "./scrollMemory";
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -1219,6 +1219,10 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (!allRows.length) return <div className="rounded-[var(--radius)] border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No FF&E items yet. Build the costing sheet on the FF&E tab first.</div>;
   const awaitingBudget = needsBudget === true && budgetCosting?.status !== "Quoted";
+  const orderingExpected = !!project.confirmed_at && needsBudget !== undefined && !awaitingBudget;
+  const orderingBorder = (r: FfeRow) => orderingExpected && (
+    missingBuyability(r) ? "border-l-4 border-l-destructive" : notMoving(r) ? "border-l-4 border-l-warning" : false
+  );
 
   const dateCell = (r: FfeRow, k: "ordered_on" | "eta" | "delivered_on" | "installed_on", label: string) =>
     canEdit ? (
@@ -1262,6 +1266,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         <div className="flex flex-wrap gap-2 text-xs">
           {PHASES.map((p) => <span key={p.name} className="rounded-full border border-border px-2.5 py-0.5">{p.name} · {rows.filter((r) => phaseOf(r.stage) === p.name).length}</span>)}
         </div>
+        {orderingExpected && view !== "board" && <p className="text-xs text-muted-foreground">Amber = not ordered and no delivery date.</p>}
         {canEdit && sel.size > 0 && view === "table" && (
           <div className="flex flex-col gap-2 rounded-[var(--radius)] border border-primary/40 p-3 sm:flex-row sm:items-center">
             <span className="text-sm">{sel.size} selected</span>
@@ -1288,7 +1293,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       {view === "delivery" ? (
         <DeliveryView rows={shownRows} total={allRows.length} filtered={supplierFilter !== "all" || searching}
           filterLabel={[supplierFilter !== "all" && supplierFilter, searching && `“${search.trim()}”`].filter(Boolean).join(" · ")}
-          handover={project.handover_date} override={project.on_site_by} onSetOnSite={setOnSiteBy} canEdit={canEdit} rowHi={rowHi}
+          handover={project.handover_date} override={project.on_site_by} onSetOnSite={setOnSiteBy} canEdit={canEdit} rowHi={rowHi} orderingBorder={orderingBorder}
           onEta={(id, eta) => apply([id], { eta })} />
       ) : view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
@@ -1313,7 +1318,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               </thead>
               <tbody>
                 {items.map((r) => (
-                  <tr key={r.id} data-ffe-row={r.id} className={cn("border-t border-border align-top", rowHi(r))}>
+                  <tr key={r.id} data-ffe-row={r.id} className={cn("border-t border-border align-top", orderingBorder(r), rowHi(r))}>
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
                     <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}{(() => { const line = specSub(r, groupBy !== "room"); return line ? <span className="block max-w-64 truncate text-[10px] text-muted-foreground">{line}</span> : null; })()}
                       {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
@@ -1333,7 +1338,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           </div>
           <ul className="space-y-3 md:hidden">
             {items.map((r) => (
-              <li key={r.id} data-ffe-row={r.id} className={cn("space-y-2 rounded-[var(--radius)] border border-border p-3", rowHi(r))}>
+              <li key={r.id} data-ffe-row={r.id} className={cn("space-y-2 rounded-[var(--radius)] border border-border p-3", orderingBorder(r), rowHi(r))}>
                 <div className="flex items-start gap-2">
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
                   <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}</p>{(() => { const line = specSub(r, groupBy !== "room"); return line ? <p className="max-w-64 truncate text-[10px] text-muted-foreground">{line}</p> : null; })()}
@@ -1406,9 +1411,10 @@ const pl = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const isDelivered = (r: FfeRow) => !!r.delivered_on || DONE_STAGES.includes(r.stage);
 
 /** Everything must be on site three days before handover (the coordinator's `delivered` deadline). No money here. */
-const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, onSetOnSite, canEdit, rowHi, onEta }: {
+const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, onSetOnSite, canEdit, rowHi, orderingBorder, onEta }: {
   rows: FfeRow[]; total: number; filtered: boolean; filterLabel: string; handover: string | null; override: string | null; onSetOnSite: (v: string | null) => void; canEdit: boolean;
   rowHi: (r: FfeRow) => string | false; onEta: (id: string, eta: string | null) => void;
+  orderingBorder: (r: FfeRow) => string | false;
 }) => {
   const [showDelivered, setShowDelivered] = useState(false);
   const onSiteBy = override ?? (handover ? addDays(handover, -3) : null);
@@ -1417,7 +1423,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, 
   const delivered = rows.filter(isDelivered);
   const late = onSiteBy ? open.filter((r) => r.eta && r.eta > onSiteBy).sort((a, b) => (b.eta! < a.eta! ? -1 : b.eta! > a.eta! ? 1 : 0)) : [];
   const noEta = open.filter((r) => r.ordered_on && !r.eta);
-  const notOrdered = open.filter((r) => !r.ordered_on);
+  const notOrdered = open.filter(notMoving);
   const notOrderedBySup = bySupplier(notOrdered);
   const dated = open.filter((r) => r.eta).sort((a, b) => a.eta!.localeCompare(b.eta!));
   const dates = [...new Set(dated.map((r) => r.eta!))];
@@ -1429,10 +1435,11 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, 
   ) : <span className={cn("text-sm whitespace-nowrap", onSiteBy && r.eta && r.eta > onSiteBy && "text-destructive")}>{shortDate(r.eta)}</span>;
 
   const Row = ({ r, extra }: { r: FfeRow; extra?: ReactNode }) => (
-    <li data-ffe-row={r.id} className={cn("flex flex-col gap-2 border-t border-border py-2 first:border-t-0 sm:flex-row sm:items-center sm:justify-between", r.review && "opacity-80", rowHi(r))}>
+    <li data-ffe-row={r.id} className={cn("flex flex-col gap-2 border-t border-border py-2 first:border-t-0 sm:flex-row sm:items-center sm:justify-between", orderingBorder(r), orderingBorder(r) && "pl-3", r.review && "opacity-80", rowHi(r))}>
       <div className="min-w-0">
-        <p className="text-sm break-words"><ReviewBadge row={r} />{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span></p>
+        <p className="text-sm break-words"><ReviewBadge row={r} />{r.item}<ProductLink row={r} /> <span className="text-muted-foreground">×{Number(r.qty)}</span></p>
         <p className="text-xs text-muted-foreground">{r.room} · {supplierOf(r)}{r.review_note && r.review ? ` · ${r.review_note}` : ""}</p>
+        {r.eta && !r.ordered_on && <p className="text-xs text-muted-foreground">no order date recorded</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">{extra}{etaCell(r)}</div>
     </li>
@@ -1468,7 +1475,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, 
             : `On track — everything due before ${shortDate(onSiteBy)}`}
         </p>
         {!late.length && (noEta.length > 0 || notOrdered.length > 0) && (
-          <p className="text-sm text-warning">…of the dates known: {noEta.length} ordered without a date, {notOrdered.length} not ordered yet.</p>
+          <p className="text-sm text-warning">…of the dates known: {noEta.length} ordered without a delivery date, {notOrdered.length} not ordered and no delivery date.</p>
         )}
         <p className="text-xs text-muted-foreground">{scope}</p>
       </div>
@@ -1484,7 +1491,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, 
         </Group>
       )}
       {notOrdered.length > 0 && (
-        <Group title={`Not ordered yet · ${notOrdered.length}`} tone="warning">
+        <Group title={`Not ordered and no delivery date · ${notOrdered.length}`} tone="warning">
           {(() => { const left = daysBetween(today, onSiteBy); return (
             <p className={cn("text-xs", left < 0 ? "text-destructive" : "text-muted-foreground")}>
               {left < 0 ? `On-site deadline passed ${pl(-left, "day")} ago.` : `${pl(left, "day")} left until everything must be on site.`}
