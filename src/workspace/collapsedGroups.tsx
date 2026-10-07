@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,10 +47,12 @@ export const useCollapsedGroups = (key: string, opts: { searching: boolean; item
 export const sectionDomId = (scope: string, g: string) =>
   `ffe-sec-${scope}-${g.replace(/[^a-zA-Z0-9_-]+/g, "_")}`;
 
-export const CollapseChevron = ({ open, controls, label, onClick }: { open: boolean; controls: string; label: string; onClick: () => void }) => (
-  <button type="button" aria-expanded={open} aria-controls={controls} aria-label={`${open ? "Collapse" : "Expand"} ${label}`}
-    onClick={onClick} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-    <ChevronDown className={cn("h-4 w-4 transition-transform", !open && "-rotate-90")} />
+/** The toggle. With `children` (read-only headings) the title sits inside the button; editable headings pass none
+ *  and render the chevron beside their own input, so renaming is never inside a button. */
+export const CollapseChevron = ({ open, controls, label, onClick, children }: { open: boolean; controls: string; label: string; onClick: () => void; children?: ReactNode }) => (
+  <button type="button" aria-expanded={open} aria-controls={controls} aria-label={children ? undefined : `${open ? "Collapse" : "Expand"} ${label}`}
+    onClick={onClick} className={cn("inline-flex min-h-8 shrink-0 items-center gap-1 rounded-md text-left text-muted-foreground hover:text-foreground", children ? "pr-1" : "w-8 justify-center hover:bg-muted")}>
+    <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", !open && "-rotate-90")} />{children}
   </button>
 );
 
