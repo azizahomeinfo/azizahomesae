@@ -22,6 +22,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { useFfeViewParams } from "./ffeViewParams";
 import { BuyingBar, BAR_ROW_HI } from "./BuyingBar";
 import { markReturnItem, useReturnToItem } from "./scrollMemory";
+import { byItemType } from "./itemType";
 import { CollapseAllButton, CollapseChevron, collapseKey, sectionDomId, useCollapsedGroups } from "./collapsedGroups";
 import { aed, shortDate, todayISO } from "./format";
 import {
@@ -565,11 +566,11 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
 /* ---------------- FF&E costing sheet ---------------- */
 
 /** Room or priority grouping, remembered per user in this browser (designers tend to want room, coordinators priority). */
-type GroupBy = "room" | "priority" | "supplier";
+type GroupBy = "room" | "priority" | "supplier" | "type";
 const useFfeGroupBy = (fallback: GroupBy): [GroupBy, (g: GroupBy) => void] => {
   const { member } = useWorkspace();
   const key = `ws.ffe.groupBy.${member?.user_id ?? "anon"}`;
-  const read = (): GroupBy => { try { const v = localStorage.getItem(key); return v === "room" || v === "priority" || v === "supplier" ? v : fallback; } catch { return fallback; } };
+  const read = (): GroupBy => { try { const v = localStorage.getItem(key); return v === "room" || v === "priority" || v === "supplier" || v === "type" ? v : fallback; } catch { return fallback; } };
   const [g, setG] = useState<GroupBy>(read);
   useEffect(() => { setG(read()); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return [g, (v) => { setG(v); try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } }];
@@ -578,11 +579,12 @@ const byBand = (rows: FfeRow[]) => PRIORITY_BANDS.map((_, i) => [`${i + 1} · ${
   .sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]).filter(([, l]) => l.length);
 
 export const GroupToggle = ({ value, onChange }: { value: GroupBy; onChange: (g: GroupBy) => void }) => (
-  <div className="flex items-center gap-1" role="group" aria-label="Group by">
+  <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Group by">
     <span className="text-xs text-muted-foreground">Group by</span>
     <Button size="sm" variant={value === "room" ? "default" : "outline"} aria-pressed={value === "room"} onClick={() => onChange("room")}>Room</Button>
     <Button size="sm" variant={value === "priority" ? "default" : "outline"} aria-pressed={value === "priority"} onClick={() => onChange("priority")}>Priority</Button>
     <Button size="sm" variant={value === "supplier" ? "default" : "outline"} aria-pressed={value === "supplier"} onClick={() => onChange("supplier")}>Supplier</Button>
+    <Button size="sm" variant={value === "type" ? "default" : "outline"} aria-pressed={value === "type"} onClick={() => onChange("type")}>Item type</Button>
   </div>
 );
 
@@ -755,7 +757,7 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
   const gapInternal = budget && onlyGaps ? internalRows.filter(missingBuyability) : internalRows;
   const shownInternal = gapInternal.filter((r) => matchesSearch(r, search));
   // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
-  const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groups;
+  const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groupBy === "type" ? byItemType(rows) : groups;
   const gapGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingBuyability)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
   // [heading, shown rows, whole group] — the subtotal always sums the whole group.
   const shownGroups = gapGroups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
@@ -1190,7 +1192,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
     if (groupBy === "supplier") return bySupplier(rows);
     const client = rows.filter((r) => !isInternal(r));
     const internal = rows.filter(isInternal);
-    const g = groupBy === "room" ? byRoom(client) : byBand(client);
+    const g = groupBy === "room" ? byRoom(client) : groupBy === "type" ? byItemType(client) : byBand(client);
     return internal.length ? [...g, [`${BUILDING_MATERIAL} · internal`, internal] as [string, FfeRow[]]] : g;
   }, [rows, groupBy]);
   // [heading, shown rows, whole group]; search applied last, empty groups hidden while searching.
