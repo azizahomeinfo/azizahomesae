@@ -461,6 +461,10 @@ export const useUpdateSnag = () => {
 export const missingBuyability = (r: Pick<FfeRow, "supplier_id" | "supplier_name">) =>
   !r.supplier_id && !r.supplier_name?.trim();
 
+/** Nothing is happening with this item: not ordered, no ETA, not delivered. The coordinator cannot say when it will arrive. */
+export const notMoving = (r: Pick<FfeRow, "ordered_on" | "eta" | "delivered_on" | "stage" | "review">) =>
+  !r.ordered_on && !r.eta && !r.delivered_on && !DONE_STAGES.includes(r.stage) && !r.review;
+
 /** True when the project has no contract signed in the system, so its FF&E list needs a GM budget approval. */
 export const useNeedsBudget = (projectId: string | null | undefined) =>
   useQuery({
