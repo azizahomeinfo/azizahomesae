@@ -437,6 +437,72 @@ export type Database = {
           },
         ]
       }
+      discount_requests: {
+        Row: {
+          approved_discount: number | null
+          client_note: string | null
+          decided_at: string | null
+          decided_by: string | null
+          gm_note: string | null
+          id: string
+          lead_id: string
+          option_label: string
+          proposal_id: string | null
+          quoted_amount: number
+          requested_at: string
+          requested_by: string | null
+          requested_discount: number
+          status: string
+        }
+        Insert: {
+          approved_discount?: number | null
+          client_note?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          gm_note?: string | null
+          id?: string
+          lead_id: string
+          option_label: string
+          proposal_id?: string | null
+          quoted_amount: number
+          requested_at?: string
+          requested_by?: string | null
+          requested_discount: number
+          status?: string
+        }
+        Update: {
+          approved_discount?: number | null
+          client_note?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          gm_note?: string | null
+          id?: string
+          lead_id?: string
+          option_label?: string
+          proposal_id?: string | null
+          quoted_amount?: number
+          requested_at?: string
+          requested_by?: string | null
+          requested_discount?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_requests_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_requests_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ffe_costings: {
         Row: {
           created_at: string
@@ -1988,6 +2054,18 @@ export type Database = {
       }
       ws_notify_overdue_drawings: { Args: never; Returns: undefined }
       ws_order_tasks: { Args: { _project: string }; Returns: undefined }
+      ws_decide_discount: {
+        Args: { _amount: number; _approve: boolean; _gm_note: string; _request: string }
+        Returns: undefined
+      }
+      ws_price_floor: {
+        Args: { _label: string; _lead: string }
+        Returns: number
+      }
+      ws_request_discount: {
+        Args: { _client_note: string; _discount: number; _label: string; _proposal: string }
+        Returns: string
+      }
       ws_price_book_apply: {
         Args: { _lead: string; _project?: string }
         Returns: number

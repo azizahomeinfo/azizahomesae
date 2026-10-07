@@ -15,7 +15,8 @@ import { shortDate } from "./format";
 import { useKeepScroll } from "./scrollMemory";
 import {
   useCreateProposal, useLeadProposals, useProposalItems, useProposalStatus, useSaveProposal, useSharedDesign,
-  useSyncFfeFromProposal, type FfeSyncPlan, type ProposalStatus,
+  useSyncFfeFromProposal, useDiscountRequests, useRequestDiscount, useDecideDiscount,
+  type FfeSyncPlan, type ProposalStatus,
 } from "./proposalQueries";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -194,6 +195,15 @@ const ProposalDoc = () => {
   // These MUST stay above the early returns below — hooks after a conditional return crash the page.
   const syncFfe = useSyncFfeFromProposal();
   const [syncPlan, setSyncPlan] = useState<FfeSyncPlan | null>(null);
+  // Discount loop. Also above the early returns — hooks below one crash the page.
+  const { data: discounts = [] } = useDiscountRequests(leadId);
+  const askDiscount = useRequestDiscount();
+  const decideDiscount = useDecideDiscount();
+  const [askOpen, setAskOpen] = useState(false);
+  const [askAmount, setAskAmount] = useState("");
+  const [askWhy, setAskWhy] = useState("");
+  const [counter, setCounter] = useState("");
+  const [gmNote, setGmNote] = useState("");
 
   const back = <Link to="/workspace/proposals" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> All proposals</Link>;
   if (isLoading) return <div className="space-y-4">{back}<p className="text-muted-foreground">Loading…</p></div>;
@@ -491,6 +501,122 @@ const ProposalDoc = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Discount loop: only the GM moves price, so sales asks and the database holds the floor. */}
+      {costing?.status === "Quoted" && (member?.role === "gm" || member?.role === "sales") && (() => {
+        const isGm = member?.role === "gm";
+        const open = discounts.find((x) => x.status === "Requested");
+        const approved = discounts.filter((x) => x.status === "Approved");
+        const lastDecided = discounts.find((x) => x.status !== "Requested");
+        const floorFor = (label: string, quoted: number) =>
+          quoted - Math.max(0, ...approved.filter((a) => a.option_label === label).map((a) => Number(a.approved_discount ?? 0)), 0);
+        return (
+          <section className="space-y-3 rounded-[var(--radius)] border border-border bg-card p-3 text-sm md:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-medium">Price and discounts</h3>
+              {!open && !askOpen && !isGm && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setAskOpen(true)}>Ask the GM for a discount</Button>
+              )}
+            </div>
+
+            <ul className="space-y-1">
+              {(costing.options ?? []).map((o, i) => {
+                const fl = floorFor(o.label, Number(o.amount));
+                return (
+                  <li key={i} className="flex flex-wrap justify-between gap-x-3">
+                    <span>{o.label}</span>
+                    <span className="tabular-nums">
+                      Quoted {Number(o.amount).toLocaleString()}
+                      {fl < Number(o.amount) && <span className="text-success"> · lowest you may send {fl.toLocaleString()}</span>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {open && (
+              <div className="space-y-2 rounded-[var(--radius)] border border-warning/50 bg-warning/10 p-3">
+                <p className="font-medium">
+                  {Number(open.requested_discount).toLocaleString()} off {open.option_label} — waiting for the GM
+                </p>
+                {open.client_note && <p className="text-muted-foreground">Client: {open.client_note}</p>}
+                {isGm && (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <label className="space-y-1">
+                        <span className="block text-xs text-muted-foreground">Approve a different amount (optional)</span>
+                        <Input inputMode="decimal" className="h-8 w-36" placeholder={String(open.requested_discount)}
+                          value={counter} onChange={(e) => setCounter(e.target.value)} />
+                      </label>
+                      <Input className="h-8 w-full sm:w-56" placeholder="Note back to sales (optional)"
+                        value={gmNote} onChange={(e) => setGmNote(e.target.value)} />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" disabled={decideDiscount.isPending}
+                        onClick={async () => {
+                          const amt = counter.trim() ? Number(counter) : null;
+                          if (counter.trim() && !(amt! > 0)) { toast.error("Enter a number greater than zero"); return; }
+                          try {
+                            await decideDiscount.mutateAsync({ id: open.id, leadId, approve: true, amount: amt, note: gmNote });
+                            setCounter(""); setGmNote(""); toast.success("Discount approved");
+                          } catch (e) { toast.error(e instanceof Error ? e.message : "Could not approve"); }
+                        }}>
+                        {counter.trim() ? `Approve ${Number(counter).toLocaleString()} instead` : "Approve"}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" disabled={decideDiscount.isPending}
+                        onClick={async () => {
+                          try {
+                            await decideDiscount.mutateAsync({ id: open.id, leadId, approve: false, amount: null, note: gmNote });
+                            setCounter(""); setGmNote(""); toast.success("Discount declined");
+                          } catch (e) { toast.error(e instanceof Error ? e.message : "Could not decline"); }
+                        }}>Decline</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!open && lastDecided && (
+              <p className={cn("rounded-[var(--radius)] border p-2",
+                lastDecided.status === "Approved" ? "border-success/50 bg-success/10" : "border-destructive/40 bg-destructive/10")}>
+                {lastDecided.status === "Approved"
+                  ? <>Approved: {Number(lastDecided.approved_discount).toLocaleString()} off {lastDecided.option_label}
+                      {Number(lastDecided.approved_discount) !== Number(lastDecided.requested_discount) &&
+                        <> (asked for {Number(lastDecided.requested_discount).toLocaleString()})</>}</>
+                  : <>Declined: {Number(lastDecided.requested_discount).toLocaleString()} off {lastDecided.option_label}</>}
+                {lastDecided.gm_note && <> — {lastDecided.gm_note}</>}
+              </p>
+            )}
+
+            {askOpen && !open && (
+              <div className="space-y-2 rounded-[var(--radius)] border border-border p-3">
+                <div className="flex flex-wrap items-end gap-2">
+                  <label className="space-y-1">
+                    <span className="block text-xs text-muted-foreground">How much off</span>
+                    <Input inputMode="decimal" className="h-8 w-32" value={askAmount} onChange={(e) => setAskAmount(e.target.value)} />
+                  </label>
+                  <Input className="h-8 w-full sm:w-72" placeholder="What did the client say?"
+                    value={askWhy} onChange={(e) => setAskWhy(e.target.value)} />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" disabled={askDiscount.isPending}
+                    onClick={async () => {
+                      const amt = Number(askAmount);
+                      if (!(amt > 0)) { toast.error("Enter how much to come down by"); return; }
+                      const label = costing.options?.[0]?.label ?? "Option A";
+                      try {
+                        await askDiscount.mutateAsync({ proposalId: row.id, leadId, label, discount: amt, clientNote: askWhy });
+                        setAskOpen(false); setAskAmount(""); setAskWhy("");
+                        toast.success("Sent to the GM");
+                      } catch (e) { toast.error(e instanceof Error ? e.message : "Could not send the request"); }
+                    }}>Send to the GM</Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setAskOpen(false)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* rail */}

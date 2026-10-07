@@ -95,6 +95,77 @@ export const useProposalItems = (leadId: string | undefined, _briefFfe?: unknown
     },
   });
 
+export type DiscountStatus = "Requested" | "Approved" | "Declined";
+export interface DiscountRequest {
+  id: string; lead_id: string; proposal_id: string | null; option_label: string;
+  quoted_amount: number; requested_discount: number; client_note: string | null;
+  status: DiscountStatus; approved_discount: number | null; gm_note: string | null;
+  requested_by: string | null; requested_at: string; decided_by: string | null; decided_at: string | null;
+}
+
+const DISCOUNT_COLS =
+  "id, lead_id, proposal_id, option_label, quoted_amount, requested_discount, client_note, status, approved_discount, gm_note, requested_by, requested_at, decided_by, decided_at";
+
+/** Discount asks on this lead, newest first. Hidden from designers and coordinators by RLS. */
+export const useDiscountRequests = (leadId: string | undefined) =>
+  useQuery({
+    queryKey: ["ws", "discounts", leadId ?? ""],
+    enabled: !!leadId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("discount_requests")
+        .select(DISCOUNT_COLS).eq("lead_id", leadId!).order("requested_at", { ascending: false });
+      fail(error);
+      return (data ?? []) as unknown as DiscountRequest[];
+    },
+  });
+
+/** Every GM decision anywhere, for the dashboard tile. */
+export const useOpenDiscountRequests = (enabled = true) =>
+  useQuery({
+    queryKey: ["ws", "discounts-open"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("discount_requests")
+        .select("id, lead_id, option_label, quoted_amount, requested_discount, leads(name)")
+        .eq("status", "Requested");
+      fail(error);
+      return (data ?? []) as { id: string; lead_id: string; option_label: string; quoted_amount: number;
+                               requested_discount: number; leads: { name: string } | null }[];
+    },
+  });
+
+const invalidateDiscounts = (qc: ReturnType<typeof useQueryClient>, leadId: string) => {
+  qc.invalidateQueries({ queryKey: ["ws", "discounts", leadId] });
+  qc.invalidateQueries({ queryKey: ["ws", "discounts-open"] });
+  qc.invalidateQueries({ queryKey: ["ws", "notifications"] });
+};
+
+/** Sales asks the GM to come down on the option the client is taking. */
+export const useRequestDiscount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { proposalId: string; leadId: string; label: string; discount: number; clientNote: string }) => {
+      const { error } = await supabase.rpc("ws_request_discount", {
+        _proposal: v.proposalId, _label: v.label, _discount: v.discount, _client_note: v.clientNote });
+      fail(error);
+    },
+    onSuccess: (_d, v) => invalidateDiscounts(qc, v.leadId),
+  });
+};
+
+/** GM only. Approving a different amount is the counter-offer. */
+export const useDecideDiscount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; leadId: string; approve: boolean; amount: number | null; note: string }) => {
+      const { error } = await supabase.rpc("ws_decide_discount", {
+        _request: v.id, _approve: v.approve, _amount: v.amount as number, _gm_note: v.note });
+      fail(error);
+    },
+    onSuccess: (_d, v) => { invalidateDiscounts(qc, v.leadId); qc.invalidateQueries({ queryKey: prKeys.lead(v.leadId) }); },
+  });
+};
+
 /** What syncing the proposal's item list into the FF&E list would do (or did). */
 export interface FfeSyncPlan {
   added: { room: string; item: string; qty: number }[];

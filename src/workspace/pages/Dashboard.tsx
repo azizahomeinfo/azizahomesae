@@ -4,6 +4,7 @@ import { useWorkspace } from "../WorkspaceProvider";
 import { useBriefList, useLeads } from "../queries";
 import { useDesignStatuses } from "../designQueries";
 import { useCostingsAwaitingQuote } from "../ffeQueries";
+import { useOpenDiscountRequests } from "../proposalQueries";
 import { isClosed } from "../constants";
 import { isDue, shortDate } from "../format";
 import StatusPill from "../StatusPill";
@@ -22,6 +23,7 @@ const Dashboard = () => {
 
   const { data: designStatuses } = useDesignStatuses();
   const { data: awaitingQuote = [] } = useCostingsAwaitingQuote(member?.role === "gm");
+  const { data: openDiscounts = [] } = useOpenDiscountRequests(member?.role === "gm");
   const { data: briefs = [] } = useBriefList();
   const role = member?.role;
   const { rows: queue } = useAssignQueue(role === "gm");
@@ -65,6 +67,9 @@ const Dashboard = () => {
   if (role === "gm" || role === "sales") stats.splice(2, 0, { label: "Awaiting your review", value: awaitingReview, caption: "submitted designs", alert: awaitingReview > 0 });
   // A list can need a price without the design changing at all (sales edits the proposal, it re-syncs),
   // and that case showed nowhere on this page before.
+  if (role === "gm" && openDiscounts.length) stats.splice(3, 0, { label: "Discount requests", value: openDiscounts.length,
+    caption: openDiscounts.map((d) => `${d.leads?.name ?? "a lead"} · ${Number(d.requested_discount).toLocaleString()} off`).join(", "),
+    alert: true });
   if (role === "gm") stats.splice(3, 0, { label: "Awaiting your quotation", value: awaitingQuote.length,
     caption: awaitingQuote.length ? `FF&E lists · ${awaitingQuote.map((c) => c.leads?.name).filter(Boolean).join(", ")}` : "FF&E lists",
     alert: awaitingQuote.length > 0 });
