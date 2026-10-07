@@ -633,21 +633,33 @@ export const ConfirmBanner = ({ project, hasItems }: { project: Project; hasItem
   );
 };
 
+const useOrderingBorder = (project: Project) => {
+  const { data: needsBudget } = useNeedsBudget(project.id);
+  const { data: budgetCosting } = useCosting(projectOwner(project.id), false);
+  const awaitingBudget = needsBudget === true && budgetCosting?.status !== "Quoted";
+  const orderingExpected = !!project.confirmed_at && needsBudget !== undefined && !awaitingBudget;
+  const orderingBorder = (r: FfeRow) => orderingExpected && (
+    missingBuyability(r) ? "border-l-4 border-l-destructive" : notMoving(r) ? "border-l-4 border-l-warning" : false
+  );
+  return { orderingBorder, orderingExpected, awaitingBudget };
+};
+
 export const FfeTab = ({ project }: { project: Project }) => {
   const { data: rows = [] } = useFfeItems(projectOwner(project.id), false);
+  const { orderingBorder } = useOrderingBorder(project);
   return (
     <div className="space-y-4">
       <ConfirmBanner project={project} hasItems={rows.length > 0} />
       <FfeSheet ctx={{
         owner: projectOwner(project.id), leadId: project.lead_id, projectId: project.id, name: project.name,
         designerId: project.designer_id, salesId: project.sales_id,
-      }} />
+      }} rowBorder={orderingBorder} />
     </div>
   );
 };
 
 /** The FF&E list + costing workflow, shared by the lead's design package and the project tab. */
-export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?: boolean }) => {
+export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext; readOnly?: boolean; rowBorder?: (r: FfeRow) => string | false }) => {
   const { member } = useWorkspace();
   const role = member?.role as WorkspaceRole;
   const withCost = role !== "sales";
@@ -775,7 +787,8 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
 
   const itemRow = (r: FfeRow) => (
     <li key={r.id} data-ffe-row={r.id} className={cn("space-y-1.5 rounded-[var(--radius)] border border-border p-3 md:rounded-none md:border-0 md:border-t md:px-0 md:py-2",
-      budget && missingBuyability(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3", r.id === itemId && BAR_ROW_HI)}>
+      rowBorder ? rowBorder(r) : budget && missingBuyability(r) && "border-l-4 border-l-destructive md:border-l-4 md:pl-3",
+      rowBorder?.(r) && "md:border-l-4 md:pl-3", r.id === itemId && BAR_ROW_HI)}>
       <div className={cn("grid items-start gap-2", primaryCols)}>
         <F label="Item" className={withCost ? "col-span-3 md:col-span-1" : ""}>
           <span className="block text-[10px] text-muted-foreground">{r.ref}{byPriority && <> · {r.room}</>}</span>
@@ -957,6 +970,7 @@ export const FfeSheet = ({ ctx, readOnly = false }: { ctx: FfeContext; readOnly?
         <SearchBox value={search} onChange={setSearch} shown={visibleCount} total={(withCost ? allRows : rows).length} />
         <GroupToggle value={groupBy} onChange={setGroupBy} />
       </div>
+      {rowBorder && <p className="text-xs text-muted-foreground">Amber = not ordered and no delivery date.</p>}
       <BuyingBar rows={[...shownGroups.flatMap(([, l]) => l), ...(internalVisible ? shownInternal : [])]} itemId={itemId} ready={!isLoading} showCost={canEditCost}
         supplierLabel={(r) => r.supplier_name?.trim() || "No supplier"} onSelect={setItem}
         controls={canEditCost ? (r) => (
@@ -1126,8 +1140,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const canEdit = role === "gm" || role === "coordinator";
   // GM and coordinator buy, so they see cost; nobody else reaches this tab with cost.
   const { data: allRows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
-  const { data: needsBudget } = useNeedsBudget(project.id);
-  const { data: budgetCosting } = useCosting(projectOwner(project.id), false);
+  const { orderingBorder, orderingExpected, awaitingBudget } = useOrderingBorder(project);
   const update = useUpdateFfeItems();
   const updateProject = useUpdateProject();
   const qc = useQueryClient();
@@ -1218,12 +1231,6 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (!allRows.length) return <div className="rounded-[var(--radius)] border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No FF&E items yet. Build the costing sheet on the FF&E tab first.</div>;
-  const awaitingBudget = needsBudget === true && budgetCosting?.status !== "Quoted";
-  const orderingExpected = !!project.confirmed_at && needsBudget !== undefined && !awaitingBudget;
-  const orderingBorder = (r: FfeRow) => orderingExpected && (
-    missingBuyability(r) ? "border-l-4 border-l-destructive" : notMoving(r) ? "border-l-4 border-l-warning" : false
-  );
-
   const dateCell = (r: FfeRow, k: "ordered_on" | "eta" | "delivered_on" | "installed_on", label: string) =>
     canEdit ? (
       <Input type="date" aria-label={label} value={r[k] ?? ""} className={cn("h-8 w-36 text-sm", k === "eta" && etaLate(r) && "text-destructive")}
@@ -1423,7 +1430,7 @@ const DeliveryView = ({ rows, total, filtered, filterLabel, handover, override, 
   const delivered = rows.filter(isDelivered);
   const late = onSiteBy ? open.filter((r) => r.eta && r.eta > onSiteBy).sort((a, b) => (b.eta! < a.eta! ? -1 : b.eta! > a.eta! ? 1 : 0)) : [];
   const noEta = open.filter((r) => r.ordered_on && !r.eta);
-  const notOrdered = open.filter(notMoving);
+  const notOrdered = open.filter((r) => !r.ordered_on && !r.eta);
   const notOrderedBySup = bySupplier(notOrdered);
   const dated = open.filter((r) => r.eta).sort((a, b) => a.eta!.localeCompare(b.eta!));
   const dates = [...new Set(dated.map((r) => r.eta!))];
