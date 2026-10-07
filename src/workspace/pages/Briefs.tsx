@@ -53,10 +53,16 @@ const ViewRequirements = ({
 };
 
 /** Design status chip + button that opens the design package for a lead. */
-const DesignLink = ({ leadId, briefStatus }: { leadId: string; briefStatus: BriefStatus }) => {
+/**
+ * The brief status hides this button while a design would be premature. A Won lead is the exception:
+ * the project exists and the coordinator needs the renders, so the brief's state is no longer a reason
+ * to hide it. AZ-2635 sat in Production with its brief still a Draft (ws_assign_lead_designer assigns
+ * without moving the brief on), leaving the designer with no way to reach the package at all.
+ */
+const DesignLink = ({ leadId, briefStatus, leadWon }: { leadId: string; briefStatus: BriefStatus; leadWon: boolean }) => {
   const { data: statuses } = useDesignStatuses();
   const { open, setOpen } = useDesignParam(leadId);
-  if (!DESIGN_STAGES.includes(briefStatus)) return null;
+  if (!DESIGN_STAGES.includes(briefStatus) && !leadWon) return null;
   const d = statuses?.get(leadId);
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -166,7 +172,7 @@ const DesignerView = () => {
                 </button>
               )}
             />
-            <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} />
+            <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} leadWon={b.leads?.status === "Won"} />
           </div>
         );
       })}
@@ -226,7 +232,7 @@ const GmView = () => {
                       <TableCell className="whitespace-nowrap">{(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"}</TableCell>
                       <TableCell className="whitespace-nowrap">{(b.designer_id && nameOf.get(b.designer_id)) || "—"}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end"><DesignLink leadId={b.lead_id} briefStatus={st} /></div>
+                        <div className="flex justify-end"><DesignLink leadId={b.lead_id} briefStatus={st} leadWon={b.leads?.status === "Won"} /></div>
                         {st === "Submitted" && (
                           <BriefActionBar
                             size="sm"
@@ -243,7 +249,7 @@ const GmView = () => {
               {rows.map((b) => (
                 <div key={b.id} className="space-y-2">
                   <BriefCard d={fromRow(b)} />
-                  <DesignLink leadId={b.lead_id} briefStatus={st} />
+                  <DesignLink leadId={b.lead_id} briefStatus={st} leadWon={b.leads?.status === "Won"} />
                   <p className="px-1 text-xs text-muted-foreground">
                     Owner: {(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"} · Designer: {(b.designer_id && nameOf.get(b.designer_id)) || "—"}
                   </p>

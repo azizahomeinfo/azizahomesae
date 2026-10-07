@@ -192,7 +192,7 @@ export type BriefDocColumns = Pick<T["requirement_briefs"]["Update"], "header" |
 const BRIEF_COLS =
   "id, lead_id, status, designer_id, header, style, colours, ffe, bedrooms, lists, attachments, revision_note, submitted_at, assigned_at, ready_at, approved_at, updated_at";
 const BRIEF_LIST_COLS =
-  "id, lead_id, status, designer_id, submitted_at, updated_at, leads(name, property, unit_type, budget, target_date, sales_id, designer_id, drive_url)";
+  "id, lead_id, status, designer_id, submitted_at, updated_at, leads(name, property, unit_type, budget, target_date, sales_id, designer_id, drive_url, status)";
 
 export interface BriefListRow {
   id: string;
@@ -201,7 +201,7 @@ export interface BriefListRow {
   designer_id: string | null;
   submitted_at: string | null;
   updated_at: string;
-  leads: { name: string; property: string | null; unit_type: string | null; budget: number | null; target_date: string | null; sales_id: string | null; designer_id: string | null; drive_url: string | null } | null;
+  leads: { name: string; property: string | null; unit_type: string | null; budget: number | null; target_date: string | null; sales_id: string | null; designer_id: string | null; drive_url: string | null; status: T["leads"]["Row"]["status"] } | null;
 }
 
 export type QueueRow = Database["public"]["Functions"]["ws_brief_queue"]["Returns"][number];
