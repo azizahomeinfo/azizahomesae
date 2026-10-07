@@ -207,6 +207,56 @@ export const useRemoveOnlineRetailer = () => {
   });
 };
 
+/* ---------------- pick-up suppliers (GM-maintained; feeds ws_ffe_pickup_supplier) ---------------- */
+
+/** Suppliers we collect from whatever they sell — their items go to the Dragon Mart pick-up run. */
+export const usePickupSuppliers = (enabled = true) =>
+  useQuery({
+    queryKey: ["ws", "pickup-suppliers"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("ffe_pickup_suppliers").select("name").order("name");
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((r) => r.name);
+    },
+  });
+
+const usePickupSettled = () => {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["ws", "pickup-suppliers"] });
+    qc.invalidateQueries({ queryKey: ["ws", "ffe"] });
+  };
+};
+
+export const useAddPickupSupplier = () => {
+  const settled = usePickupSettled();
+  return useMutation({
+    mutationFn: async (v: { name: string; existing: string[]; by: string | null }) => {
+      const name = v.name.trim().replace(/\s+/g, " ");
+      if (!name) throw new Error("Enter a supplier name");
+      if (name.length > 120) throw new Error("Name is too long");
+      if (v.existing.some((n) => n.toLowerCase() === name.toLowerCase())) throw new Error(`${name} is already on the list`);
+      const { error } = await supabase.from("ffe_pickup_suppliers").insert({ name, added_by: v.by });
+      if (error) throw new Error(error.message);
+      return name;
+    },
+    onSettled: settled,
+  });
+};
+
+export const useRemovePickupSupplier = () => {
+  const settled = usePickupSettled();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const { data, error } = await supabase.from("ffe_pickup_suppliers").delete().eq("name", name).select("name");
+      if (error) throw new Error(error.message);
+      if (!data?.length) throw new Error("You don't have permission to remove pick-up suppliers");
+    },
+    onSettled: settled,
+  });
+};
+
 /* ---------------- ffe items ---------------- */
 
 export const useFfeItems = (owner: FfeOwner | undefined, withCost: boolean) =>

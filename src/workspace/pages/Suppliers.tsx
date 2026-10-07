@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
 import { X } from "lucide-react";
-import { useAddOnlineRetailer, useOnlineRetailers, useRemoveOnlineRetailer, useSaveSupplier, useSupplierOpenCounts, useSuppliers, type Supplier } from "../ffeQueries";
+import { useAddOnlineRetailer, useAddPickupSupplier, useOnlineRetailers, usePickupSuppliers, useRemoveOnlineRetailer, useRemovePickupSupplier, useSaveSupplier, useSupplierOpenCounts, useSuppliers, type Supplier } from "../ffeQueries";
 
 const STATUSES: Supplier["status"][] = ["Preferred", "Approved", "On Watch", "Blocked"];
 const TONE: Record<Supplier["status"], string> = {
@@ -87,7 +87,7 @@ const OnlineRetailers = ({ userId }: { userId: string | null }) => {
   return (
     <section className="rounded-[var(--radius)] border border-border bg-card p-4 space-y-3">
       <h2 className="font-heading uppercase text-lg tracking-wide">Online retailers</h2>
-      <p className="text-sm text-muted-foreground">Items from these suppliers are ordered online (buying run 3 or 6). Everything else with a supplier is collected — run 5, Dragon Mart pick-up.</p>
+      <p className="text-sm text-muted-foreground">Items from these suppliers are ordered online — buying run 4 (furniture) or 7 (household). Everything else with a supplier is collected on run 6, the Dragon Mart pick-up.</p>
       <p className="text-xs text-muted-foreground">Existing items keep their run until they are next edited.</p>
       {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : error ? <p className="text-sm text-destructive">{(error as Error).message}</p> : (
         <ul className="flex flex-wrap gap-2">
@@ -106,6 +106,43 @@ const OnlineRetailers = ({ userId }: { userId: string | null }) => {
       <form className="flex flex-col gap-2 sm:flex-row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
         <Input value={v} onChange={(e) => setV(e.target.value)} maxLength={120} placeholder="Retailer name, e.g. Home Centre" aria-label="Retailer name" className="sm:max-w-xs" />
         <Button type="submit" variant="outline" disabled={!v.trim() || add.isPending}>{add.isPending ? "Adding…" : "Add retailer"}</Button>
+      </form>
+    </section>
+  );
+};
+
+/** GM only: suppliers we collect from whatever they sell, so their items join the Dragon Mart pick-up run. */
+const PickupSuppliers = ({ userId }: { userId: string | null }) => {
+  const { data: names = [], isLoading, error } = usePickupSuppliers();
+  const add = useAddPickupSupplier();
+  const remove = useRemovePickupSupplier();
+  const [v, setV] = useState("");
+  const submit = () => add.mutate({ name: v, existing: names, by: userId }, {
+    onSuccess: (n) => { toast.success(`${n} added`); setV(""); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+  return (
+    <section className="rounded-[var(--radius)] border border-border bg-card p-4 space-y-3">
+      <h2 className="font-heading uppercase text-lg tracking-wide">Collected suppliers</h2>
+      <p className="text-sm text-muted-foreground">Everything from these suppliers goes on buying run 6, the Dragon Mart pick-up, whatever the item is — so a dining table from Julia is collected, not treated as a furniture order.</p>
+      <p className="text-xs text-muted-foreground">Matched on any part of the name, so &quot;Julia&quot; also catches &quot;Julia Table&amp;Chair&quot;. Existing items keep their run until they are next edited.</p>
+      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : error ? <p className="text-sm text-destructive">{(error as Error).message}</p> : (
+        <ul className="flex flex-wrap gap-2">
+          {names.length === 0 && <li className="text-sm text-muted-foreground">No collected suppliers yet.</li>}
+          {names.map((n) => (
+            <li key={n} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-sm">
+              {n}
+              <button type="button" aria-label={`Remove ${n}`} disabled={remove.isPending} className="text-muted-foreground hover:text-destructive"
+                onClick={() => remove.mutate(n, { onSuccess: () => toast.success(`${n} removed`), onError: (e) => toast.error(e instanceof Error ? e.message : "Failed") })}>
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form className="flex flex-col gap-2 sm:flex-row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+        <Input value={v} onChange={(e) => setV(e.target.value)} maxLength={120} placeholder="Supplier name, e.g. Julia" aria-label="Collected supplier name" className="sm:max-w-xs" />
+        <Button type="submit" variant="outline" disabled={!v.trim() || add.isPending}>{add.isPending ? "Adding…" : "Add supplier"}</Button>
       </form>
     </section>
   );
@@ -165,6 +202,7 @@ const Suppliers = () => {
         </>
       )}
       {member?.role === "gm" && <OnlineRetailers userId={member.user_id} />}
+      {member?.role === "gm" && <PickupSuppliers userId={member.user_id} />}
       {canEdit && <SupplierDialog supplier={editing} open={open} onOpenChange={setOpen} />}
     </div>
   );

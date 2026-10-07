@@ -756,6 +756,12 @@ export type Database = {
         }
         Relationships: []
       }
+      ffe_pickup_suppliers: {
+        Row: { added_at: string; added_by: string | null; name: string }
+        Insert: { added_at?: string; added_by?: string | null; name: string }
+        Update: { added_at?: string; added_by?: string | null; name?: string }
+        Relationships: []
+      }
       ffe_price_book: {
         Row: {
           item: string
@@ -2014,6 +2020,10 @@ export type Database = {
       }
       ws_ffe_price: { Args: { _item: string; _room: string }; Returns: number }
       ws_ffe_reselected: { Args: { _item: string }; Returns: string }
+      ws_ffe_pickup_supplier: {
+        Args: { _supplier: string }
+        Returns: boolean
+      }
       ws_ffe_split_parts: {
         Args: { _category: string; _item: string; _room: string }
         Returns: string[]
