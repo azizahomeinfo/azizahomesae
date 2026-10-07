@@ -542,7 +542,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const isLatest = !!selected && selected.id === latest?.id;
   // Draft, Submitted and Accepted stay editable for the designer; edits to a shared or approved version notify sales (DB trigger, 15-min debounce) without resetting the approval.
   const editable = !viewOnly && isLatest && (selected.status === "Draft" || selected.status === "Submitted" || selected.status === "Accepted")
-    && !!me && (selected.designer_id === me || isAssignedDesigner);
+    && !!me && (selected.designer_id === me || isAssignedDesigner || isGm);
   const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
   const canResubmit = !viewOnly && isLatest && selected?.status === "Submitted" && (isGm || editable);
@@ -557,7 +557,14 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
       toast.error(errMsg(e, "Could not resubmit the design package"));
     }
   };
-  const canStartFirst = !viewOnly && !latest && isAssignedDesigner && !!brief && ["Assigned", "In Design", "Revision Requested"].includes(brief.status);
+  // The brief status is meant to stop a design starting *too early*. Once the lead is Won the project
+  // already exists and the renders are overdue, so the brief's state is no longer a reason to block:
+  // AZ-2635 reached Production with its brief still a Draft (ws_assign_lead_designer sets designer_id
+  // without moving the brief on), which left the assigned designer no way to upload anything at all —
+  // and the coordinator with no design to look at. The GM may start V1 too, as they already may for
+  // every later version (canStartNext).
+  const canStartFirst = !viewOnly && !latest && !!brief && (isAssignedDesigner || isGm)
+    && (["Assigned", "In Design", "Revision Requested"].includes(brief.status) || lead?.status === "Won");
   const canStartNext = !viewOnly && !!brief && (
     (latest?.status === "Rejected" && isAssignedDesigner)
     || (latest?.status === "Accepted" && (isGm || isAssignedDesigner || (!!lead && lead.sales_id === me)))
