@@ -23,7 +23,7 @@ type Shop = { name: string; phones: string[]; lines: Line[] };
  * Same item + size from one shop is merged into one line with the total quantity, so the driver counts
  * pieces once. No prices, rooms or client details — the message goes to an outside driver.
  */
-export const buildDriverList = (project: Pick<Project, "name" | "property" | "unit" | "location">, rows: FfeRow[], suppliers: Supplier[], withUnordered: boolean): { text: string; shops: number; pieces: number } => {
+export const buildDriverList = (project: Pick<Project, "code" | "property" | "unit" | "location">, rows: FfeRow[], suppliers: Supplier[], withUnordered: boolean): { text: string; shops: number; pieces: number } => {
   const byId = new Map(suppliers.map((s) => [s.id, s]));
   const shops = new Map<string, Shop>();
   for (const r of rows) {
@@ -51,7 +51,7 @@ export const buildDriverList = (project: Pick<Project, "name" | "property" | "un
   const pieces = list.reduce((n, s) => n + s.lines.reduce((m, l) => m + l.qty, 0), 0);
   const dest = [project.property, project.unit, project.location].map((p) => p?.trim()).filter(Boolean).join(", ");
   const out: string[] = [
-    `*Dragon Mart pick-up — ${project.name}*`,
+    `*Dragon Mart pick-up — ${project.code}*`,
     `${shortDate(todayISO())} · ${list.length} shop${list.length === 1 ? "" : "s"} · ${qtyText(pieces)} piece${pieces === 1 ? "" : "s"}`,
   ];
   if (dest) out.push(`Deliver to: ${dest}`);
