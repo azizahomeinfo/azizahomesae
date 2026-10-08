@@ -1194,6 +1194,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const { view, setView, showDelivered, setShowDelivered, supplier: supplierFilter, setSupplier: setSupplierFilter, itemId, setItem, search } = urlState;
   const [orderAll, setOrderAll] = useState<{ supplier: string; items: FfeRow[] } | null>(null);
   const [orderPo, setOrderPo] = useState("");
+  const [orderDate, setOrderDate] = useState(todayISO());
   // Changing the search clears the selection, so a bulk action can never include rows that are out of view.
   const setSearch = (v: string) => { urlState.setSearch(v); setSel(new Set()); };
   const supplierCounts = useMemo(() => bySupplier(allRows).map(([k, l]) => [k, l.length] as [string, number]), [allRows]);
@@ -1259,6 +1260,22 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       onSuccess: () => { toast.success(ok(send.length) + (held.length ? ` · ${held.length} skipped — on hold` : "")); done?.(); },
       onError: (e) => toast.error(errMsg(e, "Could not save")),
     });
+  };
+  // One order date for the whole supplier: stamped on every item that has none yet, never over a
+  // date already entered. (The database also stamps today on any move into Ordered — this lets the
+  // coordinator back-date an order placed yesterday in one go.)
+  const placeOrder = async (supplier: string, send: FfeRow[]) => {
+    const base: Partial<FfeRow> = orderPo.trim() ? { stage: "Ordered", po_ref: orderPo.trim() } : { stage: "Ordered" };
+    const undated = send.filter((r) => !r.ordered_on).map((r) => r.id);
+    const dated = send.filter((r) => r.ordered_on).map((r) => r.id);
+    try {
+      if (undated.length) await update.mutateAsync({ owner: projectOwner(project.id), ids: undated, values: { ...base, ordered_on: orderDate || todayISO() } });
+      if (dated.length) await update.mutateAsync({ owner: projectOwner(project.id), ids: dated, values: base });
+      toast.success(`${send.length} item${send.length === 1 ? "" : "s"} ordered from ${supplier} on ${shortDate(orderDate || todayISO())}`);
+      setOrderAll(null);
+    } catch (e) {
+      toast.error(errMsg(e, "Could not save"));
+    }
   };
   const toggle = (id: string, on: boolean) => { const n = new Set(sel); if (on) n.add(id); else n.delete(id); setSel(n); };
 
@@ -1347,7 +1364,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <div className="flex flex-wrap items-center gap-2">
           {groupBy === "supplier" && room !== NO_SUPPLIER && (
             <Button size="sm" variant="outline" disabled={!whole.some(buyable) || update.isPending}
-              onClick={() => { setOrderPo(""); setOrderAll({ supplier: room, items: whole }); }}>Order all from {room}</Button>
+              onClick={() => { setOrderPo(""); setOrderDate(todayISO()); setOrderAll({ supplier: room, items: whole }); }}>Order all from {room}</Button>
           )}
           <label className="flex items-center gap-2 text-xs">
             <Checkbox checked={items.every((r) => sel.has(r.id))}
@@ -1430,12 +1447,14 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                   Your search doesn't limit this — all {send.length} items from {orderAll.supplier} will be ordered, not just the {matched} shown.
                 </p>
               )}
+              <label className="space-y-1 text-sm">
+                <span className="text-muted-foreground">Order date — applied to every item without one</span>
+                <Input type="date" value={orderDate} max={todayISO()} onChange={(e) => setOrderDate(e.target.value)} aria-label="Order date for this order" />
+              </label>
               <Input placeholder="PO ref (optional)" value={orderPo} onChange={(e) => setOrderPo(e.target.value)} aria-label="PO ref for this order" />
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button disabled={!send.length || update.isPending} onClick={() => applyBulk(send.map((r) => r.id),
-                  orderPo.trim() ? { stage: "Ordered", po_ref: orderPo.trim() } : { stage: "Ordered" },
-                  (n) => `${n} item${n === 1 ? "" : "s"} ordered from ${orderAll.supplier}`, () => setOrderAll(null))}>Order {send.length}</Button>
+                <Button disabled={!send.length || update.isPending} onClick={() => placeOrder(orderAll.supplier, send)}>Order {send.length}</Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
