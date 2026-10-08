@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Copy, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Project } from "./projectQueries";
+import { useUpdateProject, type Project } from "./projectQueries";
 import { DONE_STAGES, PRIORITY_BANDS, bandOf, useSuppliers, type FfeRow, type Supplier } from "./ffeQueries";
 import { shortDate, todayISO } from "./format";
 
@@ -23,7 +23,7 @@ type Shop = { name: string; phones: string[]; lines: Line[] };
  * Same item + size from one shop is merged into one line with the total quantity, so the driver counts
  * pieces once. No prices, rooms or client details — the message goes to an outside driver.
  */
-export const buildDriverList = (project: Pick<Project, "code" | "property" | "unit" | "location">, rows: FfeRow[], suppliers: Supplier[], withUnordered: boolean): { text: string; shops: number; pieces: number } => {
+export const buildDriverList = (project: Pick<Project, "code" | "property" | "unit" | "location" | "delivery_address">, rows: FfeRow[], suppliers: Supplier[], withUnordered: boolean): { text: string; shops: number; pieces: number } => {
   const byId = new Map(suppliers.map((s) => [s.id, s]));
   const shops = new Map<string, Shop>();
   for (const r of rows) {
@@ -49,12 +49,16 @@ export const buildDriverList = (project: Pick<Project, "code" | "property" | "un
   }
   const list = [...shops.values()].sort((a, b) => a.name.localeCompare(b.name));
   const pieces = list.reduce((n, s) => n + s.lines.reduce((m, l) => m + l.qty, 0), 0);
-  const dest = [project.property, project.unit, project.location].map((p) => p?.trim()).filter(Boolean).join(", ");
+  // The project's saved delivery address (flat, floor, map link, site contact); otherwise the best the
+  // property fields give, flagged so the driver confirms before setting off.
+  const saved = project.delivery_address?.trim();
+  const rough = [project.property, project.unit, project.location].map((p) => p?.trim()).filter(Boolean).join(", ");
   const out: string[] = [
     `*Dragon Mart pick-up — ${project.code}*`,
     `${shortDate(todayISO())} · ${list.length} shop${list.length === 1 ? "" : "s"} · ${qtyText(pieces)} piece${pieces === 1 ? "" : "s"}`,
   ];
-  if (dest) out.push(`Deliver to: ${dest}`);
+  if (saved) out.push(`📍 *Deliver to:*`, saved);
+  else if (rough) out.push(`📍 *Deliver to:* ${rough} — confirm flat number with the office`);
   list.forEach((s, i) => {
     out.push("", `*${i + 1}. ${s.name}*${s.phones.length ? ` — 📞 ${s.phones.join(" / ")}` : " — no number saved"}`);
     for (const l of s.lines) {
@@ -69,8 +73,17 @@ export const DriverListButton = ({ project, rows }: { project: Project; rows: Ff
   const [open, setOpen] = useState(false);
   const [withUnordered, setWithUnordered] = useState(true);
   const { data: suppliers = [] } = useSuppliers();
+  const updateProject = useUpdateProject();
+  const [address, setAddress] = useState(project.delivery_address ?? "");
+  useEffect(() => { setAddress(project.delivery_address ?? ""); }, [project.delivery_address]);
+  const addressDirty = address.trim() !== (project.delivery_address ?? "").trim();
+  const saveAddress = () => updateProject.mutate({ id: project.id, values: { delivery_address: address.trim() || null } }, {
+    onSuccess: () => toast.success("Delivery address saved for this project"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not save the address"),
+  });
   const pickup = useMemo(() => rows.filter((r) => bandOf(r) === PICKUP_BAND), [rows]);
-  const list = useMemo(() => buildDriverList(project, pickup, suppliers, withUnordered), [project, pickup, suppliers, withUnordered]);
+  // The preview follows what's typed, so the coordinator sees the address in the message before saving.
+  const list = useMemo(() => buildDriverList({ ...project, delivery_address: address }, pickup, suppliers, withUnordered), [project, address, pickup, suppliers, withUnordered]);
   const copy = async () => {
     try { await navigator.clipboard.writeText(list.text); toast.success("Driver list copied — paste it into WhatsApp"); }
     catch { toast.error("Could not copy — select the text and copy it by hand"); }
@@ -89,6 +102,16 @@ export const DriverListButton = ({ project, rows }: { project: Project; rows: Ff
               {list.shops} shop{list.shops === 1 ? "" : "s"}, {qtyText(list.pieces)} pieces, grouped by shop with phone numbers. No prices or client details. Delivered, closed and on-hold items are left out.
             </DialogDescription>
           </DialogHeader>
+          <label className="space-y-1 text-sm">
+            <span className="text-muted-foreground">Delivery address — building, flat number, floor, Google Maps link, who receives on site</span>
+            <Textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={3} aria-label="Delivery address"
+              placeholder={"Forte Tower 1, Flat 2304, 23rd floor\nhttps://maps.app.goo.gl/…\nSecurity: ask for the Aziza team, 05x xxx xxxx"} />
+          </label>
+          {addressDirty && (
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" disabled={updateProject.isPending} onClick={saveAddress}>Save address to project</Button>
+            </div>
+          )}
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={withUnordered} onCheckedChange={(v) => setWithUnordered(v === true)} />
             Include items not ordered yet (marked "call first")

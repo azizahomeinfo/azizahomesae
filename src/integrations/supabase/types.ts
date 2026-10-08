@@ -1278,6 +1278,7 @@ export type Database = {
           created_by: string | null
           designer_id: string | null
           drive_url: string | null
+          delivery_address: string | null
           est_ops: number | null
           est_proc: number | null
           handover_date: string | null
@@ -1318,6 +1319,7 @@ export type Database = {
           created_by?: string | null
           designer_id?: string | null
           drive_url?: string | null
+          delivery_address?: string | null
           est_ops?: number | null
           est_proc?: number | null
           handover_date?: string | null
@@ -1358,6 +1360,7 @@ export type Database = {
           created_by?: string | null
           designer_id?: string | null
           drive_url?: string | null
+          delivery_address?: string | null
           est_ops?: number | null
           est_proc?: number | null
           handover_date?: string | null

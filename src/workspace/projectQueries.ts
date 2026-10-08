@@ -9,7 +9,7 @@ type T = Database["public"]["Tables"];
 // list, so a field in the type that isn't selected is impossible. projects.value is revoked
 // from staff (contract value lives in project_value_private) — never list it here.
 const PROJECT_FIELDS = [
-  "id", "code", "lead_id", "name", "client", "property", "unit", "unit_type", "location", "drive_url",
+  "id", "code", "lead_id", "name", "client", "property", "unit", "unit_type", "location", "drive_url", "delivery_address",
   "sales_id", "designer_id", "coordinator_id", "start_date", "handover_date", "actual_handover",
   "stage", "risk", "overall_pct", "proc_pct", "received",
   "next_due", "next_due_date", "pay_status", "created_at", "updated_at", "confirmed_at", "confirmed_by", "on_site_by", "contractor_in",
