@@ -359,7 +359,7 @@ const ContractDoc = () => {
             </div>
             <Field label="Client name"><Input disabled={dis} value={d.client} onChange={(e) => change({ client: e.target.value })} /></Field>
             <div className="grid grid-cols-2 gap-2">
-              <Field label="Unit no."><Input disabled={dis} value={d.unit} onChange={(e) => change({ unit: e.target.value })} /></Field>
+              <Field label="Unit no."><Input disabled={dis} value={d.unit} placeholder="e.g. 4609 — also the driver's delivery address" onChange={(e) => change({ unit: e.target.value })} /></Field>
               <Field label="Building"><Input disabled={dis} value={d.building} onChange={(e) => change({ building: e.target.value })} /></Field>
             </div>
             <Field label="Project"><Input disabled={dis} value={d.project} onChange={(e) => change({ project: e.target.value })} /></Field>
