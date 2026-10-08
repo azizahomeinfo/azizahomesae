@@ -21,6 +21,7 @@ import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
 import { useFfeViewParams } from "./ffeViewParams";
 import { BuyingBar, BAR_ROW_HI } from "./BuyingBar";
+import { DriverListButton } from "./DriverList";
 import { markReturnItem, useReturnToItem } from "./scrollMemory";
 import { byItemType } from "./itemType";
 import { CollapseAllButton, CollapseChevron, collapseKey, sectionDomId, useCollapsedGroups } from "./collapsedGroups";
@@ -1321,6 +1322,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <Download className="mr-1 h-3.5 w-3.5" />Download list
             </Button>
           )}
+          {canEdit && <DriverListButton project={project} rows={allRows} />}
           {view === "table" && (
             <>
               <GroupToggle value={groupBy} onChange={setGroupBy} />
