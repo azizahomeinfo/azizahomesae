@@ -624,6 +624,19 @@ export const useFfeOutOfStock = () => {
   });
 };
 
+/** The supplier has it again: the coordinator (or GM) lifts the out-of-stock hold, the item returns to its old stage, the designer's re-choose task closes. */
+export const useFfeBackInStock = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { ids: string[]; note?: string }) => {
+      const { data, error } = await supabase.rpc("ws_ffe_back_in_stock", { _items: v.ids, _note: v.note });
+      fail(error);
+      return (data as number) ?? v.ids.length;
+    },
+    onSettled: () => invalidateReview(qc),
+  });
+};
+
 export const useFfeReselected = () => {
   const qc = useQueryClient();
   return useMutation({

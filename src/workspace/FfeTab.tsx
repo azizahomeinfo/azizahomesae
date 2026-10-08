@@ -28,7 +28,7 @@ import { CollapseAllButton, CollapseChevron, collapseKey, sectionDomId, useColla
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeBackInStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -1180,6 +1180,11 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const { data: allRows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
   const { orderingBorder, orderingExpected, awaitingBudget } = useOrderingBorder(project);
   const update = useUpdateFfeItems();
+  const backInStock = useFfeBackInStock();
+  const markBackInStock = (r: FfeRow) => backInStock.mutate({ ids: [r.id] }, {
+    onSuccess: () => toast.success(`${r.ref ?? r.item} is back in stock — you can buy it again, the designer has been told`),
+    onError: (e) => toast.error(errMsg(e, "Could not mark it back in stock")),
+  });
   const updateProject = useUpdateProject();
   const qc = useQueryClient();
   // Empty clears the override, returning to the three-day rule; ws_handover_tasks reschedules the run in the DB.
@@ -1404,7 +1409,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                   <tr key={r.id} data-ffe-row={r.id} className={cn("border-t border-border align-top", orderingBorder(r), rowHi(r))}>
                     {canEdit && <td className="p-1"><Checkbox aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} /></td>}
                     <td className="p-1 min-w-36"><span className="block text-[10px] text-muted-foreground">{r.ref}</span><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}{(() => { const line = specSub(r, groupBy !== "room"); return line ? <span className="block max-w-64 truncate text-[10px] text-muted-foreground">{line}</span> : null; })()}
-                      {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}</td>
+                      {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="block text-[10px] text-muted-foreground underline hover:text-foreground" onClick={() => setOosIds([r.id])}>Out of stock…</button>}
+                      {canEdit && r.review === "Out of stock" && <button type="button" disabled={backInStock.isPending} className="block text-[10px] font-medium text-primary underline" onClick={() => markBackInStock(r)}>Back in stock</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
                     <td className="p-1"><StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} /></td>
@@ -1426,7 +1432,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                   {canEdit && <Checkbox className="mt-1" aria-label={`Select ${r.item}`} checked={sel.has(r.id)} onCheckedChange={(c) => toggle(r.id, c === true)} />}
                   <div className="flex-1"><p className="text-[10px] text-muted-foreground">{r.ref}</p><p className="text-sm"><ReviewBadge row={r} />{groupBy === "supplier" && <InternalBadge row={r} />}{r.item} <span className="text-muted-foreground">×{Number(r.qty)}</span><ProductLink row={r} onOpen={setItem} />{buyBtn(r)}</p>{(() => { const line = specSub(r, groupBy !== "room"); return line ? <p className="max-w-64 truncate text-[10px] text-muted-foreground">{line}</p> : null; })()}
                     {r.review && r.review_note && <p className="text-xs text-muted-foreground">{r.review_note}</p>}
-                    {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}</div>
+                    {canEdit && !r.review && !DONE_STAGES.includes(r.stage) && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => setOosIds([r.id])}>Out of stock → designer</button>}
+                    {canEdit && r.review === "Out of stock" && <button type="button" disabled={backInStock.isPending} className="text-xs font-medium text-primary underline" onClick={() => markBackInStock(r)}>Back in stock — buy it again</button>}</div>
                 </div>
                 {bandCell(r)}
                 <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} />

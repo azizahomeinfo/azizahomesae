@@ -2021,6 +2021,10 @@ export type Database = {
         Args: { _items: string[]; _note: string }
         Returns: number
       }
+      ws_ffe_back_in_stock: {
+        Args: { _items: string[]; _note?: string }
+        Returns: number
+      }
       ws_ffe_price: { Args: { _item: string; _room: string }; Returns: number }
       ws_ffe_reselected: { Args: { _item: string }; Returns: string }
       ws_ffe_pickup_supplier: {
