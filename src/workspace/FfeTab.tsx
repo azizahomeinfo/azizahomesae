@@ -77,6 +77,9 @@ const bySupplier = (rows: FfeRow[]) => {
     .map(([k, l]) => [k, [...l].sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]);
 };
 /** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
+type DateField = "ordered_on" | "eta" | "delivered_on" | "installed_on";
+const DATE_FIELDS: DateField[] = ["eta", "delivered_on", "ordered_on", "installed_on"];
+const DATE_FIELD_LABEL: Record<DateField, string> = { eta: "ETA", delivered_on: "Delivered", ordered_on: "Ordered", installed_on: "Installed" };
 const buyable = (r: FfeRow) => !r.review && !DONE_STAGES.includes(r.stage);
 
 // ---- Final-inspection CSV -------------------------------------------------
@@ -1188,6 +1191,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkStage, setBulkStage] = useState<ProcStage | "">("");
   const [bulkPo, setBulkPo] = useState("");
+  const [bulkDateField, setBulkDateField] = useState<DateField>("eta");
+  const [bulkDate, setBulkDate] = useState("");
   const [oosIds, setOosIds] = useState<string[] | null>(null);
   // View state lives in the URL (view, sup, q, item, showdel) so a Safari tab discard + remount restores the same screen.
   const urlState = useFfeViewParams();
@@ -1277,14 +1282,22 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       toast.error(errMsg(e, "Could not save"));
     }
   };
+  // A date is a fact about the items, not a buying decision, so held items take it too (unlike applyBulk).
+  const setDates = (ids: string[], k: DateField, value: string) =>
+    update.mutate({ owner: projectOwner(project.id), ids, values: { [k]: value } }, {
+      onSuccess: () => toast.success(`${DATE_FIELD_LABEL[k]} ${shortDate(value)} set on ${ids.length} item${ids.length === 1 ? "" : "s"}`),
+      onError: (e) => toast.error(errMsg(e, "Could not save")),
+    });
   const toggle = (id: string, on: boolean) => { const n = new Set(sel); if (on) n.add(id); else n.delete(id); setSel(n); };
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (!allRows.length) return <div className="rounded-[var(--radius)] border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No FF&E items yet. Build the costing sheet on the FF&E tab first.</div>;
-  const dateCell = (r: FfeRow, k: "ordered_on" | "eta" | "delivered_on" | "installed_on", label: string) =>
+  // Picking a date on a row that is part of a multi-row selection sets it on every selected row,
+  // so a whole delivery gets one ETA without editing each item. Clearing stays per row.
+  const dateCell = (r: FfeRow, k: DateField, label: string) =>
     canEdit ? (
       <Input type="date" aria-label={label} value={r[k] ?? ""} className={cn("h-8 w-36 text-sm", k === "eta" && etaLate(r) && "text-destructive")}
-        onChange={(e) => apply([r.id], { [k]: e.target.value || null })} />
+        onChange={(e) => e.target.value && sel.size > 1 && sel.has(r.id) ? setDates([...sel], k, e.target.value) : apply([r.id], { [k]: e.target.value || null })} />
     ) : <span className={cn("text-sm whitespace-nowrap", k === "eta" && etaLate(r) && "text-destructive")}>{shortDate(r[k]) || "—"}</span>;
 
   return (
@@ -1338,6 +1351,12 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
             <Button size="sm" disabled={!bulkStage || update.isPending} onClick={() => bulkStage && applyBulk([...sel], { stage: bulkStage }, (n) => `${n} items moved to ${bulkStage}`)}>Apply stage</Button>
             <Input className="h-8 sm:w-36" placeholder="PO ref" value={bulkPo} onChange={(e) => setBulkPo(e.target.value)} aria-label="Bulk PO ref" />
             <Button size="sm" disabled={!bulkPo.trim() || update.isPending} onClick={() => applyBulk([...sel], { po_ref: bulkPo.trim() }, (n) => `PO set on ${n} items`)}>Apply PO</Button>
+            <Select value={bulkDateField} onValueChange={(v) => setBulkDateField(v as DateField)}>
+              <SelectTrigger className="h-8 sm:w-32" aria-label="Which date"><SelectValue /></SelectTrigger>
+              <SelectContent>{DATE_FIELDS.map((k) => <SelectItem key={k} value={k}>{DATE_FIELD_LABEL[k]}</SelectItem>)}</SelectContent>
+            </Select>
+            <Input type="date" className="h-8 sm:w-36" value={bulkDate} onChange={(e) => setBulkDate(e.target.value)} aria-label={`Bulk ${DATE_FIELD_LABEL[bulkDateField]}`} />
+            <Button size="sm" disabled={!bulkDate || update.isPending} onClick={() => setDates([...sel], bulkDateField, bulkDate)}>Apply date</Button>
             <Button size="sm" variant="outline" onClick={() => setOosIds([...sel])}>Out of stock → designer</Button>
             <Button size="sm" variant="ghost" onClick={() => setSel(new Set())}>Clear</Button>
           </div>
