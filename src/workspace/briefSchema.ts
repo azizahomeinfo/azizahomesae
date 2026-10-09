@@ -49,11 +49,12 @@ const KITCHEN = mk([
 ]);
 const APPLIANCES = mk([
   ["Microwave", 1], ["TV 65”", 1], ["Electric Kettle", 1], ["Fridge", 1], ["Washing Machine", 1],
-  ["Iron", 1], ["Hair Dryer", 1], ["Coffee Machine", 1],
+  ["Iron", 1], ["Hair Dryer", 1], ["Coffee Machine", 1], ["Toaster", 1],
 ]);
 const DTCM = mk([
-  ["Safety Box", 1], ["Prayer Mat", 1, "pend"], ["Smart Lock (Supply & Install – Oji EVO or other)", 1, "pend"],
+  ["Safety Box", 1], ["Prayer Mat", 1], ["Smart Lock (Supply & Install – Oji EVO or other)", 1, "pend"],
   ["First Aid Kit", 1], ["Ash Tray", 1], ["Weighing Scale", 1],
+  ["Emergency Numbers Sticker", 1], ["Qibla Direction Sticker", 1],
 ]);
 
 const sec = (title: string, items: ChecklistItem[], notesLabel = ALT): ChecklistSection => ({ code: "", title, notesLabel, items });

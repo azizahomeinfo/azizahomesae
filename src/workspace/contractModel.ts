@@ -72,8 +72,12 @@ const briefSection = (title: string) => fromBrief("2 Bedroom").find((s) => s.tit
 /** The "+ Add category…" picker. Wall Design and Balcony item lists are placeholders until Veronica sends the generator's own. */
 export const CATEGORIES: { title: string; items: () => { item: string; qty: string }[] }[] = [
   { title: "Living Essentials", items: () => briefSection("Living & Dining") },
-  { title: "DTCM Holiday Home Requirements", items: () => fromBrief("2 Bedroom").slice(-1)[0].items.concat(
-    [{ item: "Prayer Mat", qty: "1" }, { item: "Smart Lock", qty: "1" }]) },
+  { title: "DTCM Holiday Home Requirements", items: () => {
+    const base = fromBrief("2 Bedroom").slice(-1)[0].items;
+    // Prayer Mat is a standard included item now; only add what the checklist still leaves pending.
+    return base.concat([{ item: "Prayer Mat", qty: "1" }, { item: "Smart Lock", qty: "1" }]
+      .filter((x) => !base.some((b) => b.item.toLowerCase().startsWith(x.item.toLowerCase()))));
+  } },
   { title: "Wall Design", items: () => [{ item: "Feature Wall", qty: "1" }, { item: "Wall Art Décor", qty: "1" }] },
   { title: "Appliances", items: () => briefSection("Appliances") },
   { title: "Kitchen", items: () => briefSection("Kitchenware & Tabletop") },

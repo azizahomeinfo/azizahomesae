@@ -33,7 +33,7 @@ const BUCKETS: Bucket[] = [
   { label: "TVs & electronics", terms: ["tv", "television"], not: /\btv (unit|stand|cabinet|console)/ },
   // "ash tray" is household.
   { label: "Kitchenware & tableware", terms: ["cookware", "cutlery", "dinner set", "mug", "plate", "bowl", "glass", "knife", "knives", "utensil", "chopping board", "colander", "peeler", "grater", "opener", "napkin", "placemat", "tray", "kitchenware", "tableware"], not: /\bash ?tray/ },
-  { label: "Safety & compliance", terms: ["first aid", "safety box", "fire extinguisher", "fire blanket", "smoke"] },
+  { label: "Safety & compliance", terms: ["first aid", "safety box", "fire extinguisher", "fire blanket", "smoke", "prayer mat", "qibla", "emergency number", "sticker"] },
   { label: "Household & laundry", terms: ["drying rack", "ironing board", "hanger", "bin", "trash", "waste", "scale", "soap", "dispenser", "amenities", "toilet brush", "ash tray", "ashtray"] },
   { label: "Plants & decorative", terms: ["plant", "flower", "vase", "decorative", "decor", "candle", "sculpture", "ornament"] },
   { label: "Switches & sockets", terms: ["switch", "switches", "socket"] },
