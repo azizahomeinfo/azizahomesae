@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -12,7 +12,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useBrief, useLead, useMembers } from "./queries";
 import { useWorkspace } from "./WorkspaceProvider";
-import { useLeadProposals, useProposalItems } from "./proposalQueries";
+import { useLeadProposals, useProposalItems, type ProposalRow } from "./proposalQueries";
+import { PROPOSAL_CSS, ProposalPages } from "./ProposalPages";
+import { useSignedUrls } from "./designQueries";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateContract, useLeadContracts, useSaveContract, useSignContract, type ContractStatus } from "./contractQueries";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -69,6 +72,13 @@ const CSS = `
 .ctr-pf { display: none; }
 .ctr-spacer-h { height: 64px; } .ctr-spacer-f { height: 36px; }
 .ctr-layout { width: 100%; border-collapse: collapse; } .ctr-layout > thead, .ctr-layout > tfoot { display: none; }
+.ctr-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; position: relative; box-sizing: border-box; width: 794px; height: 1123px; padding: 0.7in; display: flex; flex-direction: column; overflow: hidden; background: hsl(var(--card)); }
+.ctr-page > .ctr-head { margin-bottom: 18px; } .ctr-page > .ctr-foot { margin-top: auto; }
+.ctr-page-body { flex: 1 1 auto; min-height: 0; }
+.ctr-measure { position: absolute; left: -10000px; top: 0; width: calc(794px - 1.4in); visibility: hidden; pointer-events: none; }
+`;
+/** Print rules for the agreement on its own (flowing pages, browser margins). Left out of the combined document. */
+const CSS_PRINT = `
 @media print {
   @page { size: A4; margin: 0.7in; }
   html, body { background: hsl(var(--card)) !important; }
@@ -97,13 +107,91 @@ const longDate = (iso: string) => {
   return Number.isNaN(dt.getTime()) ? iso : dt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 };
 
-export const ContractPaper = ({ d }: { d: ContractDocument }) => {
+/* ---------------- content blocks (shared by the flowing PDF and the A4 pages) ---------------- */
+
+export type GoodsRow = { key: string; kind: "sec" | "item" | "sum"; node: ReactNode };
+export type ContractBlock = { key: string; kind: "block"; node: ReactNode } | { key: string; kind: "goods"; rows: GoodsRow[] };
+
+export const GoodsTable = ({ rows }: { rows: GoodsRow[] }) => (
+  <table className="ctr-goods">
+    <thead><tr><th>Item</th><th className="q">Qty</th></tr></thead>
+    <tbody>{rows.map((r) => <tr key={r.key} data-row={r.key}>{r.node}</tr>)}</tbody>
+  </table>
+);
+
+/** The agreement as an ordered list of blocks. Clauses never split; the goods table splits by row. */
+export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
   const m = contractMoney(d);
   const proj = projectLabel(d);
   const seller = sellerFor(d.vatCharged);
+  const b = (key: string, node: ReactNode): ContractBlock => ({ key, kind: "block", node });
+  return [
+    b("title", <div className="ctr-title">
+      <p className="ctr-eyebrow">{[proj, d.unitType].filter(Boolean).join(" · ")}</p>
+      <h1 className="ctr-h1">Sales Agreement</h1>
+      <div className="ctr-rule" />
+    </div>),
+    b("parties", <p>
+      This Sales Agreement (the "Agreement") is entered into <b>{longDate(d.date)}</b> (the "Effective Date"), by and between <b>{seller.name}</b>, with an address of {seller.address} (the "Seller") and <b>{d.client || "—"}</b>, with an address of Unit {d.unit || "—"}, {proj || "—"}, Dubai, UAE, (the "Buyer"), also individually referred to as "Party", and collectively "the Parties."
+    </p>),
+    b("background", <>
+      <h2 className="ctr-h2">Background</h2>
+      <p>The Seller is the manufacturer/distributor of the following product(s):</p>
+      <p className="ctr-indent">Home Furniture and Service;</p>
+      <p>and</p>
+      <p>The Buyer wishes to purchase the aforementioned product(s).</p>
+      <p><b>THEREFORE, the Parties agree as follows:</b></p>
+    </>),
+    b("goods-intro", <p style={{ margin: "12px 0 0" }}><b>1. Sale of Goods.</b> The Seller shall make available for sale and the Buyer shall purchase (the "Goods"):</p>),
+    { key: "goods", kind: "goods", rows: [
+      ...d.sections.flatMap((s): GoodsRow[] => [
+        { key: `s-${s.id}`, kind: "sec", node: <td className="sec" colSpan={2}>{s.title}</td> },
+        ...s.items.map((i): GoodsRow => ({ key: `i-${i.id}`, kind: "item", node: <><td>{i.item}</td><td className="q">{i.qty}</td></> })),
+      ]),
+      { key: "sum-total", kind: "sum", node: <><td className="sum">Total</td><td className="q sum"><span className="ctr-fig">{aedWhole(m.subtotal)}</span></td></> },
+      { key: "sum-vat", kind: "sum", node: <><td className="sum">VAT (5%)</td><td className="q sum"><span className="ctr-fig">{d.vatCharged ? aedWhole(m.vat) : "Waived"}</span></td></> },
+    ] },
+    ...(d.vatCharged ? [b("bank", <div className="ctr-bank" style={{ marginBottom: 12 }}>
+      <div><span className="ctr-label">Account Name</span><b>AZIZA HOME L.L.C-FZ</b></div>
+      <div><span className="ctr-label">IBAN</span><b>AE5 1086 0000009598140131</b></div>
+      <div><span className="ctr-label">Bank Name</span><b>WIO</b></div>
+      <div><span className="ctr-label">Swift Code</span><b>WIOBAEADXXX</b></div>
+    </div>)] : []),
+    ...d.clauses.map((c, i): ContractBlock => {
+      const n = i + 2;
+      if (c.key === "price") {
+        return b(c.id, <div className="ctr-clause ctr-pay ctr-small">
+          <p><b>{n}. {c.title}.</b> {priceSentence(d)} {paymentSentence(d)} {fillClause(c.body, d)}</p>
+          <div className="ctr-strip">
+            <div><span className="ctr-label">Total incl. VAT</span><b>{aedWhole(m.total)}</b></div>
+            <div><span className="ctr-label">{m.dep}% on signing</span><b>{aedWhole(m.depA)}</b></div>
+            {m.del > 0 && <div><span className="ctr-label">{m.del}% on delivery</span><b>{aedWhole(m.delA)}</b></div>}
+            <div><span className="ctr-label">{m.bal}% on handover</span><b>{aedWhole(m.balA)}</b></div>
+          </div>
+        </div>);
+      }
+      return b(c.id, <div className="ctr-clause ctr-small"><p style={{ whiteSpace: "pre-line" }}><b>{n}. {c.title}.</b> {fillClause(c.body, d)}</p></div>);
+    }),
+    b("sign", <div className="ctr-sign">
+      <p>{SIGNATURE_COPY.sig}</p>
+      <div className="ctr-sign-grid">
+        {[[SIGNATURE_COPY.buyer, d.client], [SIGNATURE_COPY.seller, seller.name]].map(([h, name]) => (
+          <div key={h}>
+            <h3>{h}</h3>
+            <div className="ctr-line"><span>{SIGNATURE_COPY.signed}</span><span /></div>
+            <div className="ctr-line"><span>{SIGNATURE_COPY.name}</span><span>{name}</span></div>
+            <div className="ctr-line"><span>{SIGNATURE_COPY.date}</span><span /></div>
+          </div>
+        ))}
+      </div>
+    </div>),
+  ];
+};
+
+export const ContractPaper = ({ d }: { d: ContractDocument }) => {
   return (
     <div className="ctr contract-doc" data-contract-root>
-      <style>{CSS}</style>
+      <style>{CSS + CSS_PRINT}</style>
       <Head d={d} fixed /><Foot d={d} fixed />
       <div className="ctr-sheet">
         <Head d={d} />
@@ -111,79 +199,127 @@ export const ContractPaper = ({ d }: { d: ContractDocument }) => {
           <thead><tr><td><div className="ctr-spacer-h" /></td></tr></thead>
           <tfoot><tr><td><div className="ctr-spacer-f" /></td></tr></tfoot>
           <tbody><tr><td>
-            <div className="ctr-title">
-              <p className="ctr-eyebrow">{[proj, d.unitType].filter(Boolean).join(" · ")}</p>
-              <h1 className="ctr-h1">Sales Agreement</h1>
-              <div className="ctr-rule" />
-            </div>
-            <p>
-              This Sales Agreement (the "Agreement") is entered into <b>{longDate(d.date)}</b> (the "Effective Date"), by and between <b>{seller.name}</b>, with an address of {seller.address} (the "Seller") and <b>{d.client || "—"}</b>, with an address of Unit {d.unit || "—"}, {proj || "—"}, Dubai, UAE, (the "Buyer"), also individually referred to as "Party", and collectively "the Parties."
-            </p>
-            <h2 className="ctr-h2">Background</h2>
-            <p>The Seller is the manufacturer/distributor of the following product(s):</p>
-            <p className="ctr-indent">Home Furniture and Service;</p>
-            <p>and</p>
-            <p>The Buyer wishes to purchase the aforementioned product(s).</p>
-            <p><b>THEREFORE, the Parties agree as follows:</b></p>
-
-            <div style={{ margin: "12px 0" }}>
-              <p><b>1. Sale of Goods.</b> The Seller shall make available for sale and the Buyer shall purchase (the "Goods"):</p>
-              <table className="ctr-goods">
-                <thead><tr><th>Item</th><th className="q">Qty</th></tr></thead>
-                <tbody>
-                  {d.sections.map((s) => [
-                    <tr key={s.id}><td className="sec" colSpan={2}>{s.title}</td></tr>,
-                    ...s.items.map((i) => <tr key={i.id}><td>{i.item}</td><td className="q">{i.qty}</td></tr>),
-                  ])}
-                  <tr><td className="sum">Total</td><td className="q sum"><span className="ctr-fig">{aedWhole(m.subtotal)}</span></td></tr>
-                  <tr><td className="sum">VAT (5%)</td><td className="q sum"><span className="ctr-fig">{d.vatCharged ? aedWhole(m.vat) : "Waived"}</span></td></tr>
-                </tbody>
-              </table>
-              {d.vatCharged && (
-                <div className="ctr-bank">
-                  <div><span className="ctr-label">Account Name</span><b>AZIZA HOME L.L.C-FZ</b></div>
-                  <div><span className="ctr-label">IBAN</span><b>AE5 1086 0000009598140131</b></div>
-                  <div><span className="ctr-label">Bank Name</span><b>WIO</b></div>
-                  <div><span className="ctr-label">Swift Code</span><b>WIOBAEADXXX</b></div>
-                </div>
-              )}
-            </div>
-
-            {d.clauses.map((c, i) => {
-              const n = i + 2;
-              if (c.key === "price") {
-                return (
-                  <div key={c.id} className="ctr-clause ctr-pay ctr-small">
-                    <p><b>{n}. {c.title}.</b> {priceSentence(d)} {paymentSentence(d)} {fillClause(c.body, d)}</p>
-                    <div className="ctr-strip">
-                      <div><span className="ctr-label">Total incl. VAT</span><b>{aedWhole(m.total)}</b></div>
-                      <div><span className="ctr-label">{m.dep}% on signing</span><b>{aedWhole(m.depA)}</b></div>
-                      {m.del > 0 && <div><span className="ctr-label">{m.del}% on delivery</span><b>{aedWhole(m.delA)}</b></div>}
-                      <div><span className="ctr-label">{m.bal}% on handover</span><b>{aedWhole(m.balA)}</b></div>
-                    </div>
-                  </div>
-                );
-              }
-              return <div key={c.id} className="ctr-clause ctr-small"><p style={{ whiteSpace: "pre-line" }}><b>{n}. {c.title}.</b> {fillClause(c.body, d)}</p></div>;
-            })}
-
-            <div className="ctr-sign">
-              <p>{SIGNATURE_COPY.sig}</p>
-              <div className="ctr-sign-grid">
-                {[[SIGNATURE_COPY.buyer, d.client], [SIGNATURE_COPY.seller, seller.name]].map(([h, name]) => (
-                  <div key={h}>
-                    <h3>{h}</h3>
-                    <div className="ctr-line"><span>{SIGNATURE_COPY.signed}</span><span /></div>
-                    <div className="ctr-line"><span>{SIGNATURE_COPY.name}</span><span>{name}</span></div>
-                    <div className="ctr-line"><span>{SIGNATURE_COPY.date}</span><span /></div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {contractBlocks(d).map((b) => b.kind === "goods" ? <GoodsTable key={b.key} rows={b.rows} /> : <div key={b.key}>{b.node}</div>)}
           </td></tr></tbody>
         </table>
         <Foot d={d} />
       </div>
+    </div>
+  );
+};
+
+
+/* ---------------- the agreement as fixed A4 pages (for the combined proposal + agreement) ---------------- */
+
+type PagePart = { kind: "block"; i: number } | { kind: "goods"; rows: GoodsRow[] };
+const PAGE_INNER_H = 1123 - 2 * 67; // A4 at 96 dpi minus the 0.7in margins
+
+/**
+ * Same content as ContractPaper, laid out in code onto 794×1123 pages so it can share one print job
+ * with the proposal's full-bleed pages: one @page rule (no margin) for the whole document, in every
+ * browser. Blocks are measured off-screen once fonts are loaded, then packed.
+ */
+export const useContractPages = (d: ContractDocument) => {
+  const blocks = contractBlocks(d);
+  const ref = useRef<HTMLDivElement>(null);
+  const [pages, setPages] = useState<PagePart[][] | null>(null);
+  const sig = JSON.stringify(d);
+  useLayoutEffect(() => {
+    let alive = true;
+    const run = () => {
+      const root = ref.current;
+      if (!root || !alive) return;
+      const hOf = (sel: string) => (root.querySelector(sel) as HTMLElement | null)?.getBoundingClientRect().height ?? 0;
+      // Head keeps an 18px gap below it; the foot sits at the bottom (margin-top: auto). 4px to spare for rounding.
+      const avail = PAGE_INNER_H - hOf("[data-m='head']") - 18 - hOf("[data-m='foot']") - 4;
+      const tableExtra = hOf("[data-m='goods'] thead") + 18; // header row + table margins
+      const out: PagePart[][] = [[]];
+      let used = 0;
+      const push = (part: PagePart, h: number) => {
+        if (used > 0 && used + h > avail) { out.push([]); used = 0; }
+        out[out.length - 1].push(part); used += h;
+      };
+      blocks.forEach((b, i) => {
+        if (b.kind === "block") { push({ kind: "block", i }, hOf(`[data-m='b${i}']`)); return; }
+        const rowH = b.rows.map((r) => hOf(`[data-m='goods'] [data-row='${r.key}']`));
+        let k = 0;
+        while (k < b.rows.length) {
+          // Rows that go on this page: a room heading is never left last, the two totals stay together.
+          let h = tableExtra, end = k;
+          while (end < b.rows.length && used + h + rowH[end] <= avail) { h += rowH[end]; end++; }
+          while (end > k && end < b.rows.length && (b.rows[end - 1].kind === "sec" || b.rows[end].kind === "sum" && b.rows[end - 1].kind === "sum")) end--;
+          if (end === k) {
+            if (used > 0) { out.push([]); used = 0; continue; }
+            end = k + 1; h = tableExtra + rowH[k];
+          }
+          out[out.length - 1].push({ kind: "goods", rows: b.rows.slice(k, end) });
+          used += h; k = end;
+          if (k < b.rows.length) { out.push([]); used = 0; }
+        }
+      });
+      setPages(out.filter((p) => p.length));
+    };
+    void (document.fonts?.ready ?? Promise.resolve()).then(run);
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig]);
+  const measurer = (
+    <div ref={ref} className="ctr ctr-measure" aria-hidden>
+      <style>{CSS}</style>
+      <div data-m="head"><Head d={d} /></div>
+      <div data-m="foot"><Foot d={d} /></div>
+      {blocks.map((b, i) => b.kind === "block"
+        ? <div key={b.key} data-m={`b${i}`} style={{ display: "flow-root" }}>{b.node}</div>
+        : <div key={b.key} data-m="goods" style={{ display: "flow-root" }}><GoodsTable rows={b.rows} /></div>)}
+    </div>
+  );
+  const render = (n: number, total: number) => pages && (
+    <div className="ctr ctr-page">
+      <style>{CSS}</style>
+      <Head d={d} />
+      <div className="ctr-page-body">
+        {pages[n].map((part, j) => part.kind === "block"
+          ? <div key={j} style={{ display: "flow-root" }}>{(blocks[part.i] as Extract<ContractBlock, { kind: "block" }>).node}</div>
+          : <GoodsTable key={j} rows={part.rows} />)}
+      </div>
+      <div className="ctr-foot"><span>{footerLeft(d.vatCharged)}</span><span>Agreement · page {n + 1} of {total}</span></div>
+    </div>
+  );
+  return { measurer, count: pages?.length ?? 0, ready: !!pages, render };
+};
+
+
+/* ---------------- proposal + agreement, one document ---------------- */
+
+const CombinedView = ({ proposal, contract, client, onClose }: { proposal: ProposalRow; contract: ContractDocument; client: string; onClose: () => void }) => {
+  const [skipDup, setSkipDup] = useState(false);
+  const doc = proposal.doc;
+  const paths = [doc.cover.hero, doc.floorPlan.path, ...doc.moodBoard.map((m) => m.path), ...doc.pages.flatMap((p) => p.images.map((i) => i.path))]
+    .filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf"));
+  const { data: urls } = useSignedUrls(paths);
+  const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
+  const cp = useContractPages(contract);
+  const after = cp.ready ? Array.from({ length: cp.count }, (_, n) => cp.render(n, cp.count)) : [];
+  const ready = cp.ready && (!paths.length || !!urls);
+  return (
+    <div className="space-y-4">
+      <button type="button" onClick={onClose} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back to the contract</button>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-1">
+          <h2 className="font-heading text-2xl uppercase tracking-wide break-words">Proposal + agreement · {client}</h2>
+          <p className="text-sm text-muted-foreground">
+            One document for the client to read and sign: proposal V{proposal.version}{doc.finalAt ? "" : " (not finalised yet)"}, then the sales agreement{cp.ready ? ` (${cp.count} page${cp.count === 1 ? "" : "s"})` : ""}. Unsaved contract edits are included.
+          </p>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={skipDup} onCheckedChange={(v) => setSkipDup(v === true)} />
+            Leave out the proposal's item list and investment pages — the agreement lists the goods and the price
+          </label>
+        </div>
+        <Button disabled={!ready} onClick={() => window.print()}>{ready ? "Save as PDF / Print" : "Preparing…"}</Button>
+      </div>
+      <style>{PROPOSAL_CSS}</style>
+      {cp.measurer}
+      <ProposalPages doc={doc} url={url} after={after} skip={skipDup ? (s) => s.kind === "items" || s.kind === "invest" : undefined} />
     </div>
   );
 };
@@ -224,6 +360,7 @@ const ContractDoc = () => {
   const [handover, setHandover] = useState("");
   const sign = useSignContract();
   const navigate = useNavigate();
+  const [combined, setCombined] = useState(false);
 
   const accepted = proposals.find((p) => p.status === "Accepted");
   const back = accepted
@@ -314,6 +451,10 @@ const ContractDoc = () => {
     } catch (e) { toast.error(errMsg(e, "Could not mark signed")); }
   };
   const dis = !editable;
+  // The contract's own proposal, else the accepted one, else the latest finalised one.
+  const sourceProposal = proposals.find((p) => p.id === row.proposal_id) ?? accepted ?? proposals.find((p) => p.doc.finalAt) ?? null;
+  // The editor's preview is unmounted while the combined view is open: its print rules would fight the combined document's.
+  if (combined && sourceProposal) return <CombinedView proposal={sourceProposal} contract={d} client={lead.name} onClose={() => setCombined(false)} />;
 
   return (
     <div className="space-y-4">
@@ -335,6 +476,7 @@ const ContractDoc = () => {
           {canEdit && row.status === "Issued" && <Button variant="outline" onClick={() => { setHandover(lead.target_date ?? ""); setSignOpen(true); }}>Mark signed</Button>}
           {editable && <Button variant="outline" disabled={!draft || save.isPending} onClick={persist}>Save</Button>}
           <Button onClick={print}>Save as PDF / Print</Button>
+          {sourceProposal && <Button variant="outline" onClick={() => setCombined(true)} title="The proposal followed by this agreement, as one PDF for the client to sign">Proposal + agreement</Button>}
           {canEdit && row.status === "Issued" && <p className="basis-full text-xs text-muted-foreground">Marking this signed will re-take the item list from the current FF&amp;E list.</p>}
         </div>
       </div>

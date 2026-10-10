@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import logo from "@/assets/aziza-logo.png";
 import { shortDate } from "./format";
 import {
@@ -311,14 +311,16 @@ const renderSheet = (s: Sheet, doc: ProposalDocument, url: Url, n: number) => {
 };
 
 /** Pages stacked in the grey field, scaled for preview; print shows them 1:1, one per A4 sheet. */
-export const ProposalPages = ({ doc, url, scale = PREVIEW_SCALE }: { doc: ProposalDocument; url: Url; scale?: number }) => {
-  const { sheets } = layoutSheets(doc);
+/** `after`: more full 794×1123 pages printed in the same run (the agreement, in the combined document). */
+export const ProposalPages = ({ doc, url, scale = PREVIEW_SCALE, after = [], skip }: { doc: ProposalDocument; url: Url; scale?: number; after?: ReactNode[]; skip?: (s: Sheet) => boolean }) => {
+  const sheets = layoutSheets(doc).sheets.filter((s) => !skip?.(s));
+  const all = [...sheets.map((s, i) => renderSheet(s, doc, url, i + 1)), ...after];
   return (
     <div className="ppd ppd-field flex flex-col items-center gap-6 p-6" data-print-root>
-      {sheets.map((s, i) => (
+      {all.map((page, i) => (
         <div key={i} data-print-slot style={{ width: PAGE_W * scale, height: PAGE_H * scale, flex: "none", boxShadow: "0 1px 6px hsl(30 15% 15% / 0.12)" }}>
           <div data-print-scale style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: PAGE_W, height: PAGE_H }}>
-            {renderSheet(s, doc, url, i + 1)}
+            {page}
           </div>
         </div>
       ))}
