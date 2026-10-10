@@ -30,8 +30,10 @@ export const PROPOSAL_CSS = `
 .ppd-note { position: absolute; left: 56px; right: 56px; bottom: 50px; font-size: 9.5px; line-height: 1.5; font-style: italic; text-align: center; color: var(--pp-label); margin: 0; }
 .ppd-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .ppd-grow { flex: 1 1 auto; min-height: 0; }
-.ppd-cols { column-count: 3; column-gap: 32px; column-rule: 1px solid var(--pp-line-soft); column-fill: balance; }
-.ppd-cols.ppd-cols-4 { column-count: 4; column-gap: 24px; }
+.ppd-colgrid { display: grid; column-gap: 0; align-items: stretch; }
+.ppd-col { min-width: 0; padding: 0 14px; border-left: 1px solid var(--pp-line-soft); }
+.ppd-col:first-child { padding-left: 0; border-left: none; }
+.ppd-col:last-child { padding-right: 0; }
 .ppd-group { break-inside: avoid; page-break-inside: avoid; margin-bottom: 14px; }
 .ppd-group h4 { font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-olive);
   margin: 0 0 4px; padding-bottom: 5px; border-bottom: 1px solid var(--pp-line); }
@@ -204,32 +206,67 @@ const InvestTable = ({ doc }: { doc: ProposalDocument }) => {
   );
 };
 
+/**
+ * Item-list columns are laid out here, not by CSS multi-column: Safari's print engine re-flows
+ * `column-count` + `column-fill: balance` differently from the screen (groups split or pushed off the
+ * page), so the PDF did not match the preview. Explicit columns print exactly as they are shown.
+ * Heights are estimated in row units from text length; a group that does not fit is split with a
+ * "continued" heading, never leaving a heading with fewer than two rows under it.
+ */
+type ColGroup = { room: string; cont: boolean; items: ItemGroup["items"] };
+export const splitColumns = (groups: ItemGroup[], cols: number): ColGroup[][] => {
+  const itemChars = cols >= 4 ? 21 : 29;   // characters per line of an item name at that column width
+  const headChars = cols >= 4 ? 15 : 21;   // headings are letter-spaced capitals
+  const rowCost = (it: ItemGroup["items"][number]) => Math.max(1, Math.ceil(it.item.length / itemChars));
+  const headCost = (room: string, cont: boolean) => 1.1 + 0.6 * Math.ceil((room.length + (cont ? 12 : 0)) / headChars);
+  const total = groups.reduce((n, g) => n + headCost(g.room, false) + g.items.reduce((m, it) => m + rowCost(it), 0), 0);
+  const target = total / cols;
+  const out: ColGroup[][] = [[]];
+  let used = 0;
+  for (const g of groups) {
+    let rest = g.items;
+    let cont = false;
+    while (rest.length) {
+      const last = out.length === cols;
+      const head = headCost(g.room, cont);
+      let take = 0, h = head;
+      if (last) take = rest.length;
+      else while (take < rest.length && used + h + rowCost(rest[take]) <= target + 0.75) { h += rowCost(rest[take]); take++; }
+      // A short group moves to the next column whole; a long one only splits with at least three rows
+      // on this side. Otherwise the group (or its continuation) starts the next column.
+      const splitOk = take >= 3 && rest.length > 8;
+      if (!last && take < rest.length && !splitOk && out[out.length - 1].length > 0) { out.push([]); used = 0; continue; }
+      if (!last && take === 0) take = Math.min(rest.length, 3);
+      // Never strand fewer than three rows at the top of the next column.
+      while (!last && take < rest.length && rest.length - take < 3 && take > 3) take--;
+      out[out.length - 1].push({ room: g.room, cont, items: rest.slice(0, take) });
+      used += head + rest.slice(0, take).reduce((m, it) => m + rowCost(it), 0);
+      rest = rest.slice(take);
+      cont = true;
+      if (rest.length && !last) { out.push([]); used = 0; }
+    }
+  }
+  while (out.length < cols) out.push([]);
+  return out;
+};
+
 const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: ProposalDocument; n: number }) => (
   <div className="ppd-page" style={{ padding: "56px 56px 84px" }}>
     <div style={{ paddingBottom: 18, borderBottom: "1px solid var(--pp-line)", marginBottom: 22 }}>
       <p className="ppd-eyebrow">Everything included</p>
       <h2 className="ppd-serif" style={{ fontSize: 36, letterSpacing: "0.04em", lineHeight: 1.05 }}>{s.title}</h2>
     </div>
-    <div className={s.withInvest ? "ppd-cols ppd-cols-4" : "ppd-cols ppd-grow"} style={s.withInvest ? { flex: "1 1 auto", minHeight: 0 } : undefined}>
-      {(() => {
-        const columnCount = s.withInvest ? 4 : 3;
-        const itemCount = s.groups.reduce((sum, group) => sum + group.items.length, 0);
-        const itemsPerColumn = Math.max(1, Math.ceil(itemCount / columnCount));
-        return s.groups.flatMap((g: ItemGroup, gi) => {
-          const chunks: ItemGroup["items"][] = [];
-          if (g.items.length > itemsPerColumn) {
-            for (let i = 0; i < g.items.length; i += itemsPerColumn) chunks.push(g.items.slice(i, i + itemsPerColumn));
-          } else {
-            chunks.push(g.items);
-          }
-          return chunks.map((items, ci) => (
-            <div key={`${g.room}-${gi}-${ci}`} className="ppd-group">
-              <h4>{g.room}{ci > 0 ? " · continued" : ""}</h4>
-              {items.map((it, k) => <div key={k} className="ppd-row"><span>{it.item}</span><b>{it.qty}</b></div>)}
+    <div className="ppd-colgrid" style={{ flex: "1 1 auto", minHeight: 0, gridTemplateColumns: `repeat(${s.withInvest ? 4 : 3}, minmax(0, 1fr))` }}>
+      {splitColumns(s.groups, s.withInvest ? 4 : 3).map((col, c) => (
+        <div key={c} className="ppd-col">
+          {col.map((g, k) => (
+            <div key={`${g.room}-${k}`} className="ppd-group">
+              <h4>{g.room}{g.cont ? " · continued" : ""}</h4>
+              {g.items.map((it, j) => <div key={j} className="ppd-row"><span>{it.item}</span><b>{it.qty}</b></div>)}
             </div>
-          ));
-        });
-      })()}
+          ))}
+        </div>
+      ))}
     </div>
     {s.withInvest && <InvestTable doc={doc} />}
     <Foot client={doc.cover.client} n={n} />
