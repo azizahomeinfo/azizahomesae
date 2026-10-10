@@ -264,7 +264,14 @@ const itemRows = (item: string) => Math.max(1, Math.ceil(item.length / ITEM_CHAR
 /** Spec weight is 1.6 + items.length; wrapped names count once per line so a page can never overflow. */
 const groupWeight = (g: ItemGroup) => 1.6 + g.items.reduce((s, i) => s + itemRows(i.item), 0);
 
-export const paginateItems = (groups: ItemGroup[]) => {
+/**
+ * How much item list fits above the investment table on a combined last page (4 columns, measured:
+ * a 2-bedroom list of weight 92 fills it with one option). Each extra option row takes some back.
+ */
+export const combinedPageCap = (optionCount: number) => 96 - 8 * (Math.max(1, optionCount) - 1);
+
+/** lastCap: what the final page may hold — smaller when the investment shares that page. */
+export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_CAP) => {
   if (!groups.length) return { pages: [] as ItemGroup[][], pageWeights: [] as number[], usedWeight: 0 };
   const weights = groups.map(groupWeight);
   const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
@@ -281,7 +288,7 @@ export const paginateItems = (groups: ItemGroup[]) => {
       for (let end = page; end <= groups.length; end += 1) {
         for (let start = page - 1; start < end; start += 1) {
           const weight = (prefix[end] ?? 0) - (prefix[start] ?? 0);
-          if (weight > ITEM_PAGE_CAP || !Number.isFinite(dp[page - 1]?.[start])) continue;
+          if (weight > (page === pageCount ? lastCap : ITEM_PAGE_CAP) || !Number.isFinite(dp[page - 1]?.[start])) continue;
           const score = (dp[page - 1]?.[start] ?? 0) + Math.pow(weight - target, 2);
           if (score < (dp[page]?.[end] ?? Number.POSITIVE_INFINITY)) {
             if (dp[page]) dp[page][end] = score;
@@ -302,20 +309,21 @@ export const paginateItems = (groups: ItemGroup[]) => {
     return ranges;
   };
 
-  let pageCount = Math.max(1, Math.ceil(totalWeight / ITEM_PAGE_CAP));
+  let pageCount = Math.max(1, Math.ceil(totalWeight / ITEM_PAGE_CAP), 1 + Math.ceil(Math.max(0, totalWeight - lastCap) / ITEM_PAGE_CAP));
   let ranges = partition(pageCount);
   while (!ranges && pageCount < groups.length) {
     pageCount += 1;
     ranges = partition(pageCount);
   }
-  if (!ranges) ranges = groups.map((_, index) => [index, index + 1] as [number, number]);
+  if (!ranges) {
+    // Can't respect lastCap (one room is bigger than a combined page): report it so the caller doesn't combine.
+    if (lastCap < ITEM_PAGE_CAP) return { pages: [] as ItemGroup[][], pageWeights: [] as number[], usedWeight: 0, fits: false };
+    ranges = groups.map((_, index) => [index, index + 1] as [number, number]);
+  }
   const pages = ranges.map(([start, end]) => groups.slice(start, end));
   const pageWeights = ranges.map(([start, end]) => (prefix[end] ?? 0) - (prefix[start] ?? 0));
-  return { pages, pageWeights, usedWeight: pageWeights[pageWeights.length - 1] ?? 0 };
+  return { pages, pageWeights, usedWeight: pageWeights[pageWeights.length - 1] ?? 0, fits: true };
 };
-
-export const autoCombine = (usedWeight: number, optionCount: number) =>
-  Math.ceil(usedWeight / 3) + (8 + 10 * Math.ceil(optionCount / 2) + 5) <= 38;
 
 /** A room stays on one proposal sheet unless it has more than six pictures. */
 export const MAX_IMAGES_PER_PAGE = 6;
@@ -346,9 +354,13 @@ export const layoutSheets = (doc: ProposalDocument) => {
   const groups = doc.itemList.filter((g) => g.items.length);
   const showItems = doc.toggles.itemList && groups.length > 0;
   const showInvest = doc.toggles.investment && doc.investment.options.length > 0;
-  const { pages, usedWeight } = paginateItems(groups);
-  const guess = autoCombine(usedWeight, doc.investment.options.length);
+  // Default (combine: null) is one page for the last of the item list and the investment: the item
+  // pages are re-balanced so the last one leaves room for the table. Only when even that can't fit
+  // (one room larger than a combined page) does the investment get its own page.
+  const combinedTry = showItems && showInvest ? paginateItems(groups, combinedPageCap(doc.investment.options.length)) : null;
+  const guess = !!combinedTry?.fits;
   const combine = showItems && showInvest && (doc.toggles.combine ?? guess);
+  const { pages } = combine && combinedTry?.fits ? combinedTry : paginateItems(groups);
   if (showItems) {
     pages.forEach((g, k) => sheets.push({
       kind: "items", title: pages.length > 1 ? `Item list · ${k + 1} of ${pages.length}` : "Item list",
