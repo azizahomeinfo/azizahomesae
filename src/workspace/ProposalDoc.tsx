@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useBrief, useLead } from "./queries";
 import { uploadToWorkspace, useSignedUrls } from "./designQueries";
+import { useLeadContracts } from "./contractQueries";
 import { leadOwner, useCosting } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { shortDate } from "./format";
@@ -151,6 +152,7 @@ const ProposalDoc = () => {
   const { data: costing, isLoading: costingLoading } = useCosting(leadId ? leadOwner(leadId) : undefined, false);
   const { data: groups, isLoading: itemsLoading } = useProposalItems(briefLoading ? undefined : leadId, brief?.ffe);
   const { data: proposals = [], isLoading: propLoading } = useLeadProposals(leadId);
+  const { data: leadContracts = [] } = useLeadContracts(leadId);
   const create = useCreateProposal();
   const save = useSaveProposal();
   const setStatus = useProposalStatus();
@@ -406,6 +408,9 @@ const ProposalDoc = () => {
           {canEdit && row.status === "Sent" && <><Button variant="outline" disabled={withdrawn} onClick={clientAccepted}>Client accepted</Button><Button variant="outline" onClick={() => markStatus("Rejected")}>Client rejected</Button></>}
           {row.status === "Accepted" && row.accepted_option && <span className="self-center text-xs text-muted-foreground">Client chose {row.accepted_option.label}</span>}
           {canEdit && <Button variant="outline" onClick={openContract}>Generate contract</Button>}
+          {canEdit && <Button variant="outline" title="This proposal followed by the sales agreement, as one PDF for the client to sign"
+            onClick={() => leadContracts.length ? navigate(`/workspace/contracts/${lead.id}?combined=1`)
+              : toast.info("Generate the contract first — the combined document is this proposal followed by the agreement.")}>Proposal + agreement</Button>}
           {d.finalAt && !dirty
             ? <Button disabled={withdrawn} onClick={() => window.print()}>Download PDF</Button>
             : canEdit && <Button onClick={() => void finalise()} disabled={save.isPending}>Finalise &amp; download</Button>}

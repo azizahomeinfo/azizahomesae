@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/aziza-logo.png";
@@ -360,7 +360,8 @@ const ContractDoc = () => {
   const [handover, setHandover] = useState("");
   const sign = useSignContract();
   const navigate = useNavigate();
-  const [combined, setCombined] = useState(false);
+  const [params] = useSearchParams();
+  const [combined, setCombined] = useState(params.get("combined") === "1");
 
   const accepted = proposals.find((p) => p.status === "Accepted");
   const back = accepted
@@ -476,7 +477,11 @@ const ContractDoc = () => {
           {canEdit && row.status === "Issued" && <Button variant="outline" onClick={() => { setHandover(lead.target_date ?? ""); setSignOpen(true); }}>Mark signed</Button>}
           {editable && <Button variant="outline" disabled={!draft || save.isPending} onClick={persist}>Save</Button>}
           <Button onClick={print}>Save as PDF / Print</Button>
-          {sourceProposal && <Button variant="outline" onClick={() => setCombined(true)} title="The proposal followed by this agreement, as one PDF for the client to sign">Proposal + agreement</Button>}
+          <Button variant="outline" title="The proposal followed by this agreement, as one PDF for the client to sign"
+            onClick={() => sourceProposal ? setCombined(true)
+              : toast.info("This contract has no proposal to put in front of it — it was created directly from the lead. Create a proposal for this lead to combine the two.")}>
+            Proposal + agreement
+          </Button>
           {canEdit && row.status === "Issued" && <p className="basis-full text-xs text-muted-foreground">Marking this signed will re-take the item list from the current FF&amp;E list.</p>}
         </div>
       </div>
