@@ -50,14 +50,24 @@ export const PROPOSAL_CSS = `
 .ppd-table .r { text-align: right; }
 @media print {
   @page { size: 210mm 297mm; margin: 0; }
-  html, body { background: #fff !important; }
+  html, body { background: #fff !important; height: auto !important; min-height: 0 !important; }
   body * { visibility: hidden !important; }
   [data-print-root], [data-print-root] * { visibility: visible !important; }
-  [data-print-root] { position: absolute !important; left: 0 !important; top: 0 !important; padding: 0 !important; margin: 0 !important;
+  /* Invisible is not enough: the editor and the rest of the workspace still took up height and came
+     out as blank pages after the document. Everything that neither holds nor is the document is
+     removed from layout, and the document's ancestors stop adding padding, gaps or min-heights. */
+  body *:not([data-print-root]):not([data-print-root] *):not(:has([data-print-root])) { display: none !important; }
+  body *:has([data-print-root]) { display: block !important; position: static !important; padding: 0 !important; margin: 0 !important;
+    min-height: 0 !important; height: auto !important; overflow: visible !important; border: 0 !important; box-shadow: none !important;
+    transform: none !important; gap: 0 !important; background: none !important; }
+  [data-print-root] { position: static !important; padding: 0 !important; margin: 0 !important;
     gap: 0 !important; background: none !important; overflow: visible !important; width: ${PAGE_W}px !important; display: block !important; }
-  [data-print-slot] { width: auto !important; height: auto !important; margin: 0 !important; box-shadow: none !important; }
-  [data-print-scale] { transform: none !important; break-after: page; page-break-after: always; }
-  [data-print-scale]:last-child { break-after: auto; }
+  /* One sheet per page, cut to exactly A4: the 1123px page is half a pixel taller than 297mm, which
+     otherwise drifts down the document and can push a last sliver onto an extra page. */
+  [data-print-slot] { width: auto !important; height: 297mm !important; overflow: hidden !important; margin: 0 !important; box-shadow: none !important;
+    break-after: page; page-break-after: always; break-inside: avoid; }
+  [data-print-slot]:last-child { break-after: auto; page-break-after: auto; }
+  [data-print-scale] { transform: none !important; }
   .ppd-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }`;
 
