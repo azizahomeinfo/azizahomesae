@@ -1243,7 +1243,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   ) : null;
   const done = rows.filter((r) => DONE_STAGES.includes(r.stage)).length;
   const bandCell = (r: FfeRow) => canEdit ? (
-    <Select value={String(bandOf(r))} onValueChange={(v) => apply([r.id], { priority_band: Number(v) })}>
+    <Select value={String(bandOf(r))} onValueChange={(v) => applyRow(r, { priority_band: Number(v) }, `Buying run ${v} · ${bandLabel(Number(v))}`)}>
       <SelectTrigger className="h-8 w-44" aria-label={`Priority for ${r.item}`}><SelectValue>{bandOf(r)} · {bandLabel(bandOf(r))}</SelectValue></SelectTrigger>
       <SelectContent>{PRIORITY_BANDS.map((_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1} · {bandLabel(i + 1)}</SelectItem>)}</SelectContent>
     </Select>
@@ -1252,7 +1252,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const costCell = (r: FfeRow) => canEdit ? (
     <div>
       <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24"
-        onSave={(v) => apply([r.id], { unit_cost: v.trim() === "" ? null : Number(v) })} />
+        onSave={(v) => applyRow(r, { unit_cost: v.trim() === "" ? null : Number(v) }, `Unit cost ${v}`, v.trim() === "")} />
       <span className="block text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">Line {aed(Number(r.unit_cost ?? 0) * Number(r.qty))}</span>
     </div>
   ) : null;
@@ -1294,6 +1294,15 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       onSuccess: () => toast.success(`${DATE_FIELD_LABEL[k]} ${shortDate(value)} set on ${ids.length} item${ids.length === 1 ? "" : "s"}`),
       onError: (e) => toast.error(errMsg(e, "Could not save")),
     });
+  // An edit on a row that is part of a multi-row selection applies to every selected row (the coordinator
+  // ticks all the rugs and moves them to Delivered once). Clearing a field stays per row. Stage and unit
+  // cost are buying decisions, so held rows are skipped (applyBulk); PO ref, notes and buying run reach all.
+  const applyRow = (r: FfeRow, values: Partial<FfeRow>, what: string, clearing = false) => {
+    if (clearing || sel.size < 2 || !sel.has(r.id)) { apply([r.id], values); return; }
+    const ids = [...sel];
+    if ("stage" in values || "unit_cost" in values) { applyBulk(ids, values, (n) => `${what} — ${n} selected items`); return; }
+    apply(ids, values, `${what} — ${ids.length} selected items`);
+  };
   const toggle = (id: string, on: boolean) => { const n = new Set(sel); if (on) n.add(id); else n.delete(id); setSel(n); };
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
@@ -1350,7 +1359,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
         {orderingExpected && view !== "board" && <p className="text-xs text-muted-foreground">Amber = not ordered and no delivery date.</p>}
         {canEdit && sel.size > 0 && view === "table" && (
           <div className="flex flex-col gap-2 rounded-[var(--radius)] border border-primary/40 p-3 sm:flex-row sm:items-center">
-            <span className="text-sm">{sel.size} selected</span>
+            <span className="text-sm">{sel.size} selected<span className="block text-[11px] text-muted-foreground">Any change on a ticked row applies to all {sel.size}</span></span>
             <Select value={bulkStage} onValueChange={(v) => setBulkStage(v as ProcStage)}>
               <SelectTrigger className="h-8 sm:w-48" aria-label="Bulk stage"><SelectValue placeholder="Set stage…" /></SelectTrigger>
               <SelectContent>{ALL_STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
@@ -1413,13 +1422,13 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                       {canEdit && r.review === "Out of stock" && <button type="button" disabled={backInStock.isPending} className="block text-[10px] font-medium text-primary underline" onClick={() => markBackInStock(r)}>Back in stock</button>}</td>
                     <td className="p-1">{bandCell(r)}</td>
                     {canEdit && <td className="p-1">{costCell(r)}</td>}
-                    <td className="p-1"><StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} /></td>
-                    <td className="p-1"><EditCell label="PO ref" value={r.po_ref} disabled={!canEdit} className="w-28" onSave={(v) => apply([r.id], { po_ref: v || null })} /></td>
+                    <td className="p-1"><StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => applyRow(r, { stage }, `Moved to ${stage}`)} /></td>
+                    <td className="p-1"><EditCell label="PO ref" value={r.po_ref} disabled={!canEdit} className="w-28" onSave={(v) => applyRow(r, { po_ref: v || null }, `PO ref ${v}`, !v)} /></td>
                     <td className="p-1">{dateCell(r, "ordered_on", "Ordered on")}</td>
                     <td className="p-1">{dateCell(r, "eta", "ETA")}</td>
                     <td className="p-1">{dateCell(r, "delivered_on", "Delivered on")}</td>
                     <td className="p-1">{dateCell(r, "installed_on", "Installed on")}</td>
-                    <td className="p-1 min-w-40"><EditCell label="Notes" value={r.notes} disabled={!canEdit} onSave={(v) => apply([r.id], { notes: v || null })} /></td>
+                    <td className="p-1 min-w-40"><EditCell label="Notes" value={r.notes} disabled={!canEdit} onSave={(v) => applyRow(r, { notes: v || null }, "Notes", !v)} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -1436,15 +1445,15 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                     {canEdit && r.review === "Out of stock" && <button type="button" disabled={backInStock.isPending} className="text-xs font-medium text-primary underline" onClick={() => markBackInStock(r)}>Back in stock — buy it again</button>}</div>
                 </div>
                 {bandCell(r)}
-                <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => apply([r.id], { stage })} />
+                <StageSelect value={r.stage} disabled={!canEdit} onChange={(stage) => applyRow(r, { stage }, `Moved to ${stage}`)} />
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {canEdit && <div className="col-span-2 space-y-1"><span className="text-muted-foreground">Unit cost</span>{costCell(r)}</div>}
-                  <label className="space-y-1"><span className="text-muted-foreground">PO ref</span><EditCell label="PO ref" value={r.po_ref} disabled={!canEdit} onSave={(v) => apply([r.id], { po_ref: v || null })} /></label>
+                  <label className="space-y-1"><span className="text-muted-foreground">PO ref</span><EditCell label="PO ref" value={r.po_ref} disabled={!canEdit} onSave={(v) => applyRow(r, { po_ref: v || null }, `PO ref ${v}`, !v)} /></label>
                   <label className="space-y-1"><span className="text-muted-foreground">ETA</span>{dateCell(r, "eta", "ETA")}</label>
                   <label className="space-y-1"><span className="text-muted-foreground">Ordered</span>{dateCell(r, "ordered_on", "Ordered on")}</label>
                   <label className="space-y-1"><span className="text-muted-foreground">Delivered</span>{dateCell(r, "delivered_on", "Delivered on")}</label>
                   <label className="space-y-1"><span className="text-muted-foreground">Installed</span>{dateCell(r, "installed_on", "Installed on")}</label>
-                  <label className="col-span-2 space-y-1"><span className="text-muted-foreground">Notes</span><EditCell label="Notes" value={r.notes} disabled={!canEdit} onSave={(v) => apply([r.id], { notes: v || null })} /></label>
+                  <label className="col-span-2 space-y-1"><span className="text-muted-foreground">Notes</span><EditCell label="Notes" value={r.notes} disabled={!canEdit} onSave={(v) => applyRow(r, { notes: v || null }, "Notes", !v)} /></label>
                 </div>
               </li>
             ))}
