@@ -321,10 +321,16 @@ const renderSheet = (s: Sheet, doc: ProposalDocument, url: Url, n: number) => {
 };
 
 /** Pages stacked in the grey field, scaled for preview; print shows them 1:1, one per A4 sheet. */
+/** The proposal's sheets as page nodes, numbered from 1. */
+export const proposalSheetNodes = (doc: ProposalDocument, url: Url, skip?: (s: Sheet) => boolean): ReactNode[] =>
+  layoutSheets(doc).sheets.filter((s) => !skip?.(s)).map((s, i) => renderSheet(s, doc, url, i + 1));
+
 /** `after`: more full 794×1123 pages printed in the same run (the agreement, in the combined document). */
-export const ProposalPages = ({ doc, url, scale = PREVIEW_SCALE, after = [], skip }: { doc: ProposalDocument; url: Url; scale?: number; after?: ReactNode[]; skip?: (s: Sheet) => boolean }) => {
-  const sheets = layoutSheets(doc).sheets.filter((s) => !skip?.(s));
-  const all = [...sheets.map((s, i) => renderSheet(s, doc, url, i + 1)), ...after];
+export const ProposalPages = ({ doc, url, scale = PREVIEW_SCALE, after = [], skip }: { doc: ProposalDocument; url: Url; scale?: number; after?: ReactNode[]; skip?: (s: Sheet) => boolean }) =>
+  <PageStack pages={[...proposalSheetNodes(doc, url, skip), ...after]} scale={scale} />;
+
+/** Any list of 794×1123 page nodes, stacked for preview and printed one per A4 sheet. */
+export const PageStack = ({ pages: all, scale = PREVIEW_SCALE }: { pages: ReactNode[]; scale?: number }) => {
   return (
     <div className="ppd ppd-field flex flex-col items-center gap-6 p-6" data-print-root>
       {all.map((page, i) => (

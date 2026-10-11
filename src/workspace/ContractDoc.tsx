@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowDown, ArrowLeft, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Plus, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/aziza-logo.png";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,9 @@ import {
 import { useBrief, useLead, useMembers } from "./queries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { useLeadProposals, useProposalItems, type ProposalRow } from "./proposalQueries";
-import { PROPOSAL_CSS, ProposalPages } from "./ProposalPages";
+import { PROPOSAL_CSS, PageStack, proposalSheetNodes } from "./ProposalPages";
+import { isPdf, useUploadedPages } from "./uploadedPages";
+import { SALES_PROPOSAL, useLeadDealFiles, useUploadProjectFile, type ProjectFile } from "./projectQueries";
 import { useSignedUrls } from "./designQueries";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateContract, useLeadContracts, useSaveContract, useSignContract, type ContractStatus } from "./contractQueries";
@@ -291,35 +293,95 @@ export const useContractPages = (d: ContractDocument) => {
 
 /* ---------------- proposal + agreement, one document ---------------- */
 
-const CombinedView = ({ proposal, contract, client, onClose }: { proposal: ProposalRow; contract: ContractDocument; client: string; onClose: () => void }) => {
+type CombinedLead = { id: string; name: string; sales_id: string | null; converted_project_id: string | null };
+
+/**
+ * The proposal followed by the agreement, as one document. The proposal is either the system's own
+ * (laid out from its data) or a PDF/image sales uploaded to the lead's deal record — for deals whose
+ * proposal was made outside the workspace. Uploading here files it under the lead's "Proposal" record.
+ */
+const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
+  lead: CombinedLead; systemProposal: ProposalRow | null; uploaded: ProjectFile[]; contract: ContractDocument; onClose: () => void;
+}) => {
+  const { member } = useWorkspace();
+  const canUpload = member?.role === "gm" || (member?.role === "sales" && lead.sales_id === member.user_id);
+  const upload = useUploadProjectFile();
+  const [source, setSource] = useState<string>(systemProposal ? "system" : uploaded[0]?.id ?? "");
   const [skipDup, setSkipDup] = useState(false);
-  const doc = proposal.doc;
-  const paths = [doc.cover.hero, doc.floorPlan.path, ...doc.moodBoard.map((m) => m.path), ...doc.pages.flatMap((p) => p.images.map((i) => i.path))]
-    .filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf"));
+  const file = uploaded.find((f) => f.id === source);
+  const useSystem = source === "system" && !!systemProposal;
+  // newest upload becomes the source as soon as it lands
+  const [awaiting, setAwaiting] = useState<string | null>(null);
+  useEffect(() => {
+    if (awaiting && uploaded[0] && uploaded[0].file_name === awaiting) { setSource(uploaded[0].id); setAwaiting(null); }
+  }, [awaiting, uploaded]);
+
+  const doc = systemProposal?.doc;
+  const sysPaths = useSystem && doc
+    ? [doc.cover.hero, doc.floorPlan.path, ...doc.moodBoard.map((m) => m.path), ...doc.pages.flatMap((p) => p.images.map((i) => i.path))]
+        .filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf"))
+    : [];
+  const paths = file ? [file.storage_path] : sysPaths;
   const { data: urls } = useSignedUrls(paths);
   const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
+  const up = useUploadedPages(file ? url(file.storage_path) : undefined, file?.file_name);
   const cp = useContractPages(contract);
-  const after = cp.ready ? Array.from({ length: cp.count }, (_, n) => cp.render(n, cp.count)) : [];
-  const ready = cp.ready && (!paths.length || !!urls);
+  const agreement = cp.ready ? Array.from({ length: cp.count }, (_, n) => cp.render(n, cp.count)) : [];
+  const proposalPages = useSystem && doc
+    ? proposalSheetNodes(doc, url, skipDup ? (s) => s.kind === "items" || s.kind === "invest" : undefined)
+    : file ? up.pages : [];
+  const proposalReady = useSystem ? (!sysPaths.length || !!urls) : file ? up.status === "ready" : false;
+  const ready = cp.ready && proposalReady;
+
+  const onPick = (f: File | undefined) => {
+    if (!f || !member) return;
+    if (!/\.pdf$/i.test(f.name) && !f.type.startsWith("image/")) { toast.error("Upload the proposal as a PDF or an image"); return; }
+    upload.mutate({ projectId: lead.converted_project_id, leadId: lead.id, file: f, category: SALES_PROPOSAL, by: member.user_id }, {
+      onSuccess: () => { setAwaiting(f.name.slice(0, 200)); toast.success("Proposal uploaded to the lead's deal record"); },
+      onError: (e) => toast.error(errMsg(e, "Could not upload the proposal")),
+    });
+  };
+
   return (
     <div className="space-y-4">
       <button type="button" onClick={onClose} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back to the contract</button>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-1">
-          <h2 className="font-heading text-2xl uppercase tracking-wide break-words">Proposal + agreement · {client}</h2>
+        <div className="space-y-2">
+          <h2 className="font-heading text-2xl uppercase tracking-wide break-words">Proposal + agreement · {lead.name}</h2>
           <p className="text-sm text-muted-foreground">
-            One document for the client to read and sign: proposal V{proposal.version}{doc.finalAt ? "" : " (not finalised yet)"}, then the sales agreement{cp.ready ? ` (${cp.count} page${cp.count === 1 ? "" : "s"})` : ""}. Unsaved contract edits are included.
+            One document for the client to read and sign: the proposal, then the sales agreement{cp.ready ? ` (${cp.count} page${cp.count === 1 ? "" : "s"})` : ""}. Unsaved contract edits are included.
           </p>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={skipDup} onCheckedChange={(v) => setSkipDup(v === true)} />
-            Leave out the proposal's item list and investment pages — the agreement lists the goods and the price
-          </label>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Proposal:</span>
+            {(systemProposal || uploaded.length > 0) && (
+              <select className="h-9 rounded-[var(--radius)] border border-input bg-background px-2 text-sm" value={source} onChange={(e) => setSource(e.target.value)} aria-label="Which proposal">
+                {systemProposal && <option value="system">Proposal V{systemProposal.version} (made in the workspace){systemProposal.doc.finalAt ? "" : " — not finalised"}</option>}
+                {uploaded.map((f) => <option key={f.id} value={f.id}>Uploaded · {f.file_name} · {shortDate(f.created_at)}</option>)}
+              </select>
+            )}
+            {canUpload && (
+              <label className={cn("inline-flex h-9 cursor-pointer items-center rounded-[var(--radius)] border border-input px-3 text-sm hover:bg-accent", upload.isPending && "pointer-events-none opacity-60")}>
+                <Upload className="mr-1 h-3.5 w-3.5" />{upload.isPending ? "Uploading…" : "Upload proposal PDF"}
+                <input type="file" accept="application/pdf,image/*" className="sr-only" onChange={(e) => { onPick(e.target.files?.[0]); e.target.value = ""; }} />
+              </label>
+            )}
+          </div>
+          {useSystem && (
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={skipDup} onCheckedChange={(v) => setSkipDup(v === true)} />
+              Leave out the proposal's item list and investment pages — the agreement lists the goods and the price
+            </label>
+          )}
+          {file && up.status === "loading" && <p className="text-sm text-muted-foreground">Reading {file.file_name}…</p>}
+          {file && up.status === "error" && <p className="text-sm text-destructive">Couldn't read {file.file_name}: {up.error}. Try saving it as a PDF again and re-uploading.</p>}
+          {file && up.status === "ready" && isPdf(file.file_name) && <p className="text-xs text-muted-foreground">{up.pages.length} page{up.pages.length === 1 ? "" : "s"} from the uploaded PDF, printed as pictures of the pages.</p>}
+          {!systemProposal && !uploaded.length && <p className="text-sm text-warning">No proposal yet — upload the PDF you sent the client.</p>}
         </div>
         <Button disabled={!ready} onClick={() => window.print()}>{ready ? "Save as PDF / Print" : "Preparing…"}</Button>
       </div>
       <style>{PROPOSAL_CSS}</style>
       {cp.measurer}
-      <ProposalPages doc={doc} url={url} after={after} skip={skipDup ? (s) => s.kind === "items" || s.kind === "invest" : undefined} />
+      <PageStack pages={[...proposalPages, ...agreement]} />
     </div>
   );
 };
@@ -360,6 +422,7 @@ const ContractDoc = () => {
   const [handover, setHandover] = useState("");
   const sign = useSignContract();
   const navigate = useNavigate();
+  const { data: dealFiles = [] } = useLeadDealFiles(leadId);
   const [params] = useSearchParams();
   const [combined, setCombined] = useState(params.get("combined") === "1");
 
@@ -455,7 +518,8 @@ const ContractDoc = () => {
   // The contract's own proposal, else the accepted one, else the latest finalised one.
   const sourceProposal = proposals.find((p) => p.id === row.proposal_id) ?? accepted ?? proposals.find((p) => p.doc.finalAt) ?? null;
   // The editor's preview is unmounted while the combined view is open: its print rules would fight the combined document's.
-  if (combined && sourceProposal) return <CombinedView proposal={sourceProposal} contract={d} client={lead.name} onClose={() => setCombined(false)} />;
+  const uploadedProposals = dealFiles.filter((f) => f.category === SALES_PROPOSAL);
+  if (combined) return <CombinedView lead={lead} systemProposal={sourceProposal} uploaded={uploadedProposals} contract={d} onClose={() => setCombined(false)} />;
 
   return (
     <div className="space-y-4">
@@ -478,8 +542,7 @@ const ContractDoc = () => {
           {editable && <Button variant="outline" disabled={!draft || save.isPending} onClick={persist}>Save</Button>}
           <Button onClick={print}>Save as PDF / Print</Button>
           <Button variant="outline" title="The proposal followed by this agreement, as one PDF for the client to sign"
-            onClick={() => sourceProposal ? setCombined(true)
-              : toast.info("This contract has no proposal to put in front of it — it was created directly from the lead. Create a proposal for this lead to combine the two.")}>
+            onClick={() => setCombined(true)}>
             Proposal + agreement
           </Button>
           {canEdit && row.status === "Issued" && <p className="basis-full text-xs text-muted-foreground">Marking this signed will re-take the item list from the current FF&amp;E list.</p>}
