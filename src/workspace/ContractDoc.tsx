@@ -293,6 +293,21 @@ export const useContractPages = (d: ContractDocument) => {
 
 /* ---------------- proposal + agreement, one document ---------------- */
 
+/** Divider between the agreement and the proposal it attaches. */
+export const AppendixPage = ({ d }: { d: ContractDocument }) => (
+  <div className="ctr ctr-page">
+    <style>{CSS}</style>
+    <Head d={d} />
+    <div className="ctr-page-body" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+      <p className="ctr-eyebrow">Appendix</p>
+      <h1 className="ctr-h1">Proposal</h1>
+      <div className="ctr-rule" />
+      <p style={{ marginTop: 18, maxWidth: 420 }}>The proposal presented to the Buyer{d.client ? `, ${d.client}` : ""}, attached to this Sales Agreement.</p>
+    </div>
+    <div className="ctr-foot"><span>{footerLeft(d.vatCharged)}</span><span>Appendix · Proposal</span></div>
+  </div>
+);
+
 type CombinedLead = { id: string; name: string; sales_id: string | null; converted_project_id: string | null };
 
 /**
@@ -324,26 +339,27 @@ const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
   const paths = file ? [file.storage_path] : sysPaths;
   const { data: urls } = useSignedUrls(paths);
   const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
-  // Which price option of an uploaded proposal to keep: null = as sent. Defaults to the one whose price
-  // is the agreement's subtotal, once the PDF has been read.
-  const [keep, setKeep] = useState<number | null>(null);
-  const [keepTouched, setKeepTouched] = useState(false);
-  const up = useUploadedPages(file ? url(file.storage_path) : undefined, file?.file_name, keep);
+  // A proposal with several prices goes into the signed document with exactly one: sales must say which.
+  // A workspace proposal whose accepted option is recorded starts on that one; otherwise nothing is preselected.
+  const acceptedIdx = useSystem && doc && systemProposal?.accepted_option ? systemProposal.accepted_option.index : null;
+  const [choice, setChoice] = useState<number | null>(null);
+  useEffect(() => { setChoice(acceptedIdx); }, [source, acceptedIdx]);
+  const up = useUploadedPages(file ? url(file.storage_path) : undefined, file?.file_name, file ? choice : null);
   const subtotal = Number(contract.subtotal) || 0;
-  useEffect(() => {
-    if (keepTouched) return;
-    const i = up.options.findIndex((o) => o.amount != null && Math.round(o.amount) === Math.round(subtotal));
-    setKeep(i >= 0 ? i : null);
-  }, [up.options, subtotal, keepTouched]);
-  useEffect(() => { setKeepTouched(false); setKeep(null); }, [source]);
-  const kept = keep != null ? up.options[keep] : null;
+  const priceOptions = useSystem && doc
+    ? doc.investment.options.map((o, i) => ({ name: o.label || `Option ${i + 1}`, desc: o.desc, amount: Number(o.amount) || null }))
+    : file ? up.options.map((o) => ({ name: `Option ${o.letter}`, desc: "", amount: o.amount })) : [];
+  const needChoice = priceOptions.length > 1 && (choice == null || !priceOptions[choice]);
+  const chosen = choice != null ? priceOptions[choice] : null;
+  const printDoc = useSystem && doc && chosen && doc.investment.options.length > 1
+    ? { ...doc, investment: { ...doc.investment, options: [doc.investment.options[choice!]] } } : doc;
   const cp = useContractPages(contract);
   const agreement = cp.ready ? Array.from({ length: cp.count }, (_, n) => cp.render(n, cp.count)) : [];
-  const proposalPages = useSystem && doc
-    ? proposalSheetNodes(doc, url, skipDup ? (s) => s.kind === "items" || s.kind === "invest" : undefined)
+  const proposalPages = useSystem && printDoc
+    ? proposalSheetNodes(printDoc, url, skipDup ? (s) => s.kind === "items" || s.kind === "invest" : undefined)
     : file ? up.pages : [];
   const proposalReady = useSystem ? (!sysPaths.length || !!urls) : file ? up.status === "ready" : false;
-  const ready = cp.ready && proposalReady;
+  const ready = cp.ready && proposalReady && !needChoice;
 
   const onPick = (f: File | undefined) => {
     if (!f || !member) return;
@@ -361,7 +377,7 @@ const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
         <div className="space-y-2">
           <h2 className="font-heading text-2xl uppercase tracking-wide break-words">Proposal + agreement · {lead.name}</h2>
           <p className="text-sm text-muted-foreground">
-            One document for the client to read and sign: the proposal, then the sales agreement{cp.ready ? ` (${cp.count} page${cp.count === 1 ? "" : "s"})` : ""}. Unsaved contract edits are included.
+            One document for the client to read and sign: the sales agreement{cp.ready ? ` (${cp.count} page${cp.count === 1 ? "" : "s"})` : ""} first, then the proposal as an appendix. Unsaved contract edits are included.
           </p>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted-foreground">Proposal:</span>
@@ -386,30 +402,38 @@ const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
           )}
           {file && up.status === "loading" && <p className="text-sm text-muted-foreground">Reading {file.file_name}…</p>}
           {file && up.status === "error" && <p className="text-sm text-destructive">Couldn't read {file.file_name}: {up.error}. Try saving it as a PDF again and re-uploading.</p>}
-          {file && up.status === "ready" && up.options.length > 1 && (
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Price shown:</span>
-              <select className="h-9 max-w-full rounded-[var(--radius)] border border-input bg-background px-2 text-sm" aria-label="Price option shown"
-                value={keep == null ? "all" : String(keep)} onChange={(e) => { setKeepTouched(true); setKeep(e.target.value === "all" ? null : Number(e.target.value)); }}>
-                <option value="all">All {up.options.length} options, as sent</option>
-                {up.options.map((o, i) => <option key={i} value={i}>Only Option {o.letter}{o.amount != null ? ` — ${aedWhole(o.amount)} excl. VAT` : ""}</option>)}
-              </select>
+          {priceOptions.length > 1 && (
+            <div className={cn("space-y-2 rounded-[var(--radius)] border p-3", needChoice ? "border-warning/60 bg-warning/10" : "border-border")}>
+              <p className="text-sm font-medium">This proposal has {priceOptions.length} prices. Which one is stated in the final document?</p>
+              <div className="flex flex-wrap gap-2">
+                {priceOptions.map((o, i) => {
+                  const matches = o.amount != null && Math.round(o.amount) === Math.round(subtotal);
+                  return (
+                    <Button key={i} size="sm" variant={choice === i ? "default" : "outline"} onClick={() => setChoice(i)} className="h-auto whitespace-normal py-1.5 text-left">
+                      <span>
+                        <span className="block">{o.name}{o.amount != null ? ` — ${aedWhole(o.amount)} excl. VAT` : ""}</span>
+                        {(o.desc || matches) && <span className="block text-[11px] opacity-80">{[o.desc, matches ? "matches the agreement" : ""].filter(Boolean).join(" · ")}</span>}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+              {needChoice
+                ? <p className="text-xs text-muted-foreground">Only the chosen price is kept on the proposal pages. Save as PDF unlocks once you choose.</p>
+                : chosen?.amount != null && Math.round(chosen.amount) !== Math.round(subtotal) && (
+                  <p className="text-sm text-warning">{chosen.name} is {aedWhole(chosen.amount)} excl. VAT, but the agreement's subtotal is {aedWhole(subtotal)}. Make them match before the client signs.</p>
+                )}
             </div>
-          )}
-          {kept && kept.amount != null && Math.round(kept.amount) !== Math.round(subtotal) && (
-            <p className="text-sm text-warning">Option {kept.letter} is {aedWhole(kept.amount)} excl. VAT, but the agreement's subtotal is {aedWhole(subtotal)}. Make them match before the client signs.</p>
-          )}
-          {file && up.status === "ready" && up.options.length > 1 && keep == null && (
-            <p className="text-xs text-muted-foreground">No option matches the agreement's subtotal of {aedWhole(subtotal)} — pick the one the client chose.</p>
           )}
           {file && up.status === "ready" && isPdf(file.file_name) && <p className="text-xs text-muted-foreground">{up.pages.length} page{up.pages.length === 1 ? "" : "s"} from the uploaded PDF, printed as pictures of the pages.</p>}
           {!systemProposal && !uploaded.length && <p className="text-sm text-warning">No proposal yet — upload the PDF you sent the client.</p>}
         </div>
-        <Button disabled={!ready} onClick={() => window.print()}>{ready ? "Save as PDF / Print" : "Preparing…"}</Button>
+        <Button disabled={!ready} onClick={() => window.print()}>{ready ? "Save as PDF / Print" : needChoice ? "Choose the price first" : "Preparing…"}</Button>
       </div>
       <style>{PROPOSAL_CSS}</style>
       {cp.measurer}
-      <PageStack pages={[...proposalPages, ...agreement]} />
+      {/* The agreement leads; the proposal follows as its appendix, behind a divider page. */}
+      <PageStack pages={[...agreement, ...(proposalPages.length ? [<AppendixPage key="appendix" d={contract} />, ...proposalPages] : [])]} />
     </div>
   );
 };
