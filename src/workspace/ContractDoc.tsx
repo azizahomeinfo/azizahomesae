@@ -324,7 +324,19 @@ const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
   const paths = file ? [file.storage_path] : sysPaths;
   const { data: urls } = useSignedUrls(paths);
   const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
-  const up = useUploadedPages(file ? url(file.storage_path) : undefined, file?.file_name);
+  // Which price option of an uploaded proposal to keep: null = as sent. Defaults to the one whose price
+  // is the agreement's subtotal, once the PDF has been read.
+  const [keep, setKeep] = useState<number | null>(null);
+  const [keepTouched, setKeepTouched] = useState(false);
+  const up = useUploadedPages(file ? url(file.storage_path) : undefined, file?.file_name, keep);
+  const subtotal = Number(contract.subtotal) || 0;
+  useEffect(() => {
+    if (keepTouched) return;
+    const i = up.options.findIndex((o) => o.amount != null && Math.round(o.amount) === Math.round(subtotal));
+    setKeep(i >= 0 ? i : null);
+  }, [up.options, subtotal, keepTouched]);
+  useEffect(() => { setKeepTouched(false); setKeep(null); }, [source]);
+  const kept = keep != null ? up.options[keep] : null;
   const cp = useContractPages(contract);
   const agreement = cp.ready ? Array.from({ length: cp.count }, (_, n) => cp.render(n, cp.count)) : [];
   const proposalPages = useSystem && doc
@@ -374,6 +386,22 @@ const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
           )}
           {file && up.status === "loading" && <p className="text-sm text-muted-foreground">Reading {file.file_name}…</p>}
           {file && up.status === "error" && <p className="text-sm text-destructive">Couldn't read {file.file_name}: {up.error}. Try saving it as a PDF again and re-uploading.</p>}
+          {file && up.status === "ready" && up.options.length > 1 && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Price shown:</span>
+              <select className="h-9 max-w-full rounded-[var(--radius)] border border-input bg-background px-2 text-sm" aria-label="Price option shown"
+                value={keep == null ? "all" : String(keep)} onChange={(e) => { setKeepTouched(true); setKeep(e.target.value === "all" ? null : Number(e.target.value)); }}>
+                <option value="all">All {up.options.length} options, as sent</option>
+                {up.options.map((o, i) => <option key={i} value={i}>Only Option {o.letter}{o.amount != null ? ` — ${aedWhole(o.amount)} excl. VAT` : ""}</option>)}
+              </select>
+            </div>
+          )}
+          {kept && kept.amount != null && Math.round(kept.amount) !== Math.round(subtotal) && (
+            <p className="text-sm text-warning">Option {kept.letter} is {aedWhole(kept.amount)} excl. VAT, but the agreement's subtotal is {aedWhole(subtotal)}. Make them match before the client signs.</p>
+          )}
+          {file && up.status === "ready" && up.options.length > 1 && keep == null && (
+            <p className="text-xs text-muted-foreground">No option matches the agreement's subtotal of {aedWhole(subtotal)} — pick the one the client chose.</p>
+          )}
           {file && up.status === "ready" && isPdf(file.file_name) && <p className="text-xs text-muted-foreground">{up.pages.length} page{up.pages.length === 1 ? "" : "s"} from the uploaded PDF, printed as pictures of the pages.</p>}
           {!systemProposal && !uploaded.length && <p className="text-sm text-warning">No proposal yet — upload the PDF you sent the client.</p>}
         </div>
