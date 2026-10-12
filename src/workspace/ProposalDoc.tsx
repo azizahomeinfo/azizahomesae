@@ -435,7 +435,8 @@ const ProposalDoc = () => {
         </p>
       )}
       <RedesignStatus leadId={lead.id} basedOn={d.designVersion} />
-      <RedesignDialog open={redesignOpen} onOpenChange={setRedesignOpen} leadId={lead.id} leadName={lead.name} proposalId={row.id} proposalVersion={row.version} />
+      <RedesignDialog open={redesignOpen} onOpenChange={setRedesignOpen} leadId={lead.id} leadName={lead.name} proposalId={row.id} proposalVersion={row.version}
+        pages={d.pages.map((p) => ({ title: p.title, paths: p.images.map((i) => i.path) }))} />
       {notices.map((n) => <p key={n} className="rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-sm">{n}</p>)}
       {driftSummary && row.status === "Draft" && (
         <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
