@@ -28,6 +28,7 @@ import { DESIGN_AREAS, DESIGN_KINDS, REJECT_REASONS, type DesignKind, type Desig
 import DesignStatusPill from "./DesignStatusPill";
 import { FfeSheet } from "./FfeTab";
 import { leadOwner, useFfeItems } from "./ffeQueries";
+import { RedesignDialog } from "./RedesignRequest";
 import { useDesignParam } from "./designParams";
 import { useKeepScroll } from "./scrollMemory";
 
@@ -453,6 +454,13 @@ const VersionView = ({
           {rejection.feedback && <p className="text-sm whitespace-pre-wrap">{rejection.feedback}</p>}
         </div>
       )}
+      {design.revision_request && (
+        <div className="rounded-[var(--radius)] border-2 border-warning/60 bg-warning/10 p-4 space-y-1">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-warning">Client feedback · redesign for V{design.version}{design.revision_requested_at ? ` · ${new Date(design.revision_requested_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : ""}</p>
+          <p className="text-sm whitespace-pre-wrap text-foreground">{design.revision_request}</p>
+          {design.status === "Draft" && <p className="text-xs text-muted-foreground">Update the renders and the FF&amp;E, then submit the package — sales reviews it and the GM re-prices the FF&amp;E.</p>}
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <Label htmlFor="design-notes">What changed in this version</Label>
@@ -570,6 +578,9 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     || (latest?.status === "Accepted" && (isGm || isAssignedDesigner || (!!lead && lead.sales_id === me)))
   );
   const [reopenOpen, setReopenOpen] = useState(false);
+  // Sales reopening an accepted design is always the client asking for changes: send the feedback with it.
+  const salesRedesign = !isGm && !isAssignedDesigner && !!lead && lead.sales_id === me && latest?.status === "Accepted";
+  const [redesignOpen, setRedesignOpen] = useState(false);
   // The designer specs FF&E against the renders, so both live in this dialog. The tab is in the URL (`dtab`) so a
   // remount returns to it; opening clears it (renders). Each tab's scroller is kept separately.
   const { tab, setTab } = useDesignParam(leadId);
@@ -804,8 +815,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
             </>
           )}
           {canStartNext && isLatest && (
-            <Button onClick={() => (latest?.status === "Accepted" ? setReopenOpen(true) : doStart())} disabled={start.isPending}>
-              Start V{(latest?.version ?? 0) + 1}
+            <Button onClick={() => (salesRedesign ? setRedesignOpen(true) : latest?.status === "Accepted" ? setReopenOpen(true) : doStart())} disabled={start.isPending}>
+              {salesRedesign ? "Client wants changes" : `Start V${(latest?.version ?? 0) + 1}`}
             </Button>
           )}
         </footer>
@@ -840,6 +851,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         </DialogContent>
       </Dialog>
       <RejectDialog open={rejectOpen} onOpenChange={setRejectOpen} pending={decide.isPending} onConfirm={(r, f) => doDecide(false, r, f)} />
+      {lead && <RedesignDialog open={redesignOpen} onOpenChange={setRedesignOpen} leadId={leadId} leadName={lead.name} />}
     </div>
   );
 

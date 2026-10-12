@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useBrief, useLead } from "./queries";
 import { uploadToWorkspace, useSignedUrls } from "./designQueries";
 import { useLeadContracts } from "./contractQueries";
+import { RedesignDialog, RedesignStatus } from "./RedesignRequest";
 import { leadOwner, useCosting } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { shortDate } from "./format";
@@ -153,6 +154,7 @@ const ProposalDoc = () => {
   const { data: groups, isLoading: itemsLoading } = useProposalItems(briefLoading ? undefined : leadId, brief?.ffe);
   const { data: proposals = [], isLoading: propLoading } = useLeadProposals(leadId);
   const { data: leadContracts = [] } = useLeadContracts(leadId);
+  const [redesignOpen, setRedesignOpen] = useState(false);
   const create = useCreateProposal();
   const save = useSaveProposal();
   const setStatus = useProposalStatus();
@@ -407,6 +409,9 @@ const ProposalDoc = () => {
           {canEdit && row.status === "Draft" && d.finalAt && !dirty && <Button variant="outline" disabled={withdrawn} onClick={() => markStatus("Sent")}>Mark sent</Button>}
           {canEdit && row.status === "Sent" && <><Button variant="outline" disabled={withdrawn} onClick={clientAccepted}>Client accepted</Button><Button variant="outline" onClick={() => markStatus("Rejected")}>Client rejected</Button></>}
           {row.status === "Accepted" && row.accepted_option && <span className="self-center text-xs text-muted-foreground">Client chose {row.accepted_option.label}</span>}
+          {canEdit && row.status !== "Accepted" && (
+            <Button variant="outline" onClick={() => setRedesignOpen(true)} title="Send the client's feedback to the designer for a new design version">Client wants changes</Button>
+          )}
           {canEdit && <Button variant="outline" onClick={openContract}>Generate contract</Button>}
           {canEdit && <Button variant="outline" title="This proposal followed by the sales agreement, as one PDF for the client to sign"
             onClick={() => leadContracts.length ? navigate(`/workspace/contracts/${lead.id}?combined=1`)
@@ -429,6 +434,8 @@ const ProposalDoc = () => {
             : `GM quotation V${d.quoteVersion} has been withdrawn — the FF&E is back with the GM for re-quoting. The prices shown are not current: don't send or print this proposal until the new quotation arrives.`}
         </p>
       )}
+      <RedesignStatus leadId={lead.id} basedOn={d.designVersion} />
+      <RedesignDialog open={redesignOpen} onOpenChange={setRedesignOpen} leadId={lead.id} leadName={lead.name} proposalId={row.id} proposalVersion={row.version} />
       {notices.map((n) => <p key={n} className="rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-sm">{n}</p>)}
       {driftSummary && row.status === "Draft" && (
         <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">

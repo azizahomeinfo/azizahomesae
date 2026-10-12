@@ -8,6 +8,7 @@ type T = Database["public"]["Tables"];
 export type DesignRow = Pick<
   T["designs"]["Row"],
   "id" | "lead_id" | "version" | "designer_id" | "status" | "notes" | "feedback" | "reject_reason" | "submitted_at" | "decided_at" | "decided_by" | "created_at" | "updated_at"
+  | "revision_request" | "revision_requested_by" | "revision_requested_at" | "revision_proposal_id"
 >;
 export type DesignImage = Pick<
   T["design_images"]["Row"],
@@ -15,7 +16,7 @@ export type DesignImage = Pick<
 >;
 export type BriefStatusValue = T["requirement_briefs"]["Row"]["status"];
 
-const DESIGN_COLS = "id, lead_id, version, designer_id, status, notes, feedback, reject_reason, submitted_at, decided_at, decided_by, created_at, updated_at";
+const DESIGN_COLS = "id, lead_id, version, designer_id, status, notes, feedback, reject_reason, submitted_at, decided_at, decided_by, created_at, updated_at, revision_request, revision_requested_by, revision_requested_at, revision_proposal_id";
 const IMAGE_COLS = "id, design_id, storage_path, caption, room, sort_order, kind, file_name, width, height";
 const BUCKET = "workspace";
 
@@ -350,6 +351,24 @@ export const useSubmitDesign = () => {
 };
 
 /** Designer (or GM) adjusted a shared package: re-checks completeness, puts the costing back with the GM, notifies GM + sales (all in the RPC). */
+/**
+ * Client feedback after the design went out (usually in a proposal): opens the next design version for the
+ * designer with the feedback on it (or adds to the version already open), tells the designer and the GM,
+ * and gives the designer a redesign task. One database call: ws_request_redesign.
+ */
+export const useRequestRedesign = () => {
+  const inv = useInvalidateAll();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { leadId: string; feedback: string; proposalId?: string | null }) => {
+      const { data, error } = await supabase.rpc("ws_request_redesign", { _lead: v.leadId, _feedback: v.feedback.trim(), _proposal: v.proposalId ?? undefined });
+      fail(error);
+      return data as string;
+    },
+    onSettled: (_d, _e, v) => { inv(v.leadId); qc.invalidateQueries({ queryKey: ["ws", "notifications"] }); qc.invalidateQueries({ queryKey: ["ws", "tasks"] }); },
+  });
+};
+
 export const useResubmitDesignPackage = () => {
   const inv = useInvalidateAll();
   const qc = useQueryClient();

@@ -343,6 +343,10 @@ export type Database = {
           lead_id: string
           notes: string | null
           reject_reason: string | null
+          revision_proposal_id: string | null
+          revision_request: string | null
+          revision_requested_at: string | null
+          revision_requested_by: string | null
           status: Database["public"]["Enums"]["design_status"]
           submitted_at: string | null
           summary: string | null
@@ -359,6 +363,10 @@ export type Database = {
           lead_id: string
           notes?: string | null
           reject_reason?: string | null
+          revision_proposal_id?: string | null
+          revision_request?: string | null
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
           status?: Database["public"]["Enums"]["design_status"]
           submitted_at?: string | null
           summary?: string | null
@@ -375,6 +383,10 @@ export type Database = {
           lead_id?: string
           notes?: string | null
           reject_reason?: string | null
+          revision_proposal_id?: string | null
+          revision_request?: string | null
+          revision_requested_at?: string | null
+          revision_requested_by?: string | null
           status?: Database["public"]["Enums"]["design_status"]
           submitted_at?: string | null
           summary?: string | null
@@ -2097,6 +2109,10 @@ export type Database = {
       ws_request_ffe_confirm: { Args: { _project: string }; Returns: undefined }
       ws_resubmit_design_package: {
         Args: { _design: string; _note?: string }
+        Returns: string
+      }
+      ws_request_redesign: {
+        Args: { _lead: string; _feedback: string; _proposal?: string }
         Returns: string
       }
       ws_return_ffe_list: {
