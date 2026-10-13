@@ -33,6 +33,12 @@ export const SELLERS = {
   individual: { name: "Ruiqing Xu", address: "905, Forte Tower 1, Downtown, Dubai, UAE" },
 } as const;
 export const sellerFor = (vatCharged: boolean) => (vatCharged ? SELLERS.company : SELLERS.individual);
+/** Where the Buyer pays, by who signs. Printed under the goods table of the agreement. */
+export const BANK_DETAILS = {
+  company: [["Account Name", "AZIZA HOME L.L.C-FZ"], ["IBAN", "AE5 1086 0000009598140131"], ["Bank Name", "WIO"], ["Swift Code", "WIOBAEADXXX"]],
+  individual: [["Account Holder Name", "Ruiqing Xu"], ["Bank Name", "Mashreq Bank"], ["Account Number", "019101339432"], ["IBAN", "AE190330000019101339432"]],
+} as const;
+export const bankFor = (vatCharged: boolean) => (vatCharged ? BANK_DETAILS.company : BANK_DETAILS.individual);
 // Running footer (left side). Kept on both versions for now — awaiting Veronica on the individual version.
 export const footerLeft = (_vatCharged: boolean) => "Aziza Home L.L.C-FZ · Dubai, UAE";
 export const DEFAULT_DELIVERY_DAYS = "8–12";

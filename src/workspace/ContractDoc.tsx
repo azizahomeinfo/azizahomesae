@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { shortDate } from "./format";
 import {
-  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
+  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, bankFor, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
   type ContractDocument, type CSection,
 } from "./contractModel";
@@ -153,12 +153,10 @@ export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
       { key: "sum-total", kind: "sum", node: <><td className="sum">Total</td><td className="q sum"><span className="ctr-fig">{aedWhole(m.subtotal)}</span></td></> },
       { key: "sum-vat", kind: "sum", node: <><td className="sum">VAT (5%)</td><td className="q sum"><span className="ctr-fig">{d.vatCharged ? aedWhole(m.vat) : "Waived"}</span></td></> },
     ] },
-    ...(d.vatCharged ? [b("bank", <div className="ctr-bank" style={{ marginBottom: 12 }}>
-      <div><span className="ctr-label">Account Name</span><b>AZIZA HOME L.L.C-FZ</b></div>
-      <div><span className="ctr-label">IBAN</span><b>AE5 1086 0000009598140131</b></div>
-      <div><span className="ctr-label">Bank Name</span><b>WIO</b></div>
-      <div><span className="ctr-label">Swift Code</span><b>WIOBAEADXXX</b></div>
-    </div>)] : []),
+    // Bank details follow who signs: the company's WIO account, or the individual's Mashreq account.
+    b("bank", <div className="ctr-bank" style={{ marginBottom: 12 }}>
+      {bankFor(d.vatCharged).map(([label, value]) => <div key={label}><span className="ctr-label">{label}</span><b>{value}</b></div>)}
+    </div>),
     ...d.clauses.map((c, i): ContractBlock => {
       const n = i + 2;
       if (c.key === "price") {
