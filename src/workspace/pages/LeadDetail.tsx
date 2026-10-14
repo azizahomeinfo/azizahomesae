@@ -158,6 +158,16 @@ const LeadDetail = () => {
 
       <section className="rounded-[var(--radius)] border border-primary/40 bg-card p-4 md:p-6 space-y-4">
         <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Next step</p>
+        {/* A proposal no longer waits for a design: sales can make one from a package at any stage. */}
+        {canSee(member?.role as WorkspaceRole, "proposals") && (member?.role === "gm" || lead.sales_id === member?.user_id) && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-foreground">Proposal</p>
+              <p className="text-sm text-muted-foreground">From a package now, or from the designer's work for a serious client.</p>
+            </div>
+            <Button asChild variant="outline"><Link to={`/workspace/proposals/${lead.id}`}>Proposal</Link></Button>
+          </div>
+        )}
         {brief || briefStage ? (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">

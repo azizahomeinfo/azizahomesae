@@ -2,17 +2,22 @@ import { Link } from "react-router-dom";
 import { aed, shortDate } from "../format";
 import { ProposalPill } from "../ProposalDoc";
 import { useAcceptedLeads, useProposalList, type ProposalStatus } from "../proposalQueries";
+import { useLeads } from "../queries";
 
 const ORDER: ProposalStatus[] = ["Draft", "Sent", "Accepted", "Rejected"];
 
 const Proposals = () => {
   const { data: rows = [], isLoading, error } = useProposalList();
   const { data: accepted = [] } = useAcceptedLeads();
+  const { data: leads = [] } = useLeads();
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (error) return <p className="text-destructive">{(error as Error).message}</p>;
 
   const withProposal = new Set(rows.map((r) => r.lead_id));
   const ready = [...new Map(accepted.filter((a) => !withProposal.has(a.lead_id)).map((a) => [a.lead_id, a])).values()];
+  // Open leads with no proposal yet — a package proposal needs no design, so any of them can have one.
+  const readyIds = new Set(ready.map((a) => a.lead_id));
+  const startable = leads.filter((l) => !withProposal.has(l.id) && !readyIds.has(l.id) && l.status !== "Won" && l.status !== "Lost");
 
   return (
     <div className="space-y-6">
@@ -31,8 +36,23 @@ const Proposals = () => {
           </ul>
         </section>
       )}
-      {rows.length === 0 && ready.length === 0 && (
-        <p className="rounded-[var(--radius)] border border-dashed border-border p-10 text-center text-muted-foreground">No proposals yet. Accept a design package to generate one.</p>
+      {startable.length > 0 && (
+        <section className="space-y-2">
+          <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">Your leads · start a proposal from a package</h3>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {startable.map((l) => (
+              <li key={l.id}>
+                <Link to={`/workspace/proposals/${l.id}`} className="block rounded-[var(--radius)] border border-dashed border-border p-3 hover:border-primary">
+                  <p className="text-sm font-medium">{l.name}</p>
+                  <p className="text-xs text-muted-foreground">{[l.unit_type, l.property ?? l.building].filter(Boolean).join(" · ") || "—"} · {l.status}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {rows.length === 0 && ready.length === 0 && startable.length === 0 && (
+        <p className="rounded-[var(--radius)] border border-dashed border-border p-10 text-center text-muted-foreground">No proposals yet. Open any of your leads and press Proposal — from a package, or from an accepted design.</p>
       )}
       {ORDER.map((s) => {
         const list = rows.filter((r) => r.status === s);
