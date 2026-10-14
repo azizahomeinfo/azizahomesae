@@ -44,6 +44,17 @@ const fromLead = (l?: Lead | null): FormState => {
   return s;
 };
 
+/* A new lead being typed survives the tab being reloaded (Safari discards background tabs): the draft
+   lives in this tab's sessionStorage until the lead is saved or the form is cancelled. */
+const DRAFT_KEY = "ws:new-lead-draft";
+const readDraft = (): FormState | null => {
+  try { const s = sessionStorage.getItem(DRAFT_KEY); return s ? (JSON.parse(s) as FormState) : null; } catch { return null; }
+};
+const writeDraft = (f: FormState | null) => {
+  try { if (f) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(f)); else sessionStorage.removeItem(DRAFT_KEY); } catch { /* storage unavailable */ }
+};
+export const hasNewLeadDraft = () => !!readDraft();
+
 const Legend = ({ children }: { children: ReactNode }) => (
   <legend className="mb-3 text-[11px] uppercase tracking-[0.25em] text-muted-foreground">{children}</legend>
 );
@@ -65,8 +76,12 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
   const [f, setF] = useState<FormState>(() => fromLead(lead));
 
   useEffect(() => {
-    if (open) setF(fromLead(lead));
+    if (open) setF(lead ? fromLead(lead) : { ...fromLead(null), ...(readDraft() ?? {}) });
   }, [open, lead]);
+  useEffect(() => {
+    if (open && !lead) writeDraft(f);
+  }, [open, lead, f]);
+  const close = () => { if (!lead) writeDraft(null); onOpenChange(false); };
 
   const set = (k: Field) => (v: string) => setF((p) => ({ ...p, [k]: v === NONE ? "" : v }));
   const inp = (k: Field) => ({ value: f[k], onChange: (e: { target: { value: string } }) => set(k)(e.target.value) });
@@ -119,6 +134,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
         const sales_id = isGm ? n(f.sales_id) : member?.user_id ?? null;
         saved = await create.mutateAsync({ ...values, sales_id, created_by: member?.user_id ?? null });
         toast.success(`Lead ${saved.ref} created`);
+        writeDraft(null);
       }
       onOpenChange(false);
       onSaved?.(saved);
@@ -186,7 +202,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
         </div>
       </fieldset>
       <div className="flex justify-end gap-2 pb-2">
-        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={close}>Cancel</Button>
         <Button type="submit" disabled={busy}>{lead ? "Save changes" : "Create lead"}</Button>
       </div>
     </form>
@@ -194,7 +210,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
         <SheetContent side="bottom" className="h-[100dvh] overflow-y-auto bg-background">
           <SheetHeader><SheetTitle className="font-heading uppercase tracking-wide">{title}</SheetTitle></SheetHeader>
           <div className="pt-4">{body}</div>
@@ -203,7 +219,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
     );
   }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="font-heading uppercase tracking-wide">{title}</DialogTitle></DialogHeader>
         {body}

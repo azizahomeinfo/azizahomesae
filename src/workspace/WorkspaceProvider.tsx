@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-ssr";
 import type { Database } from "@/integrations/supabase/types";
@@ -17,6 +17,11 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [member, setMember] = useState<WorkspaceMember | null>(null);
   const [loading, setLoading] = useState(true);
+  // Whose workspace is on screen. Supabase reports an auth event every time the tab regains focus
+  // (session re-check, token refresh). Treating those as "loading" blanked the whole workspace and threw
+  // away every open dialog and half-filled form — e.g. a new lead while the user made its Drive folder in
+  // another window. Only a different person (sign-in as someone else, sign-out) reloads the workspace.
+  const userId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +47,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
+      const uid = s?.user.id ?? null;
+      if (uid === userId.current) return; // same person, refreshed session: keep everything mounted
+      userId.current = uid;
       setLoading(true);
       // defer DB call out of the auth callback
       setTimeout(() => loadMember(s), 0);
@@ -49,6 +57,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      const uid = data.session?.user.id ?? null;
+      if (uid === userId.current) return; // the auth event above already loaded this person
+      userId.current = uid;
       loadMember(data.session);
     });
 

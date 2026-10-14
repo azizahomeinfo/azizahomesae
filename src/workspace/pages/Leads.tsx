@@ -11,7 +11,7 @@ import { useLeads, useMembers, type Lead } from "../queries";
 import { isClosed } from "../constants";
 import { aed, isDue, shortDate } from "../format";
 import StatusPill from "../StatusPill";
-import LeadForm from "../LeadForm";
+import LeadForm, { hasNewLeadDraft } from "../LeadForm";
 
 type Tab = "active" | "due" | "won" | "lost" | "all";
 const ALL = "__all";
@@ -36,7 +36,8 @@ const Leads = () => {
   const [tab, setTab] = useState<Tab>("active");
   const [q, setQ] = useState("");
   const [owner, setOwner] = useState(ALL);
-  const [formOpen, setFormOpen] = useState(false);
+  // Reopens a new lead that was being typed before the tab reloaded.
+  const [formOpen, setFormOpen] = useState(() => hasNewLeadDraft());
 
   const nameOf = useMemo(() => new Map(members.map((m) => [m.user_id, m.full_name])), [members]);
 
