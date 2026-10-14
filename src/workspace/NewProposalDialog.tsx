@@ -27,6 +27,7 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
   const [mode, setMode] = useState<"pick" | "package">("pick");
   const [style, setStyle] = useState<StyleSlug>("japandi");
   const [tiers, setTiers] = useState<Tier[]>(["Premium"]);
+  const [units, setUnits] = useState(1);
   const { layout, approximate } = packageLayoutFor(lead.unit_type);
   const toggleTier = (t: Tier) => setTiers((s) => (s.includes(t) ? s.filter((x) => x !== t) : TIERS.filter((x) => s.includes(x) || x === t)));
   const close = (o: boolean) => { onOpenChange(o); if (!o) setMode("pick"); };
@@ -82,7 +83,19 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
             </section>
 
             <section className="space-y-2">
-              <h3 className="text-[11px] uppercase tracking-[0.22em] text-primary">2 · Packages to offer — one, two or three</h3>
+              <h3 className="text-[11px] uppercase tracking-[0.22em] text-primary">2 · Number of units</h3>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => setUnits((u) => Math.max(1, u - 1))} aria-label="Fewer units">−</Button>
+                <input type="number" min={1} max={50} value={units} aria-label="Number of units"
+                  onChange={(e) => setUnits(Math.min(50, Math.max(1, Math.round(Number(e.target.value) || 1))))}
+                  className="h-9 w-16 rounded-[var(--radius)] border border-input bg-background text-center text-sm tabular-nums" />
+                <Button type="button" size="sm" variant="outline" onClick={() => setUnits((u) => Math.min(50, u + 1))} aria-label="More units">+</Button>
+                <span className="text-xs text-muted-foreground">{units > 1 ? `${units} identical ${layout} apartments — each price is the unit price × ${units}; the item list is per apartment.` : "One apartment. For an investor buying several identical units, increase this."}</span>
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="text-[11px] uppercase tracking-[0.22em] text-primary">3 · Packages to offer — one, two or three</h3>
               <div className="grid gap-2 sm:grid-cols-3">
                 {TIERS.map((t) => {
                   const on = tiers.includes(t);
@@ -94,7 +107,9 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
                         {tierLabel(t)}{on && <Check className="h-4 w-4 text-primary" />}
                       </span>
                       <span className="block px-2 text-xs text-muted-foreground">{TIER_TEXT[t].line}</span>
-                      <span className="block px-2 pb-2 pt-1 text-sm tabular-nums">{aedWhole(packagePrice(t, layout))}</span>
+                      <span className="block px-2 pb-2 pt-1 text-sm tabular-nums">
+                        {aedWhole(packagePrice(t, layout) * units)}{units > 1 && <span className="text-xs text-muted-foreground"> · {aedWhole(packagePrice(t, layout))} × {units}</span>}
+                      </span>
                     </button>
                   );
                 })}
@@ -110,7 +125,7 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
         {mode === "package" && (
           <DialogFooter>
             <Button variant="outline" onClick={() => setMode("pick")} disabled={pending}>Back</Button>
-            <Button onClick={() => onPackage({ style, tiers, layout })} disabled={pending || !tiers.length}>
+            <Button onClick={() => onPackage({ style, tiers, layout, units })} disabled={pending || !tiers.length}>
               {pending ? "Creating…" : `Create proposal · ${tiers.length} price${tiers.length === 1 ? "" : "s"}`}
             </Button>
           </DialogFooter>

@@ -69,7 +69,8 @@ const standardItems = (unitType: string | null): ItemGroup[] =>
     items: s.items.filter((i) => i.included === "inc").map((i) => ({ item: i.item, qty: parseInt(i.std, 10) || 1 })),
   })).filter((g) => g.items.length);
 
-export interface PackageChoice { style: StyleSlug; tiers: Tier[]; layout: PackageLayout }
+/** units: identical apartments priced together — each price is the unit price × units; the item list stays per unit. */
+export interface PackageChoice { style: StyleSlug; tiers: Tier[]; layout: PackageLayout; units: number }
 
 /** A complete proposal from the catalog: style photos, one page per tier offered, standard items, list prices. */
 export const buildPackageDocument = (v: {
@@ -79,18 +80,22 @@ export const buildPackageDocument = (v: {
   const style = STYLES.find((s) => s.slug === v.choice.style) ?? STYLES[0];
   const tiers = TIERS.filter((t) => v.choice.tiers.includes(t));
   const unit = v.lead.unit_type?.trim() || v.choice.layout;
+  const units = Math.max(1, Math.round(v.choice.units || 1));
+  const many = units > 1 ? ` × ${units} units` : "";
   return {
     v: 2,
     source: "package",
-    pkg: { style: style.slug, layout: v.choice.layout, tiers },
+    pkg: { style: style.slug, layout: v.choice.layout, tiers, units },
     designId: null, designVersion: null, quoteVersion: null,
     cover: {
       client: v.lead.name,
-      scope: tiers.length === 1 ? `${tierLabel(tiers[0])} · ${style.name}` : `${style.name} · ${tiers.map((t) => t).join(" / ")}`,
+      scope: (tiers.length === 1 ? `${tierLabel(tiers[0])} · ${style.name}` : `${style.name} · ${tiers.map((t) => t).join(" / ")}`) + (units > 1 ? ` · ${units} units` : ""),
       location: [v.lead.property ?? v.lead.building, v.lead.location].filter(Boolean).join(", "),
       date: new Date().toISOString().slice(0, 10),
       validity: "14 days",
-      intro: `A turnkey ${style.name} furnishing package for your ${unit}${v.lead.property ? ` at ${v.lead.property}` : ""} — furniture, décor, delivery, installation and styling, handed over ready to live in.`,
+      intro: units > 1
+        ? `A turnkey ${style.name} furnishing package for your ${units} × ${unit} apartments${v.lead.property ? ` at ${v.lead.property}` : ""} — furniture, décor, delivery, installation and styling, each handed over ready to live in. The item list is per apartment.`
+        : `A turnkey ${style.name} furnishing package for your ${unit}${v.lead.property ? ` at ${v.lead.property}` : ""} — furniture, décor, delivery, installation and styling, handed over ready to live in.`,
       hero: catalogImage(style.slug, "hero"),
     },
     floorPlan: { path: null, name: null, text: "" },
@@ -107,7 +112,9 @@ export const buildPackageDocument = (v: {
     moodBoard: [],
     itemList: standardItems(v.lead.unit_type),
     investment: {
-      options: tiers.map((t) => ({ label: tierLabel(t), desc: `${style.name} · ${v.choice.layout} · ${TIER_TEXT[t].line.toLowerCase()}`, amount: packagePrice(t, v.choice.layout) })),
+      options: tiers.map((t) => ({ label: tierLabel(t),
+        desc: `${style.name} · ${v.choice.layout}${many} · ${TIER_TEXT[t].line.toLowerCase()}`,
+        amount: packagePrice(t, v.choice.layout) * units })),
       vat: 5, down: 80, terms: DEFAULT_TERMS,
     },
     toggles: { floorPlan: false, moodBoard: false, itemList: true, investment: true, combine: null },

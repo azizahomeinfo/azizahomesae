@@ -196,7 +196,7 @@ const InvestTable = ({ doc }: { doc: ProposalDocument }) => {
   const inv = doc.investment;
   return (
     <div style={{ marginTop: 18 }}>
-      <p className="ppd-eyebrow" style={{ marginBottom: 6 }}>Your investment · {investEyebrow(inv.options.length)}</p>
+      <p className="ppd-eyebrow" style={{ marginBottom: 6 }}>Your investment · {investEyebrow(inv.options.length, doc.pkg?.units)}</p>
       <div className="ppd-table">
         <div className="th">Package</div><div className="th r">VAT {inv.vat}%</div><div className="th r">Total incl. VAT</div>
         <div className="th r">On signing {inv.down}%</div><div className="th r">On handover {100 - inv.down}%</div>
@@ -287,7 +287,7 @@ const InvestPage = ({ doc, n }: { doc: ProposalDocument; n: number }) => {
   const inv = doc.investment;
   return (
     <div className="ppd-page" style={{ padding: "48px 56px 80px" }}>
-      <p className="ppd-eyebrow">{investEyebrow(inv.options.length)}</p>
+      <p className="ppd-eyebrow">{investEyebrow(inv.options.length, doc.pkg?.units)}</p>
       <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05 }}>Your investment</h2>
       <div style={{ marginTop: 28, display: "grid", gridTemplateColumns: inv.options.length > 1 ? "1fr 1fr" : "1fr", gap: 18 }}>
         {inv.options.map((o, i) => {

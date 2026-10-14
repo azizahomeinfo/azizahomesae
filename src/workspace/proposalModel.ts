@@ -50,7 +50,7 @@ export interface ProposalDocument {
   /** "package": made by sales from the design catalog, no designer — prices are the price list, floored by the
    *  GM (ws_proposal_price_guard). Absent/"design": the designer's renders and the GM's quotation. */
   source?: "design" | "package";
-  pkg?: { style: string; layout: string; tiers: string[] };
+  pkg?: { style: string; layout: string; tiers: string[]; units?: number };
   designId: string | null;
   designVersion: number | null;
   /** ffe_costings.version this document's prices came from; null = budget placeholders. */
@@ -257,7 +257,9 @@ export const priceLines = (amount: number, vat: number, down: number) => {
   const total = amount * (1 + vat / 100);
   return { base: amount, vat: total - amount, total, down: total * (down / 100), balance: total * (1 - down / 100) };
 };
-export const investEyebrow = (n: number) => (n > 1 ? `${n} options` : "One complete package");
+/** units > 1: a package priced for several identical apartments — say so wherever the price is shown. */
+export const investEyebrow = (n: number, units?: number) =>
+  (n > 1 ? `${n} options` : "One complete package") + (units && units > 1 ? ` · ${units} units` : "");
 
 /* ---------------- pagination ---------------- */
 

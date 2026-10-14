@@ -231,11 +231,12 @@ const ProposalDoc = () => {
   // Package proposals: no designer, and the price list (less any discount the GM approved) is the floor.
   const isPackage = current?.source === "package";
   const pkgLayout = packageLayoutFor(lead.unit_type).layout;
+  const pkgUnits = Math.max(1, Number(current?.pkg?.units) || 1);
   const pkgFloor = (label: string) => {
     const tier = tierOfLabel(label);
     if (!tier) return null;
     const off = Math.max(0, ...discounts.filter((x) => x.status === "Approved" && x.option_label === label).map((x) => Number(x.approved_discount ?? 0)));
-    return packagePrice(tier, pkgLayout) - off;
+    return packagePrice(tier, pkgLayout) * pkgUnits - off;
   };
   const pkgBelow = isPackage ? (current?.investment.options ?? []).filter((o) => { const f = pkgFloor(o.label); return f == null || Number(o.amount) < f; }) : [];
   const designOk = isPackage || (design?.status === "Accepted" && current?.designId === design.id);
@@ -554,7 +555,7 @@ const ProposalDoc = () => {
       {/* Discount loop: only the GM moves price, so sales asks and the database holds the floor. */}
       {(costing?.status === "Quoted" || isPackage) && (member?.role === "gm" || member?.role === "sales") && (() => {
         const baseOptions = isPackage
-          ? d.investment.options.filter((o) => tierOfLabel(o.label)).map((o) => ({ label: o.label, amount: packagePrice(tierOfLabel(o.label)!, pkgLayout) }))
+          ? d.investment.options.filter((o) => tierOfLabel(o.label)).map((o) => ({ label: o.label, amount: packagePrice(tierOfLabel(o.label)!, pkgLayout) * pkgUnits }))
           : (costing?.options ?? []);
         const isGm = member?.role === "gm";
         const open = discounts.find((x) => x.status === "Requested");
@@ -595,7 +596,7 @@ const ProposalDoc = () => {
                 </p>
                 {open.client_note && <p className="text-muted-foreground">Client: {open.client_note}</p>}
                 {isGm && isPackage && (
-                  <PackageCostCheck proposalId={row.id} leadId={leadId} request={open}
+                  <PackageCostCheck proposalId={row.id} leadId={leadId} request={open} units={pkgUnits}
                     listPrice={Number(baseOptions.find((o) => o.label === open.option_label)?.amount ?? open.quoted_amount)} />
                 )}
                 {!isGm && isPackage && <p className="text-xs text-muted-foreground">The GM is checking the item list against cost and will send back a final price.</p>}
@@ -846,7 +847,7 @@ const ProposalDoc = () => {
                     {editable && !locked && <Button type="button" variant="ghost" size="icon" aria-label={`Remove ${o.label}`} onClick={() => setInv({ options: d.investment.options.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button>}
                   </div>
                   <Input aria-label="Option description" value={o.desc} onChange={(e) => setInv({ options: d.investment.options.map((x, j) => (j === i ? { ...x, desc: e.target.value } : x)) })} />
-                  <Field label={isPackage ? `Price (AED, excl. VAT) — list ${(() => { const tr = tierOfLabel(o.label); return tr ? packagePrice(tr, pkgLayout).toLocaleString() : "—"; })()}` : locked ? "Price (AED, excl. VAT) — locked" : "Budget placeholder (AED, excl. VAT)"}>
+                  <Field label={isPackage ? `Price (AED, excl. VAT) — list ${(() => { const tr = tierOfLabel(o.label); return tr ? (packagePrice(tr, pkgLayout) * pkgUnits).toLocaleString() + (pkgUnits > 1 ? ` (${pkgUnits} units)` : "") : "—"; })()}` : locked ? "Price (AED, excl. VAT) — locked" : "Budget placeholder (AED, excl. VAT)"}>
                     <Input aria-label="Price" type="number" min={0} className="tabular-nums" value={o.amount} readOnly={locked} disabled={locked}
                       onChange={(e) => { if (!locked) setInv({ options: d.investment.options.map((x, j) => (j === i ? { ...x, amount: Number(e.target.value) || 0 } : x)) }); }} />
                   </Field>

@@ -20,8 +20,8 @@ const roundUp500 = (n: number) => Math.ceil(n / 500) * 500;
 const aed = (n: number) => `AED ${Math.round(n).toLocaleString()}`;
 const marginOf = (price: number, cost: number) => (price > 0 ? (price - cost) / price : 0);
 
-export const PackageCostCheck = ({ proposalId, leadId, request, listPrice }: {
-  proposalId: string; leadId: string; request: DiscountRequest; listPrice: number;
+export const PackageCostCheck = ({ proposalId, leadId, request, listPrice, units = 1 }: {
+  proposalId: string; leadId: string; request: DiscountRequest; listPrice: number; units?: number;
 }) => {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -44,7 +44,9 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice }: {
   });
   const decide = useDecideDiscount();
 
-  const cost = useMemo(() => lines.reduce((s, l) => s + (Number(l.unit_cost) || 0) * (Number(l.qty) || 0), 0), [lines]);
+  // The item list is per apartment; the price covers every unit.
+  const perUnit = useMemo(() => lines.reduce((s, l) => s + (Number(l.unit_cost) || 0) * (Number(l.qty) || 0), 0), [lines]);
+  const cost = perUnit * Math.max(1, units);
   const missing = lines.filter((l) => l.unit_cost == null || l.unit_cost === ("" as never)).length;
   const asked = listPrice - Number(request.requested_discount);
   const suggested = Math.min(listPrice, roundUp500(Math.max(asked, cost / (1 - MIN_MARGIN))));
@@ -94,7 +96,7 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice }: {
         </table>
       </div>
       <div className="grid gap-1 text-sm sm:grid-cols-2">
-        <p>Total cost <b className="tabular-nums">{aed(cost)}</b>{missing > 0 && <span className="text-warning"> · {missing} item{missing === 1 ? "" : "s"} without a cost</span>}</p>
+        <p>Total cost <b className="tabular-nums">{aed(cost)}</b>{units > 1 && <span className="text-muted-foreground"> ({aed(perUnit)} × {units} units)</span>}{missing > 0 && <span className="text-warning"> · {missing} item{missing === 1 ? "" : "s"} without a cost</span>}</p>
         <p>List price <b className="tabular-nums">{aed(listPrice)}</b> · margin <span className="tabular-nums">{Math.round(marginOf(listPrice, cost) * 100)}%</span></p>
         <p>Sales asked <b className="tabular-nums">{aed(asked)}</b> · margin <span className={cn("tabular-nums", marginOf(asked, cost) < MIN_MARGIN && "text-destructive")}>{Math.round(marginOf(asked, cost) * 100)}%</span></p>
         {request.client_note && <p className="text-muted-foreground">Client: {request.client_note}</p>}
