@@ -30,6 +30,8 @@ const schema = z.object({
   phone: z.string().trim().max(40),
   budget: z.union([z.literal(""), z.coerce.number().min(0, "Budget cannot be negative").max(1e10)]),
   notes: z.string().max(5000),
+  // Every lead says where it came from, so marketing spend can be judged by the leads it brings in.
+  source: z.string().trim().min(1, "Choose where this lead came from (Source)"),
 });
 
 const fromLead = (l?: Lead | null): FormState => {
@@ -138,7 +140,8 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
           {text("name", "Name *", "text", { autoFocus: !lead })}
           {text("phone", "Phone", "tel")}
           {text("email", "Email", "email")}
-          <div className="space-y-1.5 sm:col-span-3">
+          {sel("source", "Source * — how they found us", SOURCES)}
+          <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="lf-drive_url">Google Drive folder</Label>
             <Input id="lf-drive_url" type="url" inputMode="url" placeholder="https://drive.google.com/…" aria-invalid={!!drive.error} {...inp("drive_url")} />
             {drive.error ? <p className="text-xs text-destructive">{drive.error}</p> : drive.hint ? <p className="text-xs text-muted-foreground">{drive.hint}</p> : null}
@@ -167,7 +170,6 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
           {text("style", "Style")}
           {text("refs", "References")}
           {sel("floor_plan", "Floor plan", ["Yes", "No"])}
-          {sel("source", "Source", SOURCES)}
         </div>
       </fieldset>
       <fieldset>
