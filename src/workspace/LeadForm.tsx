@@ -169,7 +169,12 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
         <div className="grid gap-4 sm:grid-cols-3">
           {text("property", "Property")}
           {text("building", "Building")}
-          {sel("location", "Area", AREAS)}
+          {/* Typed, with the usual areas suggested — Dubai has far more communities than any fixed list. */}
+          <div className="space-y-1.5">
+            <Label htmlFor="lf-location">Area</Label>
+            <Input id="lf-location" list="lf-area-options" placeholder="Type or pick an area" autoComplete="off" {...inp("location")} />
+            <datalist id="lf-area-options">{AREAS.filter((a) => a !== "Other").map((a) => <option key={a} value={a} />)}</datalist>
+          </div>
           {sel("unit_type", "Unit type", UNIT_TYPES)}
           {text("size", "Size")}
           {sel("handover_status", "Handover", HANDOVER_STATUSES)}
