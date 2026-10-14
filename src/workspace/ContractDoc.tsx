@@ -16,6 +16,7 @@ import { useLeadProposals, useProposalItems, type ProposalRow } from "./proposal
 import { PROPOSAL_CSS, PageStack, proposalSheetNodes } from "./ProposalPages";
 import { isPdf, useUploadedPages } from "./uploadedPages";
 import { isCatalogPath } from "./packageCatalog";
+import { docFileName, printAs } from "./printAs";
 import { SALES_PROPOSAL, useLeadDealFiles, useUploadProjectFile, type ProjectFile } from "./projectQueries";
 import { useSignedUrls } from "./designQueries";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -427,7 +428,7 @@ const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
           {file && up.status === "ready" && isPdf(file.file_name) && <p className="text-xs text-muted-foreground">{up.pages.length} page{up.pages.length === 1 ? "" : "s"} from the uploaded PDF, printed as pictures of the pages.</p>}
           {!systemProposal && !uploaded.length && <p className="text-sm text-warning">No proposal yet — upload the PDF you sent the client.</p>}
         </div>
-        <Button disabled={!ready} onClick={() => window.print()}>{ready ? "Save as PDF / Print" : needChoice ? "Choose the price first" : "Preparing…"}</Button>
+        <Button disabled={!ready} onClick={() => printAs(docFileName("Proposal and Agreement", contract.client || lead.name, contract.building))}>{ready ? "Save as PDF / Print" : needChoice ? "Choose the price first" : "Preparing…"}</Button>
       </div>
       <style>{PROPOSAL_CSS}</style>
       {cp.measurer}
@@ -553,8 +554,9 @@ const ContractDoc = () => {
   };
   const print = () => {
     const missing = preflight(d);
-    if (missing.length) setConfirm({ title: "Some details are missing", body: `Missing: ${missing.join(", ")}. Print anyway?`, run: () => window.setTimeout(() => window.print(), 200) });
-    else window.print();
+    const file = docFileName("Sales Agreement", d.client || lead.name, d.building);
+    if (missing.length) setConfirm({ title: "Some details are missing", body: `Missing: ${missing.join(", ")}. Print anyway?`, run: () => window.setTimeout(() => printAs(file), 200) });
+    else printAs(file);
   };
   const doSign = async () => {
     if (!handover) { toast.error("Enter the handover date — a contract can't be marked signed without it."); return; }

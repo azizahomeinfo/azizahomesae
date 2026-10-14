@@ -13,6 +13,7 @@ import { useLeadContracts } from "./contractQueries";
 import { RedesignDialog, RedesignStatus } from "./RedesignRequest";
 import { NewProposalDialog } from "./NewProposalDialog";
 import { PackageCostCheck } from "./PackageCostCheck";
+import { docFileName, printAs } from "./printAs";
 import { buildPackageDocument, isCatalogPath, packageLayoutFor, packagePrice, tierOfLabel, type PackageChoice } from "./packageCatalog";
 import { leadOwner, useCosting } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -287,6 +288,8 @@ const ProposalDoc = () => {
     <NewProposalDialog open={newOpen} onOpenChange={setNewOpen} lead={lead} design={design ?? null} pending={create.isPending}
       onDesigner={() => { void generate().then(() => setNewOpen(false)); }} onPackage={(c) => void generatePackage(c)} />
   );
+  // "Aziza Home Proposal - Client - Building" as the suggested PDF name.
+  const proposalFile = docFileName("Proposal", lead.name, lead.building || lead.property);
   const finalise = async () => {
     if (!current) return;
     if (!designOk || !quoteOk) {
@@ -297,7 +300,7 @@ const ProposalDoc = () => {
       return;
     }
     const ok = await persist({ ...current, finalAt: new Date().toISOString() });
-    if (ok) window.setTimeout(() => window.print(), 300);
+    if (ok) window.setTimeout(() => printAs(proposalFile), 300);
   };
   const opts = row?.doc.investment.options ?? [];
   const acceptWith = (i: number) => {
@@ -453,7 +456,7 @@ const ProposalDoc = () => {
             onClick={() => leadContracts.length ? navigate(`/workspace/contracts/${lead.id}?combined=1`)
               : toast.info("Generate the contract first — the combined document is this proposal followed by the agreement.")}>Proposal + agreement</Button>}
           {d.finalAt && !dirty
-            ? <Button disabled={withdrawn} onClick={() => window.print()}>Download PDF</Button>
+            ? <Button disabled={withdrawn} onClick={() => printAs(proposalFile)}>Download PDF</Button>
             : canEdit && <Button onClick={() => void finalise()} disabled={save.isPending}>Finalise &amp; download</Button>}
         </div>
       </div>
