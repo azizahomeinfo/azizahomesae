@@ -15,6 +15,7 @@ import { useWorkspace } from "./WorkspaceProvider";
 import { useLeadProposals, useProposalItems, type ProposalRow } from "./proposalQueries";
 import { PROPOSAL_CSS, PageStack, proposalSheetNodes } from "./ProposalPages";
 import { isPdf, useUploadedPages } from "./uploadedPages";
+import { isCatalogPath } from "./packageCatalog";
 import { SALES_PROPOSAL, useLeadDealFiles, useUploadProjectFile, type ProjectFile } from "./projectQueries";
 import { useSignedUrls } from "./designQueries";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -332,11 +333,11 @@ const CombinedView = ({ lead, systemProposal, uploaded, contract, onClose }: {
   const doc = systemProposal?.doc;
   const sysPaths = useSystem && doc
     ? [doc.cover.hero, doc.floorPlan.path, ...doc.moodBoard.map((m) => m.path), ...doc.pages.flatMap((p) => p.images.map((i) => i.path))]
-        .filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf"))
+        .filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf") && !isCatalogPath(p))
     : [];
   const paths = file ? [file.storage_path] : sysPaths;
   const { data: urls } = useSignedUrls(paths);
-  const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
+  const url = (p: string | null | undefined) => (p ? (isCatalogPath(p) ? p : urls?.get(p)) : undefined);
   // A proposal with several prices goes into the signed document with exactly one: sales must say which.
   // A workspace proposal whose accepted option is recorded starts on that one; otherwise nothing is preselected.
   const acceptedIdx = useSystem && doc && systemProposal?.accepted_option ? systemProposal.accepted_option.index : null;

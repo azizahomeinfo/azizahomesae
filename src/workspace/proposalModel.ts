@@ -47,6 +47,10 @@ export const itemListDiff = (stored: ItemGroup[], live: ItemGroup[]): ItemListDi
 
 export interface ProposalDocument {
   v: 2;
+  /** "package": made by sales from the design catalog, no designer — prices are the price list, floored by the
+   *  GM (ws_proposal_price_guard). Absent/"design": the designer's renders and the GM's quotation. */
+  source?: "design" | "package";
+  pkg?: { style: string; layout: string; tiers: string[] };
   designId: string | null;
   designVersion: number | null;
   /** ffe_costings.version this document's prices came from; null = budget placeholders. */
@@ -347,7 +351,10 @@ export const layoutSheets = (doc: ProposalDocument) => {
       title, desc: k === 0 ? desc : null, images: imgs,
     }));
   };
-  doc.pages.forEach((p, i) => areaPage(`Area ${String(i + 1).padStart(2, "0")}`, p.title, p.desc, p.images));
+  // Catalog proposals: the first page is the style, the others are the packages offered — not rooms.
+  doc.pages.forEach((p, i) => areaPage(
+    doc.source === "package" ? (i === 0 ? "Design direction" : "Package") : `Area ${String(i + 1).padStart(2, "0")}`,
+    p.title, p.desc, p.images));
   if (doc.toggles.moodBoard && doc.moodBoard.length) {
     areaPage("Design direction", "Mood board", "The palette, textures and references guiding the design.", doc.moodBoard);
   }

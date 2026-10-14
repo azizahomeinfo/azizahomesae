@@ -11,6 +11,8 @@ import { useBrief, useLead } from "./queries";
 import { uploadToWorkspace, useSignedUrls } from "./designQueries";
 import { useLeadContracts } from "./contractQueries";
 import { RedesignDialog, RedesignStatus } from "./RedesignRequest";
+import { NewProposalDialog } from "./NewProposalDialog";
+import { buildPackageDocument, isCatalogPath, packageLayoutFor, packagePrice, tierOfLabel, type PackageChoice } from "./packageCatalog";
 import { leadOwner, useCosting } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { shortDate } from "./format";
@@ -155,6 +157,7 @@ const ProposalDoc = () => {
   const { data: proposals = [], isLoading: propLoading } = useLeadProposals(leadId);
   const { data: leadContracts = [] } = useLeadContracts(leadId);
   const [redesignOpen, setRedesignOpen] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
   const create = useCreateProposal();
   const save = useSaveProposal();
   const setStatus = useProposalStatus();
@@ -175,6 +178,8 @@ const ProposalDoc = () => {
     synced.current = row.id;
     let doc = row.doc;
     const found: string[] = [];
+    // A package proposal is the catalog and the price list: never pull designer renders or a GM quote into it.
+    if (doc.source === "package") { setDraft(null); setNotices([]); setAttempted(false); return; }
     if (quote && doc.quoteVersion !== quote.version) {
       doc = applyQuote(doc, quote, groups ?? []);
       found.push(`Prices and items updated from GM quotation V${quote.version} — save to keep`);
@@ -191,9 +196,9 @@ const ProposalDoc = () => {
   const current = row ? (draft ?? row.doc) : null;
   const paths = current ? [
     current.cover.hero, current.floorPlan.path, ...current.moodBoard.map((m) => m.path), ...current.pages.flatMap((p) => p.images.map((i) => i.path)),
-  ].filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf")) : [];
+  ].filter((p): p is string => !!p && !p.toLowerCase().endsWith(".pdf") && !isCatalogPath(p)) : [];
   const { data: urls } = useSignedUrls(paths);
-  const url = (p: string | null | undefined) => (p ? urls?.get(p) : undefined);
+  const url = (p: string | null | undefined) => (p ? (isCatalogPath(p) ? p : urls?.get(p)) : undefined);
   // Two directions now: pull the FF&E list into the proposal, or push the proposal's edits back into it.
   // Drift alone cannot say which side moved, so both are offered and the wording stays neutral.
   // These MUST stay above the early returns below — hooks after a conditional return crash the page.
@@ -205,6 +210,7 @@ const ProposalDoc = () => {
   const decideDiscount = useDecideDiscount();
   const [askOpen, setAskOpen] = useState(false);
   const [askAmount, setAskAmount] = useState("");
+  const [askLabel, setAskLabel] = useState("");
   const [askWhy, setAskWhy] = useState("");
   const [counter, setCounter] = useState("");
   const [gmNote, setGmNote] = useState("");
@@ -221,10 +227,22 @@ const ProposalDoc = () => {
   const withdrawn = locked && !!costing && costing.status !== "Quoted";
 
   /* ---- gate ---- */
-  const designOk = design?.status === "Accepted" && current?.designId === design.id;
-  const quoteOk = !!quote && current?.quoteVersion === quote.version;
-  const designText = !design ? "waiting for designer" : design.status === "Accepted" ? `V${design.version} accepted` : `V${design.version} shared — accept it to finalise`;
-  const quoteText = quote ? `GM quote V${quote.version} · prices locked` : "waiting for GM — prices below are budget placeholders";
+  // Package proposals: no designer, and the price list (less any discount the GM approved) is the floor.
+  const isPackage = current?.source === "package";
+  const pkgLayout = packageLayoutFor(lead.unit_type).layout;
+  const pkgFloor = (label: string) => {
+    const tier = tierOfLabel(label);
+    if (!tier) return null;
+    const off = Math.max(0, ...discounts.filter((x) => x.status === "Approved" && x.option_label === label).map((x) => Number(x.approved_discount ?? 0)));
+    return packagePrice(tier, pkgLayout) - off;
+  };
+  const pkgBelow = isPackage ? (current?.investment.options ?? []).filter((o) => { const f = pkgFloor(o.label); return f == null || Number(o.amount) < f; }) : [];
+  const designOk = isPackage || (design?.status === "Accepted" && current?.designId === design.id);
+  const quoteOk = isPackage ? pkgBelow.length === 0 : !!quote && current?.quoteVersion === quote.version;
+  const designText = isPackage ? `catalog package · ${current?.pkg?.style ?? ""}` : !design ? "waiting for designer" : design.status === "Accepted" ? `V${design.version} accepted` : `V${design.version} shared — accept it to finalise`;
+  const quoteText = isPackage
+    ? (pkgBelow.length ? `${pkgBelow.map((o) => o.label).join(", ")} below the price list — needs GM approval` : `price list (${pkgLayout})`)
+    : quote ? `GM quote V${quote.version} · prices locked` : "waiting for GM — prices below are budget placeholders";
   const markOf = (ok: boolean): Mark => (ok ? "ok" : attempted ? "block" : "wait");
 
   const change = (doc: ProposalDocument) => { setDraft({ ...doc, finalAt: null }); };
@@ -254,10 +272,24 @@ const ProposalDoc = () => {
       toast.success(`Proposal V${nextVersion} created`);
     } catch (e) { toast.error(errMsg(e, "Could not generate proposal")); }
   };
+  const generatePackage = async (choice: PackageChoice) => {
+    try {
+      const doc = buildPackageDocument({ lead, choice });
+      const nextVersion = proposals.reduce((m, p) => Math.max(m, p.version), 0) + 1;
+      const id = await create.mutateAsync({ leadId: lead.id, doc, by: member.user_id, nextVersion });
+      synced.current = id; setSelectedId(id); setDraft(null); setNotices([]); setNewOpen(false);
+      toast.success(`Package proposal V${nextVersion} created — edit the items, then Finalise & download`);
+    } catch (e) { toast.error(errMsg(e, "Could not create the proposal")); }
+  };
+  const newProposalDialog = (
+    <NewProposalDialog open={newOpen} onOpenChange={setNewOpen} lead={lead} design={design ?? null} pending={create.isPending}
+      onDesigner={() => { void generate().then(() => setNewOpen(false)); }} onPackage={(c) => void generatePackage(c)} />
+  );
   const finalise = async () => {
     if (!current) return;
     if (!designOk || !quoteOk) {
       setAttempted(true);
+      if (isPackage) { toast.error(`Can't download yet — ${pkgBelow.map((o) => o.label).join(", ")} is below the price list. Ask the GM to approve the lower price (Price and discounts, below).`); return; }
       const missing = [!designOk && "the design is not accepted", !quoteOk && "the GM quotation is not set"].filter(Boolean).join(" and ");
       toast.error(`Can't finalise yet — design must be accepted and GM quotation set. Still missing: ${missing}.`);
       return;
@@ -292,10 +324,11 @@ const ProposalDoc = () => {
         <h2 className="font-heading text-2xl uppercase tracking-wide">{lead.name}</h2>
         {canEdit ? (
           <div className="space-y-3 rounded-[var(--radius)] border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">No proposal yet. It is generated from the latest shared design, the FF&E list and the GM's quotation.</p>
-            <Button onClick={generate} disabled={create.isPending || !ready}>{create.isPending ? "Generating…" : "Generate proposal"}</Button>
+            <p className="text-sm text-muted-foreground">No proposal yet. Make one from a package in minutes, or from the designer's work for a serious client.</p>
+            <Button onClick={() => setNewOpen(true)} disabled={create.isPending || !ready}>New proposal</Button>
           </div>
         ) : <p className="text-sm text-muted-foreground">No proposal yet. Only the lead's sales owner or the GM can generate one.</p>}
+        {newProposalDialog}
       </div>
     );
   }
@@ -303,7 +336,7 @@ const ProposalDoc = () => {
   /* ---- doc editing helpers ---- */
   const d = current;
   const liveGroups = groups ?? [];
-  const drift = liveGroups.length ? itemListDiff(d.itemList, liveGroups) : null;
+  const drift = !isPackage && liveGroups.length ? itemListDiff(d.itemList, liveGroups) : null;
   const driftSummary = drift?.differs
     ? `${drift.added} ${drift.added === 1 ? "item" : "items"} added, ${drift.removed} removed, ${drift.quantitiesChanged} ${drift.quantitiesChanged === 1 ? "quantity" : "quantities"} changed`
     : null;
@@ -409,9 +442,10 @@ const ProposalDoc = () => {
           {canEdit && row.status === "Draft" && d.finalAt && !dirty && <Button variant="outline" disabled={withdrawn} onClick={() => markStatus("Sent")}>Mark sent</Button>}
           {canEdit && row.status === "Sent" && <><Button variant="outline" disabled={withdrawn} onClick={clientAccepted}>Client accepted</Button><Button variant="outline" onClick={() => markStatus("Rejected")}>Client rejected</Button></>}
           {row.status === "Accepted" && row.accepted_option && <span className="self-center text-xs text-muted-foreground">Client chose {row.accepted_option.label}</span>}
-          {canEdit && row.status !== "Accepted" && (
+          {canEdit && row.status !== "Accepted" && !isPackage && (
             <Button variant="outline" onClick={() => setRedesignOpen(true)} title="Send the client's feedback to the designer for a new design version">Client wants changes</Button>
           )}
+          {canEdit && <Button variant="outline" onClick={() => setNewOpen(true)}>New proposal</Button>}
           {canEdit && <Button variant="outline" onClick={openContract}>Generate contract</Button>}
           {canEdit && <Button variant="outline" title="This proposal followed by the sales agreement, as one PDF for the client to sign"
             onClick={() => leadContracts.length ? navigate(`/workspace/contracts/${lead.id}?combined=1`)
@@ -434,7 +468,8 @@ const ProposalDoc = () => {
             : `GM quotation V${d.quoteVersion} has been withdrawn — the FF&E is back with the GM for re-quoting. The prices shown are not current: don't send or print this proposal until the new quotation arrives.`}
         </p>
       )}
-      <RedesignStatus leadId={lead.id} basedOn={d.designVersion} />
+      {!isPackage && <RedesignStatus leadId={lead.id} basedOn={d.designVersion} />}
+      {newProposalDialog}
       <RedesignDialog open={redesignOpen} onOpenChange={setRedesignOpen} leadId={lead.id} leadName={lead.name} proposalId={row.id} proposalVersion={row.version}
         pages={d.pages.map((p) => ({ title: p.title, paths: p.images.map((i) => i.path) }))} />
       {notices.map((n) => <p key={n} className="rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-sm">{n}</p>)}
@@ -516,7 +551,10 @@ const ProposalDoc = () => {
       </AlertDialog>
 
       {/* Discount loop: only the GM moves price, so sales asks and the database holds the floor. */}
-      {costing?.status === "Quoted" && (member?.role === "gm" || member?.role === "sales") && (() => {
+      {(costing?.status === "Quoted" || isPackage) && (member?.role === "gm" || member?.role === "sales") && (() => {
+        const baseOptions = isPackage
+          ? d.investment.options.filter((o) => tierOfLabel(o.label)).map((o) => ({ label: o.label, amount: packagePrice(tierOfLabel(o.label)!, pkgLayout) }))
+          : (costing?.options ?? []);
         const isGm = member?.role === "gm";
         const open = discounts.find((x) => x.status === "Requested");
         const approved = discounts.filter((x) => x.status === "Approved");
@@ -533,13 +571,13 @@ const ProposalDoc = () => {
             </div>
 
             <ul className="space-y-1">
-              {(costing.options ?? []).map((o, i) => {
+              {baseOptions.map((o, i) => {
                 const fl = floorFor(o.label, Number(o.amount));
                 return (
                   <li key={i} className="flex flex-wrap justify-between gap-x-3">
                     <span>{o.label}</span>
                     <span className="tabular-nums">
-                      Quoted {Number(o.amount).toLocaleString()}
+                      {isPackage ? "List price" : "Quoted"} {Number(o.amount).toLocaleString()}
                       {fl < Number(o.amount) && <span className="text-success"> · lowest you may send {fl.toLocaleString()}</span>}
                     </span>
                   </li>
@@ -604,6 +642,15 @@ const ProposalDoc = () => {
             {askOpen && !open && (
               <div className="space-y-2 rounded-[var(--radius)] border border-border p-3">
                 <div className="flex flex-wrap items-end gap-2">
+                  {baseOptions.length > 1 && (
+                    <label className="space-y-1">
+                      <span className="block text-xs text-muted-foreground">On</span>
+                      <select className="h-8 rounded-[var(--radius)] border border-input bg-background px-2 text-sm" value={askLabel || baseOptions[0].label}
+                        onChange={(e) => setAskLabel(e.target.value)} aria-label="Which price">
+                        {baseOptions.map((o) => <option key={o.label} value={o.label}>{o.label}</option>)}
+                      </select>
+                    </label>
+                  )}
                   <label className="space-y-1">
                     <span className="block text-xs text-muted-foreground">How much off</span>
                     <Input inputMode="decimal" className="h-8 w-32" value={askAmount} onChange={(e) => setAskAmount(e.target.value)} />
@@ -616,7 +663,7 @@ const ProposalDoc = () => {
                     onClick={async () => {
                       const amt = Number(askAmount);
                       if (!(amt > 0)) { toast.error("Enter how much to come down by"); return; }
-                      const label = costing.options?.[0]?.label ?? "Option A";
+                      const label = askLabel || baseOptions[0]?.label || "Option A";
                       try {
                         await askDiscount.mutateAsync({ proposalId: row.id, leadId, label, discount: amt, clientNote: askWhy });
                         setAskOpen(false); setAskAmount(""); setAskWhy("");
@@ -772,17 +819,21 @@ const ProposalDoc = () => {
               {d.investment.options.map((o, i) => (
                 <div key={i} className="space-y-1.5 rounded-[var(--radius)] border border-border p-3">
                   <div className="flex gap-1">
-                    <Input aria-label="Option label" value={o.label} onChange={(e) => setInv({ options: d.investment.options.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) })} />
+                    <Input aria-label="Option label" value={o.label} readOnly={isPackage} title={isPackage ? "Package names stay as they are — the GM's price check uses them" : undefined}
+                      onChange={(e) => { if (!isPackage) setInv({ options: d.investment.options.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) }); }} />
                     {editable && !locked && <Button type="button" variant="ghost" size="icon" aria-label={`Remove ${o.label}`} onClick={() => setInv({ options: d.investment.options.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button>}
                   </div>
                   <Input aria-label="Option description" value={o.desc} onChange={(e) => setInv({ options: d.investment.options.map((x, j) => (j === i ? { ...x, desc: e.target.value } : x)) })} />
-                  <Field label={locked ? "Price (AED, excl. VAT) — locked" : "Budget placeholder (AED, excl. VAT)"}>
+                  <Field label={isPackage ? `Price (AED, excl. VAT) — list ${(() => { const tr = tierOfLabel(o.label); return tr ? packagePrice(tr, pkgLayout).toLocaleString() : "—"; })()}` : locked ? "Price (AED, excl. VAT) — locked" : "Budget placeholder (AED, excl. VAT)"}>
                     <Input aria-label="Price" type="number" min={0} className="tabular-nums" value={o.amount} readOnly={locked} disabled={locked}
                       onChange={(e) => { if (!locked) setInv({ options: d.investment.options.map((x, j) => (j === i ? { ...x, amount: Number(e.target.value) || 0 } : x)) }); }} />
                   </Field>
+                  {isPackage && (() => { const fl = pkgFloor(o.label); return fl != null && Number(o.amount) < fl
+                    ? <p className="text-xs text-warning">Below {fl.toLocaleString()} — needs the GM's approval before this can be downloaded or saved. Use "Ask the GM" under Price and discounts.</p>
+                    : null; })()}
                 </div>
               ))}
-              {editable && !locked && (
+              {editable && !locked && !isPackage && (
                 <Button type="button" variant="outline" size="sm" onClick={() => setInv({ options: [...d.investment.options, { label: `Option ${String.fromCharCode(65 + d.investment.options.length)}`, desc: "", amount: 0 }] })}>
                   <Plus className="h-4 w-4" /> Add option
                 </Button>

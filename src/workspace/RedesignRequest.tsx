@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useDesignImages, useDesigns, useRequestRedesign, useSignedUrls, type DesignRow } from "./designQueries";
 import { useMembers } from "./queries";
 import { shortDate } from "./format";
+import { isCatalogPath } from "./packageCatalog";
 
 const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
 
@@ -36,7 +37,7 @@ export const RedesignDialog = ({ open, onOpenChange, leadId, leadName, proposalI
   const rooms = useRooms(leadId, pages, open);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [overall, setOverall] = useState("");
-  const paths = rooms.flatMap((r) => r.paths).filter((p) => !p.toLowerCase().endsWith(".pdf"));
+  const paths = rooms.flatMap((r) => r.paths).filter((p) => !p.toLowerCase().endsWith(".pdf") && !isCatalogPath(p));
   const { data: urls } = useSignedUrls(open ? paths : []);
   const req = useRequestRedesign();
   // The designer reads it as one note, organised by room, in the client's order.
@@ -65,7 +66,7 @@ export const RedesignDialog = ({ open, onOpenChange, leadId, leadName, proposalI
               {r.paths.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {r.paths.map((p) => {
-                    const u = urls?.get(p);
+                    const u = isCatalogPath(p) ? p : urls?.get(p);
                     return u
                       ? <a key={p} href={u} target="_blank" rel="noreferrer" className="shrink-0"><img src={u} alt={r.title} className="h-28 w-auto rounded-[var(--radius)] border border-border object-cover" /></a>
                       : <div key={p} className="h-28 w-40 shrink-0 animate-pulse rounded-[var(--radius)] bg-muted" />;
