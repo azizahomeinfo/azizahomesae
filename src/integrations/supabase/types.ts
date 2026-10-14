@@ -2117,6 +2117,10 @@ export type Database = {
         Args: { _design: string; _note?: string }
         Returns: string
       }
+      ws_package_cost_refresh: {
+        Args: { _proposal: string }
+        Returns: undefined
+      }
       ws_package_save_costs: {
         Args: { _proposal: string; _items: Json }
         Returns: undefined

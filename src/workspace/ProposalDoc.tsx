@@ -556,6 +556,13 @@ const ProposalDoc = () => {
       </AlertDialog>
 
       {/* Discount loop: only the GM moves price, so sales asks and the database holds the floor. */}
+      {/* The GM's standing FF&E list & costs for a package proposal — the list the project will be bought from. */}
+      {isPackage && member?.role === "gm" && !discounts.some((x) => x.status === "Requested") && (
+        <section className="space-y-2 rounded-[var(--radius)] border border-border bg-card p-3 text-sm md:p-4">
+          <PackageCostCheck proposalId={row.id} leadId={leadId} units={pkgUnits}
+            prices={d.investment.options.map((o) => ({ label: o.label, amount: Number(o.amount) || 0 }))} />
+        </section>
+      )}
       {(costing?.status === "Quoted" || isPackage) && (member?.role === "gm" || member?.role === "sales") && (() => {
         const baseOptions = isPackage
           ? d.investment.options.filter((o) => tierOfLabel(o.label)).map((o) => ({ label: o.label, amount: packagePrice(tierOfLabel(o.label)!, pkgLayout) * pkgUnits }))
