@@ -12,6 +12,7 @@ import { uploadToWorkspace, useSignedUrls } from "./designQueries";
 import { useLeadContracts } from "./contractQueries";
 import { RedesignDialog, RedesignStatus } from "./RedesignRequest";
 import { NewProposalDialog } from "./NewProposalDialog";
+import { PackageCostCheck } from "./PackageCostCheck";
 import { buildPackageDocument, isCatalogPath, packageLayoutFor, packagePrice, tierOfLabel, type PackageChoice } from "./packageCatalog";
 import { leadOwner, useCosting } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
@@ -566,7 +567,7 @@ const ProposalDoc = () => {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-medium">Price and discounts</h3>
               {!open && !askOpen && !isGm && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setAskOpen(true)}>Ask the GM for a discount</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setAskOpen(true)}>{isPackage ? "Ask the GM for a price" : "Ask the GM for a discount"}</Button>
               )}
             </div>
 
@@ -588,10 +589,17 @@ const ProposalDoc = () => {
             {open && (
               <div className="space-y-2 rounded-[var(--radius)] border border-warning/50 bg-warning/10 p-3">
                 <p className="font-medium">
-                  {Number(open.requested_discount).toLocaleString()} off {open.option_label} — waiting for the GM
+                  {isPackage
+                    ? <>Asked for {(Number(open.quoted_amount) - Number(open.requested_discount)).toLocaleString()} on {open.option_label} (list {Number(open.quoted_amount).toLocaleString()}) — waiting for the GM</>
+                    : <>{Number(open.requested_discount).toLocaleString()} off {open.option_label} — waiting for the GM</>}
                 </p>
                 {open.client_note && <p className="text-muted-foreground">Client: {open.client_note}</p>}
-                {isGm && (
+                {isGm && isPackage && (
+                  <PackageCostCheck proposalId={row.id} leadId={leadId} request={open}
+                    listPrice={Number(baseOptions.find((o) => o.label === open.option_label)?.amount ?? open.quoted_amount)} />
+                )}
+                {!isGm && isPackage && <p className="text-xs text-muted-foreground">The GM is checking the item list against cost and will send back a final price.</p>}
+                {isGm && !isPackage && (
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-end gap-2">
                       <label className="space-y-1">
@@ -630,7 +638,18 @@ const ProposalDoc = () => {
             {!open && lastDecided && (
               <p className={cn("rounded-[var(--radius)] border p-2",
                 lastDecided.status === "Approved" ? "border-success/50 bg-success/10" : "border-destructive/40 bg-destructive/10")}>
-                {lastDecided.status === "Approved"
+                {lastDecided.status === "Approved" && isPackage
+                  ? (() => {
+                      const gmPrice = Number(lastDecided.quoted_amount) - Number(lastDecided.approved_discount);
+                      const idx = d.investment.options.findIndex((o) => o.label === lastDecided.option_label);
+                      const applied = idx >= 0 && Number(d.investment.options[idx].amount) === gmPrice;
+                      return <>GM's final price for {lastDecided.option_label}: <b>AED {gmPrice.toLocaleString()}</b> excl. VAT
+                        {editable && idx >= 0 && !applied && (
+                          <Button type="button" size="sm" className="ml-2 h-7" onClick={() => setInv({ options: d.investment.options.map((o, j) => (j === idx ? { ...o, amount: gmPrice } : o)) })}>Use this price</Button>
+                        )}
+                        {applied && <span className="text-muted-foreground"> · in the proposal</span>}</>;
+                    })()
+                  : lastDecided.status === "Approved"
                   ? <>Approved: {Number(lastDecided.approved_discount).toLocaleString()} off {lastDecided.option_label}
                       {Number(lastDecided.approved_discount) !== Number(lastDecided.requested_discount) &&
                         <> (asked for {Number(lastDecided.requested_discount).toLocaleString()})</>}</>
@@ -652,7 +671,7 @@ const ProposalDoc = () => {
                     </label>
                   )}
                   <label className="space-y-1">
-                    <span className="block text-xs text-muted-foreground">How much off</span>
+                    <span className="block text-xs text-muted-foreground">{isPackage ? "Price the client is asking for (excl. VAT)" : "How much off"}</span>
                     <Input inputMode="decimal" className="h-8 w-32" value={askAmount} onChange={(e) => setAskAmount(e.target.value)} />
                   </label>
                   <Input className="h-8 w-full sm:w-72" placeholder="What did the client say?"
@@ -661,13 +680,16 @@ const ProposalDoc = () => {
                 <div className="flex gap-2">
                   <Button type="button" size="sm" disabled={askDiscount.isPending}
                     onClick={async () => {
-                      const amt = Number(askAmount);
-                      if (!(amt > 0)) { toast.error("Enter how much to come down by"); return; }
                       const label = askLabel || baseOptions[0]?.label || "Option A";
+                      // Packages: sales enter the price the client wants; the request carries it as an amount off the list.
+                      const list = Number(baseOptions.find((o) => o.label === label)?.amount ?? 0);
+                      const amt = isPackage ? list - Number(askAmount) : Number(askAmount);
+                      if (isPackage && !(Number(askAmount) > 0 && Number(askAmount) < list)) { toast.error(`Enter a price below the list price ${list.toLocaleString()}`); return; }
+                      if (!(amt > 0)) { toast.error("Enter how much to come down by"); return; }
                       try {
                         await askDiscount.mutateAsync({ proposalId: row.id, leadId, label, discount: amt, clientNote: askWhy });
                         setAskOpen(false); setAskAmount(""); setAskWhy("");
-                        toast.success("Sent to the GM");
+                        toast.success(isPackage ? "Sent to the GM with the item list for a cost check" : "Sent to the GM");
                       } catch (e) { toast.error(e instanceof Error ? e.message : "Could not send the request"); }
                     }}>Send to the GM</Button>
                   <Button type="button" size="sm" variant="outline" onClick={() => setAskOpen(false)}>Cancel</Button>

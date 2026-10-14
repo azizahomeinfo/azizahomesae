@@ -1153,6 +1153,12 @@ export type Database = {
           },
         ]
       }
+      package_costings: {
+        Row: { proposal_id: string; lead_id: string; request_id: string | null; items: Json; updated_at: string; updated_by: string | null }
+        Insert: { proposal_id: string; lead_id: string; request_id?: string | null; items?: Json; updated_at?: string; updated_by?: string | null }
+        Update: { proposal_id?: string; lead_id?: string; request_id?: string | null; items?: Json; updated_at?: string; updated_by?: string | null }
+        Relationships: []
+      }
       project_costs_private: {
         Row: {
           act_ops: number | null
@@ -2110,6 +2116,10 @@ export type Database = {
       ws_resubmit_design_package: {
         Args: { _design: string; _note?: string }
         Returns: string
+      }
+      ws_package_save_costs: {
+        Args: { _proposal: string; _items: Json }
+        Returns: undefined
       }
       ws_request_redesign: {
         Args: { _lead: string; _feedback: string; _proposal?: string }
