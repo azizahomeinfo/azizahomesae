@@ -57,6 +57,38 @@ const DTCM = mk([
   ["Emergency Numbers Sticker", 1], ["Qibla Direction Sticker", 1],
 ]);
 
+/*
+ * 1 Bedroom extras: the Zed Living / DTCM holiday-home inventory checklist (Oct 2026), on top of the shared
+ * lists above. "pend" items show in the brief for the designer to confirm but stay out of the package list.
+ */
+const ONE_BED = {
+  living: mk([
+    ["Armchair", 1], ["Side Table", 1], ["Buffet Console + Mirror", 1], ["Sofa Cushions", 4], ["Sofa Throw", 1],
+    ["Decorative Accessories (Living)", 1], ["Trash Bin (Living)", 1], ["4-Way Wall Socket (Living)", 1],
+    ["Universal Adapters", 2], ["Landline Phone", 1],
+  ]),
+  master: mk([
+    ["Bedside Table Lamps", 2, "pend"], ["Mattress Protector", 1], ["Digital Alarm Clock", 1], ["Trash Bin (Bedroom)", 1],
+    ["4-Way Wall Socket (Bedroom)", 1], ["Decorative Accessories (Bedroom)", 1], ["Smart TV 43” (Bedroom)", 1],
+  ]),
+  bath: mk([["Toilet Brush", 1], ["Robe & Towel Hooks", 1], ["Laundry Basket", 1], ["Wall Art (Bathroom)", 1], ["Artificial Plant (Bathroom)", 1]]),
+  kitchen: mk([
+    ["Tea Cups & Saucers", 4], ["Salt & Pepper Grinders", 1], ["Kitchen Waste Bin (Large)", 1], ["Kitchen Soap Dispenser", 1],
+    ["Oven Gloves", 1], ["Cup Coasters", 4], ["Pot Coasters / Trivets", 2], ["Oven Dish", 1], ["Baking Tray Set", 1],
+    ["Glass Bowl Set", 1], ["Serving Dish", 1], ["Kitchen Scissors", 1], ["Mixing Bowl", 1], ["Kitchen Roll Stand", 1],
+    ["Garlic Press", 1], ["Chopsticks (pairs)", 4], ["Serving Tray", 1], ["Storage Containers (Coffee / Sugar / Tea)", 1],
+    ["4-Way Wall Socket (Kitchen)", 1], ["Counter Stools", 2, "pend"],
+  ]),
+  dtcm: mk([
+    ["Fire Extinguisher", 1], ["Fire Blanket", 1], ["Evacuation Plan", 1], ["DTCM QR Code Sign", 1], ["DTCM Rules Sign", 1],
+    ["Key Lock Box", 1],
+  ]),
+  laundry: mk([
+    ["Vacuum Cleaner", 1], ["Dustpan", 1], ["Broom", 1], ["Mop & Bucket", 1], ["Clothes Drying Rack", 1], ["Detergent Box & Scoop", 1],
+  ]),
+  guest: mk([["Entrance Mat", 1], ["Guest Manual", 1], ["Keychain & Card Packs", 1], ["Coffee / Tea Box", 1]]),
+};
+
 const sec = (title: string, items: ChecklistItem[], notesLabel = ALT): ChecklistSection => ({ code: "", title, notesLabel, items });
 
 /** Bedrooms, maid's room for a unit type. Unknown / null falls back to 2 Bedroom. */
@@ -74,6 +106,13 @@ const layoutOf = (unitType: string | null | undefined) => {
  */
 const layoutSections = (unitType: string | null | undefined): ChecklistSection[] => {
   const { studio, beds, maid } = layoutOf(unitType);
+  if (!studio && beds === 1 && !maid) return [
+    sec("Living & Dining", [...LIVING, ...ONE_BED.living]), sec("Master Bedroom", [...MASTER, ...ONE_BED.master]),
+    sec("Bathroom", [...BATH, ...ONE_BED.bath]), sec("Kitchenware & Tabletop", [...KITCHEN, ...ONE_BED.kitchen]),
+    sec("Appliances", APPLIANCES),
+    sec("Safety, Access & Compliance (DTCM & Other)", [...DTCM, ...ONE_BED.dtcm], "Location / Spec Notes"),
+    sec("Laundry & Cleaning", ONE_BED.laundry), sec("Guest Essentials", ONE_BED.guest),
+  ];
   const rooms: ChecklistSection[] = [];
   if (studio) rooms.push(sec("Sleeping Area", SLEEPING));
   else {
