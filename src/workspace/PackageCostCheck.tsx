@@ -29,9 +29,9 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
   const { data, isLoading } = useQuery({
     queryKey: ["ws", "package-costing", proposalId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("package_costings").select("items, updated_at").eq("proposal_id", proposalId).maybeSingle();
+      const { data, error } = await supabase.from("package_costings").select("items, prices, updated_at").eq("proposal_id", proposalId).maybeSingle();
       if (error) throw new Error(error.message);
-      return data as unknown as { items: Line[]; updated_at: string } | null;
+      return data as unknown as { items: Line[]; prices: { label: string; amount: number | null; units?: number }[]; updated_at: string } | null;
     },
   });
   const [lines, setLines] = useState<Line[]>([]);
@@ -56,7 +56,9 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
 
   // The item list is per apartment; the price covers every unit.
   const perUnit = useMemo(() => lines.reduce((s, l) => s + (Number(l.unit_cost) || 0) * (Number(l.qty) || 0), 0), [lines]);
-  const cost = perUnit * Math.max(1, units);
+  // Designers can't open the proposal, so the cost list carries the units with the prices.
+  const unitsUsed = Math.max(1, Number(data?.prices?.[0]?.units) || units);
+  const cost = perUnit * unitsUsed;
   const missing = lines.filter((l) => l.unit_cost == null || l.unit_cost === ("" as never)).length;
   const asked = request ? listPrice - Number(request.requested_discount) : 0;
   const suggested = Math.min(listPrice, roundUp500(Math.max(asked, cost / (1 - MIN_MARGIN))));
@@ -87,7 +89,7 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
     <div className="space-y-3 rounded-[var(--radius)] border border-border bg-background p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-medium">{request ? `Cost check · ${request.option_label}` : "FF&E list & costs"}</p>
-        <p className="text-xs text-muted-foreground">Unit costs are pre-filled from the price book — correct any, fill the blanks. Sales never see these.
+        <p className="text-xs text-muted-foreground">Unit costs are pre-filled from the price book — correct any, fill the blanks. Only the GM and the lead's designer see these.
           {" "}<button type="button" className="underline" disabled={refresh.isPending} onClick={() => refresh.mutate()}>Refresh from the proposal</button></p>
       </div>
       <div className="max-h-80 overflow-y-auto rounded-[var(--radius)] border border-border">
@@ -113,12 +115,12 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
         </table>
       </div>
       <div className="grid gap-1 text-sm sm:grid-cols-2">
-        <p>Total cost <b className="tabular-nums">{aed(cost)}</b>{units > 1 && <span className="text-muted-foreground"> ({aed(perUnit)} × {units} units)</span>}{missing > 0 && <span className="text-warning"> · {missing} item{missing === 1 ? "" : "s"} without a cost</span>}</p>
+        <p>Total cost <b className="tabular-nums">{aed(cost)}</b>{unitsUsed > 1 && <span className="text-muted-foreground"> ({aed(perUnit)} × {unitsUsed} units)</span>}{missing > 0 && <span className="text-warning"> · {missing} item{missing === 1 ? "" : "s"} without a cost</span>}</p>
         {request ? <>
           <p>List price <b className="tabular-nums">{aed(listPrice)}</b> · margin <span className="tabular-nums">{Math.round(marginOf(listPrice, cost) * 100)}%</span></p>
           <p>Sales asked <b className="tabular-nums">{aed(asked)}</b> · margin <span className={cn("tabular-nums", marginOf(asked, cost) < MIN_MARGIN && "text-destructive")}>{Math.round(marginOf(asked, cost) * 100)}%</span></p>
           {request.client_note && <p className="text-muted-foreground">Client: {request.client_note}</p>}
-        </> : prices.map((p) => (
+        </> : (prices.length ? prices : (data.prices ?? []).filter((p) => p.amount != null).map((p) => ({ label: p.label, amount: Number(p.amount) }))).map((p) => (
           <p key={p.label}>{p.label} at <b className="tabular-nums">{aed(p.amount)}</b> · margin <span className={cn("tabular-nums", marginOf(p.amount, cost) < MIN_MARGIN && "text-destructive")}>{Math.round(marginOf(p.amount, cost) * 100)}%</span></p>
         ))}
       </div>
@@ -137,5 +139,28 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
         {request && <Button size="sm" variant="outline" disabled={decide.isPending || save.isPending} onClick={() => void send(false)}>Keep the list price</Button>}
       </div>
     </div>
+  );
+};
+
+/**
+ * On the lead: the package's FF&E list & costs for the GM and the lead's designer (RLS returns nothing to
+ * anyone else, so it simply doesn't render for them). Latest package proposal's list.
+ */
+export const LeadPackageCosts = ({ leadId }: { leadId: string }) => {
+  const { data } = useQuery({
+    queryKey: ["ws", "package-costing-lead", leadId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("package_costings").select("proposal_id").eq("lead_id", leadId)
+        .order("updated_at", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+  if (!data) return null;
+  return (
+    <section className="space-y-2 rounded-[var(--radius)] border border-border bg-card p-4 text-sm md:p-6">
+      <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Package FF&amp;E list &amp; costs</p>
+      <PackageCostCheck proposalId={data.proposal_id} leadId={leadId} />
+    </section>
   );
 };

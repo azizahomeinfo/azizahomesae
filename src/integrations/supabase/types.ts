@@ -1154,7 +1154,7 @@ export type Database = {
         ]
       }
       package_costings: {
-        Row: { proposal_id: string; lead_id: string; request_id: string | null; items: Json; updated_at: string; updated_by: string | null }
+        Row: { proposal_id: string; lead_id: string; request_id: string | null; items: Json; prices: Json; updated_at: string; updated_by: string | null }
         Insert: { proposal_id: string; lead_id: string; request_id?: string | null; items?: Json; updated_at?: string; updated_by?: string | null }
         Update: { proposal_id?: string; lead_id?: string; request_id?: string | null; items?: Json; updated_at?: string; updated_by?: string | null }
         Relationships: []
