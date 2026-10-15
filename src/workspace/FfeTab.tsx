@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useBrief, useMembers } from "./queries";
+import { useLeadProposals } from "./proposalQueries";
 import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, useUpdateProject, type Project } from "./projectQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import type { WorkspaceRole } from "./access";
@@ -735,6 +736,10 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
   const stdDefaults = withCost ? moneyRows.filter((r) => r.from_price_book && r.unit_cost != null).length : 0;
   const stdMissing = withCost ? moneyRows.filter((r) => r.unit_cost == null).length : 0;
   const leadForStd = ctx.leadId;
+  // A package lead's first quotation starts from the package prices sales offered (tiers × units).
+  const { data: leadProposals } = useLeadProposals(isGm && ctx.leadId ? ctx.leadId : undefined);
+  const pkgOptions = (leadProposals ?? []).find((p) => p.doc?.source === "package")?.doc.investment.options
+    .map((o) => ({ label: o.label, desc: o.desc, amount: Number(o.amount) || 0 })) ?? [];
   const applyBtn = withCost && !readOnly && (isGm || role === "designer") && leadForStd && (stdMissing > 0 || stdDefaults > 0) ? (
     <Button size="sm" variant="outline" disabled={applyStd.isPending}
       onClick={() => applyStd.mutate({ leadId: leadForStd, projectId: ctx.projectId }, {
@@ -954,7 +959,7 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
       {isGm && !readOnly && (status === "Submitted" || status === "Quoted") && (
         <QuotePanel key={`${costing?.id}-${costing?.version}-${status}`} cost={grand} hasQuote={hasQuote} version={costing?.version ?? 1}
           pending={transition.isPending}
-          initial={{ markup: Number(costing?.markup_pct ?? 35), options: costing?.options ?? [], notes: costing?.gm_notes ?? "" }}
+          initial={{ markup: Number(costing?.markup_pct ?? 35), options: costing?.options?.length ? costing.options : pkgOptions, notes: costing?.gm_notes ?? "" }}
           onSet={(v) => run(
             {
               status: "Quoted", quoted_at: new Date().toISOString(), quoted_by: member?.user_id ?? null,

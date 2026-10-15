@@ -180,8 +180,16 @@ const ProposalDoc = () => {
     synced.current = row.id;
     let doc = row.doc;
     const found: string[] = [];
-    // A package proposal is the catalog and the price list: never pull designer renders or a GM quote into it.
-    if (doc.source === "package") { setDraft(null); setNotices([]); setAttempted(false); return; }
+    // A package proposal never pulls designer renders. It does take the GM's quotation once the designer → GM
+    // costing round (after an item change) has produced one: that becomes its price.
+    if (doc.source === "package") {
+      if (quote && doc.quoteVersion !== quote.version) {
+        const next = { ...doc, quoteVersion: quote.version, investment: { ...doc.investment, options: quote.options.map((o) => ({ ...o })) } };
+        setDraft(next); setNotices([`Prices updated from the GM's final quotation V${quote.version} — save to keep`]);
+      } else { setDraft(null); setNotices([]); }
+      setAttempted(false);
+      return;
+    }
     if (quote && doc.quoteVersion !== quote.version) {
       doc = applyQuote(doc, quote, groups ?? []);
       found.push(`Prices and items updated from GM quotation V${quote.version} — save to keep`);
@@ -236,15 +244,23 @@ const ProposalDoc = () => {
   const pkgFloor = (label: string) => {
     const tier = tierOfLabel(label);
     if (!tier) return null;
+    const quoted = quote?.options.find((o) => o.label === label);
+    if (quoted) return Number(quoted.amount) - Math.max(0, ...discounts.filter((x) => x.status === "Approved" && x.option_label === label).map((x) => Number(x.approved_discount ?? 0)));
     const off = Math.max(0, ...discounts.filter((x) => x.status === "Approved" && x.option_label === label).map((x) => Number(x.approved_discount ?? 0)));
     return packagePrice(tier, pkgLayout) * pkgUnits - off;
   };
   const pkgBelow = isPackage ? (current?.investment.options ?? []).filter((o) => { const f = pkgFloor(o.label); return f == null || Number(o.amount) < f; }) : [];
+  // Package item changes: sent to the FF&E list → designer checks costs → GM quotes. Until then, no download.
+  const pkgCosting = isPackage && !!costing && (costing.status === "Returned" || costing.status === "Submitted");
+  const pkgDrift = isPackage && !!current && (groups ?? []).length > 0 && itemListDiff(current.itemList, groups ?? []).differs;
   const designOk = isPackage || (design?.status === "Accepted" && current?.designId === design.id);
-  const quoteOk = isPackage ? pkgBelow.length === 0 : !!quote && current?.quoteVersion === quote.version;
+  const quoteOk = isPackage ? pkgBelow.length === 0 && !pkgCosting && !pkgDrift : !!quote && current?.quoteVersion === quote.version;
   const designText = isPackage ? `catalog package · ${current?.pkg?.style ?? ""}` : !design ? "waiting for designer" : design.status === "Accepted" ? `V${design.version} accepted` : `V${design.version} shared — accept it to finalise`;
   const quoteText = isPackage
-    ? (pkgBelow.length ? `${pkgBelow.map((o) => o.label).join(", ")} below the price list — needs GM approval` : `price list (${pkgLayout})`)
+    ? (pkgDrift ? "items changed — send them to the FF&E list for the designer to cost"
+      : pkgCosting ? (costing?.status === "Returned" ? "with the designer — checking the costs of your item changes" : "with the GM — setting the final price")
+      : pkgBelow.length ? `${pkgBelow.map((o) => o.label).join(", ")} below the price — needs GM approval`
+      : quote ? `GM final price V${quote.version}` : `price list (${pkgLayout})`)
     : quote ? `GM quote V${quote.version} · prices locked` : "waiting for GM — prices below are budget placeholders";
   const markOf = (ok: boolean): Mark => (ok ? "ok" : attempted ? "block" : "wait");
 
@@ -294,7 +310,12 @@ const ProposalDoc = () => {
     if (!current) return;
     if (!designOk || !quoteOk) {
       setAttempted(true);
-      if (isPackage) { toast.error(`Can't download yet — ${pkgBelow.map((o) => o.label).join(", ")} is below the price list. Ask the GM to approve the lower price (Price and discounts, below).`); return; }
+      if (isPackage) {
+        toast.error(pkgDrift ? "Can't download yet — you changed the item list. Press \"Send to FF&E list\": the designer checks the costs, then the GM sets the final price."
+          : pkgCosting ? "Can't download yet — your item changes are with the designer / GM for costing. You'll be notified when the final price is set."
+          : `Can't download yet — ${pkgBelow.map((o) => o.label).join(", ")} is below the price. Ask the GM to approve the lower price (Price and discounts, below).`);
+        return;
+      }
       const missing = [!designOk && "the design is not accepted", !quoteOk && "the GM quotation is not set"].filter(Boolean).join(" and ");
       toast.error(`Can't finalise yet — design must be accepted and GM quotation set. Still missing: ${missing}.`);
       return;
