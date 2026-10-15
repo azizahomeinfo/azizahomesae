@@ -164,3 +164,43 @@ export const LeadPackageCosts = ({ leadId }: { leadId: string }) => {
     </section>
   );
 };
+
+/**
+ * Designer dashboard: the package cost lists of leads assigned to them (designers have no Leads page, so the
+ * list is costed here). RLS returns only the GM's and the lead designer's rows.
+ */
+export const MyPackageCostLists = () => {
+  const { data: rows = [] } = useQuery({
+    queryKey: ["ws", "package-costing-mine"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("package_costings").select("proposal_id, lead_id, items, updated_at, leads(name, unit_type)")
+        .order("updated_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as unknown as { proposal_id: string; lead_id: string; items: Line[]; updated_at: string; leads: { name: string; unit_type: string | null } | null }[];
+    },
+  });
+  const [open, setOpen] = useState<string | null>(null);
+  if (!rows.length) return null;
+  return (
+    <section className="space-y-3 rounded-[var(--radius)] border border-border bg-card p-4 md:p-6">
+      <h3 className="font-heading text-xl uppercase tracking-wide">Package FF&amp;E lists to cost <span className="text-base text-muted-foreground">({rows.length})</span></h3>
+      <ul className="divide-y divide-border">
+        {rows.map((r) => {
+          const missing = (r.items ?? []).filter((l) => l.unit_cost == null).length;
+          return (
+            <li key={r.proposal_id} className="space-y-2 py-3">
+              <button type="button" onClick={() => setOpen(open === r.proposal_id ? null : r.proposal_id)}
+                className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
+                <span className="font-medium">{r.leads?.name ?? "Lead"} <span className="text-xs text-muted-foreground">· {r.leads?.unit_type ?? ""}</span></span>
+                <span className={cn("text-xs", missing ? "text-warning" : "text-muted-foreground")}>
+                  {(r.items ?? []).length} items{missing ? ` · ${missing} without a cost` : " · all costed"} · {open === r.proposal_id ? "close" : "open"}
+                </span>
+              </button>
+              {open === r.proposal_id && <PackageCostCheck proposalId={r.proposal_id} leadId={r.lead_id} />}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+};

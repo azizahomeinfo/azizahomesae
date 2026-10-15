@@ -15,6 +15,7 @@ import BriefStatusPill from "../BriefStatusPill";
 import type { BriefStatus } from "../briefWorkflow";
 import { DESIGNER_LABEL, isMineBrief } from "./Briefs";
 import { canSee, type WorkspaceRole } from "../access";
+import { MyPackageCostLists } from "../PackageCostCheck";
 
 const Dashboard = () => {
   const { member } = useWorkspace();
@@ -141,6 +142,8 @@ const Dashboard = () => {
           </ul>
         )}
       </section>
+
+      {role === "designer" && <MyPackageCostLists />}
 
       {role === "designer" && (
         <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
