@@ -184,8 +184,7 @@ const ProposalDoc = () => {
     // costing round (after an item change) has produced one: that becomes its price.
     if (doc.source === "package") {
       if (quote && doc.quoteVersion !== quote.version) {
-        const next = { ...doc, quoteVersion: quote.version, investment: { ...doc.investment, options: quote.options.map((o) => ({ ...o })) } };
-        setDraft(next); setNotices([`Prices updated from the GM's final quotation V${quote.version} — save to keep`]);
+        setDraft(applyQuote(doc, quote, groups ?? [])); setNotices([`Items and prices updated from the GM's final quotation V${quote.version} — save to keep`]);
       } else { setDraft(null); setNotices([]); }
       setAttempted(false);
       return;
@@ -202,6 +201,32 @@ const ProposalDoc = () => {
     setNotices(found);
     setAttempted(false);
   }, [row, ready, quote, design, groups]);
+
+  // Package costing round (sales sent item changes → designer → GM): the FF&E list is the item list. Whatever
+  // the designer changes there is written into the proposal automatically — no button — and, once the GM quotes,
+  // the final items and prices too. Only drafts follow; a sent proposal keeps what the client received.
+  // Above the early returns: hooks below one crash the page.
+  const followed = useRef<string | null>(null);
+  useEffect(() => {
+    if (!row || !ready || !lead || !member || row.doc.source !== "package" || row.status !== "Draft" || !costing) return;
+    if (!(member.role === "gm" || lead.sales_id === member.user_id)) return;
+    const open = costing.status === "Returned" || costing.status === "Submitted";
+    const freshQuote = costing.status === "Quoted" && row.doc.quoteVersion !== costing.version;
+    if (!open && !freshQuote) return;
+    const live = groups ?? [];
+    const differs = live.length > 0 && itemListDiff(row.doc.itemList, live).differs;
+    if (!differs && !freshQuote) return;
+    const key = `${row.id}:${costing.status}:${costing.version}:${JSON.stringify(live)}`;
+    if (followed.current === key || save.isPending) return;
+    followed.current = key;
+    const doc = freshQuote ? applyQuote(row.doc, { version: costing.version, options: costing.options }, live) : { ...row.doc, itemList: live, finalAt: null };
+    save.mutate({ id: row.id, leadId: row.lead_id ?? lead.id, doc }, {
+      onSuccess: () => { setDraft(null); setNotices([freshQuote
+        ? `Items and prices updated from the GM's final quotation V${costing.version} — saved`
+        : "Item list updated from the designer's FF&E list — saved"]); },
+      onError: (e) => { followed.current = null; toast.error(e instanceof Error ? e.message : "Could not update the proposal from the FF&E list"); },
+    });
+  }, [row, ready, lead, member, costing, groups, save]);
 
   const current = row ? (draft ?? row.doc) : null;
   const paths = current ? [
@@ -252,7 +277,7 @@ const ProposalDoc = () => {
   const pkgBelow = isPackage ? (current?.investment.options ?? []).filter((o) => { const f = pkgFloor(o.label); return f == null || Number(o.amount) < f; }) : [];
   // Package item changes: sent to the FF&E list → designer checks costs → GM quotes. Until then, no download.
   const pkgCosting = isPackage && !!costing && (costing.status === "Returned" || costing.status === "Submitted");
-  const pkgDrift = isPackage && !!current && (groups ?? []).length > 0 && itemListDiff(current.itemList, groups ?? []).differs;
+  const pkgDrift = isPackage && !pkgCosting && !!current && (groups ?? []).length > 0 && itemListDiff(current.itemList, groups ?? []).differs;
   const designOk = isPackage || (design?.status === "Accepted" && current?.designId === design.id);
   const quoteOk = isPackage ? pkgBelow.length === 0 && !pkgCosting && !pkgDrift : !!quote && current?.quoteVersion === quote.version;
   const designText = isPackage ? `catalog package · ${current?.pkg?.style ?? ""}` : !design ? "waiting for designer" : design.status === "Accepted" ? `V${design.version} accepted` : `V${design.version} shared — accept it to finalise`;
@@ -500,7 +525,14 @@ const ProposalDoc = () => {
       <RedesignDialog open={redesignOpen} onOpenChange={setRedesignOpen} leadId={lead.id} leadName={lead.name} proposalId={row.id} proposalVersion={row.version}
         pages={d.pages.map((p) => ({ title: p.title, paths: p.images.map((i) => i.path) }))} />
       {notices.map((n) => <p key={n} className="rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-sm">{n}</p>)}
-      {driftSummary && row.status === "Draft" && (
+      {isPackage && pkgCosting && row.status === "Draft" && (
+        <p className="rounded-[var(--radius)] border border-border bg-muted/40 px-3 py-2 text-sm">
+          {costing?.status === "Returned"
+            ? "The designer is checking the costs of your item changes. Anything they add, remove or change in the FF&E list appears here and is saved automatically."
+            : "The designer has sent the item list to the GM for the final price. It appears here automatically when the GM sends the quotation."}
+        </p>
+      )}
+      {driftSummary && row.status === "Draft" && !(isPackage && pkgCosting) && (
         <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p className="font-medium">This proposal and the FF&amp;E list are different.</p>
@@ -846,6 +878,8 @@ const ProposalDoc = () => {
             </RailSection>
 
             <RailSection title="Item list">
+              {isPackage && pkgCosting && <p className="text-xs text-muted-foreground">Locked while the designer and GM cost it — it follows the FF&amp;E list.</p>}
+              <fieldset disabled={isPackage && pkgCosting} className="space-y-1.5 disabled:opacity-70">
               {d.itemList.map((g, i) => (
                 <div key={i} className="space-y-1.5 rounded-[var(--radius)] border border-border p-3">
                   <div className="flex gap-1">
@@ -863,6 +897,7 @@ const ProposalDoc = () => {
                 </div>
               ))}
               {editable && <Button type="button" variant="outline" size="sm" onClick={() => change({ ...d, itemList: [...d.itemList, { room: "New group", items: [] }] })}><Plus className="h-4 w-4" /> Add group</Button>}
+              </fieldset>
             </RailSection>
 
             <RailSection title="Investment">
