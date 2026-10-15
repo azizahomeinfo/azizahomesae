@@ -18,6 +18,8 @@ export interface ContractDocument {
   deposit: number; delivery: number;
   optionLabel: string | null;
   sections: CSection[];
+  /** GM quotation version the price came from (re-quotes after item changes move it on). */
+  quoteVersion?: number | null;
   /** Set by ws_sync_contract_items at signing (DB-only). */
   itemsSyncedAt?: string;
   sectionsAtIssue?: CSection[];
@@ -41,7 +43,7 @@ export const BANK_DETAILS = {
 export const bankFor = (vatCharged: boolean) => (vatCharged ? BANK_DETAILS.company : BANK_DETAILS.individual);
 // Running footer (left side). Kept on both versions for now — awaiting Veronica on the individual version.
 export const footerLeft = (_vatCharged: boolean) => "Aziza Home L.L.C-FZ · Dubai, UAE";
-export const DEFAULT_DELIVERY_DAYS = "8–12";
+export const DEFAULT_DELIVERY_DAYS = "10–15";
 export const SIGNATURE_COPY = {
   sig: "The Parties agree to the terms and conditions set forth above as demonstrated by their signatures as follows:",
   buyer: "Buyer",
@@ -141,6 +143,13 @@ export const contractFromProposal = (existing: ContractDocument, p: { itemList: 
   deposit: Number.isFinite(p.investment.down) ? p.investment.down : existing.deposit,
   sections: p.itemList.filter((g) => g.items.length).map((g) => makeSection(g.room, g.items.map((i) => ({ item: i.item, qty: String(i.qty) })))),
 });
+
+/** The goods schedule as proposal-style item groups (contract qty is free text: "2", "1 set"). */
+export const sectionsAsGroups = (sections: CSection[]): ItemGroup[] =>
+  sections.map((s) => ({
+    room: s.title,
+    items: s.items.filter((i) => i.item.trim()).map((i) => ({ item: i.item.trim(), qty: Number(String(i.qty).match(/[0-9]+(?:\.[0-9]+)?/)?.[0] ?? 1) })),
+  })).filter((g) => g.items.length);
 
 /* ---------------- maths & sentences ---------------- */
 

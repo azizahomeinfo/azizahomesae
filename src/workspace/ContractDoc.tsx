@@ -20,12 +20,15 @@ import { docFileName, printAs } from "./printAs";
 import { SALES_PROPOSAL, useLeadDealFiles, useUploadProjectFile, type ProjectFile } from "./projectQueries";
 import { useSignedUrls } from "./designQueries";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useCreateContract, useLeadContracts, useSaveContract, useSignContract, type ContractStatus } from "./contractQueries";
+import { useCreateContract, useLeadContracts, useSaveContract, useSignContract, useSyncFfeFromContract, type ContractStatus } from "./contractQueries";
+import { leadOwner, useCosting } from "./ffeQueries";
+import { itemListDiff } from "./proposalModel";
+import type { FfeSyncPlan } from "./proposalQueries";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { shortDate } from "./format";
 import {
-  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, bankFor, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractFromProposal, contractMoney, fillClause, makeSection,
+  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, bankFor, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractFromProposal, contractMoney, sectionsAsGroups, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
   type ContractDocument, type CSection,
 } from "./contractModel";
@@ -468,6 +471,11 @@ const ContractDoc = () => {
   const { data: briefGroups = [], isLoading: gLoading } = useProposalItems(leadId, brief?.ffe ?? null);
   const create = useCreateContract();
   const save = useSaveContract();
+  // Item changes on the agreement go back through FF&E → designer → GM, like a proposal's.
+  // These MUST stay above the early returns below — hooks after a conditional return crash the page.
+  const syncFfe = useSyncFfeFromContract();
+  const [syncPlan, setSyncPlan] = useState<FfeSyncPlan | null>(null);
+  const { data: costing } = useCosting(leadId ? leadOwner(leadId) : undefined, false);
   const [draft, setDraft] = useState<ContractDocument | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [signOpen, setSignOpen] = useState(false);
@@ -477,6 +485,25 @@ const ContractDoc = () => {
   const { data: dealFiles = [] } = useLeadDealFiles(leadId);
   const [params] = useSearchParams();
   const [combined, setCombined] = useState(params.get("combined") === "1");
+  // The GM re-quoted after item changes: a draft contract takes the new price for its option and the FF&E items
+  // the GM priced, without a button. An issued one waits for sales (it has gone to the client).
+  const followedQuote = useRef<string | null>(null);
+  useEffect(() => {
+    const c = contracts[0];
+    if (!c || !lead || !member || draft || c.status !== "Draft" || !costing || costing.status !== "Quoted") return;
+    if (!(member.role === "gm" || lead.sales_id === member.user_id)) return;
+    const own = proposals.find((p) => p.id === c.proposal_id);
+    if (costing.version <= (c.doc.quoteVersion ?? own?.doc.quoteVersion ?? 0)) return;
+    const opt = costing.options.find((o) => o.label === c.doc.optionLabel) ?? (costing.options.length === 1 ? costing.options[0] : null);
+    const key = `${c.id}:${costing.version}`;
+    if (!opt || followedQuote.current === key || save.isPending) return;
+    followedQuote.current = key;
+    const doc = { ...contractFromProposal(c.doc, { itemList: briefGroups.length ? briefGroups : sectionsAsGroups(c.doc.sections), investment: { down: c.doc.deposit } }, { label: opt.label, amount: Number(opt.amount) || 0 }), quoteVersion: costing.version };
+    save.mutate({ id: c.id, leadId: lead.id, doc }, {
+      onSuccess: () => toast.success(`New GM price applied: ${opt.label} ${aedWhole(Number(opt.amount) || 0)} (quotation V${costing.version})`),
+      onError: (e) => { followedQuote.current = null; toast.error(errMsg(e, "Could not apply the GM's new price")); },
+    });
+  }, [contracts, lead, member, draft, costing, proposals, briefGroups, save]);
 
   const accepted = proposals.find((p) => p.status === "Accepted");
   const back = accepted
@@ -556,9 +583,26 @@ const ContractDoc = () => {
     const s = [...d.sections]; const j = i + dir; if (j < 0 || j >= s.length) return;
     [s[i], s[j]] = [s[j], s[i]]; change({ sections: s });
   };
+  // Saved item changes go to the FF&E list → designer (costs) → GM (new price). Shown first: removals delete FF&E rows.
+  const checkItems = async (quiet: boolean) => {
+    try {
+      const plan = await syncFfe.mutateAsync({ contractId: row.id, leadId: lead.id, dry: true });
+      if (plan.n_added || plan.n_removed || plan.n_changed) setSyncPlan(plan);
+      else if (!quiet) toast.info("The FF&E list already matches this agreement.");
+    } catch (e) { toast.error(errMsg(e, "Could not check the FF&E list")); }
+  };
+  const applySync = async () => {
+    try {
+      await syncFfe.mutateAsync({ contractId: row.id, leadId: lead.id, dry: false });
+      setSyncPlan(null);
+      toast.success("Sent to the designer to check the costs — then the GM sets the new price. It appears here automatically.");
+    } catch (e) { toast.error(errMsg(e, "Could not send the changes")); }
+  };
   const persist = async () => {
+    const itemsMoved = !!draft && itemListDiff(sectionsAsGroups(row.doc.sections), sectionsAsGroups(d.sections)).differs;
     try { await save.mutateAsync({ id: row.id, leadId: lead.id, doc: d }); setDraft(null); toast.success("Contract saved"); }
-    catch (e) { toast.error(errMsg(e, "Could not save")); }
+    catch (e) { toast.error(errMsg(e, "Could not save")); return; }
+    if (itemsMoved && briefGroups.length && row.status !== "Signed") await checkItems(true);
   };
   const setStatus = async (status: ContractStatus) => {
     // Every other client-facing price comes from the GM; a direct contract's doesn't, so the GM hears when one goes out.
@@ -585,6 +629,9 @@ const ContractDoc = () => {
     } catch (e) { toast.error(errMsg(e, "Could not mark signed")); }
   };
   const dis = !editable;
+  // Item changes are being costed: the price on this agreement is not final until the GM re-quotes.
+  const costingOpen = !!costing && (costing.status === "Returned" || costing.status === "Submitted") && row.status !== "Signed";
+  const itemsDrift = row.status !== "Signed" && !costingOpen && briefGroups.length > 0 && itemListDiff(sectionsAsGroups(d.sections), briefGroups).differs;
   // The contract's own proposal, else the accepted one, else the latest finalised one.
   const sourceProposal = proposals.find((p) => p.id === row.proposal_id) ?? accepted ?? proposals.find((p) => p.doc.finalAt) ?? null;
   // The editor's preview is unmounted while the combined view is open: its print rules would fight the combined document's.
@@ -607,7 +654,8 @@ const ContractDoc = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {canEdit && row.status === "Draft" && <Button variant="outline" onClick={() => setStatus("Issued")}>Mark issued</Button>}
+          {canEdit && row.status === "Draft" && <Button variant="outline" disabled={costingOpen}
+            title={costingOpen ? "Wait for the GM's new price for the changed items" : undefined} onClick={() => setStatus("Issued")}>Mark issued</Button>}
           {canEdit && row.status === "Issued" && <Button variant="outline" onClick={() => { setHandover(lead.target_date ?? ""); setSignOpen(true); }}>Mark signed</Button>}
           {editable && <Button variant="outline" disabled={!draft || save.isPending} onClick={persist}>Save</Button>}
           <Button onClick={print}>Save as PDF / Print</Button>
@@ -619,6 +667,39 @@ const ContractDoc = () => {
         </div>
       </div>
 
+      {costingOpen && (
+        <p className="rounded-[var(--radius)] border border-warning/60 bg-warning/10 px-3 py-3 text-sm">
+          {costing?.status === "Returned"
+            ? "The item changes are with the designer, who is checking the costs of the added and removed items. "
+            : "The designer has sent the item list to the GM for the new price. "}
+          Don't issue or send this agreement yet: the GM's new price and the final items appear here automatically.
+        </p>
+      )}
+      {itemsDrift && canEdit && (
+        <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/60 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p>This agreement's items differ from the FF&amp;E list. If you changed them for the client, send the changes to the designer to check the costs — the GM then sets the new price.</p>
+          <Button className="shrink-0" disabled={syncFfe.isPending || !!draft} title={draft ? "Save first" : undefined} onClick={() => void checkItems(false)}>Send changes to designer</Button>
+        </div>
+      )}
+      <Dialog open={!!syncPlan} onOpenChange={(o) => !o && setSyncPlan(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Send the item changes to the designer?</DialogTitle>
+            <DialogDescription>The FF&amp;E list will match this agreement. The designer checks the costs, then the GM sets the new price — it comes back to this agreement automatically.</DialogDescription>
+          </DialogHeader>
+          {syncPlan && (
+            <div className="space-y-3 text-sm">
+              {syncPlan.added.length > 0 && <div><p className="font-medium">Added ({syncPlan.added.length})</p><ul className="list-disc pl-5">{syncPlan.added.map((x, i) => <li key={i}>{x.room} · {x.item} ×{x.qty}</li>)}</ul></div>}
+              {syncPlan.removed.length > 0 && <div><p className="font-medium text-destructive">Removed from the FF&amp;E list ({syncPlan.removed.length})</p><ul className="list-disc pl-5">{syncPlan.removed.map((x, i) => <li key={i}>{x.room} · {x.item}{x.had_supplier || x.had_cost ? " — the designer's supplier/cost for it is deleted" : ""}</li>)}</ul></div>}
+              {syncPlan.changed.length > 0 && <div><p className="font-medium">Quantity changed ({syncPlan.changed.length})</p><ul className="list-disc pl-5">{syncPlan.changed.map((x, i) => <li key={i}>{x.room} · {x.item}: {x.from} → {x.to}</li>)}</ul></div>}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSyncPlan(null)}>Not now</Button>
+            <Button disabled={syncFfe.isPending} onClick={() => void applySync()}>{syncFfe.isPending ? "Sending…" : "Send to designer"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {newerAccepted && row.status !== "Signed" && (
         <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/60 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>This contract was made from proposal V{ownProposal?.version} ({aedWhole(Number(row.doc.subtotal) || 0)}). The client has since accepted <b>V{newerAccepted.version}</b>{newerAccepted.accepted_option ? ` · ${newerAccepted.accepted_option.label} ${aedWhole(Number(newerAccepted.accepted_option.amount) || 0)}` : ""} — update the price and items from it.{row.status === "Issued" && " It has already been issued: send the client the updated copy."}</p>

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-ssr";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { ContractDocument } from "./contractModel";
+import type { FfeSyncPlan } from "./proposalQueries";
 
 export type ContractStatus = Database["public"]["Enums"]["contract_status"];
 /** source is set by the database from proposal_id: "proposal" = GM-quoted price, "direct" = price typed by sales. */
@@ -35,6 +36,25 @@ export const useCreateContract = () => {
       return data!.id as string;
     },
     onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: key(v.leadId) }),
+  });
+};
+
+/** Agreement item changes → FF&E list → designer checks costs → GM re-quotes (ws_sync_ffe_from_contract). */
+export const useSyncFfeFromContract = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { contractId: string; leadId: string; dry: boolean }): Promise<FfeSyncPlan> => {
+      const { data, error } = await supabase.rpc("ws_sync_ffe_from_contract" as never, { _contract: v.contractId, _dry: v.dry } as never);
+      fail(error);
+      return data as unknown as FfeSyncPlan;
+    },
+    onSuccess: (plan) => {
+      if (!plan.applied) return;
+      qc.invalidateQueries({ queryKey: ["ws", "ffe"] });
+      qc.invalidateQueries({ queryKey: ["ws", "costing"] });
+      qc.invalidateQueries({ queryKey: ["ws", "notifications"] });
+      qc.invalidateQueries({ queryKey: ["ws", "proposal-items"] });
+    },
   });
 };
 
