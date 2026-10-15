@@ -553,6 +553,18 @@ export const useNeedsBudget = (projectId: string | null | undefined) =>
     },
   });
 
+/** A package lead (no design) sends its FF&E list alone to the GM for the final price. */
+export const useSubmitPackageFfe = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      const { error } = await supabase.rpc("ws_submit_package_ffe" as never, { _lead: leadId } as never);
+      fail(error);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
+  });
+};
+
 export const useSubmitBudget = () => {
   const qc = useQueryClient();
   return useMutation({

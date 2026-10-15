@@ -716,7 +716,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
                 readOnly={viewOnly}
                 ctx={{
                   owner: leadOwner(lead.id), leadId: lead.id, projectId: lead.converted_project_id ?? null, name: lead.name,
-                  designerId: brief?.designer_id ?? lead.designer_id, salesId: lead.sales_id,
+                  designerId: brief?.designer_id ?? lead.designer_id, salesId: lead.sales_id, pkg: isPackageBrief(brief),
                 }}
               />
             ) : <p className="text-muted-foreground">Loading…</p>}
