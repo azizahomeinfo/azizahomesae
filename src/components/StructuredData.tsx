@@ -33,7 +33,6 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
     "telephone": "+971-55-977-9635",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Dubai",
       "addressLocality": "Dubai",
       "addressCountry": "AE"
     },
@@ -75,20 +74,16 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
     "priceRange": "AED 26,000–115,000",
     "currenciesAccepted": "AED, USD, EUR",
     "paymentAccepted": "Cash, Credit Card, Bank Transfer",
+    // Service-area business: no public street address (matches the Google
+    // Business Profile, which shows only the area served).
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Dubai Marina, Downtown Dubai, Business Bay",
       "addressLocality": "Dubai",
       "addressCountry": "AE"
     },
-    "geo": {
-      "@type": "GeoCoordinates",
-      "latitude": "25.0772",
-      "longitude": "55.1335"
-    },
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
       "opens": "09:00",
       "closes": "18:00"
     },

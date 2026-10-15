@@ -1,5 +1,7 @@
 # Google Business Profile Setup Guide for Aziza Home Dubai
 
+> Field values (name, hours, prices, description, Q&A) live in `GOOGLE_BUSINESS_PROFILE_CONTENT.md`, which is the source of truth (updated 2026-10-15). Where this guide differs, follow the content pack.
+
 ## What is Google Business Profile (formerly Google My Business)?
 
 Google Business Profile (GBP) is a free tool that helps your business appear in Google Search and Maps when people search for interior design and furnishing services in Dubai. It's crucial for local SEO.
@@ -32,13 +34,15 @@ Google Business Profile (GBP) is a free tool that helps your business appear in 
   - Interior Decoration
   - Home Staging Service
 
-**Location**: Add your physical address in Dubai
-- If you serve customers at their location (which you do), select "Yes, I serve customers at their location"
-- Define your service area (Dubai and surrounding emirates)
+**Location**: Aziza Home is a service-area business: **don't show an address**.
+- Choose "I deliver goods and services to my customers" and set the service area to Dubai
+- Google still asks for an address privately, for verification only
+- Service-area businesses are usually verified by **video** (a short continuous clip showing the
+  business is real: branded material, tools or a project in progress, and proof you manage it)
 
 **Phone Number**: +971 55 977 9635
 
-**Website**: https://azizahomes.com
+**Website**: https://www.azizahomes.com
 
 ### 3. Verify Your Business
 

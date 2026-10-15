@@ -124,7 +124,7 @@ const Contact = () => {
                     <div>
                       <div className="font-medium text-foreground">Location</div>
                       <div className="text-muted-foreground">
-                        Forte Tower 1, Downtown Dubai, UAE
+                        Dubai, UAE — we come to your property anywhere in Dubai
                       </div>
                     </div>
                   </div>

@@ -141,7 +141,7 @@ const Footer = () => {
               <ul className="space-y-3 text-sm opacity-90">
                 <li className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Forte Tower 1, Downtown Dubai, UAE</span>
+                  <span>Dubai, UAE — serving all of Dubai</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="w-4 h-4 flex-shrink-0" />
