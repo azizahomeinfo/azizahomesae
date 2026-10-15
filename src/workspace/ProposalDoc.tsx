@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useBrief, useLead } from "./queries";
 import { uploadToWorkspace, useSignedUrls } from "./designQueries";
-import { useLeadContracts } from "./contractQueries";
+import { useLeadContracts, useSaveContract } from "./contractQueries";
+import { contractFromProposal } from "./contractModel";
 import { RedesignDialog, RedesignStatus } from "./RedesignRequest";
 import { NewProposalDialog } from "./NewProposalDialog";
 import { PackageCostCheck } from "./PackageCostCheck";
@@ -273,6 +274,7 @@ const ProposalDoc = () => {
   const { data: discounts = [] } = useDiscountRequests(leadId);
   const askDiscount = useRequestDiscount();
   const decideDiscount = useDecideDiscount();
+  const saveContract = useSaveContract();
   const [askOpen, setAskOpen] = useState(false);
   const [askAmount, setAskAmount] = useState("");
   const [askLabel, setAskLabel] = useState("");
@@ -383,13 +385,31 @@ const ProposalDoc = () => {
     const o = opts[i];
     if (!row || !o) return;
     setStatus.mutate({ id: row.id, leadId: lead.id, status: "Accepted", acceptedOption: { index: i, label: o.label, desc: o.desc, amount: Number(o.amount) || 0 } }, {
-      onSuccess: () => { toast.success(`Marked Accepted · ${o.label}`); setPicking(null); }, onError: (e) => toast.error(errMsg(e, "Failed")),
+      onSuccess: () => {
+        toast.success(`Marked Accepted · ${o.label}`); setPicking(null);
+        // A draft contract made from an older proposal follows the newly accepted one (price, option, items).
+        const c = leadContracts[0];
+        const older = c && c.proposal_id && c.proposal_id !== row.id && (proposals.find((p) => p.id === c.proposal_id)?.version ?? 0) < row.version;
+        if (c && older && c.status === "Draft") {
+          saveContract.mutate({ id: c.id, leadId: lead.id, doc: contractFromProposal(c.doc, row.doc, { label: o.label, amount: Number(o.amount) || 0 }), proposalId: row.id }, {
+            onSuccess: () => toast.success(`Contract updated to V${row.version} — ${o.label} AED ${(Number(o.amount) || 0).toLocaleString()}`),
+            onError: (e) => toast.error(errMsg(e, "Could not update the contract — open it and press Update")),
+          });
+        } else if (c && older) toast.info(`The contract is ${c.status} — open it and press "Update from V${row.version}" to take the new price and items.`);
+      },
+      onError: (e) => toast.error(errMsg(e, "Failed")),
     });
   };
   // With 2+ options sales must record which one the client took; a single option is taken automatically.
   const clientAccepted = () => (opts.length > 1 ? setPicking(-1) : opts.length === 1 ? acceptWith(0) : toast.error("This proposal has no quote option to accept."));
   const acceptedRow = proposals.find((p) => p.status === "Accepted");
   const openContract = () => {
+    // A newer version than the accepted one (a re-quote): the contract can only follow it once the client accepts it.
+    const newest = proposals[0];
+    if (acceptedRow && newest && newest.version > acceptedRow.version && newest.status !== "Accepted" && newest.status !== "Rejected") {
+      toast.error(`Proposal V${newest.version} is ${newest.status} — the contract still follows accepted V${acceptedRow.version}. ${newest.status === "Draft" ? "Finalise & download V" + newest.version + ", Mark sent, then" : "Record"} Client accepted: the contract updates to V${newest.version} automatically.`, { duration: 9000 });
+      return;
+    }
     if (acceptedRow) { navigate(`/workspace/contracts/${lead.id}`); return; }
     const st = proposals[0]?.status ?? "missing";
     toast.error(`Can't generate the contract yet — the proposal must be Accepted by the client. It is currently ${st}${st === "Draft" ? " (finalise it, then Mark sent)" : st === "Sent" ? " (record Client accepted)" : ""}.`);

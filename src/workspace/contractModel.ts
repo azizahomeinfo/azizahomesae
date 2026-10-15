@@ -129,6 +129,19 @@ export const buildContract = (v: {
   clauses: standardClauses(),
 });
 
+/**
+ * A contract re-taken from a newer accepted proposal: price, option, deposit and items follow the proposal;
+ * everything typed on the contract (unit, dates, clauses, signing party) stays.
+ */
+export const contractFromProposal = (existing: ContractDocument, p: { itemList: ItemGroup[]; investment: { down: number } },
+  option: { label: string; amount: number }): ContractDocument => ({
+  ...existing,
+  subtotal: Number(option.amount) || 0,
+  optionLabel: option.label,
+  deposit: Number.isFinite(p.investment.down) ? p.investment.down : existing.deposit,
+  sections: p.itemList.filter((g) => g.items.length).map((g) => makeSection(g.room, g.items.map((i) => ({ item: i.item, qty: String(i.qty) })))),
+});
+
 /* ---------------- maths & sentences ---------------- */
 
 export const aedWhole = (n: number) => `AED ${Math.round(n).toLocaleString("en-US")}`;

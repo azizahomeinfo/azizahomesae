@@ -25,7 +25,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { shortDate } from "./format";
 import {
-  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, bankFor, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractMoney, fillClause, makeSection,
+  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, bankFor, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractFromProposal, contractMoney, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
   type ContractDocument, type CSection,
 } from "./contractModel";
@@ -540,13 +540,11 @@ const ContractDoc = () => {
     const opts = newerAccepted.doc.investment.options;
     const opt = newerAccepted.accepted_option ?? (opts.length === 1 ? { label: opts[0].label, amount: Number(opts[0].amount) } : null);
     if (!opt) { toast.error(`Record which option the client accepted on proposal V${newerAccepted.version} first.`); return; }
-    const fresh = buildContract({ lead, unit: null, option: opt, vat: newerAccepted.doc.investment.vat, down: newerAccepted.doc.investment.down, groups: newerAccepted.doc.itemList });
-    // Price, option, deposit and items follow the proposal; everything typed here (unit, dates, clauses, signing party) stays.
-    const doc = { ...(draft ?? row.doc), subtotal: fresh.subtotal, optionLabel: fresh.optionLabel, deposit: fresh.deposit, sections: fresh.sections };
+    const doc = contractFromProposal(draft ?? row.doc, newerAccepted.doc, opt);
     try {
       await save.mutateAsync({ id: row.id, leadId: lead.id, doc, proposalId: newerAccepted.id });
       setDraft(null);
-      toast.success(`Contract updated from proposal V${newerAccepted.version} — ${aedWhole(fresh.subtotal)}`);
+      toast.success(`Contract updated from proposal V${newerAccepted.version} — ${aedWhole(doc.subtotal)}`);
     } catch (e) { toast.error(errMsg(e, "Could not update the contract")); }
   };
   const d = draft ?? row.doc;
