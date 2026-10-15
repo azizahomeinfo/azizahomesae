@@ -42,12 +42,14 @@ export const useSaveContract = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: {
-      id: string; leadId: string; doc?: ContractDocument; status?: ContractStatus;
+      id: string; leadId: string; doc?: ContractDocument; status?: ContractStatus; proposalId?: string;
       notify?: { user_id: string; title: string; body?: string }[];
     }) => {
       const patch: Database["public"]["Tables"]["contracts"]["Update"] = {};
       if (v.doc) patch.doc = v.doc as unknown as Json;
       if (v.status) patch.status = v.status;
+      // Re-pointed to a newer accepted proposal (the database checks it is Accepted and this lead's).
+      if (v.proposalId) patch.proposal_id = v.proposalId;
       const { error } = await supabase.from("contracts").update(patch).eq("id", v.id);
       fail(error);
       if (v.notify?.length) {

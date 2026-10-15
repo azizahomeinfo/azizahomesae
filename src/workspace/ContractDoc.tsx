@@ -530,6 +530,25 @@ const ContractDoc = () => {
   }
 
   const isDirect = row.source === "direct";
+  // The contract was made from one proposal; a newer one may have replaced it (a re-quote, item changes).
+  const ownProposal = proposals.find((p) => p.id === row.proposal_id) ?? null;
+  const latest = proposals[0] ?? null; // newest version first
+  const newerAccepted = !isDirect && accepted && ownProposal && accepted.id !== ownProposal.id && accepted.version > ownProposal.version ? accepted : null;
+  const newerPending = !isDirect && !newerAccepted && latest && ownProposal && latest.version > ownProposal.version && latest.status !== "Rejected" ? latest : null;
+  const updateFromProposal = async () => {
+    if (!newerAccepted) return;
+    const opts = newerAccepted.doc.investment.options;
+    const opt = newerAccepted.accepted_option ?? (opts.length === 1 ? { label: opts[0].label, amount: Number(opts[0].amount) } : null);
+    if (!opt) { toast.error(`Record which option the client accepted on proposal V${newerAccepted.version} first.`); return; }
+    const fresh = buildContract({ lead, unit: null, option: opt, vat: newerAccepted.doc.investment.vat, down: newerAccepted.doc.investment.down, groups: newerAccepted.doc.itemList });
+    // Price, option, deposit and items follow the proposal; everything typed here (unit, dates, clauses, signing party) stays.
+    const doc = { ...(draft ?? row.doc), subtotal: fresh.subtotal, optionLabel: fresh.optionLabel, deposit: fresh.deposit, sections: fresh.sections };
+    try {
+      await save.mutateAsync({ id: row.id, leadId: lead.id, doc, proposalId: newerAccepted.id });
+      setDraft(null);
+      toast.success(`Contract updated from proposal V${newerAccepted.version} — ${aedWhole(fresh.subtotal)}`);
+    } catch (e) { toast.error(errMsg(e, "Could not update the contract")); }
+  };
   const d = draft ?? row.doc;
   const editable = canEdit && row.status !== "Signed";
   const change = (p: Partial<ContractDocument>) => setDraft({ ...d, ...p });
@@ -601,6 +620,18 @@ const ContractDoc = () => {
           {canEdit && row.status === "Issued" && <p className="basis-full text-xs text-muted-foreground">Marking this signed will re-take the item list from the current FF&amp;E list.</p>}
         </div>
       </div>
+
+      {newerAccepted && row.status !== "Signed" && (
+        <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-warning/60 bg-warning/10 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p>This contract was made from proposal V{ownProposal?.version} ({aedWhole(Number(row.doc.subtotal) || 0)}). The client has since accepted <b>V{newerAccepted.version}</b>{newerAccepted.accepted_option ? ` · ${newerAccepted.accepted_option.label} ${aedWhole(Number(newerAccepted.accepted_option.amount) || 0)}` : ""} — update the price and items from it.{row.status === "Issued" && " It has already been issued: send the client the updated copy."}</p>
+          {canEdit && <Button className="shrink-0" disabled={save.isPending} onClick={() => void updateFromProposal()}>Update from V{newerAccepted.version}</Button>}
+        </div>
+      )}
+      {newerPending && row.status !== "Signed" && (
+        <p className="rounded-[var(--radius)] border border-warning/60 bg-warning/10 px-3 py-3 text-sm">
+          This contract is from proposal V{ownProposal?.version} ({aedWhole(Number(row.doc.subtotal) || 0)}). Proposal <b>V{newerPending.version}</b> ({newerPending.status}{newerPending.total != null ? ` · ${aedWhole(Number(newerPending.total))}` : ""}) is newer: finalise it, mark it sent and record the client's acceptance on the proposal — then update this contract from it here.
+        </p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <aside className="space-y-3">
