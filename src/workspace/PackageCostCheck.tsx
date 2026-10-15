@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useDecideDiscount, type DiscountRequest } from "./proposalQueries";
+import { leadOwner, useFfeItems } from "./ffeQueries";
 
 /**
  * The GM's cost check of a package proposal: the item list sales sent with their price request, each line
@@ -34,9 +35,16 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
       return data as unknown as { items: Line[]; prices: { label: string; amount: number | null; units?: number }[]; updated_at: string } | null;
     },
   });
-  const [lines, setLines] = useState<Line[]>([]);
+  // Once the lead has its FF&E list (every package lead does), that list and its costs are the only source:
+  // shown here read-only, edited in the FF&E list itself.
+  const { data: ffeRows = [] } = useFfeItems(leadOwner(leadId), true);
+  const ffe = useMemo(() => ffeRows.filter((r) => !r.internal)
+    .map((r): Line => ({ room: r.room, item: r.item, qty: Number(r.qty) || 0, unit_cost: r.unit_cost == null ? null : Number(r.unit_cost) })), [ffeRows]);
+  const fromFfe = ffe.length > 0;
+  const [draftLines, setLines] = useState<Line[]>([]);
   const [dirty, setDirty] = useState(false);
   useEffect(() => { if (data && !dirty) setLines(data.items ?? []); }, [data, dirty]);
+  const lines = fromFfe ? ffe : draftLines;
   const save = useMutation({
     mutationFn: async (items: Line[]) => {
       const { error } = await supabase.rpc("ws_package_save_costs", { _proposal: proposalId, _items: items as unknown as Json });
@@ -78,7 +86,7 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
   };
 
   if (isLoading) return <p className="text-xs text-muted-foreground">Loading the item list…</p>;
-  if (!data) return (
+  if (!data && !fromFfe) return (
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
       <span>{request ? "No item list came with this request." : "No cost list yet for this proposal."}</span>
       <Button size="sm" variant="outline" disabled={refresh.isPending} onClick={() => refresh.mutate()}>Take the item list from the proposal</Button>
@@ -90,7 +98,9 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-medium">{request ? `Cost check · ${request.option_label}` : "FF&E list & costs"}</p>
         <p className="text-xs text-muted-foreground">Unit costs are pre-filled from the price book — correct any, fill the blanks. Only the GM and the lead's designer see these.
-          {" "}<button type="button" className="underline" disabled={refresh.isPending} onClick={() => refresh.mutate()}>Refresh from the proposal</button></p>
+          {fromFfe
+            ? <>{" "}Costs come from the lead's FF&amp;E list — <a className="underline" href={`/workspace/leads/${leadId}?design=${leadId}&dtab=ffe`}>edit them there</a>.</>
+            : <>{" "}<button type="button" className="underline" disabled={refresh.isPending} onClick={() => refresh.mutate()}>Refresh from the proposal</button></>}</p>
       </div>
       <div className="max-h-80 overflow-y-auto rounded-[var(--radius)] border border-border">
         <table className="w-full text-xs">
@@ -104,7 +114,7 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
                   <td className="p-1.5 text-right tabular-nums">{l.qty}</td>
                   <td className="p-1 text-right">
                     <Input inputMode="decimal" className={cn("ml-auto h-7 w-24 text-right tabular-nums", l.unit_cost == null && "border-warning")}
-                      value={l.unit_cost ?? ""} aria-label={`Unit cost of ${l.item}`}
+                      value={l.unit_cost ?? ""} aria-label={`Unit cost of ${l.item}`} readOnly={fromFfe} disabled={fromFfe}
                       onChange={(e) => { const v = e.target.value.trim(); setDirty(true); setLines((ls) => ls.map((x, j) => (j === i ? { ...x, unit_cost: v === "" ? null : Number(v) || 0 } : x))); }} />
                   </td>
                   <td className="p-1.5 text-right tabular-nums">{l.unit_cost != null ? Math.round(l.unit_cost * l.qty).toLocaleString() : "—"}</td>
@@ -120,7 +130,7 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
           <p>List price <b className="tabular-nums">{aed(listPrice)}</b> · margin <span className="tabular-nums">{Math.round(marginOf(listPrice, cost) * 100)}%</span></p>
           <p>Sales asked <b className="tabular-nums">{aed(asked)}</b> · margin <span className={cn("tabular-nums", marginOf(asked, cost) < MIN_MARGIN && "text-destructive")}>{Math.round(marginOf(asked, cost) * 100)}%</span></p>
           {request.client_note && <p className="text-muted-foreground">Client: {request.client_note}</p>}
-        </> : (prices.length ? prices : (data.prices ?? []).filter((p) => p.amount != null).map((p) => ({ label: p.label, amount: Number(p.amount) }))).map((p) => (
+        </> : (prices.length ? prices : (data?.prices ?? []).filter((p) => p.amount != null).map((p) => ({ label: p.label, amount: Number(p.amount) }))).map((p) => (
           <p key={p.label}>{p.label} at <b className="tabular-nums">{aed(p.amount)}</b> · margin <span className={cn("tabular-nums", marginOf(p.amount, cost) < MIN_MARGIN && "text-destructive")}>{Math.round(marginOf(p.amount, cost) * 100)}%</span></p>
         ))}
       </div>
@@ -139,68 +149,5 @@ export const PackageCostCheck = ({ proposalId, leadId, request, listPrice = 0, u
         {request && <Button size="sm" variant="outline" disabled={decide.isPending || save.isPending} onClick={() => void send(false)}>Keep the list price</Button>}
       </div>
     </div>
-  );
-};
-
-/**
- * On the lead: the package's FF&E list & costs for the GM and the lead's designer (RLS returns nothing to
- * anyone else, so it simply doesn't render for them). Latest package proposal's list.
- */
-export const LeadPackageCosts = ({ leadId }: { leadId: string }) => {
-  const { data } = useQuery({
-    queryKey: ["ws", "package-costing-lead", leadId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("package_costings").select("proposal_id").eq("lead_id", leadId)
-        .order("updated_at", { ascending: false }).limit(1).maybeSingle();
-      if (error) throw new Error(error.message);
-      return data;
-    },
-  });
-  if (!data) return null;
-  return (
-    <section className="space-y-2 rounded-[var(--radius)] border border-border bg-card p-4 text-sm md:p-6">
-      <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Package FF&amp;E list &amp; costs</p>
-      <PackageCostCheck proposalId={data.proposal_id} leadId={leadId} />
-    </section>
-  );
-};
-
-/**
- * Designer dashboard: the package cost lists of leads assigned to them (designers have no Leads page, so the
- * list is costed here). RLS returns only the GM's and the lead designer's rows.
- */
-export const MyPackageCostLists = () => {
-  const { data: rows = [] } = useQuery({
-    queryKey: ["ws", "package-costing-mine"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("package_costings").select("proposal_id, lead_id, items, updated_at, leads(name, unit_type)")
-        .order("updated_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as { proposal_id: string; lead_id: string; items: Line[]; updated_at: string; leads: { name: string; unit_type: string | null } | null }[];
-    },
-  });
-  const [open, setOpen] = useState<string | null>(null);
-  if (!rows.length) return null;
-  return (
-    <section className="space-y-3 rounded-[var(--radius)] border border-border bg-card p-4 md:p-6">
-      <h3 className="font-heading text-xl uppercase tracking-wide">Package FF&amp;E lists to cost <span className="text-base text-muted-foreground">({rows.length})</span></h3>
-      <ul className="divide-y divide-border">
-        {rows.map((r) => {
-          const missing = (r.items ?? []).filter((l) => l.unit_cost == null).length;
-          return (
-            <li key={r.proposal_id} className="space-y-2 py-3">
-              <button type="button" onClick={() => setOpen(open === r.proposal_id ? null : r.proposal_id)}
-                className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
-                <span className="font-medium">{r.leads?.name ?? "Lead"} <span className="text-xs text-muted-foreground">· {r.leads?.unit_type ?? ""}</span></span>
-                <span className={cn("text-xs", missing ? "text-warning" : "text-muted-foreground")}>
-                  {(r.items ?? []).length} items{missing ? ` · ${missing} without a cost` : " · all costed"} · {open === r.proposal_id ? "close" : "open"}
-                </span>
-              </button>
-              {open === r.proposal_id && <PackageCostCheck proposalId={r.proposal_id} leadId={r.lead_id} />}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 };

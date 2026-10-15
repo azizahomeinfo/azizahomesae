@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "./WorkspaceProvider";
-import { useBrief, useLead, useMembers, type NotifyTarget } from "./queries";
+import { useBrief, useLead, useMembers, type NotifyTarget , isPackageBrief } from "./queries";
 import {
   isPdf, useDecideDesign, useDeleteImage, useDesignImages, useDesigns, useReorderImages, useSaveDesignNotes,
   touchSubmittedDesign, useRenameArea, useSignedUrls, useResubmitDesignPackage, useStartDesign, useSubmitDesign, useUpdateImage, useUploadDesignFile,
@@ -583,7 +583,10 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const [redesignOpen, setRedesignOpen] = useState(false);
   // The designer specs FF&E against the renders, so both live in this dialog. The tab is in the URL (`dtab`) so a
   // remount returns to it; opening clears it (renders). Each tab's scroller is kept separately.
-  const { tab, setTab } = useDesignParam(leadId);
+  const { tab: urlTab, setTab } = useDesignParam(leadId);
+  // A package lead (no design, FF&E from the chosen package) shows only its FF&E list.
+  const pkgOnly = isPackageBrief(brief) && !isLoading && designs.length === 0;
+  const tab = pkgOnly ? "ffe" : urlTab;
   const ffeScrollRef = useKeepScroll(open ? `design:${leadId}:ffe` : null);
   const rendersScrollRef = useKeepScroll(open ? `design:${leadId}:renders` : null);
   // Live checklist mirroring ws_submit_design_package, so the gap is visible while uploading, not after pressing Submit.
@@ -687,13 +690,13 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 md:px-6">
         <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Design package</p>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-primary">{pkgOnly ? "Package · FF&E list" : "Design package"}</p>
           <p className="truncate font-heading text-xl">{lead?.name ?? "…"}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={close} aria-label="Close"><X className="h-5 w-5" /></Button>
       </header>
 
-      <div role="tablist" aria-label="Design package sections" className="flex gap-1 border-b border-border px-4 md:px-6">
+      {!pkgOnly && <div role="tablist" aria-label="Design package sections" className="flex gap-1 border-b border-border px-4 md:px-6">
         {([["renders", "Renders"], ["ffe", "FF&E list"]] as const).map(([k, label]) => (
           <button
             key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
@@ -702,7 +705,8 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
             {label}
           </button>
         ))}
-      </div>
+      </div>}
+      {pkgOnly && <p className="border-b border-border px-4 py-2 text-xs text-muted-foreground md:px-6">The client chose a catalog package — there is no design to make. This is the package's FF&amp;E list: check the items and costs like any other list.</p>}
 
       {tab === "ffe" && (
         <div ref={ffeScrollRef} className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">

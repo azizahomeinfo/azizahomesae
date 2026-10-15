@@ -341,7 +341,8 @@ const ProposalDoc = () => {
   /* ---- doc editing helpers ---- */
   const d = current;
   const liveGroups = groups ?? [];
-  const drift = !isPackage && liveGroups.length ? itemListDiff(d.itemList, liveGroups) : null;
+  // Package leads have an FF&E list too (seeded from the package), so item changes sync the same way.
+  const drift = liveGroups.length ? itemListDiff(d.itemList, liveGroups) : null;
   const driftSummary = drift?.differs
     ? `${drift.added} ${drift.added === 1 ? "item" : "items"} added, ${drift.removed} removed, ${drift.quantitiesChanged} ${drift.quantitiesChanged === 1 ? "quantity" : "quantities"} changed`
     : null;

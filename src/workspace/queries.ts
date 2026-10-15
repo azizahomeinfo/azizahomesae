@@ -185,14 +185,16 @@ export const usePostComment = () => {
 export type BriefRow = Pick<
   T["requirement_briefs"]["Row"],
   | "id" | "lead_id" | "status" | "designer_id" | "header" | "style" | "colours" | "ffe" | "bedrooms" | "lists"
-  | "attachments" | "revision_note" | "submitted_at" | "assigned_at" | "ready_at" | "approved_at" | "updated_at"
+  | "attachments" | "revision_note" | "submitted_at" | "assigned_at" | "ready_at" | "approved_at" | "updated_at" | "extra"
 >;
+/** A package lead's brief (ws_package_lead_setup): no design stage — the FF&E list comes from the chosen package. */
+export const isPackageBrief = (b: { extra?: unknown } | null | undefined) => !!(b?.extra as { package?: boolean } | null | undefined)?.package;
 export type BriefDocColumns = Pick<T["requirement_briefs"]["Update"], "header" | "style" | "colours" | "ffe" | "bedrooms" | "lists" | "attachments">;
 
 const BRIEF_COLS =
-  "id, lead_id, status, designer_id, header, style, colours, ffe, bedrooms, lists, attachments, revision_note, submitted_at, assigned_at, ready_at, approved_at, updated_at";
+  "id, lead_id, status, designer_id, header, style, colours, ffe, bedrooms, lists, attachments, revision_note, submitted_at, assigned_at, ready_at, approved_at, updated_at, extra";
 const BRIEF_LIST_COLS =
-  "id, lead_id, status, designer_id, submitted_at, updated_at, leads(name, property, unit_type, budget, target_date, sales_id, designer_id, drive_url, status)";
+  "id, lead_id, status, designer_id, submitted_at, updated_at, extra, leads(name, property, unit_type, budget, target_date, sales_id, designer_id, drive_url, status)";
 
 export interface BriefListRow {
   id: string;
@@ -201,6 +203,7 @@ export interface BriefListRow {
   designer_id: string | null;
   submitted_at: string | null;
   updated_at: string;
+  extra: unknown;
   leads: { name: string; property: string | null; unit_type: string | null; budget: number | null; target_date: string | null; sales_id: string | null; designer_id: string | null; drive_url: string | null; status: T["leads"]["Row"]["status"] } | null;
 }
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useBrief, useBriefList, useLead, useMembers, type BriefListRow } from "../queries";
+import { useBrief, useBriefList, useLead, useMembers, type BriefListRow , isPackageBrief } from "../queries";
 import { canSee, type WorkspaceRole } from "../access";
 import BriefEditor from "../BriefEditor";
 import { BRIEF_LABEL, BRIEF_STATUSES, type BriefStatus } from "../briefWorkflow";
@@ -59,15 +59,16 @@ const ViewRequirements = ({
  * to hide it. AZ-2635 sat in Production with its brief still a Draft (ws_assign_lead_designer assigns
  * without moving the brief on), leaving the designer with no way to reach the package at all.
  */
-const DesignLink = ({ leadId, briefStatus, leadWon }: { leadId: string; briefStatus: BriefStatus; leadWon: boolean }) => {
+const DesignLink = ({ leadId, briefStatus, leadWon, pkg = false }: { leadId: string; briefStatus: BriefStatus; leadWon: boolean; pkg?: boolean }) => {
   const { data: statuses } = useDesignStatuses();
   const { open, setOpen } = useDesignParam(leadId);
   if (!DESIGN_STAGES.includes(briefStatus) && !leadWon) return null;
   const d = statuses?.get(leadId);
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {d ? <DesignStatusPill status={d.status as DesignStatus} version={d.version} /> : <span className="text-xs text-muted-foreground">No design yet</span>}
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>Design package</Button>
+      {pkg && !d ? <span className="text-xs text-muted-foreground">Catalog package · no design</span>
+        : d ? <DesignStatusPill status={d.status as DesignStatus} version={d.version} /> : <span className="text-xs text-muted-foreground">No design yet</span>}
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>{pkg && !d ? "FF&E list" : "Design package"}</Button>
       <DesignPackage leadId={leadId} open={open} onOpenChange={setOpen} />
     </div>
   );
@@ -172,7 +173,7 @@ const DesignerView = () => {
                 </button>
               )}
             />
-            <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} leadWon={b.leads?.status === "Won"} />
+            <DesignLink leadId={b.lead_id} briefStatus={b.status as BriefStatus} leadWon={b.leads?.status === "Won"} pkg={isPackageBrief(b)} />
           </div>
         );
       })}
@@ -225,6 +226,7 @@ const GmView = () => {
                     <TableRow key={b.id}>
                       <TableCell className="whitespace-nowrap">
                         <Link to={`/workspace/leads/${b.lead_id}`} className="hover:text-primary">{b.leads?.name ?? "—"}</Link>
+                        {isPackageBrief(b) && <span className="ml-2 rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">Package</span>}
                       </TableCell>
                       <TableCell>{[b.leads?.property, b.leads?.unit_type].filter(Boolean).join(" · ") || "—"}</TableCell>
                       <TableCell className="whitespace-nowrap">{aed(b.leads?.budget)}</TableCell>
@@ -232,7 +234,7 @@ const GmView = () => {
                       <TableCell className="whitespace-nowrap">{(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"}</TableCell>
                       <TableCell className="whitespace-nowrap">{(b.designer_id && nameOf.get(b.designer_id)) || "—"}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end"><DesignLink leadId={b.lead_id} briefStatus={st} leadWon={b.leads?.status === "Won"} /></div>
+                        <div className="flex justify-end"><DesignLink leadId={b.lead_id} briefStatus={st} leadWon={b.leads?.status === "Won"} pkg={isPackageBrief(b)} /></div>
                         {st === "Submitted" && (
                           <BriefActionBar
                             size="sm"
@@ -249,7 +251,7 @@ const GmView = () => {
               {rows.map((b) => (
                 <div key={b.id} className="space-y-2">
                   <BriefCard d={fromRow(b)} />
-                  <DesignLink leadId={b.lead_id} briefStatus={st} leadWon={b.leads?.status === "Won"} />
+                  <DesignLink leadId={b.lead_id} briefStatus={st} leadWon={b.leads?.status === "Won"} pkg={isPackageBrief(b)} />
                   <p className="px-1 text-xs text-muted-foreground">
                     Owner: {(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"} · Designer: {(b.designer_id && nameOf.get(b.designer_id)) || "—"}
                   </p>
