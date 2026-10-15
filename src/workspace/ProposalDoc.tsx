@@ -202,6 +202,36 @@ const ProposalDoc = () => {
     setAttempted(false);
   }, [row, ready, quote, design, groups]);
 
+  // Unsaved edits survive a reload, a crash or switching accounts (sign in as GM to approve, back as sales):
+  // the draft is kept in this browser per proposal until it is saved. Lost item lists happened without it.
+  const backupKey = row && member ? `ws:proposal-draft:${member.user_id}:${row.id}` : null;
+  const restoredFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!backupKey || !row || !ready || synced.current !== row.id || restoredFor.current === backupKey) return;
+    restoredFor.current = backupKey;
+    try {
+      const raw = localStorage.getItem(backupKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { at: string; doc: ProposalDocument };
+      if (row.status !== "Draft") { localStorage.removeItem(backupKey); return; }
+      setDraft(saved.doc);
+      setNotices((n) => [`Your unsaved edits from ${new Date(saved.at).toLocaleString()} were restored — press Save to keep them`, ...n]);
+    } catch { /* storage blocked or corrupt: nothing to restore */ }
+  }, [backupKey, row, ready]);
+  useEffect(() => {
+    if (!backupKey || restoredFor.current !== backupKey) return;
+    try {
+      if (draft) localStorage.setItem(backupKey, JSON.stringify({ at: new Date().toISOString(), doc: draft }));
+      else localStorage.removeItem(backupKey);
+    } catch { /* storage blocked */ }
+  }, [draft, backupKey]);
+  useEffect(() => {
+    if (!draft) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [draft]);
+
   // Package costing round (sales sent item changes → designer → GM): the FF&E list is the item list. Whatever
   // the designer changes there is written into the proposal automatically — no button — and, once the GM quotes,
   // the final items and prices too. Only drafts follow; a sent proposal keeps what the client received.
@@ -392,7 +422,21 @@ const ProposalDoc = () => {
   const driftSummary = drift?.differs
     ? `${drift.added} ${drift.added === 1 ? "item" : "items"} added, ${drift.removed} removed, ${drift.quantitiesChanged} ${drift.quantitiesChanged === 1 ? "quantity" : "quantities"} changed`
     : null;
+  // The GM's cost check and the FF&E sync read the SAVED proposal: save the edits on screen first.
+  const saveFirst = async () => {
+    if (!dirty || !current) return true;
+    try { await save.mutateAsync({ id: row.id, leadId: lead.id, doc: current }); setDraft(null); return true; }
+    catch {
+      // A price below the floor can't be saved yet (that's what the request is for): keep the saved prices, save the items.
+      try {
+        await save.mutateAsync({ id: row.id, leadId: lead.id, doc: { ...current, investment: { ...current.investment, options: row.doc.investment.options } } });
+        toast.info("Your item edits were saved; the lower price stays on screen until the GM approves it.");
+        return true;
+      } catch (e) { toast.error(errMsg(e, "Save your edits first — could not save")); return false; }
+    }
+  };
   const previewSync = async () => {
+    if (!(await saveFirst())) return;
     try {
       const plan = await syncFfe.mutateAsync({ proposalId: row.id, leadId, dry: true });
       if (!plan.n_added && !plan.n_removed && !plan.n_changed) { toast.info("The FF&E list already matches this proposal."); return; }
@@ -751,6 +795,7 @@ const ProposalDoc = () => {
                       const amt = isPackage ? list - Number(askAmount) : Number(askAmount);
                       if (isPackage && !(Number(askAmount) > 0 && Number(askAmount) < list)) { toast.error(`Enter a price below the list price ${list.toLocaleString()}`); return; }
                       if (!(amt > 0)) { toast.error("Enter how much to come down by"); return; }
+                      if (!(await saveFirst())) return;
                       try {
                         await askDiscount.mutateAsync({ proposalId: row.id, leadId, label, discount: amt, clientNote: askWhy });
                         setAskOpen(false); setAskAmount(""); setAskWhy("");
