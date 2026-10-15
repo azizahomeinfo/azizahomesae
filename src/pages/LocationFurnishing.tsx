@@ -147,7 +147,6 @@ const LocationFurnishing = () => {
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs md:text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-primary" /> Dubai-based team</span>
             <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-primary" /> Remote-friendly for overseas owners</span>
-            <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" /> Standard setup 5–15 business days</span>
           </div>
         </div>
       </section>

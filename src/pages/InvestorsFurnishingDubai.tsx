@@ -138,7 +138,7 @@ const steps = [
 const faqs = [
   {
     q: "How long does furnishing take?",
-    a: "Standard furnishing usually takes 5–18 business days after payment, site access, and final confirmation. Fast-track may be available subject to stock and building access.",
+    a: "Standard furnishing usually takes 7–20 days (depending on package and layout) after payment, site access, and final confirmation. Fast-track may be available subject to stock and building access.",
   },
   {
     q: "Can furnishing increase my rental income?",
@@ -254,7 +254,6 @@ const InvestorsFurnishingDubai = () => {
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs md:text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-primary" /> Dubai-based team</span>
             <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-primary" /> Investor-focused packages</span>
-            <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" /> Standard setup 5–15 business days</span>
           </div>
         </div>
       </section>

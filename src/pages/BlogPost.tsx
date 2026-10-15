@@ -13,13 +13,19 @@ import blogHolidayRoi from "@/assets/blog-holiday-roi-marina.webp";
 import blogJvcFamily from "@/assets/blog-jvc-family-rentals.webp";
 import blogCostGuide from "@/assets/package-complete-new.webp";
 
+// Schema.org dates must be ISO 8601; article dates are written "July 10, 2026".
+const toIsoDate = (date: string) => {
+  const d = new Date(`${date} 00:00:00 UTC`);
+  return isNaN(d.getTime()) ? date : d.toISOString().slice(0, 10);
+};
+
 const generateBlogStructuredData = (article: any, slug: string) => ({
   "@context": "https://schema.org",
   "@type": "BlogPosting",
   "headline": article.title,
-  "image": article.image,
-  "datePublished": article.date,
-  "dateModified": article.date,
+  "image": new URL(article.image, "https://www.azizahomes.com").href,
+  "datePublished": toIsoDate(article.date),
+  "dateModified": toIsoDate(article.updated ?? article.date),
   "author": {
     "@type": "Organization",
     "name": "Aziza Home",
@@ -33,7 +39,7 @@ const generateBlogStructuredData = (article: any, slug: string) => ({
       "url": "https://www.azizahomes.com/aziza-logo.png"
     }
   },
-  "description": article.content.substring(0, 160).replace(/<[^>]*>/g, ''),
+  "description": article.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 160),
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": `https://www.azizahomes.com/blog/${slug}`
@@ -480,7 +486,7 @@ const BlogPost = () => {
           <li>Avoid common mistakes (like oversized furniture or poor color coordination).</li>
           <li>Manage logistics, delivery, and installation.</li>
         </ul>
-        <p>At Aziza Home, we specialize in delivering complete, customized <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">furnishing solutions</a> in just 10-15 business days. We handle everything from concept to installation, allowing you to focus on enjoying your space.</p>
+        <p>At Aziza Home, we specialize in delivering complete, customized <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">furnishing solutions</a>. We handle everything from concept to installation, allowing you to focus on enjoying your space.</p>
 
         <h2>5. Opt for Multi-Functional Furniture</h2>
         <p>If you're working with a smaller space or limited budget, multi-functional furniture is key:</p>
@@ -520,7 +526,7 @@ const BlogPost = () => {
 
         <h2>Final Thoughts</h2>
         <p>Furnishing your home doesn't have to be stressful or time-consuming. With a clear plan, smart choices, and the right support, you can create a beautifully furnished space quickly and efficiently — whether it's for your personal use or for generating rental income.</p>
-        <p>At Aziza Home, we specialize in simplifying the furnishing process, offering <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">curated packages</a> delivered in just 10-15 business days. From <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">expat relocations to investor properties</a>, we take care of everything — so you can move in, rent out, or enjoy your space stress-free.</p>
+        <p>At Aziza Home, we specialize in simplifying the furnishing process, offering <a href="/packages" style="color: hsl(var(--primary)); text-decoration: underline;">curated packages</a>. From <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">expat relocations to investor properties</a>, we take care of everything — so you can move in, rent out, or enjoy your space stress-free.</p>
         <p><strong>Ready to furnish your home the smart way?</strong> <a href="/contact" style="color: hsl(var(--primary)); text-decoration: underline;">Contact Aziza Home</a> today and let us bring your vision to life.</p>
       `
     },
@@ -577,7 +583,7 @@ const BlogPost = () => {
           <li>Provides flexibility between short-term and long-term strategies</li>
         </ul>
 
-        <p>At Aziza Home, we specialize in transforming empty units into <strong>ready-to-rent, beautifully designed spaces</strong> that appeal to both the holiday-home market and long-term tenants — delivered within just 10–15 business days. <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">Explore our furnishing services</a> to see how we can help maximize your investment returns.</p>
+        <p>At Aziza Home, we specialize in transforming empty units into <strong>ready-to-rent, beautifully designed spaces</strong> that appeal to both the holiday-home market and long-term tenants. <a href="/services" style="color: hsl(var(--primary)); text-decoration: underline;">Explore our furnishing services</a> to see how we can help maximize your investment returns.</p>
 
         <h2>Final Thoughts</h2>
         <p>Whether your focus is <strong>steady rental income</strong> (Downtown, JVC) or <strong>long-term appreciation</strong> (Dubai Harbour), the key to maximizing your returns lies in <strong>professional furnishing and presentation</strong>.</p>
@@ -1013,7 +1019,7 @@ const BlogPost = () => {
             <h2 class="text-3xl font-bold text-foreground">Package vs. Furnishing It Yourself</h2>
             <p class="text-muted-foreground">Buying piece by piece from retail stores looks cheaper on paper, but the comparison usually flips once you count everything:</p>
             <ul class="space-y-3 text-muted-foreground">
-              <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Time:</strong> DIY furnishing a 1BR typically takes 4–8 weeks of showroom visits, delivery windows, and assembly bookings. A package takes 5–15 business days — for a rental, each extra empty month costs you a month of rent.</span></li>
+              <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Time:</strong> DIY furnishing a 1BR typically takes 4–8 weeks of showroom visits, delivery windows, and assembly bookings. A package takes 7–20 days (depending on package and layout) — for a rental, each extra empty month costs you a month of rent.</span></li>
               <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Coherence:</strong> Retail pieces bought separately rarely photograph as a designed whole — and listings compete on photos.</span></li>
               <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Hidden costs:</strong> Delivery fees, assembly charges, curtain tailoring and installation, and returns add 10–20% to DIY budgets.</span></li>
               <li class="flex items-start gap-3"><span class="text-primary text-xl">•</span><span><strong class="text-foreground">Overseas owners:</strong> DIY is effectively impossible remotely; packages are designed for it.</span></li>
@@ -1040,7 +1046,7 @@ const BlogPost = () => {
               </div>
               <div class="bg-card border border-border rounded-lg p-6">
                 <h3 class="font-semibold text-foreground mb-2">How long does furnishing take?</h3>
-                <p class="text-muted-foreground text-sm">Standard apartment setups complete in 5–15 business days after payment and building access. Villas run two to four weeks as phased installations.</p>
+                <p class="text-muted-foreground text-sm">Standard apartment setups complete in 7–20 days (depending on package and layout) after payment and building access. Villas run two to four weeks as phased installations.</p>
               </div>
               <div class="bg-card border border-border rounded-lg p-6">
                 <h3 class="font-semibold text-foreground mb-2">Can I furnish my apartment while living abroad?</h3>

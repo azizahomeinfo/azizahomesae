@@ -44,8 +44,7 @@ const routePriorities = {
   '/furnishing/jumeirah-lakes-towers': { priority: '0.9', changefreq: 'weekly' },
   '/holiday-home-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
   '/villa-furnishing-dubai': { priority: '0.9', changefreq: 'weekly' },
-  '/portfolio/palace-emaar-beachfront': { priority: '0.8', changefreq: 'monthly' },
-  '/seo-status': { priority: '0.3', changefreq: 'monthly' }
+  '/portfolio/palace-emaar-beachfront': { priority: '0.8', changefreq: 'monthly' }
 }
 
 // Default config for blog posts and other pages
@@ -120,8 +119,7 @@ const routesToPrerender = [
   '/holiday-home-furnishing-dubai',
   '/villa-furnishing-dubai',
   // Case studies (src/data/caseStudies.ts) — keep in sync
-  '/portfolio/palace-emaar-beachfront',
-  '/seo-status'
+  '/portfolio/palace-emaar-beachfront'
   // Add specific product URLs here when you have them
   // Example: '/product/living-room-package',
 ]
@@ -146,16 +144,13 @@ const routesToPrerender = [
     const { html: appHtml, helmet } = render(url);
     let html = template.replace(`<!--app-html-->`, appHtml)
 
-    // IMPORTANT: dist/index.html is served by Lovable hosting as the SPA
-    // fallback for ANY route that isn't an exact file match (including
-    // /investors-furnishing-dubai, /about, etc.). If we bake the homepage's
-    // Helmet tags into it, Google sees a homepage canonical/title for
-    // every URL → duplicate content → won't index. So for the "/" route,
-    // leave the head as the neutral source template (sitewide title +
-    // description from index.html). React-Helmet sets the correct
-    // homepage tags on hydration. Per-route files in subdirectories
-    // still get full Helmet injection.
-    if (helmet && url !== '/') {
+    // dist/index.html is both the homepage and the SPA fallback for routes
+    // that aren't prerendered (/workspace, /auth, unknown URLs). Every route
+    // that should rank has its own prerendered file, so the homepage gets its
+    // full Helmet head (canonical, JSON-LD) like the rest. All Helmet tags carry
+    // data-rh="true", so on a fallback route react-helmet-async replaces them
+    // with that route's own tags on hydration (NotFound adds noindex).
+    if (helmet) {
       if (helmet.title) {
         html = html.replace(/<title[^>]*>.*?<\/title>/s, helmet.title.toString())
       }

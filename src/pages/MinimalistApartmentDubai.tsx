@@ -29,7 +29,7 @@ import g6 from "@/assets/portfolio-18.webp";
 const PATH = "/minimalist-apartment-furnishing-dubai";
 const TITLE = "Minimalist Apartment Furnishing Dubai | Aziza Home";
 const DESCRIPTION =
-  "Turnkey minimalist apartment furnishing in Dubai. Calm, timeless interiors with full design, delivery, and installation in as little as 10 days.";
+  "Turnkey minimalist apartment furnishing in Dubai. Calm, timeless interiors with full design, delivery, and installation.";
 const KEYWORDS =
   "minimalist apartment furnishing dubai, minimalist interior design dubai, turnkey furnishing dubai, japandi dubai, apartment furnishing packages";
 
@@ -37,12 +37,12 @@ const highlights = [
   {
     title: "Studio & 1BR Minimalist Package",
     desc: "Curated low-profile furniture, soft neutrals, and clean lines — perfect for compact Dubai apartments.",
-    points: ["All furniture included", "Soft textiles & lighting", "Installed in 5–7 days"],
+    points: ["All furniture included", "Soft textiles & lighting", "Full installation & styling"],
   },
   {
     title: "2BR Designer Minimal",
     desc: "Architectural calm with a focal feature wall, natural materials, and warm minimalism for family homes.",
-    points: ["Feature wall design", "Premium oak & linen palette", "Installed in 7–10 days"],
+    points: ["Feature wall design", "Premium oak & linen palette", "Installation & styling included"],
     featured: true,
   },
   {
@@ -64,7 +64,7 @@ const gallery = [
 const faqs = [
   {
     q: "How long does a minimalist furnishing project take in Dubai?",
-    a: "Most studio and one-bedroom apartments are fully furnished and styled within 5–7 days. Two-bedroom homes typically complete in 7–10 days from package confirmation.",
+    a: "Most apartments are fully furnished and styled within 7–20 days of package confirmation, depending on the package and layout.",
   },
   {
     q: "What is included in the minimalist furnishing package?",
@@ -168,14 +168,14 @@ const MinimalistApartmentDubai = () => {
         <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-10 items-center py-10 md:py-16">
           <div>
             <span className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
-              Turnkey · 5–10 days
+              Turnkey · Design to handover
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Minimalist Apartment Furnishing in Dubai
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl">
               Calm, timeless interiors with clean lines and warm neutrals. Full design,
-              delivery, and installation — your apartment ready to live or list in as little as 10 days.
+              delivery, and installation — your apartment ready to live or list.
             </p>
             <div className="flex flex-wrap gap-3">
               <a href="#quote">

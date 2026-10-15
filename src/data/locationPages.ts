@@ -55,7 +55,7 @@ export const locationPages: LocationPageData[] = [
     areaName: "Dubai Marina",
     title: "Apartment Furnishing in Dubai Marina | Furniture Packages | Aziza Home",
     metaDescription:
-      "Turnkey furniture packages for Dubai Marina apartments. Holiday-home and rental-ready furnishing with design, delivery, installation and styling in 5–15 days.",
+      "Turnkey furniture packages for Dubai Marina apartments. Holiday-home and rental-ready furnishing with design, delivery, installation and styling.",
     keywords:
       "dubai marina furnishing, furniture package dubai marina, furnish apartment dubai marina, holiday home furnishing dubai marina, airbnb furnishing dubai marina, rental furnishing marina",
     heroImage: heroMarina,
@@ -94,7 +94,7 @@ export const locationPages: LocationPageData[] = [
     faqs: [
       {
         q: "How long does it take to furnish a Dubai Marina apartment?",
-        a: "Standard setups take 5–15 business days after payment and building access. Marina towers require delivery permits and service-elevator bookings, which we arrange with building management as part of the service.",
+        a: "Standard setups take 7–20 days (depending on package and layout) after payment and building access. Marina towers require delivery permits and service-elevator bookings, which we arrange with building management as part of the service.",
       },
       {
         q: "Do you furnish Marina apartments for Airbnb / holiday homes?",
@@ -120,7 +120,7 @@ export const locationPages: LocationPageData[] = [
     areaName: "Downtown Dubai",
     title: "Apartment Furnishing in Downtown Dubai | Furniture Packages | Aziza Home",
     metaDescription:
-      "Premium furniture packages for Downtown Dubai apartments near Burj Khalifa & Dubai Mall. Turnkey furnishing for rentals and holiday homes in 5–15 days.",
+      "Premium furniture packages for Downtown Dubai apartments near Burj Khalifa & Dubai Mall. Turnkey furnishing for rentals and holiday homes.",
     keywords:
       "downtown dubai furnishing, furniture package downtown dubai, furnish apartment downtown dubai, burj khalifa apartment furnishing, holiday home furnishing downtown, rental furnishing downtown dubai",
     heroImage: heroDowntown,
@@ -171,7 +171,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How fast can a Downtown unit be rental-ready?",
-        a: "Typically 5–15 business days from confirmation and access. Fast-track options may be available depending on stock and tower access rules.",
+        a: "Typically 7–20 days (depending on package and layout) from confirmation and access. Fast-track options may be available depending on stock and tower access rules.",
       },
     ],
     nearby: ["business-bay", "city-walk", "dubai-marina"],
@@ -185,7 +185,7 @@ export const locationPages: LocationPageData[] = [
     areaName: "Business Bay",
     title: "Apartment Furnishing in Business Bay | Furniture Packages | Aziza Home",
     metaDescription:
-      "Turnkey furniture packages for Business Bay apartments. Stand out in Dubai's highest-supply rental market with professional furnishing in 5–15 days.",
+      "Turnkey furniture packages for Business Bay apartments. Stand out in Dubai's highest-supply rental market with professional furnishing.",
     keywords:
       "business bay furnishing, furniture package business bay, furnish apartment business bay, rental furnishing business bay, airbnb furnishing business bay, canal view apartment furnishing",
     heroImage: heroBusinessBay,
@@ -236,7 +236,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How quickly can my Business Bay unit be ready?",
-        a: "Standard timelines are 5–15 business days after confirmation and building access. Bay towers generally have straightforward delivery procedures, which we handle end to end.",
+        a: "Standard timelines are 7–20 days (depending on package and layout) after confirmation and building access. Bay towers generally have straightforward delivery procedures, which we handle end to end.",
       },
     ],
     nearby: ["downtown-dubai", "dubai-marina", "jumeirah-village-circle"],
@@ -250,7 +250,7 @@ export const locationPages: LocationPageData[] = [
     areaName: "Jumeirah Village Circle (JVC)",
     title: "Apartment Furnishing in JVC | Furniture Packages | Aziza Home",
     metaDescription:
-      "Furniture packages for JVC apartments and townhouses. Family-friendly, high-yield rental furnishing in Jumeirah Village Circle — ready in 5–15 days.",
+      "Furniture packages for JVC apartments and townhouses. Family-friendly, high-yield rental furnishing in Jumeirah Village Circle.",
     keywords:
       "jvc furnishing, furniture package jvc, furnish apartment jvc, jumeirah village circle furnishing, family rental furnishing jvc, high yield rental furnishing dubai",
     heroImage: heroJvc,
@@ -262,7 +262,7 @@ export const locationPages: LocationPageData[] = [
     intro: [
       "Jumeirah Village Circle consistently ranks among Dubai's highest rental-yield areas, which is exactly why investors flock to it — and why the rental market there is getting more competitive every year. As new towers hand over, well-presented units lease faster and hold their rates better.",
       "JVC's tenant profile is different from Marina or Downtown: young families and budget-conscious professionals looking for space and value. Our JVC packages prioritise durable materials, family-practical layouts, and warm styling over showpiece minimalism — interiors designed for people who will actually live in them long-term.",
-      "We furnish JVC apartments and townhouses alike, and the community's newer buildings make for smooth delivery logistics — most setups here run at the faster end of our 5–15 day window.",
+      "We furnish JVC apartments and townhouses alike, and the community's newer buildings make for smooth delivery logistics — most setups here run at the faster end of our 7–20 day window.",
     ],
     whyFurnish: [
       {
@@ -301,7 +301,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How long does a JVC setup take?",
-        a: "Most JVC apartments complete in 5–12 business days — the community's newer buildings and easier access typically put it at the faster end of our standard window.",
+        a: "Most JVC apartments complete at the faster end of our standard 7–20 day window — the community's newer buildings and easier access help.",
       },
     ],
     nearby: ["dubai-marina", "business-bay", "dubai-hills-estate"],
@@ -366,7 +366,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How long does a Palm Jumeirah setup take?",
-        a: "Apartments run on our standard 5–15 business-day window. Villas depend on scope and are scheduled as phased installations, typically two to four weeks for a full home.",
+        a: "Apartments run on our standard 7–20 day window, depending on package and layout. Villas depend on scope and are scheduled as phased installations, typically two to four weeks for a full home.",
       },
     ],
     nearby: ["dubai-marina", "downtown-dubai", "dubai-hills-estate"],
@@ -431,7 +431,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How long does furnishing take in Dubai Hills?",
-        a: "Apartments complete in the standard 5–15 business days. Townhouses and villas are phased by floor and typically take two to four weeks depending on scope.",
+        a: "Apartments complete in the standard 7–20 days (depending on package and layout). Townhouses and villas are phased by floor and typically take two to four weeks depending on scope.",
       },
     ],
     nearby: ["downtown-dubai", "jumeirah-village-circle", "business-bay"],
@@ -496,7 +496,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How long does a City Walk furnishing project take?",
-        a: "Standard apartments complete in 5–15 business days after confirmation and access. We arrange Meraas community delivery permits and service-route bookings as part of the project, so access rules don't add delays.",
+        a: "Standard apartments complete in 7–20 days (depending on package and layout) after confirmation and access. We arrange Meraas community delivery permits and service-route bookings as part of the project, so access rules don't add delays.",
       },
     ],
     nearby: ["downtown-dubai", "business-bay", "palm-jumeirah"],
@@ -554,7 +554,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How fast can a JBR unit be ready for the high season?",
-        a: "Standard setups run 5–15 business days. If you're targeting the winter peak, contact us by early autumn — we schedule JBR projects so units are photographed and listed before demand spikes.",
+        a: "Standard setups run 7–20 days (depending on package and layout). If you're targeting the winter peak, contact us by early autumn — we schedule JBR projects so units are photographed and listed before demand spikes.",
       },
     ],
     nearby: ["dubai-marina", "palm-jumeirah", "jumeirah-lakes-towers"],
@@ -568,7 +568,7 @@ export const locationPages: LocationPageData[] = [
     areaName: "Dubai Creek Harbour",
     title: "Apartment Furnishing in Dubai Creek Harbour | Furniture Packages | Aziza Home",
     metaDescription:
-      "Furniture packages for Dubai Creek Harbour apartments. Post-handover furnishing for Creek Horizon, Harbour Views, Address Harbour Point and more — ready in 5–15 days.",
+      "Furniture packages for Dubai Creek Harbour apartments. Post-handover furnishing for Creek Horizon, Harbour Views, Address Harbour Point and more.",
     keywords:
       "dubai creek harbour furnishing, furniture package creek harbour, furnish apartment creek harbour, creek horizon furnishing, harbour views furnishing, emaar creek harbour handover furnishing",
     heroImage: heroCreek,
@@ -676,7 +676,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How long does a Damac Hills villa take to furnish?",
-        a: "Townhouses typically complete in one to two weeks; larger villas run two to four weeks as phased installations. Apartments in the community's towers follow our standard 5–15 business-day window.",
+        a: "Townhouses and villas are phased installations that typically run two to four weeks depending on scope. Apartments in the community's towers follow our standard 7–20 day window, depending on package and layout.",
       },
       {
         q: "Can you include garden and terrace furniture?",
@@ -756,7 +756,7 @@ export const locationPages: LocationPageData[] = [
     areaName: "Meydan & MBR City",
     title: "Apartment Furnishing in Meydan & MBR City | Aziza Home",
     metaDescription:
-      "Furniture packages for Meydan and MBR City apartments — Sobha Hartland, Azizi Riviera, District One. Post-handover and rental-ready furnishing in 5–15 days.",
+      "Furniture packages for Meydan and MBR City apartments — Sobha Hartland, Azizi Riviera, District One. Post-handover and rental-ready furnishing.",
     keywords:
       "meydan furnishing, mbr city furnishing, sobha hartland furnishing, azizi riviera furnishing, district one furnishing, furniture package meydan, furnish apartment mbr city",
     heroImage: heroMeydan,
@@ -807,7 +807,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How long does furnishing take in MBR City?",
-        a: "The standard 5–15 business days after payment and access. During large handover phases we book delivery slots early, so earlier contact means faster turnaround.",
+        a: "The standard 7–20 days (depending on package and layout) after payment and access. During large handover phases we book delivery slots early, so earlier contact means faster turnaround.",
       },
     ],
     nearby: ["downtown-dubai", "dubai-creek-harbour", "business-bay"],
@@ -821,7 +821,7 @@ export const locationPages: LocationPageData[] = [
     areaName: "JLT (Jumeirah Lakes Towers)",
     title: "Apartment Furnishing in JLT | Furniture Packages | Aziza Home",
     metaDescription:
-      "Furniture packages for JLT apartments. Rental-ready furnishing for Jumeirah Lakes Towers' clusters — Marina quality at JLT prices, ready in 5–15 days.",
+      "Furniture packages for JLT apartments. Rental-ready furnishing for Jumeirah Lakes Towers' clusters — Marina quality at JLT prices.",
     keywords:
       "jlt furnishing, furniture package jlt, furnish apartment jlt, jumeirah lakes towers furnishing, dmcc apartment furnishing, lake view apartment furnishing dubai",
     heroImage: heroJlt,
@@ -872,7 +872,7 @@ export const locationPages: LocationPageData[] = [
       },
       {
         q: "How long does a JLT setup take?",
-        a: "The standard 5–15 business days. JLT towers have well-established delivery procedures, and we handle the service-elevator bookings and permits with each cluster's management.",
+        a: "The standard 7–20 days (depending on package and layout). JLT towers have well-established delivery procedures, and we handle the service-elevator bookings and permits with each cluster's management.",
       },
     ],
     nearby: ["dubai-marina", "jbr", "jumeirah-village-circle"],

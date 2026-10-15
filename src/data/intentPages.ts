@@ -40,7 +40,7 @@ export const intentPages: IntentPageData[] = [
     path: "/holiday-home-furnishing-dubai",
     title: "Holiday Home & Airbnb Furnishing in Dubai | Aziza Home",
     metaDescription:
-      "Turnkey holiday home and Airbnb furnishing in Dubai. Design, furniture, styling and photo-ready handover for short-term rentals — set up in 5–15 days.",
+      "Turnkey holiday home and Airbnb furnishing in Dubai. Design, furniture, styling and photo-ready handover for short-term rentals.",
     keywords:
       "holiday home furnishing dubai, airbnb furnishing dubai, short term rental furnishing dubai, furnish airbnb apartment dubai, holiday home setup dubai, vacation rental furniture package dubai, dtcm holiday home furnishing",
     heroImage: heroHoliday,
@@ -79,7 +79,7 @@ export const intentPages: IntentPageData[] = [
     faqs: [
       {
         q: "How fast can my apartment be ready to list?",
-        a: "Standard holiday-home setups complete in 5–15 business days after payment and building access. Add a few days for your listing photography and platform approval, and most owners go live within three weeks of starting.",
+        a: "Standard holiday-home setups complete in 7–20 days (depending on package and layout) after payment and building access. Add a few days for your listing photography and platform approval, and most owners go live within three weeks of starting.",
       },
       {
         q: "Does furnishing quality really change Airbnb income?",

@@ -12,20 +12,9 @@ interface StructuredDataProps {
   pageDescription?: string;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ⚠️ IMPORTANT: Keep these numbers in sync with the REAL reviews on your
-// Google Business Profile. Google's guidelines require that structured-data
-// ratings reflect genuine, verifiable reviews shown to users — inflating or
-// inventing them risks a manual action / rich-result removal.
-// Update ratingValue & reviewCount whenever your GBP reviews change.
-// ─────────────────────────────────────────────────────────────────────────────
-const AGGREGATE_RATING = {
-  "@type": "AggregateRating",
-  "ratingValue": "5.0",   // ← your current Google review average
-  "reviewCount": "12",    // ← your current Google review count
-  "bestRating": "5",
-  "worstRating": "1"
-};
+// No aggregateRating: Google ignores self-declared ratings on a business's own
+// LocalBusiness/Organization markup and treats unverifiable ones as spam. Reviews
+// belong on the Google Business Profile.
 
 const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredDataProps = {}) => {
   const location = useLocation();
@@ -39,8 +28,8 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
     "url": baseUrl,
     "logo": `${baseUrl}/aziza-logo.png`,
     "description": "Premium Japandi-style interior design and complete A-Z furnishing packages in Dubai. Transform your space with minimalist, timeless design.",
-    "foundingDate": "2020",
-    "email": "info@azizahome.com",
+    "foundingDate": "2022",
+    "email": "info@azizahomes.com",
     "telephone": "+971-55-977-9635",
     "address": {
       "@type": "PostalAddress",
@@ -53,7 +42,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
         "@type": "ContactPoint",
         "telephone": "+971-55-977-9635",
         "contactType": "Customer Service",
-        "email": "info@azizahome.com",
+        "email": "info@azizahomes.com",
         "areaServed": ["AE"],
         "availableLanguage": ["English", "Arabic"]
       },
@@ -61,7 +50,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
         "@type": "ContactPoint",
         "telephone": "+351-910-163-678",
         "contactType": "Customer Service",
-        "email": "info@azizahome.com",
+        "email": "info@azizahomes.com",
         "areaServed": ["PT"],
         "availableLanguage": ["English", "Portuguese"]
       }
@@ -82,7 +71,7 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
     "description": pageDescription || "Premium interior design and turnkey furnishing packages in Dubai. Specializing in holiday homes, expat relocations, and investor properties.",
     "url": baseUrl,
     "telephone": "+971-55-977-9635",
-    "email": "info@azizahome.com",
+    "email": "info@azizahomes.com",
     "priceRange": "AED 26,000–115,000",
     "currenciesAccepted": "AED, USD, EUR",
     "paymentAccepted": "Cash, Credit Card, Bank Transfer",
@@ -97,7 +86,6 @@ const StructuredData = ({ breadcrumbs, pageTitle, pageDescription }: StructuredD
       "latitude": "25.0772",
       "longitude": "55.1335"
     },
-    "aggregateRating": AGGREGATE_RATING,
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",
       "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],

@@ -26,7 +26,7 @@ export const MultilingualSEO = ({
   description, 
   path, 
   keywords,
-  image = "https://lemuscsvkmpqggfkpfkp.supabase.co/storage/v1/object/public/images/hero-image-new.jpg"
+  image = "https://www.azizahomes.com/hero-image-new.jpg"
 }: MultilingualSEOProps) => {
   const { i18n } = useTranslation();
   const currentLang = i18n.language || 'en';
