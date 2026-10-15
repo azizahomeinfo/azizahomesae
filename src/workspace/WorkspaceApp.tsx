@@ -21,6 +21,7 @@ import Guide from "./pages/Guide";
 import Reports from "./pages/Reports";
 import ProposalDoc from "./ProposalDoc";
 import ContractDoc from "./ContractDoc";
+import { UpdateNotice } from "./UpdateNotice";
 
 const Guard = ({ page, role, children }: { page: WorkspacePage; role: WorkspaceRole; children: ReactElement }) =>
   canSee(role, page) ? children : (
@@ -79,6 +80,7 @@ const WorkspaceApp = () => (
       <meta name="robots" content="noindex, nofollow" />
     </Helmet>
     <Gate />
+    <UpdateNotice />
   </WorkspaceProvider>
 );
 
