@@ -41,7 +41,6 @@ const CSS = `
 /* Sizes follow the agreement sales already send (body 10.8pt, items 9.2pt, headings in Cormorant). */
 .ctr { font-family: 'Montserrat', sans-serif; font-size: 14.4px; line-height: 1.65; color: hsl(var(--fg-2)); background: hsl(var(--card)); }
 .ctr b { font-weight: 600; }
-.ctr-sheet { width: 794px; max-width: 100%; margin: 0 auto; padding: 0.7in; box-shadow: 0 1px 12px hsl(var(--foreground) / 0.12); }
 .ctr-head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid hsl(var(--border-soft)); padding-bottom: 8px; margin-bottom: 22px; }
 .ctr-head img { width: 42px; height: 42px; object-fit: contain; }
 .ctr-head span { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); }
@@ -82,39 +81,18 @@ const CSS = `
 .ctr-line span:first-child { display: block; font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); }
 .ctr-line span:last-child { display: block; border-bottom: 1px solid hsl(var(--foreground) / 0.5); min-height: 22px; padding: 2px 4px 0; font-size: 12.3px; font-weight: 500; color: hsl(var(--foreground)); }
 .ctr-line:first-of-type span:last-child { min-height: 48px; } /* room to sign */
-.ctr-pf { display: none; }
-.ctr-spacer-h { height: 64px; } .ctr-spacer-f { height: 36px; }
-.ctr-layout { width: 100%; border-collapse: collapse; } .ctr-layout > thead, .ctr-layout > tfoot { display: none; }
 .ctr-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; position: relative; box-sizing: border-box; width: 794px; height: 1123px; padding: 0.7in; display: flex; flex-direction: column; overflow: hidden; background: hsl(var(--card)); }
 .ctr-page > .ctr-head { margin-bottom: 18px; } .ctr-page > .ctr-foot { margin-top: auto; }
 .ctr-page-body { flex: 1 1 auto; min-height: 0; }
 .ctr-measure { position: absolute; left: -10000px; top: 0; width: calc(794px - 1.4in); visibility: hidden; pointer-events: none; }
 `;
-/** Print rules for the agreement on its own (flowing pages, browser margins). Left out of the combined document. */
-const CSS_PRINT = `
-@media print {
-  @page { size: A4; margin: 0.7in; }
-  html, body { background: hsl(var(--card)) !important; }
-  body * { visibility: hidden !important; }
-  /* Hidden is not gone: the editor beside the preview still took up height and printed as blank pages. */
-  body *:not([data-contract-root]):not([data-contract-root] *):not(:has([data-contract-root])) { display: none !important; }
-  [data-contract-root], [data-contract-root] * { visibility: visible !important; }
-  [data-contract-root] { position: absolute; left: 0; top: 0; width: 100%; }
-  .ctr-sheet { width: auto; padding: 0; box-shadow: none; }
-  .ctr-sheet > .ctr-head, .ctr-sheet > .ctr-foot { display: none; }
-  .ctr-pf { display: flex; position: fixed; left: 0; right: 0; margin: 0; background: hsl(var(--card)); }
-  .ctr-pf.ctr-head { top: 0; } .ctr-pf.ctr-foot { bottom: 0; }
-  .ctr-layout > thead { display: table-header-group; } .ctr-layout > tfoot { display: table-footer-group; }
-}
-`;
-
 /* ---------------- the document ---------------- */
 
-const Head = ({ d, fixed }: { d: ContractDocument; fixed?: boolean }) => (
-  <div className={fixed ? "ctr-head ctr-pf" : "ctr-head"}><img src={logo} alt="Aziza Home" /><span>Sales Agreement · {projectLabel(d) || "—"}</span></div>
+const Head = ({ d }: { d: ContractDocument }) => (
+  <div className="ctr-head"><img src={logo} alt="Aziza Home" /><span>Sales Agreement · {projectLabel(d) || "—"}</span></div>
 );
-const Foot = ({ d, fixed }: { d: ContractDocument; fixed?: boolean }) => (
-  <div className={fixed ? "ctr-foot ctr-pf" : "ctr-foot"}><span>{footerLeft(d.vatCharged)}</span><span>azizahomes.com · +971 55 977 9635</span></div>
+const Foot = ({ d, page }: { d: ContractDocument; page?: string }) => (
+  <div className="ctr-foot"><span>{footerLeft(d.vatCharged)}</span><span>azizahomes.com · +971 55 977 9635{page ? ` · ${page}` : ""}</span></div>
 );
 
 const longDate = (iso: string) => {
@@ -201,34 +179,13 @@ export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
   ];
 };
 
-export const ContractPaper = ({ d }: { d: ContractDocument }) => {
-  return (
-    <div className="ctr contract-doc" data-contract-root>
-      <style>{CSS + CSS_PRINT}</style>
-      <Head d={d} fixed /><Foot d={d} fixed />
-      <div className="ctr-sheet">
-        <Head d={d} />
-        <table className="ctr-layout">
-          <thead><tr><td><div className="ctr-spacer-h" /></td></tr></thead>
-          <tfoot><tr><td><div className="ctr-spacer-f" /></td></tr></tfoot>
-          <tbody><tr><td>
-            {contractBlocks(d).map((b) => b.kind === "goods" ? <GoodsTable key={b.key} rows={b.rows} /> : <div key={b.key}>{b.node}</div>)}
-          </td></tr></tbody>
-        </table>
-        <Foot d={d} />
-      </div>
-    </div>
-  );
-};
-
-
 /* ---------------- the agreement as fixed A4 pages (for the combined proposal + agreement) ---------------- */
 
 type PagePart = { kind: "block"; i: number } | { kind: "goods"; rows: GoodsRow[] };
 const PAGE_INNER_H = 1123 - 2 * 67; // A4 at 96 dpi minus the 0.7in margins
 
 /**
- * Same content as ContractPaper, laid out in code onto 794×1123 pages so it can share one print job
+ * The agreement laid out in code onto 794×1123 pages, for its own PDF and to share one print job
  * with the proposal's full-bleed pages: one @page rule (no margin) for the whole document, in every
  * browser. Blocks are measured off-screen once fonts are loaded, then packed.
  */
@@ -280,7 +237,7 @@ export const useContractPages = (d: ContractDocument) => {
     <div ref={ref} className="ctr ctr-measure" aria-hidden>
       <style>{CSS}</style>
       <div data-m="head"><Head d={d} /></div>
-      <div data-m="foot"><Foot d={d} /></div>
+      <div data-m="foot"><Foot d={d} page="Page 10 of 10" /></div>
       {blocks.map((b, i) => b.kind === "block"
         ? <div key={b.key} data-m={`b${i}`} style={{ display: "flow-root" }}>{b.node}</div>
         : <div key={b.key} data-m="goods" style={{ display: "flow-root" }}><GoodsTable rows={b.rows} /></div>)}
@@ -292,15 +249,35 @@ export const useContractPages = (d: ContractDocument) => {
       <Head d={d} />
       <div className="ctr-page-body">
         {pages[n].map((part, j) => part.kind === "block"
-          ? <div key={j} style={{ display: "flow-root" }}>{(blocks[part.i] as Extract<ContractBlock, { kind: "block" }>).node}</div>
+          // pages can be one edit behind the blocks while they are re-measured (e.g. a clause just deleted)
+          ? <div key={j} style={{ display: "flow-root" }}>{(blocks[part.i] as Extract<ContractBlock, { kind: "block" }> | undefined)?.node}</div>
           : <GoodsTable key={j} rows={part.rows} />)}
       </div>
-      <div className="ctr-foot"><span>{footerLeft(d.vatCharged)}</span><span>Agreement · page {n + 1} of {total}</span></div>
+      <Foot d={d} page={`Page ${n + 1} of ${total}`} />
     </div>
   );
   return { measurer, count: pages?.length ?? 0, ready: !!pages, render };
 };
 
+
+/**
+ * The agreement on its own, previewed and printed as the same fixed A4 pages as the combined document.
+ * The earlier flowing print relied on repeating table headers and position: fixed for the page head and
+ * foot, which Safari doesn't repeat per page: from page 2 the header and footer ran over the text.
+ */
+const AgreementPages = ({ d, onReady }: { d: ContractDocument; onReady: (ready: boolean) => void }) => {
+  const cp = useContractPages(d);
+  useEffect(() => { onReady(cp.ready); }, [cp.ready, onReady]);
+  return (
+    <>
+      <style>{PROPOSAL_CSS}</style>
+      {cp.measurer}
+      {cp.ready
+        ? <PageStack pages={Array.from({ length: cp.count }, (_, n) => cp.render(n, cp.count))} />
+        : <p className="p-6 text-sm text-muted-foreground">Preparing the pages…</p>}
+    </>
+  );
+};
 
 /* ---------------- proposal + agreement, one document ---------------- */
 
@@ -493,6 +470,7 @@ const ContractDoc = () => {
   const { data: dealFiles = [] } = useLeadDealFiles(leadId);
   const [params] = useSearchParams();
   const [combined, setCombined] = useState(params.get("combined") === "1");
+  const [pagesReady, setPagesReady] = useState(false);
   // The GM re-quoted after item changes: a draft contract takes the new price for its option and the FF&E items
   // the GM priced, without a button. An issued one waits for sales (it has gone to the client).
   const followedQuote = useRef<string | null>(null);
@@ -622,6 +600,7 @@ const ContractDoc = () => {
     catch (e) { toast.error(errMsg(e, "Failed")); }
   };
   const print = () => {
+    if (!pagesReady) return;
     const missing = preflight(d);
     const file = docFileName("Sales Agreement", d.client || lead.name, d.building);
     if (missing.length) setConfirm({ title: "Some details are missing", body: `Missing: ${missing.join(", ")}. Print anyway?`, run: () => window.setTimeout(() => printAs(file), 200) });
@@ -666,7 +645,7 @@ const ContractDoc = () => {
             title={costingOpen ? "Wait for the GM's new price for the changed items" : undefined} onClick={() => setStatus("Issued")}>Mark issued</Button>}
           {canEdit && row.status === "Issued" && <Button variant="outline" onClick={() => { setHandover(lead.target_date ?? ""); setSignOpen(true); }}>Mark signed</Button>}
           {editable && <Button variant="outline" disabled={!draft || save.isPending} onClick={persist}>Save</Button>}
-          <Button onClick={print}>Save as PDF / Print</Button>
+          <Button onClick={print} disabled={!pagesReady}>{pagesReady ? "Save as PDF / Print" : "Preparing…"}</Button>
           <Button variant="outline" title="The proposal followed by this agreement, as one PDF for the client to sign"
             onClick={() => setCombined(true)}>
             Proposal + agreement
@@ -837,8 +816,8 @@ const ContractDoc = () => {
           </Section>
         </aside>
 
-        <div className="overflow-x-auto rounded-[var(--radius)] bg-muted/20 p-4">
-          <ContractPaper d={d} />
+        <div className="overflow-x-auto rounded-[var(--radius)] bg-muted/20">
+          <AgreementPages d={d} onReady={setPagesReady} />
         </div>
       </div>
 
