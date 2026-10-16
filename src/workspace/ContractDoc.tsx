@@ -38,44 +38,50 @@ const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
 /* ---------------- print + document CSS ---------------- */
 
 const CSS = `
-.ctr { font-family: 'Montserrat', sans-serif; font-size: 10.5px; line-height: 1.65; color: hsl(var(--foreground)); background: hsl(var(--card)); }
+/* Sizes follow the agreement sales already send (body 10.8pt, items 9.2pt, headings in Cormorant). */
+.ctr { font-family: 'Montserrat', sans-serif; font-size: 14.4px; line-height: 1.65; color: hsl(var(--fg-2)); background: hsl(var(--card)); }
+.ctr b { font-weight: 600; }
 .ctr-sheet { width: 794px; max-width: 100%; margin: 0 auto; padding: 0.7in; box-shadow: 0 1px 12px hsl(var(--foreground) / 0.12); }
 .ctr-head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid hsl(var(--border-soft)); padding-bottom: 8px; margin-bottom: 22px; }
 .ctr-head img { width: 42px; height: 42px; object-fit: contain; }
-.ctr-head span { font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); }
+.ctr-head span { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); }
 .ctr-foot { display: flex; justify-content: space-between; border-top: 1px solid hsl(var(--border-soft)); padding-top: 6px; margin-top: 28px;
-  font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: hsl(var(--fg-2)); }
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: hsl(var(--fg-2)); }
 .ctr-serif { font-family: 'Cormorant Garamond', serif; }
 .ctr-title { text-align: center; margin-bottom: 20px; }
-.ctr-eyebrow { font-size: 8.5px; letter-spacing: 0.24em; text-transform: uppercase; color: hsl(var(--secondary)); margin: 0 0 6px; }
-.ctr-h1 { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(var(--primary)); margin: 0; line-height: 1.1; }
+.ctr-eyebrow { font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: hsl(var(--secondary)); margin: 0 0 6px; }
+.ctr-h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(var(--primary)); margin: 0; line-height: 1.1; }
 .ctr-rule { width: 64px; height: 2px; background: hsl(var(--primary)); margin: 10px auto 0; }
-.ctr-h2 { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--primary)); margin: 16px 0 4px; font-weight: 600; }
+.ctr-h2 { font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--primary)); margin: 16px 0 4px; font-weight: 600; }
 .ctr p { margin: 0 0 8px; }
 .ctr-indent { padding-left: 18px; font-weight: 500; }
 .ctr-clause { break-inside: avoid; orphans: 3; widows: 3; margin: 12px 0; }
-.ctr-small { font-size: 9.2px; }
-.ctr-goods { width: 100%; border-collapse: collapse; font-size: 11.5px; margin: 8px 0 10px; }
+.ctr-small { font-size: inherit; }
+.ctr-goods { width: 100%; border-collapse: collapse; font-size: 12.3px; color: hsl(var(--foreground)); margin: 8px 0 10px; }
 .ctr-goods tr { break-inside: avoid; }
-.ctr-goods th { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 6px 10px; text-align: left; }
+.ctr-goods th { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 6px 10px; text-align: left; }
 .ctr-goods th.q, .ctr-goods td.q { text-align: right; width: 22%; }
 .ctr-goods td { padding: 5px 10px; border-bottom: 1px solid hsl(var(--border-soft)); }
-.ctr-goods td.sec { background: hsl(var(--surface-warm)); font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: hsl(var(--primary)); font-weight: 600; }
+.ctr-goods td.sec { background: hsl(var(--surface-warm)); font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase; color: hsl(var(--primary)); font-weight: 600; }
 .ctr-goods td.sum { text-align: right; border-bottom: none; }
-.ctr-fig { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600; color: hsl(var(--primary)); }
+.ctr-goods td.sum:first-child { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); }
+.ctr-fig { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: hsl(var(--primary)); }
 .ctr-bank { background: hsl(var(--surface-warm)); border: 1px solid hsl(var(--border-soft)); display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; padding: 10px 14px; margin: 6px 0 4px; break-inside: avoid; }
-.ctr-label { font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); display: block; }
+.ctr-bank b { font-weight: 500; color: hsl(var(--foreground)); }
+.ctr-label { font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); display: block; }
 .ctr-pay { border: 1px solid hsl(var(--primary)); background: hsl(var(--surface-warm)); padding: 10px 14px; break-inside: avoid; }
 .ctr-strip { display: flex; border-top: 1px solid hsl(var(--primary)); margin-top: 8px; }
 .ctr-strip > div { flex: 1; padding: 8px 10px 2px; }
 .ctr-strip > div + div { border-left: 1px solid hsl(var(--primary)); }
-.ctr-strip b { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: hsl(var(--primary)); display: block; }
+.ctr-strip b { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: hsl(var(--primary)); display: block; }
 .ctr-sign { margin-top: 26px; break-inside: avoid; }
 .ctr-sign > p { margin: 0 0 22px; }
 .ctr-sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
-.ctr-sign h3 { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--primary)); border-bottom: 1px solid hsl(var(--primary)); padding-bottom: 4px; margin: 0 0 14px; font-weight: 600; }
-.ctr-line { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
-.ctr-line span:last-child { flex: 1; border-bottom: 1px solid hsl(var(--foreground) / 0.5); min-height: 16px; padding-left: 4px; }
+.ctr-sign h3 { font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--primary)); border-bottom: 1px solid hsl(var(--primary)); padding-bottom: 4px; margin: 0 0 14px; font-weight: 600; }
+.ctr-line { margin-bottom: 16px; }
+.ctr-line span:first-child { display: block; font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: hsl(var(--fg-2)); }
+.ctr-line span:last-child { display: block; border-bottom: 1px solid hsl(var(--foreground) / 0.5); min-height: 22px; padding: 2px 4px 0; font-size: 12.3px; font-weight: 500; color: hsl(var(--foreground)); }
+.ctr-line:first-of-type span:last-child { min-height: 48px; } /* room to sign */
 .ctr-pf { display: none; }
 .ctr-spacer-h { height: 64px; } .ctr-spacer-f { height: 36px; }
 .ctr-layout { width: 100%; border-collapse: collapse; } .ctr-layout > thead, .ctr-layout > tfoot { display: none; }
@@ -90,6 +96,8 @@ const CSS_PRINT = `
   @page { size: A4; margin: 0.7in; }
   html, body { background: hsl(var(--card)) !important; }
   body * { visibility: hidden !important; }
+  /* Hidden is not gone: the editor beside the preview still took up height and printed as blank pages. */
+  body *:not([data-contract-root]):not([data-contract-root] *):not(:has([data-contract-root])) { display: none !important; }
   [data-contract-root], [data-contract-root] * { visibility: visible !important; }
   [data-contract-root] { position: absolute; left: 0; top: 0; width: 100%; }
   .ctr-sheet { width: auto; padding: 0; box-shadow: none; }
