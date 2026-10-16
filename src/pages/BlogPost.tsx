@@ -96,7 +96,7 @@ const BlogPost = () => {
             <p class="text-xl text-white/90">Upgrade your interior. Increase your rental returns by 10–15% per year — without changing your location.</p>
             
             <div class="flex justify-center pt-4">
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
                 🔹 Request Free Consultation
               </a>
             </div>
@@ -337,7 +337,7 @@ const BlogPost = () => {
             </p>
             
             <div class="flex justify-center pt-4">
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
                 ➡️ Request Free Consultation
               </a>
             </div>
@@ -607,7 +607,7 @@ const BlogPost = () => {
             <p class="text-xl text-muted-foreground">Transform your Dubai Marina property into a high-performing holiday rental. Increase your nightly rates by 20–30% and achieve 70%+ occupancy with strategic interior design.</p>
             
             <div class="flex justify-center pt-4">
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
                 🔹 Request Free Consultation
               </a>
             </div>
@@ -875,7 +875,7 @@ const BlogPost = () => {
             </p>
             
             <div class="flex justify-center pt-4">
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
                 ➡️ Request Free Consultation
               </a>
             </div>
@@ -1082,7 +1082,7 @@ const BlogPost = () => {
             <p class="text-xl text-muted-foreground">Attract stable family tenants in Jumeirah Village Circle with strategic furnishing. Increase your rental income by 12–18% and reduce vacancy with family-friendly design.</p>
             
             <div class="flex justify-center pt-4">
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors">
                 🔹 Request Free Consultation
               </a>
             </div>
@@ -1432,7 +1432,7 @@ const BlogPost = () => {
             </p>
             
             <div class="flex justify-center pt-4">
-              <a href="https://wa.me/971585883698" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
+              <a href="https://wa.me/971559779635" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-primary px-10 py-4 text-base font-medium text-white hover:bg-primary/90 transition-colors shadow-lg">
                 ➡️ Request Free JVC Furnishing Consultation
               </a>
             </div>
