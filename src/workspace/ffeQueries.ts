@@ -388,8 +388,11 @@ export const useDeleteFfeItem = () => {
 /* ---------------- costing ---------------- */
 
 /**
- * Markup and GM/return notes live in ffe_costing_private, which RLS hides from sales:
- * markup beside the client-facing option amount would reveal the cost price.
+ * Markup lives in ffe_costing_private, which RLS now shows to the GM alone: cost x markup is the client
+ * price, so a designer holding both would be reading the contract value. The GM's notes and the reason a
+ * list was sent back still have to reach the designer, so those come back through ws_costing_notes
+ * (everyone who can see the costing except sales). The quoted option amounts are sales-and-GM only
+ * (ws_costing_options returns null for designers and coordinators).
  */
 export const useCosting = (owner: FfeOwner | undefined, withCost: boolean) =>
   useQuery({
@@ -404,10 +407,15 @@ export const useCosting = (owner: FfeOwner | undefined, withCost: boolean) =>
       const d = data as unknown as Costing;
       const out = { ...d, options: Array.isArray(opts) ? (opts as unknown as QuoteOption[]) : [] } as Costing;
       if (!withCost) return out;
-      const { data: p, error: pErr } = await supabase.from("ffe_costing_private")
-        .select("markup_pct, gm_notes, return_note").eq("costing_id", d.id).maybeSingle();
-      fail(pErr);
-      return { ...out, markup_pct: p?.markup_pct ?? undefined, gm_notes: p?.gm_notes ?? null, return_note: p?.return_note ?? null };
+      // The markup select comes back empty for anyone but the GM; the notes RPC fills the designer's side.
+      const [priv, notes] = await Promise.all([
+        supabase.from("ffe_costing_private").select("markup_pct").eq("costing_id", d.id).maybeSingle(),
+        supabase.rpc("ws_costing_notes", { _costing: d.id }),
+      ]);
+      fail(priv.error);
+      fail(notes.error);
+      const n = (notes.data ?? null) as { gm_notes: string | null; return_note: string | null } | null;
+      return { ...out, markup_pct: priv.data?.markup_pct ?? undefined, gm_notes: n?.gm_notes ?? null, return_note: n?.return_note ?? null };
     },
   });
 

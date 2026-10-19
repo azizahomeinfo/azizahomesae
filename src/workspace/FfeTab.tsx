@@ -80,6 +80,36 @@ const bySupplier = (rows: FfeRow[]) => {
     .sort(([a], [z]) => (a === NO_SUPPLIER ? 1 : 0) - (z === NO_SUPPLIER ? 1 : 0) || a.localeCompare(z))
     .map(([k, l]) => [k, [...l].sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]);
 };
+const NO_ORDER = "No order number";
+/** The order number as the coordinator typed it on the items — "Order 2", or the shop's own "INV-9981". */
+const orderOf = (r: FfeRow) => r.po_ref?.trim() ?? "";
+const orderLabel = (r: FfeRow) => `${supplierOf(r)} · ${orderOf(r) || NO_ORDER}`;
+/**
+ * One group per delivery the coordinator is waiting for: the shop, then the order he placed with it.
+ * Suppliers A→Z with "No supplier yet" last, and inside a shop the items with no order number last,
+ * because those are the ones still to buy.
+ */
+const byOrder = (rows: FfeRow[]) => {
+  const m = new Map<string, { sup: string; ord: string; rows: FfeRow[] }>();
+  for (const r of rows) {
+    const key = orderLabel(r);
+    const g = m.get(key) ?? { sup: supplierOf(r), ord: orderOf(r), rows: [] };
+    g.rows.push(r);
+    m.set(key, g);
+  }
+  return [...m.entries()]
+    .sort(([, a], [, b]) => (a.sup === NO_SUPPLIER ? 1 : 0) - (b.sup === NO_SUPPLIER ? 1 : 0)
+      || a.sup.localeCompare(b.sup) || (a.ord ? 0 : 1) - (b.ord ? 0 : 1) || a.ord.localeCompare(b.ord))
+    .map(([k, g]) => [k, [...g.rows].sort((x, y) => x.room.localeCompare(y.room) || x.sort_order - y.sort_order)] as [string, FfeRow[]]);
+};
+/** The next free "Order n" for this shop on this list, so one shop's orders read 1, 2, 3. */
+const nextOrderNo = (rows: FfeRow[], supplier: string) => {
+  const used = new Set(rows.filter((r) => supplierOf(r) === supplier).map(orderOf).filter(Boolean));
+  let n = used.size + 1;
+  while (used.has(`Order ${n}`)) n += 1;
+  return `Order ${n}`;
+};
+
 /** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
 type DateField = "ordered_on" | "eta" | "delivered_on" | "installed_on";
 const DATE_FIELDS: DateField[] = ["eta", "delivered_on", "ordered_on", "installed_on"];
@@ -104,6 +134,54 @@ const downloadFfeCsv = (code: string, rows: FfeRow[]) => {
   const a = document.createElement("a");
   a.href = url;
   a.download = `${code} FF&E ${todayISO()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// ---- Receiving checklist, by supplier and order --------------------------
+// What the coordinator holds when a van arrives: every order with its state, then the items of each
+// order under its own heading, so he can tick off one delivery without reading the whole list.
+// No money columns here either.
+const ORDERS_HEADER = ["Check", "Supplier", "Order", "Ref", "Room", "Item", "Qty", "Unit", "Dims", "Spec", "Notes", "Stage", "Ordered", "ETA", "Delivered"];
+const orderSummary = (l: FfeRow[]) => {
+  const delivered = l.filter((r) => !!r.delivered_on || DONE_STAGES.includes(r.stage)).length;
+  const ordered = l.filter((r) => !!r.ordered_on).length;
+  const dates = (k: "ordered_on" | "eta") => [...new Set(l.map((r) => r[k]).filter(Boolean) as string[])].sort();
+  const ord = dates("ordered_on");
+  const eta = dates("eta");
+  return {
+    delivered,
+    pieces: l.reduce((s, r) => s + (Number(r.qty) || 0), 0),
+    ordered: ord[0] ?? "",
+    eta: eta[eta.length - 1] ?? "",
+    status: delivered === l.length ? "Complete"
+      : delivered > 0 ? `Part delivered — ${delivered} of ${l.length}`
+      : ordered === 0 ? "Not ordered yet" : "Waiting",
+  };
+};
+const downloadOrdersCsv = (code: string, rows: FfeRow[]) => {
+  const groups = byOrder(rows);
+  const out: string[] = [];
+  out.push([`Orders — ${code}`, `printed ${todayISO()}`].map(csvCell).join(","));
+  out.push(["Supplier", "Order", "Items", "Pieces", "Ordered", "Latest ETA", "Delivered", "Status"].map(csvCell).join(","));
+  for (const [, l] of groups) {
+    const s = orderSummary(l);
+    out.push([supplierOf(l[0]), orderOf(l[0]) || NO_ORDER, l.length, s.pieces, s.ordered, s.eta, `${s.delivered} of ${l.length}`, s.status].map(csvCell).join(","));
+  }
+  for (const [label, l] of groups) {
+    const s = orderSummary(l);
+    out.push("");
+    out.push([`${label} — ${l.length} item${l.length === 1 ? "" : "s"}, ${s.delivered} of ${l.length} delivered${s.eta ? `, ETA ${s.eta}` : ""}`].map(csvCell).join(","));
+    out.push(ORDERS_HEADER.map(csvCell).join(","));
+    for (const r of l) {
+      out.push(["", supplierOf(r), orderOf(r), r.ref, r.room, r.item, r.qty, r.unit, r.dims, r.spec, r.notes, r.stage, r.ordered_on, r.eta, r.delivered_on].map(csvCell).join(","));
+    }
+  }
+  const blob = new Blob(["\uFEFF" + out.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${code} orders ${todayISO()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 };
@@ -573,11 +651,11 @@ const BudgetSection = ({ projectId, name, status, costing, rows, gapRows, cost, 
 /* ---------------- FF&E costing sheet ---------------- */
 
 /** Room or priority grouping, remembered per user in this browser (designers tend to want room, coordinators priority). */
-type GroupBy = "room" | "priority" | "supplier" | "type";
+type GroupBy = "room" | "priority" | "supplier" | "type" | "order";
 const useFfeGroupBy = (fallback: GroupBy): [GroupBy, (g: GroupBy) => void] => {
   const { member } = useWorkspace();
   const key = `ws.ffe.groupBy.${member?.user_id ?? "anon"}`;
-  const read = (): GroupBy => { try { const v = localStorage.getItem(key); return v === "room" || v === "priority" || v === "supplier" || v === "type" ? v : fallback; } catch { return fallback; } };
+  const read = (): GroupBy => { try { const v = localStorage.getItem(key); return v === "room" || v === "priority" || v === "supplier" || v === "type" || v === "order" ? v : fallback; } catch { return fallback; } };
   const [g, setG] = useState<GroupBy>(read);
   useEffect(() => { setG(read()); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return [g, (v) => { setG(v); try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } }];
@@ -592,6 +670,7 @@ export const GroupToggle = ({ value, onChange }: { value: GroupBy; onChange: (g:
     <Button size="sm" variant={value === "priority" ? "default" : "outline"} aria-pressed={value === "priority"} onClick={() => onChange("priority")}>Priority</Button>
     <Button size="sm" variant={value === "supplier" ? "default" : "outline"} aria-pressed={value === "supplier"} onClick={() => onChange("supplier")}>Supplier</Button>
     <Button size="sm" variant={value === "type" ? "default" : "outline"} aria-pressed={value === "type"} onClick={() => onChange("type")}>Item type</Button>
+    <Button size="sm" variant={value === "order" ? "default" : "outline"} aria-pressed={value === "order"} onClick={() => onChange("order")}>Order</Button>
   </div>
 );
 
@@ -777,7 +856,8 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
   const gapInternal = budget && onlyGaps ? internalRows.filter(missingBuyability) : internalRows;
   const shownInternal = gapInternal.filter((r) => matchesSearch(r, search));
   // Room headings carry the section controls; priority headings are read-only buckets (rename/delete there would be meaningless).
-  const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows) : groupBy === "type" ? byItemType(rows) : groups;
+  const baseGroups = groupBy === "priority" ? byBand(rows) : groupBy === "supplier" ? bySupplier(rows)
+    : groupBy === "order" ? byOrder(rows) : groupBy === "type" ? byItemType(rows) : groups;
   const gapGroups = budget && onlyGaps ? baseGroups.map(([g, l]) => [g, l.filter(missingBuyability)] as [string, FfeRow[]]).filter(([, l]) => l.length) : baseGroups;
   // [heading, shown rows, whole group] — the subtotal always sums the whole group.
   const shownGroups = gapGroups.map(([g, l]) => [g, l.filter((r) => matchesSearch(r, search)), l] as [string, FfeRow[], FfeRow[]])
@@ -1242,6 +1322,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const searching = !!search.trim();
   const groups = useMemo(() => {
     if (groupBy === "supplier") return bySupplier(rows);
+    if (groupBy === "order") return byOrder(rows);
     const client = rows.filter((r) => !isInternal(r));
     const internal = rows.filter(isInternal);
     const g = groupBy === "room" ? byRoom(client) : groupBy === "type" ? byItemType(client) : byBand(client);
@@ -1253,6 +1334,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   // Inspection export: the whole list in the same on-screen order, ignoring any active filter/search.
   const exportRows = useMemo(() => {
     if (groupBy === "supplier") return bySupplier(allRows).flatMap(([, l]) => l);
+    if (groupBy === "order") return byOrder(allRows).flatMap(([, l]) => l);
     const client = allRows.filter((r) => !isInternal(r));
     const internal = allRows.filter(isInternal);
     const g = groupBy === "room" ? byRoom(client) : groupBy === "type" ? byItemType(client) : byBand(client);
@@ -1360,6 +1442,13 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
               <Download className="mr-1 h-3.5 w-3.5" />Download list
             </Button>
           )}
+          {canEdit && (
+            <Button size="sm" variant="outline" disabled={!allRows.length}
+              title={allRows.length ? "Every order with its state, then its items — for checking a delivery in" : "No items to download yet"}
+              onClick={() => downloadOrdersCsv(project.code, allRows)}>
+              <Download className="mr-1 h-3.5 w-3.5" />Download orders
+            </Button>
+          )}
           {canEdit && <DriverListButton project={project} rows={allRows} />}
           {view === "table" && (
             <>
@@ -1423,7 +1512,14 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           <div className="flex flex-wrap items-center gap-2">
           {groupBy === "supplier" && room !== NO_SUPPLIER && (
             <Button size="sm" variant="outline" disabled={!whole.some(buyable) || update.isPending}
-              onClick={() => { setOrderPo(""); setOrderDate(todayISO()); setOrderAll({ supplier: room, items: whole }); }}>Order all from {room}</Button>
+              onClick={() => { setOrderPo(nextOrderNo(allRows, room)); setOrderDate(todayISO()); setOrderAll({ supplier: room, items: whole }); }}>Order all from {room}</Button>
+          )}
+          {groupBy === "order" && !room.endsWith(NO_ORDER) && (
+            <Button size="sm" variant="outline"
+              disabled={update.isPending || whole.every((r) => !!r.delivered_on)}
+              onClick={() => setDates(whole.filter((r) => !r.delivered_on).map((r) => r.id), "delivered_on", todayISO())}>
+              Whole order arrived today
+            </Button>
           )}
           <label className="flex items-center gap-2 text-xs">
             <Checkbox checked={items.every((r) => sel.has(r.id))}
@@ -1512,7 +1608,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
                 <span className="text-muted-foreground">Order date — applied to every item without one</span>
                 <Input type="date" value={orderDate} max={todayISO()} onChange={(e) => setOrderDate(e.target.value)} aria-label="Order date for this order" />
               </label>
-              <Input placeholder="PO ref (optional)" value={orderPo} onChange={(e) => setOrderPo(e.target.value)} aria-label="PO ref for this order" />
+              <Input placeholder="Order number (optional)" value={orderPo} onChange={(e) => setOrderPo(e.target.value)} aria-label="PO ref for this order" />
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <Button disabled={!send.length || update.isPending} onClick={() => placeOrder(orderAll.supplier, send)}>Order {send.length}</Button>

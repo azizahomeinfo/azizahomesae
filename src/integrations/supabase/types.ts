@@ -1985,6 +1985,7 @@ export type Database = {
         Returns: boolean
       }
       ws_costing_options: { Args: { _costing: string }; Returns: Json }
+      ws_costing_notes: { Args: { _costing: string }; Returns: Json }
       ws_cr_costs: {
         Args: { _project?: string }
         Returns: {
