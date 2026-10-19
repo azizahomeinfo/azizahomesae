@@ -14,8 +14,8 @@ export type WorkspacePage =
 
 // Convenience only — database RLS is the real access boundary.
 export const PAGES_BY_ROLE: Record<WorkspaceRole, WorkspacePage[]> = {
-  gm: ["dashboard", "leads", "briefs", "proposals", "contracts", "projects", "tasks", "suppliers", "reports", "settings"],
-  sales: ["dashboard", "leads", "proposals", "contracts", "projects", "reports"],
+  gm: ["dashboard", "leads", "briefs", "proposals", "contracts", "projects", "tasks", "suppliers", "guide", "reports", "settings"],
+  sales: ["dashboard", "leads", "proposals", "contracts", "projects", "guide", "reports"],
   designer: ["dashboard", "briefs", "projects", "tasks", "suppliers"],
   coordinator: ["dashboard", "projects", "tasks", "suppliers", "guide"],
 };
@@ -32,7 +32,7 @@ export const PAGE_META: Record<WorkspacePage, { label: string; path: string; des
   projects: { label: "Projects", path: "/workspace/projects", description: "Live jobs from deposit to handover." },
   tasks: { label: "Tasks", path: "/workspace/tasks", description: "What needs doing, by whom, and when." },
   suppliers: { label: "Suppliers", path: "/workspace/suppliers", description: "Who we buy from, their terms and how they perform." },
-  guide: { label: "How my job works", path: "/workspace/guide", description: "What you own, and how to work it." },
+  guide: { label: "Playbook", path: "/workspace/guide", description: "How your job works — and, for sales, what to say on a first call." },
   reports: { label: "Reports", path: "/workspace/reports", description: "Pipeline, conversion and delivery from the rows you can see." },
   settings: { label: "Settings", path: "/workspace/settings", description: "Team roster, roles and invitations." },
 };

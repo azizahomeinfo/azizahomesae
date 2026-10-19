@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { checkDriveUrl } from "./DriveLink";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -159,6 +160,16 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
 
   const body = (
     <form onSubmit={submit} className="space-y-6 font-body">
+      {/* On a first call this form IS the call sheet — the playbook's questions in the order they are asked. */}
+      {!lead && (
+        <p className="rounded-[var(--radius)] border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          On a first call?{" "}
+          <Link to="/workspace/guide" target="_blank" rel="noopener" className="font-medium text-primary underline-offset-4 hover:underline">
+            Open the Stage 1 playbook
+          </Link>{" "}
+          — the opening script, the questions in order and what you must have before hanging up. Your draft is kept.
+        </p>
+      )}
       <fieldset>
         <Legend>Client</Legend>
         <div className="grid gap-4 sm:grid-cols-3">
