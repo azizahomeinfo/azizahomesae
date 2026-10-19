@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AREAS, HANDOVER_STATUSES, LEAD_STATUSES, SCOPES, SOURCES, UNIT_TYPES, USES, type LeadStatus } from "./constants";
-import { useCreateLead, useMembers, useUpdateLead, type Lead } from "./queries";
+import { useCreateLead, useLeadBudgets, useMembers, useSetLeadBudget, useUpdateLead, type Lead } from "./queries";
 import { useWorkspace } from "./WorkspaceProvider";
 
 const NONE = "__none";
@@ -34,12 +34,14 @@ const schema = z.object({
   source: z.string().trim().min(1, "Choose where this lead came from (Source)"),
 });
 
-const fromLead = (l?: Lead | null): FormState => {
+/** `budget` is not on the lead row any more (no column grant), so it is passed in separately. */
+const fromLead = (l?: Lead | null, budget?: number | null): FormState => {
   const s = {} as FormState;
   for (const f of FIELDS) {
     const v = l ? (l as unknown as Record<string, unknown>)[f] : null;
     s[f] = v === null || v === undefined ? "" : String(v);
   }
+  s.budget = budget == null ? "" : String(budget);
   if (!l) s.status = "New Lead";
   return s;
 };
@@ -73,11 +75,14 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
   const { data: members = [] } = useMembers();
   const create = useCreateLead();
   const update = useUpdateLead();
-  const [f, setF] = useState<FormState>(() => fromLead(lead));
+  const { data: budgets } = useLeadBudgets();
+  const setBudget = useSetLeadBudget();
+  const leadBudget = lead ? budgets?.get(lead.id) ?? null : null;
+  const [f, setF] = useState<FormState>(() => fromLead(lead, leadBudget));
 
   useEffect(() => {
-    if (open) setF(lead ? fromLead(lead) : { ...fromLead(null), ...(readDraft() ?? {}) });
-  }, [open, lead]);
+    if (open) setF(lead ? fromLead(lead, leadBudget) : { ...fromLead(null), ...(readDraft() ?? {}) });
+  }, [open, lead, leadBudget]);
   useEffect(() => {
     if (open && !lead) writeDraft(f);
   }, [open, lead, f]);
@@ -120,7 +125,7 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
       phone: n(f.phone), email: n(f.email), property: n(f.property), building: n(f.building),
       location: n(f.location), unit_type: n(f.unit_type), size: n(f.size), handover_status: n(f.handover_status),
       exp_handover: f.handover_status === "Pending handover" ? n(f.exp_handover) : null,
-      use_type: n(f.use_type), budget: f.budget === "" ? null : Number(f.budget), target_date: n(f.target_date),
+      use_type: n(f.use_type), target_date: n(f.target_date),
       scope: n(f.scope), style: n(f.style), refs: n(f.refs), floor_plan: n(f.floor_plan), source: n(f.source),
       status: (f.status || "New Lead") as LeadStatus, last_contact: n(f.last_contact), next_follow: n(f.next_follow),
       notes: n(f.notes), drive_url: drive.value,
@@ -136,6 +141,10 @@ const LeadForm = ({ open, onOpenChange, lead, onSaved }: Props) => {
         toast.success(`Lead ${saved.ref} created`);
         writeDraft(null);
       }
+      // The budget is written on its own: only the GM and the lead's sales owner may set it, and it is
+      // no longer part of the lead row the form sends.
+      const amount = f.budget === "" ? null : Number(f.budget);
+      if (amount !== leadBudget) await setBudget.mutateAsync({ leadId: saved.id, amount });
       onOpenChange(false);
       onSaved?.(saved);
     } catch (err) {

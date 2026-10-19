@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useBrief, useBriefList, useLead, useMembers, type BriefListRow , isPackageBrief } from "../queries";
+import { useBrief, useBriefList, useLead, useLeadBudgets, useMembers, type BriefListRow , isPackageBrief } from "../queries";
 import { canSee, type WorkspaceRole } from "../access";
 import BriefEditor from "../BriefEditor";
 import { BRIEF_LABEL, BRIEF_STATUSES, type BriefStatus } from "../briefWorkflow";
@@ -76,11 +76,11 @@ const DesignLink = ({ leadId, briefStatus, leadWon, pkg = false }: { leadId: str
 
 interface CardData {
   leadId: string; name: string; property: string | null; unitType: string | null;
-  budget: number | null; targetDate: string | null; status: BriefStatus;
+  targetDate: string | null; status: BriefStatus;
 }
 
 // Links to the lead page only for roles that can open it; designers never get the lead page (deal records, commercials).
-const BriefCard = ({ d, label }: { d: CardData; label?: string }) => {
+const BriefCard = ({ d, label, budget }: { d: CardData; label?: string; budget?: number | null }) => {
   const { member } = useWorkspace();
   const body = (
   <>
@@ -90,7 +90,7 @@ const BriefCard = ({ d, label }: { d: CardData; label?: string }) => {
     </div>
     <p className="text-sm text-muted-foreground truncate">{[d.property, d.unitType].filter(Boolean).join(" · ") || "—"}</p>
     <div className="flex justify-between text-sm">
-      <span>{aed(d.budget)}</span>
+      <span>{budget == null ? "" : aed(budget)}</span>
       <span className="text-muted-foreground">Target {shortDate(d.targetDate)}</span>
     </div>
   </>
@@ -114,7 +114,7 @@ const Group = ({ title, empty, children, count }: { title: string; empty: string
 
 const fromRow = (b: BriefListRow): CardData => ({
   leadId: b.lead_id, name: b.leads?.name ?? "—", property: b.leads?.property ?? null, unitType: b.leads?.unit_type ?? null,
-  budget: b.leads?.budget ?? null, targetDate: b.leads?.target_date ?? null, status: b.status as BriefStatus,
+  targetDate: b.leads?.target_date ?? null, status: b.status as BriefStatus,
 });
 
 /** Designer-facing wording for each brief status. */
@@ -162,8 +162,7 @@ const DesignerView = () => {
                     <BriefStatusPill status={d.status} label={DESIGNER_LABEL[d.status]} />
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{[d.property, d.unitType].filter(Boolean).join(" · ") || "—"}</p>
-                  <div className="flex justify-between text-sm">
-                    <span>{aed(d.budget)}</span>
+                  <div className="flex justify-end text-sm">
                     <span className="text-muted-foreground">Target {shortDate(d.targetDate)}</span>
                   </div>
                   {draft && <p className="text-xs text-muted-foreground">Sales hasn't finished this brief yet</p>}
@@ -191,6 +190,8 @@ const DesignerView = () => {
 const GmView = () => {
   const { data: list = [], isLoading, error } = useBriefList();
   const { data: members = [] } = useMembers();
+  // Budgets come from their own RPC now; for anyone but the GM and the lead's sales owner it is empty.
+  const { data: budgets } = useLeadBudgets();
   const nameOf = useMemo(() => new Map(members.map((m) => [m.user_id, m.full_name])), [members]);
 
   if (error) return <p className="text-destructive">{(error as Error).message}</p>;
@@ -229,7 +230,7 @@ const GmView = () => {
                         {isPackageBrief(b) && <span className="ml-2 rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">Package</span>}
                       </TableCell>
                       <TableCell>{[b.leads?.property, b.leads?.unit_type].filter(Boolean).join(" · ") || "—"}</TableCell>
-                      <TableCell className="whitespace-nowrap">{aed(b.leads?.budget)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{aed(budgets?.get(b.lead_id) ?? null)}</TableCell>
                       <TableCell className="whitespace-nowrap">{shortDate(b.leads?.target_date)}</TableCell>
                       <TableCell className="whitespace-nowrap">{(b.leads?.sales_id && nameOf.get(b.leads.sales_id)) || "—"}</TableCell>
                       <TableCell className="whitespace-nowrap">{(b.designer_id && nameOf.get(b.designer_id)) || "—"}</TableCell>

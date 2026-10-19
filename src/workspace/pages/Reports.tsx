@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-ssr";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useLeads } from "../queries";
+import { useLeadBudgets, useLeads } from "../queries";
 import { useProjects, useProjectValues } from "../projectQueries";
 import { LEAD_STATUSES } from "../constants";
 import { PROJECT_STAGES } from "../projectConstants";
@@ -32,6 +32,7 @@ const Reports = () => {
   const { member } = useWorkspace();
   const isGm = member?.role === "gm";
   const { data: leads = [], isLoading: l1 } = useLeads();
+  const { data: budgets } = useLeadBudgets();
   const { data: projects = [], isLoading: l2 } = useProjects();
   const { data: values } = useProjectValues(member?.role);
   const { data: approvedCr = 0 } = useQuery({
@@ -52,7 +53,7 @@ const Reports = () => {
 
   const pipe = LEAD_STATUSES.map((s) => {
     const rows = leads.filter((l) => l.status === s);
-    return { s, n: rows.length, budget: rows.reduce((t, l) => t + Number(l.budget ?? 0), 0) };
+    return { s, n: rows.length, budget: rows.reduce((t, l) => t + (budgets?.get(l.id) ?? 0), 0) };
   });
   const maxN = Math.max(...pipe.map((p) => p.n), 0);
 

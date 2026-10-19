@@ -3,14 +3,15 @@ import { supabase } from "@/lib/supabase-ssr";
 import type { Database } from "@/integrations/supabase/types";
 
 type T = Database["public"]["Tables"];
-export type Lead = T["leads"]["Row"];
+/** No budget: the client's money has no column grant left on leads — see useLeadBudgets. */
+export type Lead = Omit<T["leads"]["Row"], "budget">;
 export type LeadInsert = T["leads"]["Insert"];
 export type LeadUpdate = T["leads"]["Update"];
 export type Comment = Pick<T["comments"]["Row"], "id" | "lead_id" | "project_id" | "author_id" | "body" | "mentions" | "created_at">;
 export type MemberLite = Pick<T["workspace_members"]["Row"], "user_id" | "full_name" | "role" | "title" | "active">;
 
 const LEAD_COLS =
-  "id, ref, name, phone, email, property, building, location, unit_type, size, handover_status, exp_handover, use_type, budget, target_date, scope, style, refs, floor_plan, source, sales_id, designer_id, status, last_contact, next_follow, notes, lost_reason, converted_project_id, is_demo, created_by, created_at, updated_at, closed_at, drive_url";
+  "id, ref, name, phone, email, property, building, location, unit_type, size, handover_status, exp_handover, use_type, target_date, scope, style, refs, floor_plan, source, sales_id, designer_id, status, last_contact, next_follow, notes, lost_reason, converted_project_id, is_demo, created_by, created_at, updated_at, closed_at, drive_url";
 const COMMENT_COLS = "id, lead_id, project_id, author_id, body, mentions, created_at";
 const MEMBER_COLS = "user_id, full_name, role, title, active";
 
@@ -194,7 +195,7 @@ export type BriefDocColumns = Pick<T["requirement_briefs"]["Update"], "header" |
 const BRIEF_COLS =
   "id, lead_id, status, designer_id, header, style, colours, ffe, bedrooms, lists, attachments, revision_note, submitted_at, assigned_at, ready_at, approved_at, updated_at, extra";
 const BRIEF_LIST_COLS =
-  "id, lead_id, status, designer_id, submitted_at, updated_at, extra, leads(name, property, unit_type, budget, target_date, sales_id, designer_id, drive_url, status)";
+  "id, lead_id, status, designer_id, submitted_at, updated_at, extra, leads(name, property, unit_type, target_date, sales_id, designer_id, drive_url, status)";
 
 export interface BriefListRow {
   id: string;
@@ -204,7 +205,7 @@ export interface BriefListRow {
   submitted_at: string | null;
   updated_at: string;
   extra: unknown;
-  leads: { name: string; property: string | null; unit_type: string | null; budget: number | null; target_date: string | null; sales_id: string | null; designer_id: string | null; drive_url: string | null; status: T["leads"]["Row"]["status"] } | null;
+  leads: { name: string; property: string | null; unit_type: string | null; target_date: string | null; sales_id: string | null; designer_id: string | null; drive_url: string | null; status: T["leads"]["Row"]["status"] } | null;
 }
 
 export type QueueRow = Database["public"]["Functions"]["ws_brief_queue"]["Returns"][number];
@@ -300,6 +301,33 @@ export const useAssignBrief = () => {
       return v;
     },
     onSettled: (_d, _e, v) => invalidateBrief(qc, v.leadId),
+  });
+};
+
+/**
+ * The client's money. `leads.budget` lost its column grant on 2026-10-19 — Veronica: the designer
+ * interface "shouldn't be able to see the contract value" — so it travels only through these two
+ * RPCs, which answer the GM and the lead's own sales owner. For a designer the map is simply empty
+ * and every budget line disappears from the briefs.
+ */
+export const useLeadBudgets = () =>
+  useQuery({
+    queryKey: ["ws", "lead-budgets"] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ws_lead_budgets");
+      fail(error);
+      return new Map((data ?? []).map((r) => [r.lead_id, Number(r.budget)]));
+    },
+  });
+
+export const useSetLeadBudget = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, amount }: { leadId: string; amount: number | null }) => {
+      const { error } = await supabase.rpc("ws_set_lead_budget", { _lead: leadId, _amount: amount });
+      fail(error);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "lead-budgets"] }),
   });
 };
 

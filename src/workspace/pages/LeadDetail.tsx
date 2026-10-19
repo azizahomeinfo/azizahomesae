@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DriveLink } from "../DriveLink";
-import { useBrief, useCreateBrief, useLead, useMembers, useUpdateLead } from "../queries";
+import { useBrief, useCreateBrief, useLead, useLeadBudgets, useMembers, useUpdateLead } from "../queries";
 import { useWorkspace } from "../WorkspaceProvider";
 import { blankBrief } from "../briefSchema";
 import type { BriefStatus } from "../briefWorkflow";
@@ -39,6 +39,7 @@ const Grid = DefGrid;
 const LeadDetail = () => {
   const { id } = useParams();
   const { data: lead, isLoading, error } = useLead(id);
+  const { data: budgets } = useLeadBudgets();
   const { data: members = [] } = useMembers();
   const update = useUpdateLead();
   const { member } = useWorkspace();
@@ -257,7 +258,7 @@ const LeadDetail = () => {
         <Grid
           title="Requirement"
           items={[
-            ["Use", lead.use_type], ["Budget", aed(lead.budget)],
+            ["Use", lead.use_type], ["Budget", aed(budgets?.get(lead.id) ?? null)],
             ["Target date", lead.target_date ? shortDate(lead.target_date) : null], ["Scope", lead.scope],
             ["Style", lead.style], ["References", lead.refs], ["Floor plan", lead.floor_plan], ["Source", lead.source],
             ["Google Drive folder", lead.drive_url ? <DriveLink url={lead.drive_url} /> : null],

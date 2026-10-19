@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useLeads, useMembers, type Lead } from "../queries";
+import { useLeadBudgets, useLeads, useMembers, type Lead } from "../queries";
 import { isClosed } from "../constants";
 import { aed, isDue, shortDate } from "../format";
 import StatusPill from "../StatusPill";
@@ -32,6 +32,7 @@ const Leads = () => {
   const isGm = member?.role === "gm";
   const canCreate = isGm || member?.role === "sales";
   const { data: leads = [], isLoading, error } = useLeads();
+  const { data: budgets } = useLeadBudgets();
   const { data: members = [] } = useMembers();
   const [tab, setTab] = useState<Tab>("active");
   const [q, setQ] = useState("");
@@ -120,7 +121,7 @@ const Leads = () => {
                     <TableCell className="whitespace-nowrap">{l.name}</TableCell>
                     <TableCell>{l.property ?? "—"}</TableCell>
                     <TableCell className="whitespace-nowrap">{l.location ?? "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap">{aed(l.budget)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{aed(budgets?.get(l.id) ?? null)}</TableCell>
                     <TableCell><StatusPill status={l.status} /></TableCell>
                     <TableCell className="whitespace-nowrap"><FollowUp lead={l} /></TableCell>
                     <TableCell className="whitespace-nowrap">{(l.sales_id && nameOf.get(l.sales_id)) || "—"}</TableCell>
@@ -145,7 +146,7 @@ const Leads = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <span className="text-muted-foreground truncate">{l.property ?? "—"}</span>
-                  <span className="text-right">{aed(l.budget)}</span>
+                  <span className="text-right">{aed(budgets?.get(l.id) ?? null)}</span>
                   <span className="text-muted-foreground truncate">{(l.sales_id && nameOf.get(l.sales_id)) || "—"}</span>
                   <span className="text-right"><FollowUp lead={l} /></span>
                 </div>

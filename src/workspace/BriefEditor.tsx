@@ -22,7 +22,7 @@ import {
 } from "./briefSchema";
 import { editRights, type BriefStatus } from "./briefWorkflow";
 import { checkDriveUrl, DriveLink } from "./DriveLink";
-import { useSaveBrief, useUpdateLead, type BriefDocColumns, type BriefRow, type Lead } from "./queries";
+import { useLeadBudgets, useSaveBrief, useUpdateLead, type BriefDocColumns, type BriefRow, type Lead } from "./queries";
 import { BriefActionBar, useActor } from "./useBriefActions";
 import { useKeepScroll } from "./scrollMemory";
 import BriefStatusPill from "./BriefStatusPill";
@@ -142,6 +142,8 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
   const canSave = rights.full || rights.ffeAndColours;
   const save = useSaveBrief();
   const updateLead = useUpdateLead();
+  // Empty for a designer: the client's budget is the GM's and sales' to see.
+  const budget = useLeadBudgets().data?.get(lead.id) ?? null;
   // The Drive link lives on the lead (needed before the brief exists and carried into the project),
   // so it saves straight to the lead on blur rather than through the brief autosave.
   const [driveDraft, setDriveDraft] = useState(lead.drive_url ?? "");
@@ -318,7 +320,7 @@ const BriefEditor = ({ open, onOpenChange, lead, brief, viewOnly = false }: Prop
                 ["Client", lead.name], ["Phone", lead.phone], ["Email", lead.email], ["Property", lead.property],
                 ["Building / unit", lead.building], ["Area", lead.location], ["Unit type", lead.unit_type], ["Size", lead.size],
                 ["Handover status", lead.handover_status], ["Expected handover", lead.exp_handover ? shortDate(lead.exp_handover) : null],
-                ["Use", lead.use_type], ["Budget", lead.budget != null ? aed(lead.budget) : null],
+                ["Use", lead.use_type], ["Budget", budget == null ? null : aed(budget)],
                 ["Target date", lead.target_date ? shortDate(lead.target_date) : null], ["Scope", lead.scope],
                 ["Style", lead.style], ["Source", lead.source],
                 ["Google Drive folder", lead.drive_url ? <DriveLink url={lead.drive_url} /> : rights.full ? (

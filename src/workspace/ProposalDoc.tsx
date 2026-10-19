@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { useBrief, useLead } from "./queries";
+import { useBrief, useLead, useLeadBudgets } from "./queries";
 import { uploadToWorkspace, useSignedUrls } from "./designQueries";
 import { useLeadContracts, useSaveContract } from "./contractQueries";
 import { contractFromProposal } from "./contractModel";
@@ -164,6 +164,8 @@ const ProposalDoc = () => {
   const create = useCreateProposal();
   const save = useSaveProposal();
   const setStatus = useProposalStatus();
+  // Sales and the GM only: the placeholder price of a proposal with no GM quote yet is the lead's budget.
+  const leadBudget = useLeadBudgets().data?.get(leadId) ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ProposalDocument | null>(null);
   const [notices, setNotices] = useState<string[]>([]);
@@ -341,7 +343,7 @@ const ProposalDoc = () => {
   };
   const generate = async () => {
     try {
-      const doc = buildDocument({ lead, design: design ?? null, quote, groups: groups ?? [] });
+      const doc = buildDocument({ lead: { ...lead, budget: leadBudget }, design: design ?? null, quote, groups: groups ?? [] });
       const nextVersion = proposals.reduce((m, p) => Math.max(m, p.version), 0) + 1;
       const id = await create.mutateAsync({ leadId: lead.id, doc, by: member.user_id, nextVersion });
       synced.current = id; setSelectedId(id); setDraft(null); setNotices([]);

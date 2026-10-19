@@ -1986,6 +1986,8 @@ export type Database = {
       }
       ws_costing_options: { Args: { _costing: string }; Returns: Json }
       ws_costing_notes: { Args: { _costing: string }; Returns: Json }
+      ws_lead_budgets: { Args: Record<PropertyKey, never>; Returns: { lead_id: string; budget: number }[] }
+      ws_set_lead_budget: { Args: { _lead: string; _amount: number | null }; Returns: undefined }
       ws_cr_costs: {
         Args: { _project?: string }
         Returns: {
