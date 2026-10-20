@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 const EYEBROW = "text-[11px] uppercase tracking-[0.2em] text-muted-foreground";
 const H2 = "font-heading text-2xl uppercase tracking-wide text-foreground";
-const CARD = "rounded-[var(--radius)] border border-border bg-card p-5";
+const CARD = "avoid-break rounded-[var(--radius)] border border-border bg-card p-5";
 
 const Script = ({ children }: { children: ReactNode }) => (
   <p className="mt-3 border-l-2 border-primary/60 bg-muted/40 py-3 pl-4 pr-3 text-[15px] leading-7 text-foreground">
@@ -122,19 +122,54 @@ const NAV: [string, string][] = [
   ["questions", "Questions"], ["never", "Never promise"], ["close", "Close"], ["checklist", "Checklist"],
 ];
 
+/**
+ * Printing is how the PDF gets made now, so there is no second document to keep in step: the disclosures
+ * open for print and close again afterwards, and the app's furniture is hidden.
+ */
+const usePrintableDisclosures = () => {
+  useEffect(() => {
+    const all = () => Array.from(document.querySelectorAll<HTMLDetailsElement>("details"));
+    const opened: HTMLDetailsElement[] = [];
+    const before = () => all().forEach((d) => { if (!d.open) { d.open = true; opened.push(d); } });
+    const after = () => { opened.splice(0).forEach((d) => { d.open = false; }); };
+    window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
+    return () => {
+      window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
+    };
+  }, []);
+};
+
 export const SalesPlaybook = ({ isGm }: { isGm: boolean }) => {
   const { done, toggle, reset } = useCallChecklist();
+  usePrintableDisclosures();
 
   return (
     <div className="space-y-8">
+      <style>{`
+        @media print {
+          @page { size: A4; margin: 14mm; }
+          .playbook-hide-print { display: none !important; }
+          .playbook details > summary ~ * { display: block !important; }
+          .playbook section, .playbook details, .playbook table { break-inside: auto; }
+          .playbook .avoid-break { break-inside: avoid; }
+          .playbook h2, .playbook h3 { break-after: avoid; }
+        }
+      `}</style>
       <header className="space-y-5">
-        <p className={EYEBROW}>Sales training · Stage 1</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <p className={EYEBROW}>Sales training · Stage 1</p>
+          <Button size="sm" variant="outline" className="playbook-hide-print" onClick={() => window.print()}>
+            Print / Save as PDF
+          </Button>
+        </div>
         <h1 className="font-heading text-3xl uppercase tracking-wide text-foreground sm:text-4xl">Your first client call, made simple</h1>
         <p className="max-w-2xl text-base leading-7 text-muted-foreground">
           Everything you need before you pick up the phone. Read it once, keep it open during the call.
           {isGm && " This is the page your sales team works from."}
         </p>
-        <nav aria-label="Playbook sections" className="flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase tracking-[0.12em] text-muted-foreground">
+        <nav aria-label="Playbook sections" className="playbook-hide-print flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase tracking-[0.12em] text-muted-foreground">
           {NAV.map(([id, label]) => (
             <a key={id} href={`#${id}`} className="hover:text-primary">{label}</a>
           ))}
@@ -419,7 +454,7 @@ export const SalesPlaybook = ({ isGm }: { isGm: boolean }) => {
             <p className="text-sm font-medium text-foreground">
               {done.length === CHECKS.length ? "Stage 1 complete" : `${done.length} of ${CHECKS.length}`}
             </p>
-            <Button size="sm" variant="outline" onClick={reset} disabled={!done.length}>Start a new call</Button>
+            <Button size="sm" variant="outline" className="playbook-hide-print" onClick={reset} disabled={!done.length}>Start a new call</Button>
           </div>
         </div>
         <p className="text-sm italic leading-7 text-muted-foreground">

@@ -80,7 +80,7 @@ const Guide = () => {
   // Sales (and the GM, who owns the wording) get the Stage 1 call guide; everyone else their own notes.
   if (role === "sales" || isGm) {
     return (
-      <div className="mx-auto max-w-5xl">
+      <div className="playbook mx-auto max-w-5xl">
         <SalesPlaybook isGm={isGm} />
       </div>
     );
