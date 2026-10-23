@@ -263,6 +263,9 @@ export const useFfeItems = (owner: FfeOwner | undefined, withCost: boolean) =>
   useQuery({
     queryKey: [...fKeys.ffe(ownerKey(owner)), withCost],
     enabled: !!owner?.id,
+    // Ten seconds of grace: moving between Table, Delivery and the phase board, or stepping out and
+    // back, reuses the rows instead of fetching 80-odd of them again on a slow connection.
+    staleTime: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("ffe_items").select(FFE_BASE).eq(owner!.col, owner!.id).order("sort_order");
       fail(error);
@@ -340,26 +343,62 @@ export const useAddFfeItem = () => {
   });
 };
 
+/**
+ * Patch the edited rows into every FF&E cache instead of refetching the list. The UPDATE returns the rows
+ * as the triggers left them (band, ordered_on, stage), so the cache ends up with the server's own values —
+ * the only thing the response cannot carry is the cost, which lives in ffe_item_costs and is whatever we
+ * just wrote. Veronica, 2026-10-23: editing the list "is lagging". It was four round trips per cell on a
+ * link doing roughly a second each; this makes it one.
+ */
+const patchFfeRows = (qc: ReturnType<typeof useQueryClient>, ids: string[], rows: FfeRow[], unitCost: number | null | undefined) => {
+  const fresh = new Map(rows.map((r) => [r.id, r]));
+  const edited = new Set(ids);
+  qc.setQueriesData<FfeRow[]>({ queryKey: ["ws", "ffe"] }, (old) => {
+    if (!old?.length) return old;
+    if (!old.some((r) => edited.has(r.id))) return old;
+    return old.map((r) => {
+      if (!edited.has(r.id)) return r;
+      const base = fresh.get(r.id) ?? r;
+      return {
+        ...base,
+        unit_cost: unitCost !== undefined ? unitCost : r.unit_cost,
+        // A hand-typed cost is no longer a price-book default (trigger ws_price_book_flag agrees).
+        from_price_book: unitCost !== undefined ? false : r.from_price_book,
+      } as FfeRow;
+    });
+  });
+};
+
+/** Fields whose change moves something outside the row itself. */
+const touchesSupplierWork = (v: T["ffe_items"]["Update"]) =>
+  v.stage !== undefined || v.supplier_id !== undefined || v.supplier_name !== undefined || v.review !== undefined;
+
 export const useUpdateFfeItems = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { owner: FfeOwner; ids: string[]; values: Omit<T["ffe_items"]["Update"], "unit_cost"> & { unit_cost?: number | null }; existing?: FfeRow[] }) => {
-      if (!v.ids.length) return v;
+      if (!v.ids.length) return { ...v, rows: [] as FfeRow[] };
       const { unit_cost, ...values } = v.values;
-      if (unit_cost !== undefined) {
-        const { error } = await supabase.from("ffe_item_costs").upsert(v.ids.map((item_id) => ({ item_id, unit_cost })));
-        fail(error);
-        if (!Object.keys(values).length) return v;
-      }
       // Moving a row to another section changes ONLY its room, never its ref — same decision as
       // renames (FfeTab.tsx): a ref is an identifier, not a location, and may already be on a PO
       // or in a supplier email. nextRef issues refs at creation only; updates never re-issue one.
-      const { error } = await supabase.from("ffe_items").update(values).in("id", v.ids);
-      fail(error);
-      return v;
+      const [costRes, rowRes] = await Promise.all([
+        unit_cost !== undefined
+          ? supabase.from("ffe_item_costs").upsert(v.ids.map((item_id) => ({ item_id, unit_cost })))
+          : Promise.resolve(null),
+        Object.keys(values).length
+          ? supabase.from("ffe_items").update(values).in("id", v.ids).select(FFE_BASE)
+          : Promise.resolve(null),
+      ]);
+      if (costRes) fail(costRes.error);
+      if (rowRes) fail(rowRes.error);
+      return { ...v, rows: (rowRes?.data ?? []) as unknown as FfeRow[] };
     },
+    onSuccess: (r) => patchFfeRows(qc, r.ids, r.rows, r.values.unit_cost),
+    onError: () => invalidateFfe(qc),
     onSettled: (_d, _e, v) => {
-      invalidateFfe(qc);
+      // Only what the row itself cannot carry: the supplier badge, and the project's own percentages.
+      if (touchesSupplierWork(v.values)) qc.invalidateQueries({ queryKey: fKeys.supplierOpen });
       if (v.values.stage) {
         qc.invalidateQueries({ queryKey: ["ws", "project"] });
         qc.invalidateQueries({ queryKey: pKeys.projects });
