@@ -29,7 +29,7 @@ import { CollapseAllButton, CollapseChevron, collapseKey, sectionDomId, useColla
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useSubmitPackageFfe, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeBackInStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  isLabour, projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useSubmitPackageFfe, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeBackInStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -160,7 +160,8 @@ const orderSummary = (l: FfeRow[]) => {
   };
 };
 const downloadOrdersCsv = (code: string, rows: FfeRow[]) => {
-  const groups = byOrder(rows);
+  // Run 10 is the contractor's labour — nothing is delivered, so it has no place on a receiving list.
+  const groups = byOrder(rows.filter((r) => !isLabour(r)));
   const out: string[] = [];
   out.push([`Orders — ${code}`, `printed ${todayISO()}`].map(csvCell).join(","));
   out.push(["Supplier", "Order", "Items", "Pieces", "Ordered", "Latest ETA", "Delivered", "Status"].map(csvCell).join(","));
@@ -660,8 +661,14 @@ const useFfeGroupBy = (fallback: GroupBy): [GroupBy, (g: GroupBy) => void] => {
   useEffect(() => { setG(read()); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return [g, (v) => { setG(v); try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } }];
 };
-const byBand = (rows: FfeRow[]) => PRIORITY_BANDS.map((_, i) => [`${i + 1} · ${bandLabel(i + 1)}`, rows.filter((r) => bandOf(r) === i + 1)
-  .sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order)] as [string, FfeRow[]]).filter(([, l]) => l.length);
+const byBand = (rows: FfeRow[]) => {
+  const inRun = (n: number) => rows.filter((r) => bandOf(r) === n)
+    .sort((a, z) => a.room.localeCompare(z.room) || a.sort_order - z.sort_order);
+  const runs = PRIORITY_BANDS.map((_, i) => [`${i + 1} · ${bandLabel(i + 1)}`, inRun(i + 1)] as [string, FfeRow[]]);
+  // A row the database never banded belongs nowhere in the runs — show it rather than hide it.
+  const unsorted = rows.filter((r) => !bandOf(r));
+  return [...runs, ...(unsorted.length ? [["Unsorted", unsorted] as [string, FfeRow[]]] : [])].filter(([, l]) => l.length);
+};
 
 export const GroupToggle = ({ value, onChange }: { value: GroupBy; onChange: (g: GroupBy) => void }) => (
   <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Group by">
@@ -733,7 +740,8 @@ const useOrderingBorder = (project: Project) => {
   const awaitingBudget = needsBudget === true && budgetCosting?.status !== "Quoted";
   const orderingExpected = !!project.confirmed_at && needsBudget !== undefined && !awaitingBudget;
   const orderingBorder = (r: FfeRow) => orderingExpected && (
-    missingBuyability(r) ? "border-l-4 border-l-destructive" : notMoving(r) ? "border-l-4 border-l-warning" : false
+    isLabour(r) ? false
+      : missingBuyability(r) ? "border-l-4 border-l-destructive" : notMoving(r) ? "border-l-4 border-l-warning" : false
   );
   return { orderingBorder, orderingExpected, awaitingBudget };
 };

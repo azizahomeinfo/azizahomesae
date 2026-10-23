@@ -147,12 +147,21 @@ export const PRIORITY_BANDS = [
   "Household",            // 7
   "Switches",             // 8
   "Wallpaper",            // 9
+  "Design (labour)",      // 10 — not a buying run: the contractor's wall design, costed, never ordered
 ] as const;
 /** Safe during band-definition rollouts, including invalid or unknown band numbers. */
 export const bandLabel = (n: number): string =>
   PRIORITY_BANDS.find((_, i) => i + 1 === n) ?? "Unsorted";
-/** Derived in the database on write (ws_ffe_band; hand overrides stick); the final band covers a row not yet saved. */
-export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? PRIORITY_BANDS.length;
+/**
+ * Derived in the database on write (ws_ffe_band; hand overrides stick). A row with no band at all is
+ * 0 — "Unsorted" — never the last run, which since 2026-10-23 is labour and would have made an
+ * unclassified row look like something nobody has to buy.
+ */
+export const bandOf = (r: Pick<FfeRow, "priority_band">): number => r.priority_band ?? 0;
+
+/** Run 10 is the contractor's labour: nothing is ordered, delivered or chased for it. */
+export const LABOUR_BAND = PRIORITY_BANDS.indexOf("Design (labour)") + 1;
+export const isLabour = (r: Pick<FfeRow, "priority_band">) => bandOf(r) === LABOUR_BAND;
 
 /** The designer's spec — dims, spec, notes — read-only wherever the item is bought. Empty parts are dropped. */
 export const specLine = (r: Pick<FfeRow, "dims" | "spec" | "notes">): string =>
