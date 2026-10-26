@@ -96,7 +96,10 @@ export const buildPackageDocument = (v: {
       intro: units > 1
         ? `A turnkey ${style.name} furnishing package for your ${units} × ${unit} apartments${v.lead.property ? ` at ${v.lead.property}` : ""} — furniture, décor, delivery, installation and styling, each handed over ready to live in. The item list is per apartment.`
         : `A turnkey ${style.name} furnishing package for your ${unit}${v.lead.property ? ` at ${v.lead.property}` : ""} — furniture, décor, delivery, installation and styling, handed over ready to live in.`,
-      hero: catalogImage(style.slug, "hero"),
+      // The cover is the room the client is actually buying. The style "hero" is a wide landscape
+      // shot, and a portrait cover keeps only the middle 45% of it — on Japandi that is the pendant
+      // and the curtains, which is what Veronica saw on 2026-10-26. A tier photo crops far better.
+      hero: catalogImage(style.slug, tiers.length === 1 ? (tiers[0].toLowerCase() as Lowercase<Tier>) : "hero"),
     },
     floorPlan: { path: null, name: null, text: "" },
     pages: [

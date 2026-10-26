@@ -38,6 +38,11 @@ export const PROPOSAL_CSS = `
 .ppd-group h4 { font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-olive);
   margin: 0 0 4px; padding-bottom: 5px; border-bottom: 1px solid var(--pp-line); }
 .ppd-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; line-height: 1.3; padding: 3px 0; }
+/* Measured in Chrome against a 710px column: normal holds ~104 weight, dense ~116. */
+.ppd-dense .ppd-row { font-size: 10.5px; line-height: 1.22; padding: 2px 0; }
+.ppd-dense .ppd-group { margin-bottom: 10px; }
+.ppd-dense .ppd-group h4 { margin: 0 0 3px; padding-bottom: 4px; }
+.ppd-dense .ppd-col { padding: 0 11px; }
 .ppd-row b { font-weight: 600; }
 .ppd-card { background: var(--pp-card); border: 1px solid var(--pp-line); padding: 24px 26px; }
 .ppd-line { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 5px 0; color: var(--pp-muted); }
@@ -86,8 +91,10 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   return (
     <div className="ppd-page">
       {/* The cover is deliberately full-bleed and cropped at the client's request. */}
-      {hero && <img src={hero} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
-      {hero && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 30%, hsl(38 65% 98% / 0.85) 50%, hsl(38 65% 98%) 58%, hsl(38 65% 98%) 100%)" }} />}
+      {hero && <img src={hero} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 42%" }} />}
+      {/* The fade starts at 56%, not 30%: the picture should fill the cover and stop just above the
+          title block. Earlier the photograph was washed out from a third of the way down. */}
+      {hero && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 56%, hsl(38 65% 98% / 0.88) 72%, hsl(38 65% 98%) 80%, hsl(38 65% 98%) 100%)" }} />}
       <img src={logo} alt="Aziza Home" style={{ position: "absolute", top: 62, left: 70, width: 147, height: 147, objectFit: "contain" }} />
       <div style={{ position: "absolute", left: 70, right: 70, bottom: 58 }}>
         <p className="ppd-eyebrow">Interior design proposal</p>
@@ -261,7 +268,7 @@ export const splitColumns = (groups: ItemGroup[], cols: number): ColGroup[][] =>
 };
 
 const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: ProposalDocument; n: number }) => (
-  <div className="ppd-page" style={{ padding: "56px 56px 84px" }}>
+  <div className={`ppd-page${s.dense ? " ppd-dense" : ""}`} style={{ padding: "56px 56px 84px" }}>
     <div style={{ paddingBottom: 18, borderBottom: "1px solid var(--pp-line)", marginBottom: 22 }}>
       <p className="ppd-eyebrow">Everything included</p>
       <h2 className="ppd-serif" style={{ fontSize: 36, letterSpacing: "0.04em", lineHeight: 1.05 }}>{s.title}</h2>

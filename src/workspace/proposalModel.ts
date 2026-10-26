@@ -271,10 +271,14 @@ const itemRows = (item: string) => Math.max(1, Math.ceil(item.length / ITEM_CHAR
 const groupWeight = (g: ItemGroup) => 1.6 + g.items.reduce((s, i) => s + itemRows(i.item), 0);
 
 /**
- * How much item list fits above the investment table on a combined last page (4 columns, measured:
- * a 2-bedroom list of weight 92 fills it with one option). Each extra option row takes some back.
+ * How much item list fits above the investment table on a combined last page (4 columns). Measured in
+ * Chrome on 2026-10-26 against the real 710px column height: 104 weight fits with room to spare, 108
+ * overflows. The old 96 was conservative enough to push an 84-item 1-bedroom list (weight 96.2) onto
+ * a second page, which is what Veronica asked to stop. Each extra option row takes some back.
  */
-export const combinedPageCap = (optionCount: number) => 96 - 8 * (Math.max(1, optionCount) - 1);
+export const combinedPageCap = (optionCount: number) => 104 - 8 * (Math.max(1, optionCount) - 1);
+/** The same page with the list set denser (.ppd-dense): measured to hold ~116 before it overflows. */
+export const combinedDensePageCap = (optionCount: number) => 116 - 8 * (Math.max(1, optionCount) - 1);
 
 /** lastCap: what the final page may hold — smaller when the investment shares that page. */
 export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_CAP) => {
@@ -338,7 +342,7 @@ export type Sheet =
   | { kind: "cover" }
   | { kind: "floor" }
   | { kind: "area"; eyebrow: string; title: string; desc: string | null; images: DocImage[] }
-  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean }
+  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean; dense: boolean }
   | { kind: "invest" };
 
 export const layoutSheets = (doc: ProposalDocument) => {
@@ -366,14 +370,20 @@ export const layoutSheets = (doc: ProposalDocument) => {
   // Default (combine: null) is one page for the last of the item list and the investment: the item
   // pages are re-balanced so the last one leaves room for the table. Only when even that can't fit
   // (one room larger than a combined page) does the investment get its own page.
-  const combinedTry = showItems && showInvest ? paginateItems(groups, combinedPageCap(doc.investment.options.length)) : null;
+  const options = doc.investment.options.length;
+  // Try the roomier dense setting too: a list a little over the normal cap still belongs on one page
+  // with the price rather than spilling into an "Item list 2 of 2".
+  const combinedTry = showItems && showInvest ? paginateItems(groups, combinedDensePageCap(options)) : null;
   const guess = !!combinedTry?.fits;
   const combine = showItems && showInvest && (doc.toggles.combine ?? guess);
-  const { pages } = combine && combinedTry?.fits ? combinedTry : paginateItems(groups);
+  const useTry = combine && combinedTry?.fits ? combinedTry : null;
+  const { pages } = useTry ?? paginateItems(groups);
+  const dense = !!useTry && useTry.usedWeight > combinedPageCap(options);
   if (showItems) {
     pages.forEach((g, k) => sheets.push({
       kind: "items", title: pages.length > 1 ? `Item list · ${k + 1} of ${pages.length}` : "Item list",
       groups: g, withInvest: combine && k === pages.length - 1,
+      dense: dense && k === pages.length - 1,
     }));
   }
   if (showInvest && !combine) sheets.push({ kind: "invest" });
