@@ -252,18 +252,21 @@ const ProposalDoc = () => {
     if (!(member.role === "gm" || lead.sales_id === member.user_id)) return;
     const open = costing.status === "Returned" || costing.status === "Submitted";
     const freshQuote = costing.status === "Quoted" && row.doc.quoteVersion !== costing.version;
-    if (!open && !freshQuote) return;
+    // A budget redesign the GM has approved joins the proposal as design pages, like the price — no button.
+    const freshDesign = costing.status === "Quoted" && !!design && design.status === "Accepted" && row.doc.designId !== design.id;
+    if (!open && !freshQuote && !freshDesign) return;
     const live = groups ?? [];
     const differs = live.length > 0 && itemListDiff(row.doc.itemList, live).differs;
-    if (!differs && !freshQuote) return;
-    const key = `${row.id}:${costing.status}:${costing.version}:${JSON.stringify(live)}`;
+    if (!differs && !freshQuote && !freshDesign) return;
+    const key = `${row.id}:${costing.status}:${costing.version}:${design?.id ?? ""}:${JSON.stringify(live)}`;
     if (followed.current === key || save.isPending) return;
     followed.current = key;
     let doc = freshQuote ? applyQuote(row.doc, { version: costing.version, options: costing.options }, live) : { ...row.doc, itemList: live, finalAt: null };
-    if (freshQuote && design && design.status === "Accepted" && doc.designId !== design.id) doc = { ...applyDesign(doc, design), cover: doc.cover };
+    if (freshDesign && design) doc = { ...applyDesign(doc, design), cover: doc.cover };
     save.mutate({ id: row.id, leadId: row.lead_id ?? lead.id, doc }, {
       onSuccess: () => { setDraft(null); setNotices([freshQuote
-        ? `Items and prices updated from the GM's final quotation V${costing.version} — saved`
+        ? `Items and prices updated from the GM's final quotation V${costing.version}${freshDesign ? ` with design V${design?.version}` : ""} — saved`
+        : freshDesign ? `Design V${design?.version} added from the designer — saved`
         : "Item list updated from the designer's FF&E list — saved"]); },
       onError: (e) => { followed.current = null; toast.error(e instanceof Error ? e.message : "Could not update the proposal from the FF&E list"); },
     });
