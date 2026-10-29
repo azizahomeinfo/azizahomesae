@@ -523,7 +523,7 @@ export const useCostingTransition = () => {
       await notify(v.notify ?? []);
       return v;
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "costing"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify-brief"] }); },
   });
 };
 
@@ -640,7 +640,7 @@ export const useSubmitPackageFfe = () => {
       const { error } = await supabase.rpc("ws_submit_package_ffe" as never, { _lead: leadId } as never);
       fail(error);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "costing"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify-brief"] }); },
   });
 };
 
@@ -651,7 +651,7 @@ export const useSubmitBudget = () => {
       const { error } = await supabase.rpc("ws_submit_budget", { _project: projectId });
       fail(error);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "costing"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify-brief"] }); },
   });
 };
 
@@ -662,7 +662,7 @@ export const useDecideBudget = () => {
       const { error } = await supabase.rpc("ws_decide_budget", { _project: v.projectId, _approve: v.approve, _note: v.note });
       fail(error);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["ws", "costing"] }),
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "costing"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify-brief"] }); },
   });
 };
 

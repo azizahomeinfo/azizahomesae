@@ -166,6 +166,57 @@ export const useDecideDiscount = () => {
   });
 };
 
+/** "Client wants a lower price", path 2: sales sent the list back to the designer to simplify it to the client's budget. */
+export interface SimplifyRequest {
+  id: string; lead_id: string; proposal_id: string | null; option_label: string; quoted_amount: number;
+  client_budget: number; cost_at_request: number; target_cost: number; note: string | null;
+  status: "Open" | "Quoted"; new_amount: number | null; requested_at: string; closed_at: string | null;
+}
+
+/** Simplify asks on this lead, newest first. Sales owner + GM only (RLS) — they carry the client's budget. */
+export const useSimplifyRequests = (leadId: string | undefined) =>
+  useQuery({
+    queryKey: ["ws", "simplify", leadId ?? ""],
+    enabled: !!leadId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("simplify_requests")
+        .select("id, lead_id, proposal_id, option_label, quoted_amount, client_budget, cost_at_request, target_cost, note, status, new_amount, requested_at, closed_at")
+        .eq("lead_id", leadId!).order("requested_at", { ascending: false });
+      fail(error);
+      return (data ?? []) as unknown as SimplifyRequest[];
+    },
+  });
+
+/** What the designer sees of an open simplify ask: a target COST and the note — never the client's budget or price. */
+export const useSimplifyBrief = (leadId: string | undefined | null) =>
+  useQuery({
+    queryKey: ["ws", "simplify-brief", leadId ?? ""],
+    enabled: !!leadId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ws_simplify_brief", { _lead: leadId! });
+      fail(error);
+      return (data ?? [])[0] ?? null;
+    },
+  });
+
+/** Sends the costing back to the designer (Returned) with a target cost; notifies the designer and the GM. */
+export const useRequestSimplify = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { proposalId: string; leadId: string; label: string; budget: number; note: string }) => {
+      const { error } = await supabase.rpc("ws_request_simplify", {
+        _proposal: v.proposalId, _label: v.label, _budget: v.budget, _note: v.note });
+      fail(error);
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["ws", "simplify", v.leadId] });
+      qc.invalidateQueries({ queryKey: ["ws", "simplify-brief", v.leadId] });
+      qc.invalidateQueries({ queryKey: ["ws", "costing"] });
+      qc.invalidateQueries({ queryKey: ["ws", "notifications"] });
+    },
+  });
+};
+
 /** What syncing the proposal's item list into the FF&E list would do (or did). */
 export interface FfeSyncPlan {
   added: { room: string; item: string; qty: number }[];

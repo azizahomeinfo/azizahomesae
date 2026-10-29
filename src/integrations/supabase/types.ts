@@ -449,6 +449,57 @@ export type Database = {
           },
         ]
       }
+      simplify_requests: {
+        Row: {
+          client_budget: number
+          closed_at: string | null
+          cost_at_request: number
+          id: string
+          lead_id: string
+          new_amount: number | null
+          note: string | null
+          option_label: string
+          proposal_id: string | null
+          quoted_amount: number
+          requested_at: string
+          requested_by: string | null
+          status: string
+          target_cost: number
+        }
+        Insert: {
+          client_budget: number
+          closed_at?: string | null
+          cost_at_request: number
+          id?: string
+          lead_id: string
+          new_amount?: number | null
+          note?: string | null
+          option_label: string
+          proposal_id?: string | null
+          quoted_amount: number
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          target_cost: number
+        }
+        Update: {
+          client_budget?: number
+          closed_at?: string | null
+          cost_at_request?: number
+          id?: string
+          lead_id?: string
+          new_amount?: number | null
+          note?: string | null
+          option_label?: string
+          proposal_id?: string | null
+          quoted_amount?: number
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          target_cost?: number
+        }
+        Relationships: []
+      }
       discount_requests: {
         Row: {
           approved_discount: number | null
@@ -2102,6 +2153,21 @@ export type Database = {
       ws_price_floor: {
         Args: { _label: string; _lead: string }
         Returns: number
+      }
+      ws_request_simplify: {
+        Args: { _budget: number; _label: string; _note: string; _proposal: string }
+        Returns: string
+      }
+      ws_simplify_brief: {
+        Args: { _lead: string }
+        Returns: {
+          cost_at_request: number
+          id: string
+          note: string
+          requested_at: string
+          status: string
+          target_cost: number
+        }[]
       }
       ws_request_discount: {
         Args: { _client_note: string; _discount: number; _label: string; _proposal: string }

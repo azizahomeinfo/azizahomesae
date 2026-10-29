@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useBrief, useMembers } from "./queries";
-import { useLeadProposals } from "./proposalQueries";
+import { useLeadProposals, useSimplifyBrief } from "./proposalQueries";
 import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, useUpdateProject, type Project } from "./projectQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import type { WorkspaceRole } from "./access";
@@ -851,6 +851,8 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
   };
   // A package lead's first quotation starts from the package prices sales offered (tiers × units).
   const { data: leadProposals } = useLeadProposals(isGm && ctx.leadId ? ctx.leadId : undefined);
+  // Sales asked to simplify to the client's budget: the designer gets a target COST only (ws_simplify_brief).
+  const { data: simplify } = useSimplifyBrief(withCost && !budget ? ctx.leadId : null);
   const pkgOptions = (leadProposals ?? []).find((p) => p.doc?.source === "package")?.doc.investment.options
     .map((o) => ({ label: o.label, desc: o.desc, amount: Number(o.amount) || 0 })) ?? [];
   const applyBtn = withCost && !readOnly && (isGm || role === "designer") && leadForStd && (stdMissing > 0 || stdDefaults > 0) ? (
@@ -1051,6 +1053,20 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
         {status === "Returned" && costing?.return_note && (
           <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 p-3 text-sm">Returned by GM: {costing.return_note}</p>
         )}
+        {simplify && (() => {
+          const over = grand - Number(simplify.target_cost);
+          return (
+            <div className="space-y-1 rounded-[var(--radius)] border border-warning/50 bg-warning/10 p-3 text-sm">
+              <p className="font-medium">The client's budget is lower — simplify this list to a total cost of about {aed(simplify.target_cost)}</p>
+              <p className="tabular-nums">
+                Now {aed(grand)} (was {aed(simplify.cost_at_request)} when sales asked) ·{" "}
+                {over > 0 ? <span className="text-destructive">{aed(over)} still to cut</span> : <span className="text-success">on target</span>}
+              </p>
+              {simplify.note && <p className="text-muted-foreground">Sales: {simplify.note}</p>}
+              {status !== "Submitted" && <p className="text-xs text-muted-foreground">Swap to simpler items, drop or reduce quantities, then press "Resubmit to GM". The GM sets the final quote.</p>}
+            </div>
+          );
+        })()}
         {/* Sales synced items in from the proposal; they arrive with no supplier and no real cost. */}
         {withCost && specCount > 0 && (
           <p className="rounded-[var(--radius)] border border-primary/50 bg-primary/10 p-3 text-sm">

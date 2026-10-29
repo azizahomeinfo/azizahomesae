@@ -22,7 +22,7 @@ import { shortDate } from "./format";
 import { useKeepScroll } from "./scrollMemory";
 import {
   useCreateProposal, useLeadProposals, useProposalItems, useProposalStatus, useSaveProposal, useSharedDesign,
-  useSyncFfeFromProposal, useDiscountRequests, useRequestDiscount, useDecideDiscount,
+  useSyncFfeFromProposal, useDiscountRequests, useRequestDiscount, useDecideDiscount, useSimplifyRequests, useRequestSimplify,
   type FfeSyncPlan, type ProposalStatus,
 } from "./proposalQueries";
 import {
@@ -281,6 +281,10 @@ const ProposalDoc = () => {
   const [askAmount, setAskAmount] = useState("");
   const [askLabel, setAskLabel] = useState("");
   const [askWhy, setAskWhy] = useState("");
+  // "Client wants a lower price": one ask, two paths — GM discount, or the designer simplifies the list.
+  const { data: simplifies = [] } = useSimplifyRequests(leadId);
+  const askSimplify = useRequestSimplify();
+  const [askPath, setAskPath] = useState<"discount" | "simplify">("discount");
   const [counter, setCounter] = useState("");
   const [gmNote, setGmNote] = useState("");
 
@@ -683,7 +687,7 @@ const ProposalDoc = () => {
             prices={d.investment.options.map((o) => ({ label: o.label, amount: Number(o.amount) || 0 }))} />
         </section>
       )}
-      {(costing?.status === "Quoted" || isPackage) && (member?.role === "gm" || member?.role === "sales") && (() => {
+      {(costing?.status === "Quoted" || isPackage || simplifies.some((x) => x.status === "Open")) && (member?.role === "gm" || member?.role === "sales") && (() => {
         const baseOptions = isPackage
           ? d.investment.options.filter((o) => tierOfLabel(o.label)).map((o) => ({ label: o.label, amount: packagePrice(tierOfLabel(o.label)!, pkgLayout) * pkgUnits }))
           : (costing?.options ?? []);
@@ -691,14 +695,22 @@ const ProposalDoc = () => {
         const open = discounts.find((x) => x.status === "Requested");
         const approved = discounts.filter((x) => x.status === "Approved");
         const lastDecided = discounts.find((x) => x.status !== "Requested");
+        const openSimplify = simplifies.find((x) => x.status === "Open");
+        // The latest simplify round, if nothing was asked of the GM since: is the new price within the client's budget?
+        const doneSimplify = simplifies.find((x) => x.status === "Quoted");
+        const simplifyResult = !openSimplify && doneSimplify && doneSimplify.new_amount != null
+          && !discounts.some((x) => x.requested_at > (doneSimplify.closed_at ?? "")) ? doneSimplify : null;
+        const openAsk = (label?: string, budget?: number) => {
+          setAskPath("discount"); setAskLabel(label ?? ""); setAskAmount(budget ? String(budget) : ""); setAskOpen(true);
+        };
         const floorFor = (label: string, quoted: number) =>
           quoted - Math.max(0, ...approved.filter((a) => a.option_label === label).map((a) => Number(a.approved_discount ?? 0)), 0);
         return (
           <section className="space-y-3 rounded-[var(--radius)] border border-border bg-card p-3 text-sm md:p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-medium">Price and discounts</h3>
-              {!open && !askOpen && !isGm && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setAskOpen(true)}>{isPackage ? "Ask the GM for a price" : "Ask the GM for a discount"}</Button>
+              {!open && !openSimplify && !askOpen && !isGm && (
+                <Button type="button" variant="outline" size="sm" onClick={() => openAsk()}>Client wants a lower price</Button>
               )}
             </div>
 
@@ -766,6 +778,34 @@ const ProposalDoc = () => {
               </div>
             )}
 
+            {openSimplify && (
+              <div className="space-y-1 rounded-[var(--radius)] border border-warning/50 bg-warning/10 p-3">
+                <p className="font-medium">
+                  {costing?.status === "Submitted" ? "Simplified list is with the GM for the new price" : "With the designer — simplifying the design to the client's budget"}
+                </p>
+                <p className="tabular-nums">
+                  {openSimplify.option_label}: AED {Number(openSimplify.quoted_amount).toLocaleString()} → client budget <b>AED {Number(openSimplify.client_budget).toLocaleString()}</b>
+                  {isGm && <span className="text-muted-foreground"> · designer's target cost AED {Number(openSimplify.target_cost).toLocaleString()} (was {Number(openSimplify.cost_at_request).toLocaleString()})</span>}
+                </p>
+                {openSimplify.note && <p className="text-muted-foreground">Note: {openSimplify.note}</p>}
+                {!isGm && <p className="text-xs text-muted-foreground">The designer adjusts the FF&E list and resubmits; the GM sets the final quote and the draft proposal updates. You'll be notified.</p>}
+              </div>
+            )}
+
+            {simplifyResult && (() => {
+              const gap = Number(simplifyResult.new_amount) - Number(simplifyResult.client_budget);
+              return (
+                <p className={cn("rounded-[var(--radius)] border p-2 tabular-nums", gap > 0 ? "border-warning/50 bg-warning/10" : "border-success/50 bg-success/10")}>
+                  Simplified design re-quoted: {simplifyResult.option_label} <b>AED {Number(simplifyResult.new_amount).toLocaleString()}</b> (was {Number(simplifyResult.quoted_amount).toLocaleString()}) · client budget AED {Number(simplifyResult.client_budget).toLocaleString()}
+                  {gap > 0 ? <> — still AED {gap.toLocaleString()} over.
+                    {!isGm && !open && !askOpen && (
+                      <Button type="button" size="sm" variant="outline" className="ml-2 h-7"
+                        onClick={() => openAsk(simplifyResult.option_label, Number(simplifyResult.client_budget))}>Ask the GM to discount the rest</Button>
+                    )}</> : <> — within budget.</>}
+                </p>
+              );
+            })()}
+
             {!open && lastDecided && (
               <p className={cn("rounded-[var(--radius)] border p-2",
                 lastDecided.status === "Approved" ? "border-success/50 bg-success/10" : "border-destructive/40 bg-destructive/10")}>
@@ -802,28 +842,54 @@ const ProposalDoc = () => {
                     </label>
                   )}
                   <label className="space-y-1">
-                    <span className="block text-xs text-muted-foreground">{isPackage ? "Price the client is asking for (excl. VAT)" : "How much off"}</span>
+                    <span className="block text-xs text-muted-foreground">Client's budget (AED, excl. VAT)</span>
                     <Input inputMode="decimal" className="h-8 w-32" value={askAmount} onChange={(e) => setAskAmount(e.target.value)} />
                   </label>
-                  <Input className="h-8 w-full sm:w-72" placeholder="What did the client say?"
+                  <Input className="h-8 w-full sm:w-72" placeholder={askPath === "simplify" ? "Note for the designer, e.g. keep the sofa, drop the decor" : "What did the client say?"}
                     value={askWhy} onChange={(e) => setAskWhy(e.target.value)} />
                 </div>
+                {(() => {
+                  const label = askLabel || baseOptions[0]?.label || "Option A";
+                  const list = Number(baseOptions.find((o) => o.label === label)?.amount ?? 0);
+                  const budget = Number(askAmount);
+                  const gap = budget > 0 && budget < list ? list - budget : 0;
+                  return (
+                    <div className="space-y-1" role="radiogroup" aria-label="How to meet the budget">
+                      {gap > 0 && <p className="text-xs tabular-nums text-muted-foreground">{label} is AED {list.toLocaleString()} — AED {gap.toLocaleString()} ({Math.round((gap / list) * 100)}%) over the budget.</p>}
+                      <label className="flex items-start gap-2">
+                        <input type="radio" className="mt-1" checked={askPath === "discount"} onChange={() => setAskPath("discount")} />
+                        <span><b className="font-medium">Ask the GM for a discount</b>{gap > 0 && <> — AED {gap.toLocaleString()} off</>}<br />
+                          <span className="text-xs text-muted-foreground">Same design, lower price. The GM approves, counters or declines.</span></span>
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input type="radio" className="mt-1" checked={askPath === "simplify"} onChange={() => setAskPath("simplify")} />
+                        <span><b className="font-medium">Ask the designer to simplify the design</b><br />
+                          <span className="text-xs text-muted-foreground">Big gap: the designer adjusts the FF&E list to a target cost and resubmits; the GM sets the final quote. The GM is told now.</span></span>
+                      </label>
+                    </div>
+                  );
+                })()}
                 <div className="flex gap-2">
-                  <Button type="button" size="sm" disabled={askDiscount.isPending}
+                  <Button type="button" size="sm" disabled={askDiscount.isPending || askSimplify.isPending}
                     onClick={async () => {
                       const label = askLabel || baseOptions[0]?.label || "Option A";
-                      // Packages: sales enter the price the client wants; the request carries it as an amount off the list.
                       const list = Number(baseOptions.find((o) => o.label === label)?.amount ?? 0);
-                      const amt = isPackage ? list - Number(askAmount) : Number(askAmount);
-                      if (isPackage && !(Number(askAmount) > 0 && Number(askAmount) < list)) { toast.error(`Enter a price below the list price ${list.toLocaleString()}`); return; }
-                      if (!(amt > 0)) { toast.error("Enter how much to come down by"); return; }
+                      const budget = Number(askAmount);
+                      if (!(budget > 0 && budget < list)) { toast.error(`Enter the client's budget — below the current price ${list.toLocaleString()}`); return; }
                       if (!(await saveFirst())) return;
                       try {
-                        await askDiscount.mutateAsync({ proposalId: row.id, leadId, label, discount: amt, clientNote: askWhy });
+                        if (askPath === "simplify") {
+                          await askSimplify.mutateAsync({ proposalId: row.id, leadId, label, budget, note: askWhy });
+                          toast.success("Sent to the designer to simplify — the GM has been told");
+                        } else {
+                          // The request is an amount off the price; the client's budget goes to the GM with the note.
+                          const why = isPackage ? askWhy : [`Client budget AED ${budget.toLocaleString()}`, askWhy.trim()].filter(Boolean).join(" — ");
+                          await askDiscount.mutateAsync({ proposalId: row.id, leadId, label, discount: list - budget, clientNote: why });
+                          toast.success(isPackage ? "Sent to the GM with the item list for a cost check" : "Sent to the GM");
+                        }
                         setAskOpen(false); setAskAmount(""); setAskWhy("");
-                        toast.success(isPackage ? "Sent to the GM with the item list for a cost check" : "Sent to the GM");
                       } catch (e) { toast.error(e instanceof Error ? e.message : "Could not send the request"); }
-                    }}>Send to the GM</Button>
+                    }}>{askPath === "simplify" ? "Send to the designer" : "Send to the GM"}</Button>
                   <Button type="button" size="sm" variant="outline" onClick={() => setAskOpen(false)}>Cancel</Button>
                 </div>
               </div>
