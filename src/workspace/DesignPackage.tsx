@@ -602,6 +602,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   // A package lead (no design, FF&E from the chosen package) shows only its FF&E list.
   const pkgOnly = pkgLead && !isLoading && designs.length === 0 && !simplify;
   const tab = pkgOnly ? "ffe" : urlTab;
+  const canAddPkgDesign = pkgOnly && !viewOnly && !!brief && (isAssignedDesigner || isGm);
   const ffeScrollRef = useKeepScroll(open ? `design:${leadId}:ffe` : null);
   const rendersScrollRef = useKeepScroll(open ? `design:${leadId}:renders` : null);
   // Live checklist mirroring ws_submit_design_package, so the gap is visible while uploading, not after pressing Submit.
@@ -730,7 +731,14 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
           </button>
         ))}
       </div>}
-      {pkgOnly && <p className="border-b border-border px-4 py-2 text-xs text-muted-foreground md:px-6">The client chose a catalog package — there is no design to make. This is the package's FF&amp;E list: check the items and costs like any other list.</p>}
+      {pkgOnly && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2 md:px-6">
+          <p className="text-xs text-muted-foreground">The client chose a catalog package. This is its FF&amp;E list: check the items and costs like any other list.
+            {canAddPkgDesign && " If the client asked for changes, add a new design — the renders go to the GM with the list and into the proposal."}</p>
+          {/* Any package lead may get a design: a budget or style change can reach the designer by more than one route. */}
+          {canAddPkgDesign && <Button size="sm" variant="outline" onClick={doStart} disabled={start.isPending}>{start.isPending ? "Starting…" : "Add a new design"}</Button>}
+        </div>
+      )}
 
       {tab === "ffe" && (
         <div ref={ffeScrollRef} className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
