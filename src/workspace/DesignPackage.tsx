@@ -27,7 +27,9 @@ import {
 import { DESIGN_AREAS, DESIGN_KINDS, REJECT_REASONS, type DesignKind, type DesignStatus } from "./designSchema";
 import DesignStatusPill from "./DesignStatusPill";
 import { FfeSheet } from "./FfeTab";
-import { leadOwner, useFfeItems } from "./ffeQueries";
+import { leadOwner, useFfeItems, useSubmitPackageFfe } from "./ffeQueries";
+import { useSimplifyBrief } from "./proposalQueries";
+import { aed } from "./format";
 import { RedesignDialog } from "./RedesignRequest";
 import { useDesignParam } from "./designParams";
 import { useKeepScroll } from "./scrollMemory";
@@ -520,6 +522,14 @@ const VersionView = ({
   );
 };
 
+const SimplifyBanner = ({ target, note }: { target: number; note: string | null }) => (
+  <div className="space-y-1 rounded-[var(--radius)] border border-warning/50 bg-warning/10 p-3 text-left text-sm">
+    <p className="font-medium">The client's budget is lower than the package — adjust the design to a total FF&E cost of about {aed(target)}</p>
+    {note && <p className="text-muted-foreground">Sales: {note}</p>}
+    <p className="text-xs text-muted-foreground">Upload the new design here (optional) and change the items on the FF&E list, then Submit to GM.</p>
+  </div>
+);
+
 /* ---------------- package shell ---------------- */
 
 const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) => {
@@ -538,6 +548,11 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // A package lead whose client asked for a design within budget (sales → "Ask the designer to simplify"):
+  // it becomes a full design package — renders optional, straight to the GM, no sales review.
+  const pkgLead = isPackageBrief(brief);
+  const { data: simplify } = useSimplifyBrief(open && pkgLead ? leadId : null);
+  const submitPkg = useSubmitPackageFfe();
 
   const latest = designs[0];
   useEffect(() => { setSelectedId(latest?.id ?? null); }, [latest?.id, open]);
@@ -572,7 +587,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   // and the coordinator with no design to look at. The GM may start V1 too, as they already may for
   // every later version (canStartNext).
   const canStartFirst = !viewOnly && !latest && !!brief && (isAssignedDesigner || isGm)
-    && (["Assigned", "In Design", "Revision Requested"].includes(brief.status) || lead?.status === "Won");
+    && (["Assigned", "In Design", "Revision Requested"].includes(brief.status) || lead?.status === "Won" || (pkgLead && !!simplify));
   const canStartNext = !viewOnly && !!brief && (
     (latest?.status === "Rejected" && isAssignedDesigner)
     || (latest?.status === "Accepted" && (isGm || isAssignedDesigner || (!!lead && lead.sales_id === me)))
@@ -585,7 +600,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   // remount returns to it; opening clears it (renders). Each tab's scroller is kept separately.
   const { tab: urlTab, setTab } = useDesignParam(leadId);
   // A package lead (no design, FF&E from the chosen package) shows only its FF&E list.
-  const pkgOnly = isPackageBrief(brief) && !isLoading && designs.length === 0;
+  const pkgOnly = pkgLead && !isLoading && designs.length === 0 && !simplify;
   const tab = pkgOnly ? "ffe" : urlTab;
   const ffeScrollRef = useKeepScroll(open ? `design:${leadId}:ffe` : null);
   const rendersScrollRef = useKeepScroll(open ? `design:${leadId}:renders` : null);
@@ -642,6 +657,15 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
       // Inline and persistent: a refusal that fades away reads as a broken button.
       setSubmitError(errMsg(e, "Could not submit"));
     }
+  };
+
+  const doSubmitPkg = () => {
+    if (pkgItems.length === 0 || nUncosted > 0) { setSubmitError(`Can't submit yet — ${checks[1].fix}`); return; }
+    setSubmitError(null);
+    submitPkg.mutate(leadId, {
+      onSuccess: () => toast.success(nRenders + nMood > 0 ? "Sent to the GM — new design and FF&E list. Sales get the price and renders in the proposal." : "FF&E list sent to the GM for the final price"),
+      onError: (e) => setSubmitError(errMsg(e, "Could not submit")),
+    });
   };
 
   const doDecide = async (accept: boolean, reason?: string, feedback?: string) => {
@@ -747,6 +771,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
             <p className="text-muted-foreground">Loading…</p>
           ) : !selected ? (
             <div className="rounded-[var(--radius)] border border-border p-8 text-center space-y-3">
+              {pkgLead && simplify && <SimplifyBanner target={simplify.target_cost} note={simplify.note} />}
               <p className="text-muted-foreground">No design uploaded yet.</p>
               {canStartFirst ? (
                 <Button onClick={doStart} disabled={start.isPending}>Start V1</Button>
@@ -757,7 +782,14 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
           ) : (
             <>
               {!isLatest && <p className="text-sm text-muted-foreground">V{selected.version} is a past version and is read-only.</p>}
-              {editable && selected.status === "Draft" && (
+              {pkgLead && simplify && <SimplifyBanner target={simplify.target_cost} note={simplify.note} />}
+              {editable && selected.status === "Draft" && pkgLead && (
+                <p className="rounded-[var(--radius)] border border-primary/40 bg-primary/5 p-3 text-sm">
+                  Upload the adjusted design (optional) and update the FF&E list, then press "Submit to GM". The GM sets the final price;
+                  sales get it in the package proposal together with these renders. Every FF&E item needs a unit cost.
+                </p>
+              )}
+              {editable && selected.status === "Draft" && !pkgLead && (
                 <p className="rounded-[var(--radius)] border border-primary/40 bg-primary/5 p-3 text-sm">
                   The renders and the FF&E list go out together: sales reviews the design while the GM quotes from your costs.
                   Before submitting you need at least one render, and every FF&E item priced with a unit cost.
@@ -787,7 +819,26 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
 
       {tab === "renders" && (editable || canReview || canStartNext || canResubmit) && (
         <footer className="border-t border-border px-4 py-3 md:px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          {editable && selected?.status === "Draft" && (
+          {editable && selected?.status === "Draft" && pkgLead && (
+            <>
+              <div className="space-y-1.5 sm:mr-auto min-w-0">
+                <ul className="flex flex-wrap gap-1.5" aria-label="Needed to submit">
+                  <li className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs", nRenders + nMood ? "border-success/50 text-success" : "border-border text-muted-foreground")}>
+                    {nRenders + nMood ? <Check className="h-3 w-3" /> : null}{nRenders + nMood ? checks[0].label : "New renders (optional)"}
+                  </li>
+                  <li className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs",
+                    checks[1].ok ? "border-success/50 text-success" : "border-destructive/60 bg-destructive/10 text-destructive")}>
+                    {checks[1].ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}{checks[1].label}
+                  </li>
+                </ul>
+                {submitError
+                  ? <p role="alert" className="text-sm text-destructive">{submitError}</p>
+                  : <p className="text-xs text-muted-foreground">{checks[1].ok ? "Ready — sends the FF&E list (and any new renders) to the GM for the final price." : checks[1].fix}</p>}
+              </div>
+              <Button onClick={doSubmitPkg} disabled={submitPkg.isPending}>{submitPkg.isPending ? "Submitting…" : "Submit to GM"}</Button>
+            </>
+          )}
+          {editable && selected?.status === "Draft" && !pkgLead && (
             <>
               <div className="space-y-1.5 sm:mr-auto min-w-0">
                 <ul className="flex flex-wrap gap-1.5" aria-label="Needed to submit">

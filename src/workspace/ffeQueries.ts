@@ -640,7 +640,8 @@ export const useSubmitPackageFfe = () => {
       const { error } = await supabase.rpc("ws_submit_package_ffe" as never, { _lead: leadId } as never);
       fail(error);
     },
-    onSettled: () => { qc.invalidateQueries({ queryKey: ["ws", "costing"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify-brief"] }); },
+    // A budget redesign's renders are shared by the same call, so the design queries move too.
+    onSettled: (_d, _e, leadId) => { qc.invalidateQueries({ queryKey: ["ws", "designs", leadId] }); qc.invalidateQueries({ queryKey: ["ws", "proposal-design", leadId] }); qc.invalidateQueries({ queryKey: ["ws", "design-statuses"] }); qc.invalidateQueries({ queryKey: ["ws", "costing"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify"] }); qc.invalidateQueries({ queryKey: ["ws", "simplify-brief"] }); },
   });
 };
 

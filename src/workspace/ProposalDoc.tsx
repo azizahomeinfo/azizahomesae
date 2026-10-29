@@ -187,8 +187,15 @@ const ProposalDoc = () => {
     // costing round (after an item change) has produced one: that becomes its price.
     if (doc.source === "package") {
       if (quote && doc.quoteVersion !== quote.version) {
-        setDraft(applyQuote(doc, quote, groups ?? [])); setNotices([`Items and prices updated from the GM's final quotation V${quote.version} — save to keep`]);
-      } else { setDraft(null); setNotices([]); }
+        doc = applyQuote(doc, quote, groups ?? []);
+        found.push(`Items and prices updated from the GM's final quotation V${quote.version} — save to keep`);
+      }
+      // A budget redesign: the designer's renders join the package proposal as design pages; the catalog cover stays.
+      if (design && design.status === "Accepted" && doc.designId !== design.id) {
+        doc = { ...applyDesign(doc, design), cover: doc.cover };
+        found.push(`Design V${design.version} added from the designer — save to keep`);
+      }
+      setDraft(found.length ? doc : null); setNotices(found);
       setAttempted(false);
       return;
     }
@@ -252,14 +259,15 @@ const ProposalDoc = () => {
     const key = `${row.id}:${costing.status}:${costing.version}:${JSON.stringify(live)}`;
     if (followed.current === key || save.isPending) return;
     followed.current = key;
-    const doc = freshQuote ? applyQuote(row.doc, { version: costing.version, options: costing.options }, live) : { ...row.doc, itemList: live, finalAt: null };
+    let doc = freshQuote ? applyQuote(row.doc, { version: costing.version, options: costing.options }, live) : { ...row.doc, itemList: live, finalAt: null };
+    if (freshQuote && design && design.status === "Accepted" && doc.designId !== design.id) doc = { ...applyDesign(doc, design), cover: doc.cover };
     save.mutate({ id: row.id, leadId: row.lead_id ?? lead.id, doc }, {
       onSuccess: () => { setDraft(null); setNotices([freshQuote
         ? `Items and prices updated from the GM's final quotation V${costing.version} — saved`
         : "Item list updated from the designer's FF&E list — saved"]); },
       onError: (e) => { followed.current = null; toast.error(e instanceof Error ? e.message : "Could not update the proposal from the FF&E list"); },
     });
-  }, [row, ready, lead, member, costing, groups, save]);
+  }, [row, ready, lead, member, costing, groups, save, design]);
 
   const current = row ? (draft ?? row.doc) : null;
   const paths = current ? [
