@@ -29,7 +29,7 @@ import { CollapseAllButton, CollapseChevron, collapseKey, sectionDomId, useColla
 import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
-  isLabour, projectOwner, useSeedFfe, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useSubmitPackageFfe, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeBackInStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
+  isLabour, projectOwner, useSeedFfe, useFfePriceSuggestions, type PriceSuggestion, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useSubmitPackageFfe, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeBackInStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
   type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
 } from "./ffeQueries";
 
@@ -109,6 +109,19 @@ const nextOrderNo = (rows: FfeRow[], supplier: string) => {
   while (used.has(`Order ${n}`)) n += 1;
   return `Order ${n}`;
 };
+
+/**
+ * A line nobody has costed, where the book knows something close: one tap takes the price instead of
+ * typing it. Accepting records it as a real cost, so the book learns this wording too.
+ */
+const PriceHint = ({ hint, onUse }: { hint?: PriceSuggestion; onUse: (v: number) => void }) =>
+  hint ? (
+    <button type="button" onClick={() => onUse(hint.unit_cost)}
+      title={`Standard price for "${hint.suggestion}" (${hint.room_class}) — tap to use, then change it if this one differs`}
+      className="mt-1 block max-w-full truncate rounded-full border border-primary/40 bg-primary/5 px-2 py-0.5 text-[10px] text-primary hover:bg-primary/10">
+      {hint.suggestion} · {aed(hint.unit_cost)}
+    </button>
+  ) : null;
 
 /** Held items are refused by a DB trigger; one in a batch would fail the whole update. */
 type DateField = "ordered_on" | "eta" | "delivered_on" | "installed_on";
@@ -766,6 +779,8 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
   const role = member?.role as WorkspaceRole;
   const withCost = role !== "sales";
   const { data: allRows = [], isLoading } = useFfeItems(ctx.owner, withCost);
+  // Only asked for when the viewer can price and something is actually blank.
+  const { data: hints } = useFfePriceSuggestions(ctx.owner, withCost && allRows.some((r) => r.unit_cost == null));
   // Building materials (internal) render in their own section on a project only. Hiding them from sales is
   // presentation, not security: the document boundary is the internal filter in useProposalItems.
   const rows = useMemo(() => allRows.filter((r) => !isInternal(r)), [allRows]);
@@ -938,6 +953,7 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
             {r.from_price_book && r.unit_cost != null && (
               <span className="block text-[10px] text-muted-foreground" title="Pre-filled from the standard prices — check it">standard price</span>
             )}
+            {canEditCost && r.unit_cost == null && <PriceHint hint={hints?.get(r.id)} onUse={(v) => save(r.id, { unit_cost: v })} />}
           </F>
         )}
         {withCost && (
@@ -1290,6 +1306,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   const canEdit = role === "gm" || role === "coordinator";
   // GM and coordinator buy, so they see cost; nobody else reaches this tab with cost.
   const { data: allRows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
+  const { data: hints } = useFfePriceSuggestions(projectOwner(project.id), canEdit && allRows.some((r) => r.unit_cost == null));
   const { orderingBorder, orderingExpected, awaitingBudget } = useOrderingBorder(project);
   const update = useUpdateFfeItems();
   const backInStock = useFfeBackInStock();
@@ -1368,6 +1385,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       <EditCell label="Unit cost" type="number" value={r.unit_cost ?? null} className="tabular-nums w-24"
         onSave={(v) => applyRow(r, { unit_cost: v.trim() === "" ? null : Number(v) }, `Unit cost ${v}`, v.trim() === "")} />
       <span className="block text-[10px] text-muted-foreground tabular-nums whitespace-nowrap">Line {aed(Number(r.unit_cost ?? 0) * Number(r.qty))}</span>
+      {r.unit_cost == null && <PriceHint hint={hints?.get(r.id)} onUse={(v) => apply([r.id], { unit_cost: v })} />}
     </div>
   ) : null;
 

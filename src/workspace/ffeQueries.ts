@@ -382,6 +382,29 @@ const patchFfeRows = (qc: ReturnType<typeof useQueryClient>, ids: string[], rows
 const touchesSupplierWork = (v: T["ffe_items"]["Update"]) =>
   v.stage !== undefined || v.supplier_id !== undefined || v.supplier_name !== undefined || v.review !== undefined;
 
+/**
+ * What the price book would offer for a line nobody has costed, matched loosely (pg_trgm) so
+ * "Refrigerator" finds "fridge". One call for the whole list, not one per row. Accepting a
+ * suggestion writes it as a hand-entered cost, which teaches the book that wording for next time.
+ */
+export type PriceSuggestion = { suggestion: string; unit_cost: number; room_class: string; closeness: number };
+export const useFfePriceSuggestions = (owner: FfeOwner | undefined, enabled: boolean) =>
+  useQuery({
+    queryKey: [...fKeys.ffe(ownerKey(owner)), "suggest"],
+    enabled: !!owner?.id && enabled,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("ws_ffe_price_suggestions", {
+        _lead: owner!.col === "lead_id" ? owner!.id : undefined,
+        _project: owner!.col === "project_id" ? owner!.id : undefined,
+      });
+      fail(error);
+      return new Map((data ?? []).map((r) => [r.item_id, {
+        suggestion: r.suggestion, unit_cost: Number(r.unit_cost), room_class: r.room_class, closeness: Number(r.closeness),
+      } as PriceSuggestion]));
+    },
+  });
+
 export const useUpdateFfeItems = () => {
   const qc = useQueryClient();
   return useMutation({
