@@ -37,6 +37,12 @@ import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages"
 
 const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
 
+/** A package budget redesign: the designer's renders REPLACE the catalog pages (and cover) in the new version. */
+const packageRedesign = (doc: ProposalDocument, design: Parameters<typeof applyDesign>[1]): ProposalDocument => {
+  const next = applyDesign(doc, design);
+  return { ...next, pages: next.pages.filter((p) => p.area || !p.images.length || !p.images.every((i) => isCatalogPath(i.path))) };
+};
+
 export const PROPOSAL_TONE: Record<ProposalStatus, string> = {
   Draft: "border-border text-muted-foreground", Sent: "bg-secondary/30 text-foreground border-transparent",
   Accepted: "bg-primary/10 text-primary border-transparent", Rejected: "bg-destructive/10 text-destructive border-transparent",
@@ -185,17 +191,10 @@ const ProposalDoc = () => {
     const found: string[] = [];
     // A package proposal never pulls designer renders. It does take the GM's quotation once the designer → GM
     // costing round (after an item change) has produced one: that becomes its price.
+    // A package proposal is never patched in place by a new quote or design: the follow effect below makes
+    // the next version from it, so what the client already received stays as it was.
     if (doc.source === "package") {
-      if (quote && doc.quoteVersion !== quote.version) {
-        doc = applyQuote(doc, quote, groups ?? []);
-        found.push(`Items and prices updated from the GM's final quotation V${quote.version} — save to keep`);
-      }
-      // A budget redesign: the designer's renders join the package proposal as design pages; the catalog cover stays.
-      if (design && design.status === "Accepted" && doc.designId !== design.id) {
-        doc = { ...applyDesign(doc, design), cover: doc.cover };
-        found.push(`Design V${design.version} added from the designer — save to keep`);
-      }
-      setDraft(found.length ? doc : null); setNotices(found);
+      setDraft(null); setNotices([]);
       setAttempted(false);
       return;
     }
@@ -242,35 +241,46 @@ const ProposalDoc = () => {
     return () => window.removeEventListener("beforeunload", warn);
   }, [draft]);
 
-  // Package costing round (sales sent item changes → designer → GM): the FF&E list is the item list. Whatever
-  // the designer changes there is written into the proposal automatically — no button — and, once the GM quotes,
-  // the final items and prices too. Only drafts follow; a sent proposal keeps what the client received.
+  // Package costing round (sales sent item changes → designer → GM): the FF&E list is the item list. While the
+  // round is open, the designer's changes are written into the latest draft automatically — no button. When the GM
+  // quotes (or a redesign is approved), the result becomes the NEXT version (V1 → V2), never an overwrite: sales keep
+  // the version the client already has and choose between them (Veronica, 2026-10-29, H).
   // Above the early returns: hooks below one crash the page.
   const followed = useRef<string | null>(null);
   useEffect(() => {
-    if (!row || !ready || !lead || !member || row.doc.source !== "package" || row.status !== "Draft" || !costing) return;
+    const latest = proposals[0];
+    if (!row || !latest || !ready || !lead || !member || latest.doc.source !== "package" || !costing) return;
     if (!(member.role === "gm" || lead.sales_id === member.user_id)) return;
-    const open = costing.status === "Returned" || costing.status === "Submitted";
-    const freshQuote = costing.status === "Quoted" && row.doc.quoteVersion !== costing.version;
-    // A budget redesign the GM has approved joins the proposal as design pages, like the price — no button.
-    const freshDesign = costing.status === "Quoted" && !!design && design.status === "Accepted" && row.doc.designId !== design.id;
-    if (!open && !freshQuote && !freshDesign) return;
     const live = groups ?? [];
-    const differs = live.length > 0 && itemListDiff(row.doc.itemList, live).differs;
-    if (!differs && !freshQuote && !freshDesign) return;
-    const key = `${row.id}:${costing.status}:${costing.version}:${design?.id ?? ""}:${JSON.stringify(live)}`;
+    const quoted = costing.status === "Quoted";
+    const freshQuote = quoted && latest.doc.quoteVersion !== costing.version;
+    const freshDesign = quoted && !!design && design.status === "Accepted" && latest.doc.designId !== design.id;
+    if (freshQuote || freshDesign) {
+      const key = `next:${latest.id}:${costing.version}:${design?.id ?? ""}`;
+      if (followed.current === key || create.isPending) return;
+      followed.current = key;
+      let doc = applyQuote(latest.doc, { version: costing.version, options: costing.options }, live);
+      if (freshDesign && design) doc = packageRedesign(doc, design);
+      create.mutate({ leadId: lead.id, doc: { ...doc, finalAt: null }, by: member.user_id, nextVersion: latest.version + 1 }, {
+        onSuccess: (id) => {
+          synced.current = id; setSelectedId(id); setDraft(null);
+          setNotices([`V${latest.version + 1} created from the GM's final quotation V${costing.version}${freshDesign ? ` with design V${design?.version}` : ""} — V${latest.version} is kept as it was`]);
+        },
+        onError: (e) => { followed.current = null; toast.error(e instanceof Error ? e.message : "Could not create the new proposal version"); },
+      });
+      return;
+    }
+    if (row.id !== latest.id || row.status !== "Draft") return;
+    const open = costing.status === "Returned" || costing.status === "Submitted";
+    if (!open || !live.length || !itemListDiff(row.doc.itemList, live).differs) return;
+    const key = `${row.id}:${costing.status}:${costing.version}:${JSON.stringify(live)}`;
     if (followed.current === key || save.isPending) return;
     followed.current = key;
-    let doc = freshQuote ? applyQuote(row.doc, { version: costing.version, options: costing.options }, live) : { ...row.doc, itemList: live, finalAt: null };
-    if (freshDesign && design) doc = { ...applyDesign(doc, design), cover: doc.cover };
-    save.mutate({ id: row.id, leadId: row.lead_id ?? lead.id, doc }, {
-      onSuccess: () => { setDraft(null); setNotices([freshQuote
-        ? `Items and prices updated from the GM's final quotation V${costing.version}${freshDesign ? ` with design V${design?.version}` : ""} — saved`
-        : freshDesign ? `Design V${design?.version} added from the designer — saved`
-        : "Item list updated from the designer's FF&E list — saved"]); },
+    save.mutate({ id: row.id, leadId: row.lead_id ?? lead.id, doc: { ...row.doc, itemList: live, finalAt: null } }, {
+      onSuccess: () => { setDraft(null); setNotices(["Item list updated from the designer's FF&E list — saved"]); },
       onError: (e) => { followed.current = null; toast.error(e instanceof Error ? e.message : "Could not update the proposal from the FF&E list"); },
     });
-  }, [row, ready, lead, member, costing, groups, save, design]);
+  }, [row, proposals, ready, lead, member, costing, groups, save, create, design]);
 
   const current = row ? (draft ?? row.doc) : null;
   const paths = current ? [
@@ -569,7 +579,11 @@ const ProposalDoc = () => {
           {proposals.length > 1 && (
             <select aria-label="Revision" className="h-9 rounded-[var(--radius)] border border-border bg-background px-2 text-sm"
               value={row.id} onChange={(e) => { setSelectedId(e.target.value); setDraft(null); }}>
-              {proposals.map((p) => <option key={p.id} value={p.id}>V{p.version} · {p.status}</option>)}
+              {proposals.map((p) => (
+                <option key={p.id} value={p.id}>
+                  V{p.version} · {p.status}{p.doc.investment.options[0] ? ` · AED ${Number(p.doc.investment.options[0].amount).toLocaleString()}` : ""}{p.doc.source === "package" && p.doc.designId ? " · new design" : ""}
+                </option>
+              ))}
             </select>
           )}
           {canEdit && row.status === "Draft" && d.finalAt && !dirty && <Button variant="outline" disabled={withdrawn} onClick={() => markStatus("Sent")}>Mark sent</Button>}
