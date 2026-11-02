@@ -515,8 +515,11 @@ export const useCostingTransition = () => {
         const { error } = await supabase.from("ffe_costings").insert({ ...pub, id, [v.owner.col]: v.owner.id });
         fail(error);
       }
-      // Every costing gets its private row; sales never reach this path (no costing controls).
-      if (!v.costingId || Object.keys(priv).length) {
+      // Only the GM ever writes the private row (markup, notes, return note). The row itself is created
+      // by the database when the costing is (trigger ffe_costings_private_seed), because a designer
+      // upserting it failed outright: INSERT ... ON CONFLICT DO UPDATE needs SELECT on the conflicting
+      // row, and reading markup is GM-only. That is what blocked "submit to GM" on 2026-11-02.
+      if (Object.keys(priv).length) {
         const { error } = await supabase.from("ffe_costing_private").upsert({ ...priv, costing_id: id });
         fail(error);
       }
