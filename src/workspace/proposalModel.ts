@@ -55,7 +55,9 @@ export interface ProposalDocument {
   designVersion: number | null;
   /** ffe_costings.version this document's prices came from; null = budget placeholders. */
   quoteVersion: number | null;
-  cover: { client: string; scope: string; location: string; date: string; validity: string; intro: string; hero: string | null };
+  /** `heroX`: where the cover crop sits horizontally, 0–1 (default 0.5 = centred). Set to
+   *  MOOD_HERO_X when the hero is a mood board — see that constant. */
+  cover: { client: string; scope: string; location: string; date: string; validity: string; intro: string; hero: string | null; heroX?: number | null };
   floorPlan: { path: string | null; name: string | null; text: string };
   pages: DocPage[];
   moodBoard: DocImage[];
@@ -114,6 +116,16 @@ const isPdfPath = (p: string) => p.toLowerCase().endsWith(".pdf");
 const isFloor = (i: SourceImage) => i.kind === "Floor plan" || i.room === "Floor Plan";
 /** Mood-board kind: ordered after renders within its room. */
 const isMoodKind = (i: SourceImage) => i.kind === "Mood board";
+/**
+ * The studio's mood boards have the room name printed into the image, top left ("MASTER BEDROOM",
+ * "LIVING & DINING"). The cover crops a 1448-wide board to 768 source px, and centred that starts at
+ * x=340 — straight through the last letters, which is what reached the client on Iris's cover
+ * (Veronica, 2026-11-02: "the entire cover is looking very nice, except for the left upper side of the
+ * letters"). The longest label measured ends at x=365, so the crop starts past it at 0.58 (x=395) and
+ * the label is gone rather than half-shown. Renders and catalog photos carry no such text and stay
+ * centred: do NOT make this the default, it would re-crop every approved cover for nothing.
+ */
+export const MOOD_HERO_X = 0.58;
 /** Filed in the generic Mood Board area (no room of its own): goes to the trailing mood-board page. */
 const isRoomless = (i: SourceImage) => i.room === "Mood Board";
 /** Images sales uploaded inside the editor live under designs/<lead>/proposal/… and survive a design refresh. */
@@ -139,6 +151,7 @@ export const designParts = (design: SourceDesign) => {
   const floor = design.images.find(isFloor);
   return {
     hero: renders[0]?.storage_path ?? moodKind[0]?.storage_path ?? null,
+    heroFromMood: !renders[0] && !!moodKind[0],
     areas: order.map((area) => ({ area, images: map.get(area)! })),
     floor: floor ? { path: floor.storage_path, name: floor.file_name } : null,
     mood: usable.filter(isRoomless).map((i) => ({ path: i.storage_path, caption: i.caption })),
@@ -171,7 +184,7 @@ export const applyDesign = (doc: ProposalDocument, design: SourceDesign): Propos
     ...doc,
     designId: design.id,
     designVersion: design.version,
-    cover: { ...doc.cover, hero: d.hero ?? doc.cover.hero },
+    cover: { ...doc.cover, hero: d.hero ?? doc.cover.hero, heroX: d.hero ? (d.heroFromMood ? MOOD_HERO_X : null) : (doc.cover.heroX ?? null) },
     pages,
     floorPlan: keepFloor ? doc.floorPlan : { ...doc.floorPlan, path: d.floor?.path ?? null, name: d.floor?.name ?? null },
     moodBoard: [...d.mood, ...doc.moodBoard.filter((m) => isOwnUpload(m.path))],
@@ -204,7 +217,7 @@ export const buildDocument = (v: {
       date: new Date().toISOString().slice(0, 10),
       validity: "14 days",
       intro: `A complete furnishing proposal for your ${unit || "home"}${v.lead.property ? ` at ${v.lead.property}` : ""} — designed around your brief, sourced, delivered, installed and styled, handed over ready to live in.`,
-      hero: null,
+      hero: null, heroX: null,
     },
     floorPlan: { path: null, name: null, text: "" },
     pages: [],
@@ -234,7 +247,7 @@ export const normalizeDoc = (raw: unknown): ProposalDocument => {
     designId: d.designId ?? null, designVersion: d.designVersion ?? null, quoteVersion: null,
     cover: {
       client: c.client ?? "", scope: c.unit ?? "", location: c.property ?? "", date: c.date ?? new Date().toISOString().slice(0, 10),
-      validity: "14 days", intro: "", hero: c.hero ?? null,
+      validity: "14 days", intro: "", hero: c.hero ?? null, heroX: typeof c.heroX === "number" ? c.heroX : null,
     },
     floorPlan: { path: d.floorPlan?.path ?? null, name: d.floorPlan?.name ?? null, text: "" },
     pages: (d.areas ?? []).map((a: { area: string; title: string; desc: string; images: DocImage[] }) => ({ id: newId(), area: a.area, title: a.title, desc: a.desc, images: a.images ?? [] })),

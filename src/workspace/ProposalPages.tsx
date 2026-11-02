@@ -91,7 +91,9 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   return (
     <div className="ppd-page">
       {/* The cover is deliberately full-bleed and cropped at the client's request. */}
-      {hero && <img src={hero} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 42%" }} />}
+      {hero && <img src={hero} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+        /* Horizontal anchor is per cover (MOOD_HERO_X crops past a mood board's printed room name); vertical stays at 42%. */
+        objectPosition: `${Math.round((c.heroX ?? 0.5) * 100)}% 42%` }} />}
       {/* The fade starts at 56%, not 30%: the picture should fill the cover and stop just above the
           title block. Earlier the photograph was washed out from a third of the way down. */}
       {hero && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 56%, hsl(38 65% 98% / 0.88) 72%, hsl(38 65% 98%) 80%, hsl(38 65% 98%) 100%)" }} />}
