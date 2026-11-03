@@ -21,10 +21,16 @@ export const TAB_LABEL: Record<ProjectTab, string> = {
 const ALL_TABS = Object.keys(TAB_LABEL) as ProjectTab[];
 
 // Convenience only — RLS is the real boundary.
+// The designer gets Procurement READ-ONLY (ProcurementTab's canEdit is gm/coordinator only): she
+// specified every item, so she has to be able to see what was actually ordered and what has landed
+// without asking the coordinator (Veronica, 2026-11-03, on Luca: "she cannot see what's delivered and
+// what's not delivered… she cannot see what the coordinator did for the procurement"). It shows no
+// money to her — useFfeItems is called with withCost = canEdit — and the Commercial card that carries
+// the contract value stays gm/sales only, so the wall is untouched.
 export const TABS_BY_ROLE: Record<WorkspaceRole, ProjectTab[]> = {
   gm: ALL_TABS,
   sales: ["overview", "brief", "timeline", "changes", "files"],
-  designer: ["overview", "brief", "design", "ffe", "timeline", "tasks", "issues", "changes", "files"],
+  designer: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "files"],
   coordinator: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "snagging", "files"],
 };
 
