@@ -162,11 +162,13 @@ const orderSummary = (l: FfeRow[]) => {
   const dates = (k: "ordered_on" | "eta") => [...new Set(l.map((r) => r[k]).filter(Boolean) as string[])].sort();
   const ord = dates("ordered_on");
   const eta = dates("eta");
+  const del = [...new Set(l.map((r) => r.delivered_on).filter(Boolean) as string[])].sort();
   return {
     delivered,
     pieces: l.reduce((s, r) => s + (Number(r.qty) || 0), 0),
     ordered: ord[0] ?? "",
     eta: eta[eta.length - 1] ?? "",
+    lastDelivery: del[del.length - 1] ?? "",
     status: delivered === l.length ? "Complete"
       : delivered > 0 ? `Part delivered — ${delivered} of ${l.length}`
       : ordered === 0 ? "Not ordered yet" : "Waiting",
@@ -422,7 +424,7 @@ const RoomHeading = ({ room, canEdit, onRename }: { room: string; canEdit: boole
 };
 
 /** `collapse` turns the title into a toggle; `right` controls stay usable while collapsed. */
-const Section = ({ title, right, children, collapse }: { title: string; right?: ReactNode; children: ReactNode; collapse?: { open: boolean; id: string; onToggle: () => void } }) => (
+const Section = ({ title, note, right, children, collapse }: { title: string; note?: ReactNode; right?: ReactNode; children: ReactNode; collapse?: { open: boolean; id: string; onToggle: () => void } }) => (
   <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2">
       {collapse ? (
@@ -431,6 +433,8 @@ const Section = ({ title, right, children, collapse }: { title: string; right?: 
         </h3>
       ) : <h3 className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">{title}</h3>}{right}
     </div>
+    {/* A heading is uppercase and letter-spaced; anything that has to be READ goes here instead. */}
+    {note}
     {collapse ? (collapse.open && <div id={collapse.id} className="space-y-3">{children}</div>) : children}
   </section>
 );
@@ -681,6 +685,28 @@ const byBand = (rows: FfeRow[]) => {
   // A row the database never banded belongs nowhere in the runs — show it rather than hide it.
   const unsorted = rows.filter((r) => !bandOf(r));
   return [...runs, ...(unsorted.length ? [["Unsorted", unsorted] as [string, FfeRow[]]] : [])].filter(([, l]) => l.length);
+};
+
+/**
+ * What the coordinator needs standing in the apartment with the boxes: the order number is on the tag
+ * outside, so he should be able to answer "is this order complete, and when did it land" without
+ * unpacking anything (Veronica, 2026-11-03). These same figures existed only inside the "Download
+ * orders" CSV, which is no use on a phone on site — so they go on the group heading itself.
+ */
+const OrderNote = ({ rows }: { rows: FfeRow[] }) => {
+  const s = orderSummary(rows);
+  const all = s.delivered === rows.length;
+  return (
+    <p className="text-xs text-muted-foreground">
+      <span className={cn("font-medium", all ? "text-success" : s.delivered > 0 ? "text-warning" : "text-foreground")}>
+        {s.ordered || s.delivered ? `${s.delivered} of ${rows.length} delivered` : "Not ordered yet"}
+      </span>
+      {` · ${pl(s.pieces, "piece")} to check`}
+      {s.ordered && ` · ordered ${shortDate(s.ordered)}`}
+      {s.eta && !all && ` · ETA ${shortDate(s.eta)}`}
+      {s.lastDelivery && ` · last arrived ${shortDate(s.lastDelivery)}`}
+    </p>
+  );
 };
 
 export const GroupToggle = ({ value, onChange }: { value: GroupBy; onChange: (g: GroupBy) => void }) => (
@@ -1550,7 +1576,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
       ) : view === "board" ? (
         <PhaseBoard rows={shownRows} canEdit={canEdit} onMove={(id, stage) => apply([id], { stage })} />
       ) : shownGroups.map(([room, items, whole]) => (
-        <Section key={room} collapse={{ open: procCollapse.isOpen(room, items), id: sectionDomId("proc", room), onToggle: () => procCollapse.toggle(room) }} title={`${room} · ${searching ? `${items.length} of ${whole.length}` : whole.length} item${whole.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(whole.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`} right={canEdit ? (
+        <Section key={room} collapse={{ open: procCollapse.isOpen(room, items), id: sectionDomId("proc", room), onToggle: () => procCollapse.toggle(room) }} title={`${room} · ${searching ? `${items.length} of ${whole.length}` : whole.length} item${whole.length === 1 ? "" : "s"}${canEdit ? ` · ${aed(whole.reduce((s, r) => s + Number(r.unit_cost ?? 0) * Number(r.qty), 0))}` : ""}`}
+          note={groupBy === "order" ? <OrderNote rows={whole} /> : undefined} right={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
           {groupBy === "supplier" && room !== NO_SUPPLIER && (
             <Button size="sm" variant="outline" disabled={!whole.some(buyable) || update.isPending}
