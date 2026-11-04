@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWorkspace } from "../WorkspaceProvider";
-import { useBrief, useBriefList, useLead, useLeadBudgets, useMembers, type BriefListRow , isPackageBrief } from "../queries";
+import { useBrief, useBriefList, useLead, useLeadBudgets, useLeadsAwaitingBrief, useMembers, type BriefListRow, type AssignedLead, isPackageBrief } from "../queries";
 import { canSee, type WorkspaceRole } from "../access";
 import BriefEditor from "../BriefEditor";
 import { BRIEF_LABEL, BRIEF_STATUSES, type BriefStatus } from "../briefWorkflow";
@@ -133,9 +133,12 @@ export const isMineBrief = (b: BriefListRow, uid: string | undefined) => !!uid &
 const DesignerView = () => {
   const { member } = useWorkspace();
   const { data: list = [], isLoading: lLoading, error: lErr } = useBriefList();
+  const { data: assigned = [] } = useLeadsAwaitingBrief(member?.user_id);
   const mine = list.filter((b) => isMineBrief(b, member?.user_id));
   const live = mine.filter((b) => b.status !== "Design Approved");
   const done = mine.filter((b) => b.status === "Design Approved");
+  // Assigned to her, but sales have not written the brief — otherwise the lead is simply invisible.
+  const waiting = assigned.filter((l) => !list.some((b) => b.lead_id === l.id));
 
   if (lErr) return <p className="text-destructive">{(lErr as Error).message}</p>;
   if (lLoading) return <p className="text-muted-foreground">Loading…</p>;
@@ -182,6 +185,24 @@ const DesignerView = () => {
   return (
     <div className="space-y-8">
       <Group title="My briefs" empty="Nothing assigned to you." count={live.length}>{grid(live)}</Group>
+      {waiting.length > 0 && (
+        <Group title="Waiting for the brief" empty="" count={waiting.length}>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {waiting.map((l: AssignedLead) => (
+              <div key={l.id} className="space-y-2 rounded-[var(--radius)] border border-dashed border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-foreground min-w-0 truncate">{l.name}</p>
+                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">Brief not written</span>
+                </div>
+                <p className="text-sm text-muted-foreground truncate">{[...new Set([l.property, l.unit_type].filter(Boolean))].join(" · ") || "—"}</p>
+                <p className="text-xs text-muted-foreground">
+                  Assigned to you. Sales are still writing the requirements — it moves to “My briefs” as soon as they submit it.
+                </p>
+              </div>
+            ))}
+          </div>
+        </Group>
+      )}
       {done.length > 0 && <Group title="Approved by sales" empty="" count={done.length}>{grid(done)}</Group>}
     </div>
   );

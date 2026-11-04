@@ -342,6 +342,32 @@ export const useBriefQueue = (enabled = true) =>
     },
   });
 
+/**
+ * Leads handed to a designer that have no brief yet. The GM can assign a designer the moment a lead
+ * looks real (ws_assign_lead_designer works at any brief status), but the designer's world is Briefs —
+ * so before this, an assignment with no brief behind it was invisible to her while the notification
+ * still said "Open the brief and start the design" (Elsy / L-1092, Veronica 2026-11-04: "I just
+ * assigned a new project to her, but it's not showing"). Converted leads are excluded: those are
+ * projects, which she reaches from Projects.
+ */
+export type AssignedLead = Pick<Lead, "id" | "ref" | "name" | "property" | "unit_type" | "location" | "status" | "created_at">;
+
+export const useLeadsAwaitingBrief = (uid: string | undefined) =>
+  useQuery({
+    queryKey: [...K.leads, "awaiting-brief", uid ?? ""],
+    enabled: !!uid,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, ref, name, property, unit_type, location, status, created_at")
+        .eq("designer_id", uid!)
+        .is("converted_project_id", null)
+        .order("created_at", { ascending: false });
+      fail(error);
+      return (data ?? []) as unknown as AssignedLead[];
+    },
+  });
+
 export const useBriefList = () =>
   useQuery({
     queryKey: K.briefs,
