@@ -30,7 +30,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, ITEM_FONTS, itemFontOf, layoutSheets, MAX_IMAGES_PER_PAGE, MOOD_DESC, MOOD_TITLE, newId,
+  applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, ITEM_FONT_DEFAULT, ITEM_FONT_MAX, ITEM_FONT_MIN, ITEM_FONT_STEP, itemFontOf, layoutSheets, MAX_IMAGES_PER_PAGE, MOOD_DESC, MOOD_TITLE, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
@@ -249,12 +249,15 @@ const ProposalDoc = () => {
   const followed = useRef<string | null>(null);
   useEffect(() => {
     const latest = proposals[0];
-    if (!row || !latest || !ready || !lead || !member || latest.doc.source !== "package" || !costing) return;
+    if (!row || !latest || !ready || !lead || !member || !costing) return;
+    // Package OR design: when the GM re-quotes, the draft must stop showing yesterday's price
+    // (Veronica, 2026-11-05: "gm adjust the price, why the price on proposal is still old price").
+    const isPkg = latest.doc.source === "package";
     if (!(member.role === "gm" || lead.sales_id === member.user_id)) return;
     const live = groups ?? [];
     const quoted = costing.status === "Quoted";
     const freshQuote = quoted && latest.doc.quoteVersion !== costing.version;
-    const freshDesign = quoted && !!design && design.status === "Accepted" && latest.doc.designId !== design.id;
+    const freshDesign = isPkg && quoted && !!design && design.status === "Accepted" && latest.doc.designId !== design.id;
     if (freshQuote || freshDesign) {
       const key = `next:${latest.id}:${costing.version}:${design?.id ?? ""}`;
       if (followed.current === key || create.isPending) return;
@@ -270,6 +273,7 @@ const ProposalDoc = () => {
       });
       return;
     }
+    if (!isPkg) return; // the item-list follow below stays a package behaviour
     if (row.id !== latest.id || row.status !== "Draft") return;
     const open = costing.status === "Returned" || costing.status === "Submitted";
     if (!open || !live.length || !itemListDiff(row.doc.itemList, live).differs) return;
@@ -926,6 +930,15 @@ const ProposalDoc = () => {
       <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* rail */}
         <aside ref={railScrollRef} className="rounded-[var(--radius)] border border-border bg-card px-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+          {/* A disabled fieldset at 80% opacity looks like a normal rail, so a locked proposal read as
+              "nothing works" with no reason given (Veronica, 2026-11-05: "still can not edit"). Say it. */}
+          {!editable && (
+            <p className="mt-4 rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-xs">
+              {row?.status !== "Draft"
+                ? `This proposal is ${row?.status ?? "not a draft"} — only a Draft can be edited. Press "New proposal" to make a new version.`
+                : "Read-only — a proposal is edited by the GM or by the sales owner of this lead."}
+            </p>
+          )}
           <fieldset disabled={!editable} className="min-w-0 disabled:opacity-80">
             <RailSection title="Cover">
               <Field label="Client"><Input value={d.cover.client} onChange={(e) => setCover({ client: e.target.value })} /></Field>
@@ -1044,16 +1057,21 @@ const ProposalDoc = () => {
             <RailSection title="Item list">
               {/* Type size for the printed list. Bigger type fits fewer rows per page, so the list
                   simply runs onto another page — the page caps divide by the same scale. */}
-              <Field label="Type size">
-                <div className="flex flex-wrap gap-1">
-                  {ITEM_FONTS.map((f) => (
-                    <Button key={f.value} type="button" size="sm" disabled={!editable}
-                      variant={itemFontOf(d) === f.value ? "default" : "outline"}
-                      aria-pressed={itemFontOf(d) === f.value}
-                      onClick={() => change({ ...d, itemFont: f.value })}>{f.label}</Button>
-                  ))}
+              <Field label="Type size on the printed list">
+                <div className="flex items-center gap-2">
+                  <Button type="button" size="icon" variant="outline" aria-label="Smaller"
+                    disabled={!editable || itemFontOf(d) <= ITEM_FONT_MIN}
+                    onClick={() => change({ ...d, itemFont: Math.max(ITEM_FONT_MIN, +(itemFontOf(d) - ITEM_FONT_STEP).toFixed(2)) })}>−</Button>
+                  <span className="min-w-14 text-center text-sm tabular-nums">{Math.round(itemFontOf(d) * 100)}%</span>
+                  <Button type="button" size="icon" variant="outline" aria-label="Bigger"
+                    disabled={!editable || itemFontOf(d) >= ITEM_FONT_MAX}
+                    onClick={() => change({ ...d, itemFont: Math.min(ITEM_FONT_MAX, +(itemFontOf(d) + ITEM_FONT_STEP).toFixed(2)) })}>+</Button>
+                  {itemFontOf(d) !== ITEM_FONT_DEFAULT && editable && (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => change({ ...d, itemFont: null })}>Reset</Button>
+                  )}
                 </div>
               </Field>
+              <p className="text-xs text-muted-foreground">Bigger type fits fewer rows, so a long list runs onto another page.</p>
               {isPackage && pkgCosting && <p className="text-xs text-muted-foreground">Locked while the designer and GM cost it — it follows the FF&amp;E list.</p>}
               <fieldset disabled={isPackage && pkgCosting} className="space-y-1.5 disabled:opacity-70">
               {d.itemList.map((g, i) => (

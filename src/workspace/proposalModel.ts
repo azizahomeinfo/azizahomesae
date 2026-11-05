@@ -296,14 +296,15 @@ export const investEyebrow = (n: number, units?: number) =>
 export const MOOD_TITLE = "Mood board";
 export const MOOD_DESC = "The palette, textures and references guiding the design.";
 
-export const ITEM_FONTS = [
-  { value: 1, label: "Normal" },
-  { value: 1.15, label: "Large" },
-  { value: 1.3, label: "Extra large" },
-] as const;
+export const ITEM_FONT_MIN = 1;
+export const ITEM_FONT_MAX = 2;
+export const ITEM_FONT_STEP = 0.1;
+/** 11px was measured for density, not for reading: too small on a client's desk (Veronica said so
+ *  twice on 2026-11-05), so an unset list now prints at 130% and sales can take it to 200%. */
+export const ITEM_FONT_DEFAULT = 1.3;
 export const itemFontOf = (doc: { itemFont?: number | null }) => {
   const f = Number(doc.itemFont);
-  return Number.isFinite(f) && f > 0 ? Math.min(2, Math.max(0.8, f)) : 1;
+  return Number.isFinite(f) && f > 0 ? Math.min(ITEM_FONT_MAX, Math.max(ITEM_FONT_MIN, f)) : ITEM_FONT_DEFAULT;
 };
 
 export const ITEM_PAGE_CAP = 114;
