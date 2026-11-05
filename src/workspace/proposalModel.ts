@@ -61,6 +61,10 @@ export interface ProposalDocument {
   /** Item-list type size, 1 = the measured default. Bigger type fits fewer rows, so the page caps
    *  divide by it (see ITEM_FONTS) and the list simply runs onto another page. */
   itemFont?: number | null;
+  /** The mood-board page's heading and paragraph. Hard-coded until 2026-11-05, which left sales
+   *  unable to change the one page they most often want to word themselves. */
+  moodTitle?: string | null;
+  moodDesc?: string | null;
   floorPlan: { path: string | null; name: string | null; text: string };
   pages: DocPage[];
   moodBoard: DocImage[];
@@ -222,7 +226,7 @@ export const buildDocument = (v: {
       intro: `A complete furnishing proposal for your ${unit || "home"}${v.lead.property ? ` at ${v.lead.property}` : ""} — designed around your brief, sourced, delivered, installed and styled, handed over ready to live in.`,
       hero: null, heroX: null,
     },
-    itemFont: null,
+    itemFont: null, moodTitle: null, moodDesc: null,
     floorPlan: { path: null, name: null, text: "" },
     pages: [],
     moodBoard: [],
@@ -254,6 +258,8 @@ export const normalizeDoc = (raw: unknown): ProposalDocument => {
       validity: "14 days", intro: "", hero: c.hero ?? null, heroX: typeof c.heroX === "number" ? c.heroX : null,
     },
     itemFont: typeof d.itemFont === "number" ? d.itemFont : null,
+    moodTitle: typeof d.moodTitle === "string" ? d.moodTitle : null,
+    moodDesc: typeof d.moodDesc === "string" ? d.moodDesc : null,
     floorPlan: { path: d.floorPlan?.path ?? null, name: d.floorPlan?.name ?? null, text: "" },
     pages: (d.areas ?? []).map((a: { area: string; title: string; desc: string; images: DocImage[] }) => ({ id: newId(), area: a.area, title: a.title, desc: a.desc, images: a.images ?? [] })),
     moodBoard: (d.moodBoard ?? []).map((m: { path: string }) => ({ path: m.path, caption: null })),
@@ -287,6 +293,9 @@ export const investEyebrow = (n: number, units?: number) =>
  * below is in weight units: at 1.15 a page holds 1/1.15 of the rows and a name wraps 15% sooner, so
  * the list flows onto another page instead of overflowing one.
  */
+export const MOOD_TITLE = "Mood board";
+export const MOOD_DESC = "The palette, textures and references guiding the design.";
+
 export const ITEM_FONTS = [
   { value: 1, label: "Normal" },
   { value: 1.15, label: "Large" },
@@ -403,7 +412,7 @@ export const layoutSheets = (doc: ProposalDocument) => {
     doc.source === "package" ? (i === 0 ? "Design direction" : "Package") : `Area ${String(i + 1).padStart(2, "0")}`,
     p.title, p.desc, p.images));
   if (doc.toggles.moodBoard && doc.moodBoard.length) {
-    areaPage("Design direction", "Mood board", "The palette, textures and references guiding the design.", doc.moodBoard);
+    areaPage("Design direction", doc.moodTitle?.trim() || MOOD_TITLE, doc.moodDesc ?? MOOD_DESC, doc.moodBoard);
   }
   const groups = doc.itemList.filter((g) => g.items.length);
   const showItems = doc.toggles.itemList && groups.length > 0;

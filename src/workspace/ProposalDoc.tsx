@@ -30,7 +30,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, ITEM_FONTS, itemFontOf, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
+  applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, ITEM_FONTS, itemFontOf, layoutSheets, MAX_IMAGES_PER_PAGE, MOOD_DESC, MOOD_TITLE, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
@@ -1022,6 +1022,12 @@ const ProposalDoc = () => {
             {d.moodBoard.length > 0 && (
               <RailSection title="Mood board">
                 <p className="text-xs text-muted-foreground">Images supplied with the accepted design.</p>
+                {/* The heading and paragraph printed on the mood-board page — editable like any other page. */}
+                <Input aria-label="Mood board page title" placeholder={MOOD_TITLE} disabled={!editable}
+                  value={d.moodTitle ?? ""} onChange={(e) => change({ ...d, moodTitle: e.target.value })} />
+                <Textarea aria-label="Mood board page description" rows={3} placeholder={MOOD_DESC} disabled={!editable}
+                  value={d.moodDesc ?? ""} onChange={(e) => change({ ...d, moodDesc: e.target.value })} />
+                <p className="text-xs text-muted-foreground">Empty title prints the standard heading; an empty description prints no paragraph at all.</p>
                 <ImageStrip images={d.moodBoard} url={(x) => url(x)}
                   onMove={editable ? (k, direction) => movePicture({ page: "mood", image: k }, direction) : undefined}
                   moveDisabled={(k, direction) => pictureMoveDisabled({ page: "mood", image: k }, direction)} />
