@@ -30,7 +30,7 @@ import { aed, shortDate, todayISO } from "./format";
 import {
   DONE_STAGES, useAddFfeItem, useCosting, useCostingTransition, useDeleteFfeItem, useFfeItems, useSaveSupplier, BUILDING_MATERIAL, isInternal,
   isLabour, projectOwner, useSeedFfe, useFfePriceSuggestions, type PriceSuggestion, useSetStandardPrices, useApplyStandardPrices, useNeedsBudget, useSubmitBudget, useSubmitPackageFfe, useDecideBudget, missingBuyability, needsSpec, notMoving, useSuppliers, useUpdateFfeItems, PRIORITY_BANDS, bandOf, bandLabel, useConfirmFfe, useReturnFfe, useFfeOutOfStock, useFfeBackInStock, useFfeReselected, useFfeDecideChange, REVIEW_LABEL, type ReviewPrev,
-  type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption,
+  type CostingStatus, type FfeOwner, type FfeRow, type ProcStage, type QuoteOption, useOnlineRetailers,
 } from "./ffeQueries";
 
 /** What the sheet belongs to: a lead (inside the design package) or a project (inherited on conversion). */
@@ -155,7 +155,22 @@ const downloadFfeCsv = (code: string, rows: FfeRow[]) => {
 // What the coordinator holds when a van arrives: every order with its state, then the items of each
 // order under its own heading, so he can tick off one delivery without reading the whole list.
 // No money columns here either.
-const ORDERS_HEADER = ["Check", "Supplier", "Order", "Ref", "Room", "Item", "Qty", "Unit", "Dims", "Spec", "Notes", "Stage", "Ordered", "ETA", "Delivered"];
+// Order of the sheet, asked for by Veronica on 2026-11-05: ONLINE orders first, because he walks into
+// the unit and checks those boxes first; then the shop/pick-up orders; and everything not ordered (or
+// never updated) last, since there is nothing to receive for it. Each order leads with what it holds,
+// then what state it is in, then the order and delivery dates.
+const ORDERS_HEADER = ["Check", "Ref", "Room", "Item", "Qty", "Unit", "Stage", "Ordered", "ETA", "Delivered", "Details"];
+const ORDER_SUMMARY_HEADER = ["Check", "Supplier", "Order", "Items", "Pieces", "Delivered", "Status", "Ordered", "ETA", "Last arrival"];
+/** Mirrors ws_ffe_online_supplier: the supplier name CONTAINS a GM-listed retailer, case-insensitive. */
+const isOnlineSupplier = (supplier: string, retailers: string[]) => {
+  const s = supplier.trim().toLowerCase();
+  return !!s && retailers.some((n) => n.trim() && s.includes(n.trim().toLowerCase()));
+};
+const SECTIONS = [
+  { key: "online", title: "1. ONLINE ORDERS — check these first, inside the unit" },
+  { key: "shop", title: "2. SHOP & PICK-UP ORDERS" },
+  { key: "pending", title: "3. NOT ORDERED YET — nothing to receive" },
+] as const;
 const orderSummary = (l: FfeRow[]) => {
   const delivered = l.filter((r) => !!r.delivered_on || DONE_STAGES.includes(r.stage)).length;
   const ordered = l.filter((r) => !!r.ordered_on).length;
@@ -174,23 +189,48 @@ const orderSummary = (l: FfeRow[]) => {
       : ordered === 0 ? "Not ordered yet" : "Waiting",
   };
 };
-const downloadOrdersCsv = (code: string, rows: FfeRow[]) => {
+const downloadOrdersCsv = (code: string, rows: FfeRow[], retailers: string[]) => {
   // Run 10 is the contractor's labour — nothing is delivered, so it has no place on a receiving list.
   const groups = byOrder(rows.filter((r) => !isLabour(r)));
+  const bucket = (l: FfeRow[]) =>
+    !l.some((r) => r.ordered_on) ? "pending" : isOnlineSupplier(supplierOf(l[0]), retailers) ? "online" : "shop";
+  const filed = groups.map(([label, l]) => ({ label, l, where: bucket(l), s: orderSummary(l) }));
   const out: string[] = [];
-  out.push([`Orders — ${code}`, `printed ${todayISO()}`].map(csvCell).join(","));
-  out.push(["Supplier", "Order", "Items", "Pieces", "Ordered", "Latest ETA", "Delivered", "Status"].map(csvCell).join(","));
-  for (const [, l] of groups) {
-    const s = orderSummary(l);
-    out.push([supplierOf(l[0]), orderOf(l[0]) || NO_ORDER, l.length, s.pieces, s.ordered, s.eta, `${s.delivered} of ${l.length}`, s.status].map(csvCell).join(","));
-  }
-  for (const [label, l] of groups) {
-    const s = orderSummary(l);
+  out.push([`Orders — ${code}`, `printed ${shortDate(todayISO())}`].map(csvCell).join(","));
+
+  // Page 1: one line per order, in the order he walks the unit.
+  for (const sec of SECTIONS) {
+    const mine = filed.filter((g) => g.where === sec.key);
+    if (!mine.length) continue;
     out.push("");
-    out.push([`${label} — ${l.length} item${l.length === 1 ? "" : "s"}, ${s.delivered} of ${l.length} delivered${s.eta ? `, ETA ${s.eta}` : ""}`].map(csvCell).join(","));
-    out.push(ORDERS_HEADER.map(csvCell).join(","));
-    for (const r of l) {
-      out.push(["", supplierOf(r), orderOf(r), r.ref, r.room, r.item, r.qty, r.unit, r.dims, r.spec, r.notes, r.stage, r.ordered_on, r.eta, r.delivered_on].map(csvCell).join(","));
+    out.push([sec.title].map(csvCell).join(","));
+    out.push(ORDER_SUMMARY_HEADER.map(csvCell).join(","));
+    for (const g of mine) {
+      out.push(["", supplierOf(g.l[0]), orderOf(g.l[0]) || NO_ORDER, g.l.length, g.s.pieces,
+                `${g.s.delivered} of ${g.l.length}`, g.s.status,
+                shortDate(g.s.ordered), shortDate(g.s.eta), shortDate(g.s.lastDelivery)].map(csvCell).join(","));
+    }
+  }
+
+  // Then every order in the same sequence, with what is inside it.
+  for (const sec of SECTIONS) {
+    const mine = filed.filter((g) => g.where === sec.key);
+    if (!mine.length) continue;
+    out.push("");
+    out.push([`———— ${sec.title} ————`].map(csvCell).join(","));
+    for (const g of mine) {
+      out.push("");
+      out.push([`${g.label} — ${g.l.length} item${g.l.length === 1 ? "" : "s"}, ${g.s.pieces} piece${g.s.pieces === 1 ? "" : "s"} to check`,
+                `${g.s.delivered} of ${g.l.length} delivered`,
+                g.s.ordered ? `ordered ${shortDate(g.s.ordered)}` : "not ordered",
+                g.s.eta ? `ETA ${shortDate(g.s.eta)}` : "",
+                g.s.lastDelivery ? `last arrived ${shortDate(g.s.lastDelivery)}` : ""].map(csvCell).join(","));
+      out.push(ORDERS_HEADER.map(csvCell).join(","));
+      for (const r of g.l) {
+        out.push(["", r.ref, r.room, r.item, r.qty, r.unit, r.stage,
+                  shortDate(r.ordered_on), shortDate(r.eta), shortDate(r.delivered_on),
+                  [r.dims, r.spec, r.notes].map((x) => x?.trim()).filter(Boolean).join(" · ")].map(csvCell).join(","));
+      }
     }
   }
   const blob = new Blob(["\uFEFF" + out.join("\r\n")], { type: "text/csv;charset=utf-8" });
@@ -1350,6 +1390,8 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
   // GM and coordinator buy, so they see cost; nobody else reaches this tab with cost.
   const { data: allRows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
   const { data: hints } = useFfePriceSuggestions(projectOwner(project.id), canEdit && allRows.some((r) => r.unit_cost == null));
+  // Which shops are online decides what the coordinator checks first on the receiving sheet.
+  const { data: onlineRetailers = [] } = useOnlineRetailers(canEdit);
   const { orderingBorder, orderingExpected, awaitingBudget } = useOrderingBorder(project);
   const update = useUpdateFfeItems();
   const backInStock = useFfeBackInStock();
@@ -1514,7 +1556,7 @@ export const ProcurementTab = ({ project }: { project: Project }) => {
           {canEdit && (
             <Button size="sm" variant="outline" disabled={!allRows.length}
               title={allRows.length ? "Every order with its state, then its items — for checking a delivery in" : "No items to download yet"}
-              onClick={() => downloadOrdersCsv(project.code, allRows)}>
+              onClick={() => downloadOrdersCsv(project.code, allRows, onlineRetailers)}>
               <Download className="mr-1 h-3.5 w-3.5" />Download orders
             </Button>
           )}
