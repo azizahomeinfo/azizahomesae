@@ -22,7 +22,32 @@ import IntentFurnishing from "./pages/IntentFurnishing";
 import CaseStudy from "./pages/CaseStudy";
 import { lazy, Suspense } from "react";
 
-const Workspace = lazy(() => import("./workspace/WorkspaceApp"));
+/**
+ * Publishing replaces the hashed bundles and DELETES the old ones, so a tab opened before a deploy
+ * gets a 404 the moment it finally imports the workspace: "Failed to fetch dynamically imported
+ * module", and the screen simply never arrives (Veronica, 2026-11-05: "cannot reach the workflow,
+ * fail to catch" — four deploys that day). UpdateNotice only asks the person to reload, and only
+ * every few minutes, so it cannot catch a navigation in between. The cure is the one the browser
+ * needs anyway: fetch the new index. Reload once, remembered for the tab so a genuinely broken
+ * build (or being offline) shows the error instead of looping.
+ */
+const RELOADED = "ws.stale-chunk-reload";
+const freshChunk = <T,>(load: () => Promise<T>): Promise<T> =>
+  load().then((m) => {
+    try { sessionStorage.removeItem(RELOADED); } catch { /* private window: nothing to clear */ }
+    return m;
+  }).catch((err) => {
+    let retried = true;
+    try {
+      retried = sessionStorage.getItem(RELOADED) === "1";
+      if (!retried) sessionStorage.setItem(RELOADED, "1");
+    } catch { retried = true; } // can't remember: never reload, show the error
+    if (retried) throw err;
+    window.location.reload();
+    return new Promise<T>(() => {}); // the reload takes over; never resolve
+  });
+
+const Workspace = lazy(() => freshChunk(() => import("./workspace/WorkspaceApp")));
 
 const queryClient = new QueryClient();
 
