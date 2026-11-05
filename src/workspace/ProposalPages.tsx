@@ -24,7 +24,7 @@ export const PROPOSAL_CSS = `
   font-family: 'Montserrat', sans-serif; box-sizing: border-box; display: flex; flex-direction: column; }
 .ppd-page * { box-sizing: border-box; }
 .ppd-serif { font-family: 'Cormorant Garamond', serif; font-weight: 600; text-transform: uppercase; margin: 0; }
-.ppd-eyebrow { font-size: 11.5px; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pp-olive); margin: 0 0 12px; }
+.ppd-eyebrow { font-size: 11.5px; font-weight: 500; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pp-olive); margin: 0 0 12px; flex-shrink: 0; }
 .ppd-foot { position: absolute; left: 56px; right: 56px; bottom: 28px; display: flex; justify-content: space-between;
   font-size: 9px; font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pp-label); }
 .ppd-note { position: absolute; left: 56px; right: 56px; bottom: 50px; font-size: 9.5px; line-height: 1.5; font-style: italic; text-align: center; color: var(--pp-label); margin: 0; }
@@ -184,8 +184,12 @@ const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc
   return (
     <div className="ppd-page" style={{ padding: "52px 56px 88px" }}>
       <p className="ppd-eyebrow">{s.eyebrow}</p>
-      <h2 className="ppd-serif" style={{ fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05, ...clamp(multi ? 1 : 2) }}>{s.title}</h2>
-      {s.desc && <p style={{ fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
+      {/* flexShrink 0: these are flex items beside the picture grid, and without it the grid's demand for
+          height squeezed the paragraph below its own text — the clamp's overflow then sliced the last line
+          in half, which is what reached the client (Veronica, 2026-11-05, three renders on one page).
+          Measured: the box fell to 32.6px against 44.2px of text. The pictures give way instead. */}
+      <h2 className="ppd-serif" style={{ flexShrink: 0, fontSize: 40, letterSpacing: "0.04em", lineHeight: 1.05, ...clamp(multi ? 1 : 2) }}>{s.title}</h2>
+      {s.desc && <p style={{ flexShrink: 0, fontSize: 13, lineHeight: 1.7, margin: "12px 0 0", color: "var(--pp-muted)", ...clamp(descClampLines(s.images.length)) }}>{s.desc}</p>}
       <div className="ppd-grow" style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: multi ? 12 : 22 }}>
         <div style={{ width: "100%", height: "100%", display: "grid", gridTemplateColumns: `repeat(${columns}, ${w}px)`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`, gap: AREA_MEDIA_GAP }}>
         {s.images.map((img: DocImage) => (
