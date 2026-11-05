@@ -58,6 +58,9 @@ export interface ProposalDocument {
   /** `heroX`: where the cover crop sits horizontally, 0–1 (default 0.5 = centred). Set to
    *  MOOD_HERO_X when the hero is a mood board — see that constant. */
   cover: { client: string; scope: string; location: string; date: string; validity: string; intro: string; hero: string | null; heroX?: number | null };
+  /** Item-list type size, 1 = the measured default. Bigger type fits fewer rows, so the page caps
+   *  divide by it (see ITEM_FONTS) and the list simply runs onto another page. */
+  itemFont?: number | null;
   floorPlan: { path: string | null; name: string | null; text: string };
   pages: DocPage[];
   moodBoard: DocImage[];
@@ -219,6 +222,7 @@ export const buildDocument = (v: {
       intro: `A complete furnishing proposal for your ${unit || "home"}${v.lead.property ? ` at ${v.lead.property}` : ""} — designed around your brief, sourced, delivered, installed and styled, handed over ready to live in.`,
       hero: null, heroX: null,
     },
+    itemFont: null,
     floorPlan: { path: null, name: null, text: "" },
     pages: [],
     moodBoard: [],
@@ -249,6 +253,7 @@ export const normalizeDoc = (raw: unknown): ProposalDocument => {
       client: c.client ?? "", scope: c.unit ?? "", location: c.property ?? "", date: c.date ?? new Date().toISOString().slice(0, 10),
       validity: "14 days", intro: "", hero: c.hero ?? null, heroX: typeof c.heroX === "number" ? c.heroX : null,
     },
+    itemFont: typeof d.itemFont === "number" ? d.itemFont : null,
     floorPlan: { path: d.floorPlan?.path ?? null, name: d.floorPlan?.name ?? null, text: "" },
     pages: (d.areas ?? []).map((a: { area: string; title: string; desc: string; images: DocImage[] }) => ({ id: newId(), area: a.area, title: a.title, desc: a.desc, images: a.images ?? [] })),
     moodBoard: (d.moodBoard ?? []).map((m: { path: string }) => ({ path: m.path, caption: null })),
@@ -276,12 +281,28 @@ export const investEyebrow = (n: number, units?: number) =>
 
 /* ---------------- pagination ---------------- */
 
+/**
+ * What sales can pick for the item list, asked for by Veronica on 2026-11-05 ("add the feature for
+ * adjusting the font, and we can size up"). A scale, not a px size, because every page measurement
+ * below is in weight units: at 1.15 a page holds 1/1.15 of the rows and a name wraps 15% sooner, so
+ * the list flows onto another page instead of overflowing one.
+ */
+export const ITEM_FONTS = [
+  { value: 1, label: "Normal" },
+  { value: 1.15, label: "Large" },
+  { value: 1.3, label: "Extra large" },
+] as const;
+export const itemFontOf = (doc: { itemFont?: number | null }) => {
+  const f = Number(doc.itemFont);
+  return Number.isFinite(f) && f > 0 ? Math.min(2, Math.max(0.8, f)) : 1;
+};
+
 export const ITEM_PAGE_CAP = 114;
 /** ~30 characters fit on one line of a 3-column item list; a longer name wraps and costs another row. */
 const ITEM_CHARS_PER_LINE = 30;
-const itemRows = (item: string) => Math.max(1, Math.ceil(item.length / ITEM_CHARS_PER_LINE));
+const itemRows = (item: string, scale = 1) => Math.max(1, Math.ceil(item.length / (ITEM_CHARS_PER_LINE / scale)));
 /** Spec weight is 1.6 + items.length; wrapped names count once per line so a page can never overflow. */
-const groupWeight = (g: ItemGroup) => 1.6 + g.items.reduce((s, i) => s + itemRows(i.item), 0);
+const groupWeight = (g: ItemGroup, scale = 1) => 1.6 + g.items.reduce((s, i) => s + itemRows(i.item, scale), 0);
 
 /**
  * How much item list fits above the investment table on a combined last page (4 columns). Measured in
@@ -294,9 +315,12 @@ export const combinedPageCap = (optionCount: number) => 104 - 8 * (Math.max(1, o
 export const combinedDensePageCap = (optionCount: number) => 116 - 8 * (Math.max(1, optionCount) - 1);
 
 /** lastCap: what the final page may hold — smaller when the investment shares that page. */
-export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_CAP) => {
+export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_CAP, scale = 1) => {
   if (!groups.length) return { pages: [] as ItemGroup[][], pageWeights: [] as number[], usedWeight: 0 };
-  const weights = groups.map(groupWeight);
+  // Larger type: the same page holds proportionally fewer rows. Row padding does not grow with it, so
+  // dividing is the conservative side of the truth — a page under-fills rather than overflows.
+  const fullCap = ITEM_PAGE_CAP / scale;
+  const weights = groups.map((g) => groupWeight(g, scale));
   const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
   const prefix = [0];
   for (const weight of weights) prefix.push((prefix[prefix.length - 1] ?? 0) + weight);
@@ -311,7 +335,7 @@ export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_C
       for (let end = page; end <= groups.length; end += 1) {
         for (let start = page - 1; start < end; start += 1) {
           const weight = (prefix[end] ?? 0) - (prefix[start] ?? 0);
-          if (weight > (page === pageCount ? lastCap : ITEM_PAGE_CAP) || !Number.isFinite(dp[page - 1]?.[start])) continue;
+          if (weight > (page === pageCount ? lastCap : fullCap) || !Number.isFinite(dp[page - 1]?.[start])) continue;
           const score = (dp[page - 1]?.[start] ?? 0) + Math.pow(weight - target, 2);
           if (score < (dp[page]?.[end] ?? Number.POSITIVE_INFINITY)) {
             if (dp[page]) dp[page][end] = score;
@@ -332,7 +356,7 @@ export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_C
     return ranges;
   };
 
-  let pageCount = Math.max(1, Math.ceil(totalWeight / ITEM_PAGE_CAP), 1 + Math.ceil(Math.max(0, totalWeight - lastCap) / ITEM_PAGE_CAP));
+  let pageCount = Math.max(1, Math.ceil(totalWeight / fullCap), 1 + Math.ceil(Math.max(0, totalWeight - lastCap) / fullCap));
   let ranges = partition(pageCount);
   while (!ranges && pageCount < groups.length) {
     pageCount += 1;
@@ -340,7 +364,7 @@ export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_C
   }
   if (!ranges) {
     // Can't respect lastCap (one room is bigger than a combined page): report it so the caller doesn't combine.
-    if (lastCap < ITEM_PAGE_CAP) return { pages: [] as ItemGroup[][], pageWeights: [] as number[], usedWeight: 0, fits: false };
+    if (lastCap < fullCap) return { pages: [] as ItemGroup[][], pageWeights: [] as number[], usedWeight: 0, fits: false };
     ranges = groups.map((_, index) => [index, index + 1] as [number, number]);
   }
   const pages = ranges.map(([start, end]) => groups.slice(start, end));
@@ -348,14 +372,18 @@ export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_C
   return { pages, pageWeights, usedWeight: pageWeights[pageWeights.length - 1] ?? 0, fits: true };
 };
 
-/** A room stays on one proposal sheet unless it has more than six pictures. */
-export const MAX_IMAGES_PER_PAGE = 6;
+/**
+ * Two pictures to a page. Three stacked on A4 left each render too small to sell anything, so a room
+ * with three runs onto a second sheet ("1 of 2", "2 of 2") — Veronica, 2026-11-05, on Christine's
+ * living room. This also caps what sales can drag onto one page in the editor.
+ */
+export const MAX_IMAGES_PER_PAGE = 2;
 
 export type Sheet =
   | { kind: "cover" }
   | { kind: "floor" }
   | { kind: "area"; eyebrow: string; title: string; desc: string | null; images: DocImage[] }
-  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean; dense: boolean }
+  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean; dense: boolean; scale: number }
   | { kind: "invest" };
 
 export const layoutSheets = (doc: ProposalDocument) => {
@@ -386,17 +414,18 @@ export const layoutSheets = (doc: ProposalDocument) => {
   const options = doc.investment.options.length;
   // Try the roomier dense setting too: a list a little over the normal cap still belongs on one page
   // with the price rather than spilling into an "Item list 2 of 2".
-  const combinedTry = showItems && showInvest ? paginateItems(groups, combinedDensePageCap(options)) : null;
+  const scale = itemFontOf(doc);
+  const combinedTry = showItems && showInvest ? paginateItems(groups, combinedDensePageCap(options) / scale, scale) : null;
   const guess = !!combinedTry?.fits;
   const combine = showItems && showInvest && (doc.toggles.combine ?? guess);
   const useTry = combine && combinedTry?.fits ? combinedTry : null;
-  const { pages } = useTry ?? paginateItems(groups);
-  const dense = !!useTry && useTry.usedWeight > combinedPageCap(options);
+  const { pages } = useTry ?? paginateItems(groups, ITEM_PAGE_CAP / scale, scale);
+  const dense = !!useTry && useTry.usedWeight > combinedPageCap(options) / scale;
   if (showItems) {
     pages.forEach((g, k) => sheets.push({
       kind: "items", title: pages.length > 1 ? `Item list · ${k + 1} of ${pages.length}` : "Item list",
       groups: g, withInvest: combine && k === pages.length - 1,
-      dense: dense && k === pages.length - 1,
+      dense: dense && k === pages.length - 1, scale,
     }));
   }
   if (showInvest && !combine) sheets.push({ kind: "invest" });

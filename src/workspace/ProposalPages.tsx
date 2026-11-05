@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type CSSProperties, useState, type ReactNode } from "react";
 import logo from "@/assets/aziza-logo.png";
 import { shortDate } from "./format";
 import {
@@ -35,11 +35,12 @@ export const PROPOSAL_CSS = `
 .ppd-col:first-child { padding-left: 0; border-left: none; }
 .ppd-col:last-child { padding-right: 0; }
 .ppd-group { break-inside: avoid; page-break-inside: avoid; margin-bottom: 14px; }
-.ppd-group h4 { font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-olive);
+.ppd-group h4 { font-size: calc(10px * var(--pp-item-scale, 1)); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-olive);
   margin: 0 0 4px; padding-bottom: 5px; border-bottom: 1px solid var(--pp-line); }
-.ppd-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; line-height: 1.3; padding: 3px 0; }
+/* --pp-item-scale is the sales-chosen item-list type size (ITEM_FONTS); 1 = the measured default. */
+.ppd-row { display: flex; justify-content: space-between; gap: 8px; font-size: calc(11px * var(--pp-item-scale, 1)); line-height: 1.3; padding: 3px 0; }
 /* Measured in Chrome against a 710px column: normal holds ~104 weight, dense ~116. */
-.ppd-dense .ppd-row { font-size: 10.5px; line-height: 1.22; padding: 2px 0; }
+.ppd-dense .ppd-row { font-size: calc(10.5px * var(--pp-item-scale, 1)); line-height: 1.22; padding: 2px 0; }
 .ppd-dense .ppd-group { margin-bottom: 10px; }
 .ppd-dense .ppd-group h4 { margin: 0 0 3px; padding-bottom: 4px; }
 .ppd-dense .ppd-col { padding: 0 11px; }
@@ -270,7 +271,8 @@ export const splitColumns = (groups: ItemGroup[], cols: number): ColGroup[][] =>
 };
 
 const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: ProposalDocument; n: number }) => (
-  <div className={`ppd-page${s.dense ? " ppd-dense" : ""}`} style={{ padding: "56px 56px 84px" }}>
+  <div className={`ppd-page${s.dense ? " ppd-dense" : ""}`}
+       style={{ padding: "56px 56px 84px", ["--pp-item-scale" as string]: s.scale } as CSSProperties}>
     <div style={{ paddingBottom: 18, borderBottom: "1px solid var(--pp-line)", marginBottom: 22 }}>
       <p className="ppd-eyebrow">Everything included</p>
       <h2 className="ppd-serif" style={{ fontSize: 36, letterSpacing: "0.04em", lineHeight: 1.05 }}>{s.title}</h2>

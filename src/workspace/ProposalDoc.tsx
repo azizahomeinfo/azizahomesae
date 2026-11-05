@@ -30,7 +30,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
+  applyDesign, applyQuote, buildDocument, isDefaultDesc, itemListDiff, ITEM_FONTS, itemFontOf, layoutSheets, MAX_IMAGES_PER_PAGE, newId,
   type DocImage, type ProposalDocument,
 } from "./proposalModel";
 import { PROPOSAL_CSS, ProposalPages, descOverflowChars } from "./ProposalPages";
@@ -1036,6 +1036,18 @@ const ProposalDoc = () => {
             </RailSection>
 
             <RailSection title="Item list">
+              {/* Type size for the printed list. Bigger type fits fewer rows per page, so the list
+                  simply runs onto another page — the page caps divide by the same scale. */}
+              <Field label="Type size">
+                <div className="flex flex-wrap gap-1">
+                  {ITEM_FONTS.map((f) => (
+                    <Button key={f.value} type="button" size="sm" disabled={!editable}
+                      variant={itemFontOf(d) === f.value ? "default" : "outline"}
+                      aria-pressed={itemFontOf(d) === f.value}
+                      onClick={() => change({ ...d, itemFont: f.value })}>{f.label}</Button>
+                  ))}
+                </div>
+              </Field>
               {isPackage && pkgCosting && <p className="text-xs text-muted-foreground">Locked while the designer and GM cost it — it follows the FF&amp;E list.</p>}
               <fieldset disabled={isPackage && pkgCosting} className="space-y-1.5 disabled:opacity-70">
               {d.itemList.map((g, i) => (
