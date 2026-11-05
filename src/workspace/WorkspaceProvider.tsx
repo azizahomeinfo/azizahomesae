@@ -36,7 +36,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       }
       const { data } = await supabase
         .from("workspace_members")
-        .select("user_id, email, full_name, role, title, active, is_demo, created_at")
+        .select("user_id, email, full_name, role, second_role, title, active, is_demo, created_at")
         .eq("user_id", s.user.id)
         .maybeSingle();
       if (!cancelled) {

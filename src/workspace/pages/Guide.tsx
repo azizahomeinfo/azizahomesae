@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useWorkspace } from "../WorkspaceProvider";
-import type { WorkspaceRole } from "../access";
+import { hasRole, type WorkspaceRole } from "../access";
 import { SalesPlaybook } from "./SalesPlaybook";
 
 type Section = {
@@ -88,14 +88,14 @@ const Guide = () => {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      {role === "coordinator" && (
+      {hasRole(member, "coordinator") && (
         <section className="border-l-2 border-primary pl-4 sm:pl-5">
           <h2 className="font-heading text-lg uppercase tracking-wide text-foreground">Your job in one line</h2>
           <p className="mt-2 text-base leading-7 text-foreground">Everything the designer specified gets bought, delivered and installed — on time, at or under the costed price, with nothing forgotten.</p>
         </section>
       )}
 
-      {role === "coordinator" && (
+      {hasRole(member, "coordinator") && (
         <section className="rounded-[var(--radius)] border border-border bg-card p-4 sm:p-5">
           <h2 className="font-heading text-lg uppercase tracking-wide text-foreground">Your deadlines</h2>
           <div className="mt-2 space-y-3 text-sm leading-6 text-muted-foreground sm:text-[15px] sm:leading-7">

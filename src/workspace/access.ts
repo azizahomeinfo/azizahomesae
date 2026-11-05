@@ -20,6 +20,28 @@ export const PAGES_BY_ROLE: Record<WorkspaceRole, WorkspacePage[]> = {
   coordinator: ["dashboard", "projects", "tasks", "suppliers", "guide"],
 };
 
+/**
+ * One person can hold a second job — Suha designs AND coordinates (Veronica, 2026-11-05: "give her
+ * account both roles"). `role` stays the PRIMARY one, because every rule of the form "designers and
+ * coordinators must never see this" keys off it and must not change; these helpers answer the other
+ * question, "may they do a <role> job". The database mirrors this exactly in ws_has_role.
+ */
+export interface RoleHolder { role: string; second_role?: string | null }
+export const rolesOf = (m: RoleHolder | null | undefined): WorkspaceRole[] =>
+  m ? ([m.role, m.second_role].filter(Boolean) as WorkspaceRole[]) : [];
+/** "Can this person do a <role> job" — never use it to decide what someone may SEE. */
+export const hasRole = (m: RoleHolder | null | undefined, role: WorkspaceRole) => rolesOf(m).includes(role);
+/** Every page either of their roles opens, in the canonical order. */
+export const pagesFor = (m: RoleHolder | null | undefined): WorkspacePage[] => {
+  const roles = rolesOf(m);
+  return PAGES_BY_ROLE.gm.filter((p) => roles.some((r) => PAGES_BY_ROLE[r].includes(p)));
+};
+/** The GM can do anything a <role> can; anyone else needs that role, primary or second. */
+export const isGmOr = (m: RoleHolder | null | undefined, role: WorkspaceRole) =>
+  hasRole(m, "gm") || hasRole(m, role);
+export const canSeeAny = (m: RoleHolder | null | undefined, page: WorkspacePage) =>
+  rolesOf(m).some((r) => PAGES_BY_ROLE[r].includes(page));
+
 export const canSee = (role: WorkspaceRole | null | undefined, page: WorkspacePage) =>
   !!role && PAGES_BY_ROLE[role].includes(page);
 

@@ -1919,6 +1919,7 @@ export type Database = {
           full_name: string
           is_demo: boolean
           role: Database["public"]["Enums"]["workspace_role"]
+          second_role: Database["public"]["Enums"]["workspace_role"] | null
           title: string | null
           user_id: string
         }
@@ -1929,6 +1930,7 @@ export type Database = {
           full_name: string
           is_demo?: boolean
           role: Database["public"]["Enums"]["workspace_role"]
+          second_role?: Database["public"]["Enums"]["workspace_role"] | null
           title?: string | null
           user_id: string
         }
@@ -1939,6 +1941,7 @@ export type Database = {
           full_name?: string
           is_demo?: boolean
           role?: Database["public"]["Enums"]["workspace_role"]
+          second_role?: Database["public"]["Enums"]["workspace_role"] | null
           title?: string | null
           user_id?: string
         }

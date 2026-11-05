@@ -17,7 +17,7 @@ import { useBrief, useMembers } from "./queries";
 import { useLeadProposals, useSimplifyBrief } from "./proposalQueries";
 import { SIGNED_CONTRACT, useProjectFiles, useProjectValues, useUpdateProject, type Project } from "./projectQueries";
 import { useQueryClient } from "@tanstack/react-query";
-import type { WorkspaceRole } from "./access";
+import { isGmOr, type WorkspaceRole } from "./access";
 import type { FfeSection } from "./briefSchema";
 import { useWorkspace } from "./WorkspaceProvider";
 import { useFfeViewParams } from "./ffeViewParams";
@@ -738,7 +738,7 @@ export const ConfirmBanner = ({ project, hasItems }: { project: Project; hasItem
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p>Confirmed by {nameOf(project.confirmed_by)} on {shortDate(project.confirmed_at)} — procurement open.
           {role === "designer" && " Changes you make now are sent to the coordinator."}</p>
-        {(isGm || role === "coordinator") && !backOpen && <Button size="sm" variant="outline" onClick={() => setBackOpen(true)}>Send back to designer</Button>}
+        {isGmOr(member, "coordinator") && !backOpen && <Button size="sm" variant="outline" onClick={() => setBackOpen(true)}>Send back to designer</Button>}
       </div>
       {backOpen && (
         <div className="space-y-2">
@@ -1345,7 +1345,8 @@ const PhaseBoard = ({ rows, canEdit, onMove }: { rows: FfeRow[]; canEdit: boolea
 export const ProcurementTab = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const role = member?.role as WorkspaceRole;
-  const canEdit = role === "gm" || role === "coordinator";
+  // Buying is the coordinator's job, and someone can hold that job as a second role (hasRole).
+  const canEdit = isGmOr(member, "coordinator");
   // GM and coordinator buy, so they see cost; nobody else reaches this tab with cost.
   const { data: allRows = [], isLoading } = useFfeItems(projectOwner(project.id), canEdit);
   const { data: hints } = useFfePriceSuggestions(projectOwner(project.id), canEdit && allRows.some((r) => r.unit_cost == null));

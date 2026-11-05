@@ -33,6 +33,24 @@ const RoleSelect = ({ value, onChange, disabled }: { value: WorkspaceRole; onCha
   </Select>
 );
 
+const NO_SECOND = "__none";
+/**
+ * A second job on the same login — Suha designs and also coordinates (Veronica, 2026-11-05). It only
+ * ever ADDS what someone may do: the main role still decides what they must not see, so a designer who
+ * coordinates still cannot open a proposal or a contract. Mirrors ws_has_role in the database.
+ */
+const SecondRoleSelect = ({ main, value, onChange, disabled }: {
+  main: WorkspaceRole; value: WorkspaceRole | null; onChange: (r: WorkspaceRole | null) => void; disabled?: boolean;
+}) => (
+  <Select value={value ?? NO_SECOND} onValueChange={(v) => onChange(v === NO_SECOND ? null : (v as WorkspaceRole))} disabled={disabled}>
+    <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+    <SelectContent>
+      <SelectItem value={NO_SECOND}>—</SelectItem>
+      {ROLES.filter((r) => r !== main).map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}
+    </SelectContent>
+  </Select>
+);
+
 const Settings = () => {
   const { member: me } = useWorkspace();
   const [members, setMembers] = useState<Member[]>([]);
@@ -42,7 +60,7 @@ const Settings = () => {
 
   const load = useCallback(async () => {
     const [m, i] = await Promise.all([
-      supabase.from("workspace_members").select("user_id, email, full_name, role, title, active, is_demo, created_at").order("full_name"),
+      supabase.from("workspace_members").select("user_id, email, full_name, role, second_role, title, active, is_demo, created_at").order("full_name"),
       supabase.from("workspace_invites").select("email, full_name, role, title, invited_by, created_at").order("created_at", { ascending: false }),
     ]);
     if (m.error) toast.error(m.error.message); else setMembers(m.data);
@@ -51,7 +69,7 @@ const Settings = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const updateMember = async (id: string, patch: Partial<Pick<Member, "active" | "role">>) => {
+  const updateMember = async (id: string, patch: Partial<Pick<Member, "active" | "role" | "second_role">>) => {
     const { error } = await supabase.from("workspace_members").update(patch).eq("user_id", id);
     if (error) toast.error(error.message); else { toast.success("Updated"); load(); }
   };
@@ -92,6 +110,7 @@ const Settings = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead>
+                <TableHead>Also works as</TableHead>
                 <TableHead>Title</TableHead><TableHead>Active</TableHead>
               </TableRow>
             </TableHeader>
@@ -102,7 +121,9 @@ const Settings = () => {
                   <TableRow key={m.user_id}>
                     <TableCell className="whitespace-nowrap">{m.full_name}</TableCell>
                     <TableCell className="whitespace-nowrap">{m.email}</TableCell>
-                    <TableCell><RoleSelect value={m.role as WorkspaceRole} disabled={self} onChange={(role) => updateMember(m.user_id, { role })} /></TableCell>
+                    <TableCell><RoleSelect value={m.role as WorkspaceRole} disabled={self} onChange={(role) => updateMember(m.user_id, { role, second_role: m.second_role === role ? null : m.second_role })} /></TableCell>
+                    <TableCell><SecondRoleSelect main={m.role as WorkspaceRole} value={(m.second_role ?? null) as WorkspaceRole | null} disabled={self}
+                      onChange={(second_role) => updateMember(m.user_id, { second_role })} /></TableCell>
                     <TableCell className="whitespace-nowrap">{m.title ?? "—"}</TableCell>
                     <TableCell><Switch checked={m.active} disabled={self} onCheckedChange={(active) => updateMember(m.user_id, { active })} /></TableCell>
                   </TableRow>

@@ -18,6 +18,7 @@ import {
 } from "./projectQueries";
 import { PROJECT_STAGES, fileSize, signedAed } from "./projectConstants";
 import { useWorkspace } from "./WorkspaceProvider";
+import { isGmOr } from "./access";
 import { aed, shortDate, todayISO } from "./format";
 import { DriveLink, checkDriveUrl } from "./DriveLink";
 import { NewTaskForm, TaskRow, isOverdue, dueTimeLabel, timeLeftLabel } from "./TaskList";
@@ -182,7 +183,7 @@ export const TimelineTab = ({ project }: { project: Project }) => {
 export const TasksTab = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const { data: tasks = [], isLoading, error } = useProjectTasks(project.id);
-  const countdown = member?.role === "coordinator" || member?.role === "gm";
+  const countdown = isGmOr(member, "coordinator");
   return (
     <div className="space-y-6">
     {countdown && <CoordinatorCountdown project={project} tasks={tasks} loading={isLoading} error={error} />}

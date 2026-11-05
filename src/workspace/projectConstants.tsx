@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { WorkspaceRole } from "./access";
+import { rolesOf, type WorkspaceRole } from "./access";
 
 /** The active pipeline — the only place it is defined. Procurement is a parallel track (proc_pct), not a stage.
  *  Site Survey / Client Approval / Procurement remain in the enum as legacy; ws_project_guard refuses entering them. */
@@ -32,6 +32,12 @@ export const TABS_BY_ROLE: Record<WorkspaceRole, ProjectTab[]> = {
   sales: ["overview", "brief", "timeline", "changes", "files"],
   designer: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "files"],
   coordinator: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "snagging", "files"],
+};
+
+/** Every tab either of someone's roles opens, in the canonical order (see rolesOf). */
+export const tabsFor = (m: { role: string; second_role?: string | null } | null | undefined): ProjectTab[] => {
+  const roles = rolesOf(m);
+  return ALL_TABS.filter((t) => roles.some((r) => TABS_BY_ROLE[r].includes(t)));
 };
 
 export const RISK_DOT: Record<string, string> = { Green: "bg-primary", Yellow: "bg-secondary", Red: "bg-destructive" };

@@ -7,7 +7,7 @@ import { signOut } from "./signOut";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/aziza-logo.png";
 import { useWorkspace } from "./WorkspaceProvider";
-import { PAGES_BY_ROLE, PAGE_META, ROLE_LABEL, type WorkspacePage, type WorkspaceRole } from "./access";
+import { PAGE_META, ROLE_LABEL, pagesFor, type WorkspacePage, type WorkspaceRole } from "./access";
 import NotificationBell from "./NotificationBell";
 import { useScrollRestoration } from "./scrollMemory";
 
@@ -25,7 +25,7 @@ const SidebarBody = ({ onNavigate }: { onNavigate?: () => void }) => {
         <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Workspace</p>
       </div>
       <nav className="flex-1 px-3 space-y-1">
-        {PAGES_BY_ROLE[role].filter((p) => p !== "contracts").map((p) => (
+        {pagesFor(member).filter((p) => p !== "contracts").map((p) => (
           <NavLink
             key={p}
             to={PAGE_META[p].path}

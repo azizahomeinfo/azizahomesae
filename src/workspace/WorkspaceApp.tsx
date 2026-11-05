@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "./signOut";
 import { WorkspaceProvider, useWorkspace } from "./WorkspaceProvider";
-import { canSee, type WorkspacePage, type WorkspaceRole } from "./access";
+import { canSeeAny, type WorkspacePage, type WorkspaceRole } from "./access";
 import Login from "./Login";
 import WorkspaceLayout from "./WorkspaceLayout";
 import Dashboard from "./pages/Dashboard";
@@ -23,8 +23,9 @@ import ProposalDoc from "./ProposalDoc";
 import ContractDoc from "./ContractDoc";
 import { UpdateNotice } from "./UpdateNotice";
 
-const Guard = ({ page, role, children }: { page: WorkspacePage; role: WorkspaceRole; children: ReactElement }) =>
-  canSee(role, page) ? children : (
+// Both of someone's roles open their pages: a designer who also coordinates gets the coordinator's too.
+const Guard = ({ page, member, children }: { page: WorkspacePage; member: { role: string; second_role?: string | null } | null; children: ReactElement }) =>
+  canSeeAny(member, page) ? children : (
     <div className="space-y-4">
       <Link to="/workspace" className="text-sm text-muted-foreground hover:text-primary">← Dashboard</Link>
       <p className="text-muted-foreground">You don't have access to this page.</p>
@@ -54,19 +55,19 @@ const Gate = () => {
     <Routes>
       <Route element={<WorkspaceLayout />}>
         <Route index element={<Dashboard />} />
-        <Route path="leads" element={<Guard page="leads" role={role}><Leads /></Guard>} />
-        <Route path="leads/:id" element={<Guard page="leads" role={role}><LeadDetail /></Guard>} />
-        <Route path="briefs" element={<Guard page="briefs" role={role}><Briefs /></Guard>} />
-        <Route path="proposals" element={<Guard page="proposals" role={role}><Proposals /></Guard>} />
-        <Route path="proposals/:leadId" element={<Guard page="proposals" role={role}><ProposalDoc /></Guard>} />
-        <Route path="contracts/:leadId" element={<Guard page="contracts" role={role}><ContractDoc /></Guard>} />
-        <Route path="reports" element={<Guard page="reports" role={role}><Reports /></Guard>} />
-        <Route path="projects" element={<Guard page="projects" role={role}><Projects /></Guard>} />
-        <Route path="projects/:code" element={<Guard page="projects" role={role}><ProjectDetail /></Guard>} />
-        <Route path="tasks" element={<Guard page="tasks" role={role}><Tasks /></Guard>} />
-        <Route path="suppliers" element={<Guard page="suppliers" role={role}><Suppliers /></Guard>} />
-        <Route path="guide" element={<Guard page="guide" role={role}><Guide /></Guard>} />
-        <Route path="settings" element={<Guard page="settings" role={role}><Settings /></Guard>} />
+        <Route path="leads" element={<Guard page="leads" member={member}><Leads /></Guard>} />
+        <Route path="leads/:id" element={<Guard page="leads" member={member}><LeadDetail /></Guard>} />
+        <Route path="briefs" element={<Guard page="briefs" member={member}><Briefs /></Guard>} />
+        <Route path="proposals" element={<Guard page="proposals" member={member}><Proposals /></Guard>} />
+        <Route path="proposals/:leadId" element={<Guard page="proposals" member={member}><ProposalDoc /></Guard>} />
+        <Route path="contracts/:leadId" element={<Guard page="contracts" member={member}><ContractDoc /></Guard>} />
+        <Route path="reports" element={<Guard page="reports" member={member}><Reports /></Guard>} />
+        <Route path="projects" element={<Guard page="projects" member={member}><Projects /></Guard>} />
+        <Route path="projects/:code" element={<Guard page="projects" member={member}><ProjectDetail /></Guard>} />
+        <Route path="tasks" element={<Guard page="tasks" member={member}><Tasks /></Guard>} />
+        <Route path="suppliers" element={<Guard page="suppliers" member={member}><Suppliers /></Guard>} />
+        <Route path="guide" element={<Guard page="guide" member={member}><Guide /></Guard>} />
+        <Route path="settings" element={<Guard page="settings" member={member}><Settings /></Guard>} />
         <Route path="*" element={<Navigate to="/workspace" replace />} />
       </Route>
     </Routes>

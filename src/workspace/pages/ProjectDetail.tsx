@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "../WorkspaceProvider";
-import type { WorkspaceRole } from "../access";
+import { isGmOr, type WorkspaceRole } from "../access";
 import {
   useChangeRequests, useIssues, useProject, useProjectTasks, useUpdateProject,
 } from "../projectQueries";
-import { PROJECT_STAGES, RiskDot, StagePill, TAB_LABEL, TABS_BY_ROLE, type ProjectStage, type ProjectTab } from "../projectConstants";
+import { PROJECT_STAGES, RiskDot, StagePill, TAB_LABEL, tabsFor, type ProjectStage, type ProjectTab } from "../projectConstants";
 import {
   BriefTab, ChangesTab, ComingSoon, DesignTab, DriveFolderField, DrawingsChecklist, FilesTab, IssuesTab, OverviewTab, SignedContractCard, SnaggingTab, TasksTab, TimelineTab,
 } from "../ProjectTabs";
@@ -38,7 +38,7 @@ const ProjectDetail = () => {
   if (!project || !member) return <div className="space-y-4">{back}<p className="text-muted-foreground">This project doesn't exist or you don't have access to it.</p></div>;
 
   const role = member.role as WorkspaceRole;
-  const tabs = TABS_BY_ROLE[role];
+  const tabs = tabsFor(member);
   const requested = params.get("tab") as ProjectTab | null;
   const tab: ProjectTab = requested && tabs.includes(requested) ? requested : "overview";
   const stage = project.stage as ProjectStage;
@@ -98,7 +98,7 @@ const ProjectDetail = () => {
         </div>
       </div>
 
-      {(role === "coordinator" || role === "gm") && <ProjectSiteDetails key={project.id} project={project} />}
+      {isGmOr(member, "coordinator") && <ProjectSiteDetails key={project.id} project={project} />}
 
       <section className="rounded-[var(--radius)] border border-border bg-card p-4 md:p-6 space-y-4">
         <div className="grid gap-4 lg:grid-cols-[1fr_16rem]">
