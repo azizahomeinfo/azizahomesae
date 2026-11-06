@@ -51,8 +51,12 @@ export const PROPOSAL_CSS = `
 .ppd-table .r { white-space: nowrap; }
 .ppd-line.total { font-size: 14px; font-weight: 600; color: var(--pp-ink); border-top: 1px solid var(--pp-line-strong); margin-top: 6px; padding-top: 10px; }
 .ppd-table { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); column-gap: 12px; }
-.ppd-table > div { padding: 8px 0; border-bottom: 1px solid var(--pp-line-soft); font-size: 11px; }
-.ppd-table .th { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pp-olive); font-weight: 600; }
+/* The package table shares the item-list page, so it takes the same type size (--pp-item-scale).
+   It is the only user of .ppd-table, and the standalone investment page uses cards, so nothing else
+   moves. Its growth costs the page about one weight unit, well inside the 4-7% headroom the caps
+   already leave (Veronica, 2026-11-06: "same size as the item list"). */
+.ppd-table > div { padding: 8px 0; border-bottom: 1px solid var(--pp-line-soft); font-size: calc(11px * var(--pp-item-scale, 1)); }
+.ppd-table .th { font-size: calc(9px * var(--pp-item-scale, 1)); letter-spacing: 0.18em; text-transform: uppercase; color: var(--pp-olive); font-weight: 600; }
 .ppd-table .r { text-align: right; }
 @media print {
   @page { size: 210mm 297mm; margin: 0; }
@@ -217,7 +221,7 @@ const InvestTable = ({ doc }: { doc: ProposalDocument }) => {
         {inv.options.map((o, i) => {
           const p = priceLines(Number(o.amount) || 0, inv.vat, inv.down);
           return [
-            <div key={`l${i}`}><div style={{ fontWeight: 600 }}>{o.label}</div><div style={{ fontSize: 10, color: "var(--pp-muted)" }}>{money(p.base)} excl. VAT</div></div>,
+            <div key={`l${i}`}><div style={{ fontWeight: 600 }}>{o.label}</div><div style={{ fontSize: "calc(10px * var(--pp-item-scale, 1))", color: "var(--pp-muted)" }}>{money(p.base)} excl. VAT</div></div>,
             <div key={`v${i}`} className="r">{money(p.vat)}</div>,
             <div key={`t${i}`} className="r" style={{ fontWeight: 600 }}>{money(p.total)}</div>,
             <div key={`d${i}`} className="r">{money(p.down)}</div>,
@@ -225,7 +229,7 @@ const InvestTable = ({ doc }: { doc: ProposalDocument }) => {
           ];
         })}
       </div>
-      {inv.terms && <p style={{ fontSize: 10, lineHeight: 1.6, color: "var(--pp-muted)", margin: "10px 0 0" }}>{inv.terms}</p>}
+      {inv.terms && <p style={{ fontSize: "calc(10px * var(--pp-item-scale, 1))", lineHeight: 1.6, color: "var(--pp-muted)", margin: "10px 0 0" }}>{inv.terms}</p>}
     </div>
   );
 };
