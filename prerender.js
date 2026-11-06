@@ -144,6 +144,17 @@ const routesToPrerender = [
     const { html: appHtml, helmet } = render(url);
     let html = template.replace(`<!--app-html-->`, appHtml)
 
+    // Which route this file was rendered for. dist/index.html doubles as the SPA fallback, so
+    // /workspace is served the HOMEPAGE markup; main.tsx hydrated it anyway and React threw it away
+    // with "hydration failed" (#418/#423) — a flash of the marketing site and a page that looked
+    // broken on a hard refresh (Veronica, 2026-11-06). With the route stamped here, the client
+    // hydrates only its own page and mounts fresh for everything else.
+    html = upsertHeadTag(
+      html,
+      `<meta name="prerendered-path" content="${url}">`,
+      /<meta name="prerendered-path"[^>]*>/,
+    )
+
     // dist/index.html is both the homepage and the SPA fallback for routes
     // that aren't prerendered (/workspace, /auth, unknown URLs). Every route
     // that should rank has its own prerendered file, so the homepage gets its
