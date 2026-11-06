@@ -352,12 +352,24 @@ const ProposalDoc = () => {
     : quote ? `GM quote V${quote.version} · prices locked` : "waiting for GM — prices below are budget placeholders";
   const markOf = (ok: boolean): Mark => (ok ? "ok" : attempted ? "block" : "wait");
 
-  const change = (doc: ProposalDocument) => { setDraft({ ...doc, finalAt: null }); };
+  /**
+   * An open editor holds an unsaved copy. If the GM re-quotes (or anyone edits) while it sits there,
+   * the screen keeps showing the old prices and pressing Save writes them back over the new ones —
+   * which is exactly what happened on Christian/L-1094: the rail still read "GM quotation V1 · 66,200"
+   * long after the quotation had moved to V3 · 66,800 (Veronica, 2026-11-06). Remember the server
+   * version a draft started from, so we can say so instead of letting it overwrite silently.
+   */
+  const draftBase = useRef<string | null>(null);
+  const change = (doc: ProposalDocument) => {
+    if (!draft) draftBase.current = row?.updated_at ?? null;
+    setDraft({ ...doc, finalAt: null });
+  };
+  const serverMoved = !!draft && !!row && !!draftBase.current && row.updated_at !== draftBase.current;
   const persist = async (doc: ProposalDocument) => {
     if (!row) return false;
     try {
       await save.mutateAsync({ id: row.id, leadId: lead.id, doc });
-      setDraft(null); setNotices([]);
+      setDraft(null); setNotices([]); draftBase.current = null;
       return true;
     } catch (e) { toast.error(errMsg(e, "Could not save")); return false; }
   };
@@ -932,6 +944,12 @@ const ProposalDoc = () => {
         <aside ref={railScrollRef} className="rounded-[var(--radius)] border border-border bg-card px-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
           {/* A disabled fieldset at 80% opacity looks like a normal rail, so a locked proposal read as
               "nothing works" with no reason given (Veronica, 2026-11-05: "still can not edit"). Say it. */}
+          {serverMoved && (
+            <div className="mt-4 space-y-2 rounded-[var(--radius)] border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs">
+              <p>This proposal changed elsewhere while you had it open — most likely a new GM quotation. What you see here is your older copy, and saving would write it back over the new figures.</p>
+              <Button type="button" size="sm" variant="outline" onClick={() => window.location.reload()}>Discard my changes and reload</Button>
+            </div>
+          )}
           {!editable && (
             <p className="mt-4 rounded-[var(--radius)] border border-warning/50 bg-warning/10 px-3 py-2 text-xs">
               {row?.status !== "Draft"
