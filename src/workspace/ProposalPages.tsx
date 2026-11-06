@@ -158,7 +158,7 @@ export const descOverflowChars = (desc: string, images: number) =>
 const clamp = (lines: number) => ({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical" as const, overflow: "hidden" });
 
 /** Every area image is shown whole: the picture is sized by max-width/max-height against an explicit pixel slot, so its box is exactly the picture's shape and it cannot overflow or be cropped. */
-const FramedImage = ({ src, alt }: { src: string | null; alt: string }) => {
+const FramedImage = ({ src, alt, onRatio }: { src: string | null; alt: string; onRatio?: (r: number) => void }) => {
   const [failed, setFailed] = useState(false);
   const slot = { width: "100%", flex: "1 1 auto", minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" } as const;
   if (!src || failed) return (
@@ -169,6 +169,7 @@ const FramedImage = ({ src, alt }: { src: string | null; alt: string }) => {
   return (
     <div style={slot}>
       <img src={src} alt={alt} onError={() => setFailed(true)}
+        onLoad={(e) => { const i = e.currentTarget; if (i.naturalHeight) onRatio?.(i.naturalWidth / i.naturalHeight); }}
         style={{ display: "block", maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectPosition: "center" }} />
     </div>
   );
@@ -184,7 +185,21 @@ export const areaGrid = (count: number) => {
 
 const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc: ProposalDocument; url: Url; n: number }) => {
   const multi = s.images.length > 1;
-  const { columns, rows, w } = areaGrid(s.images.length);
+  /**
+   * Two pictures stacked is right for two landscapes, and wrong for anything portrait: a tall render
+   * in a wide, half-height slot shrinks to a stamp with empty margins either side. The document does
+   * not record each picture's shape, so we learn it when the browser loads it and put a pair side by
+   * side as soon as one of them is portrait (Veronica, 2026-11-06: "lay out all the pics in a better
+   * way" — Karl's rooms each pair a portrait with a landscape).
+   */
+  const [ratios, setRatios] = useState<Record<string, number>>({});
+  const noteRatio = (path: string, r: number) =>
+    setRatios((prev) => (Math.abs((prev[path] ?? 0) - r) < 0.01 ? prev : { ...prev, [path]: r }));
+  // Stored shape first (DocImage.w/h), measured shape as the fallback for older documents.
+  const portrait = (i: DocImage) => (i.w && i.h ? i.w < i.h : (ratios[i.path] ?? 99) < 0.95);
+  const { columns, rows, w } = s.images.length === 2 && s.images.every(portrait)
+    ? { columns: 2, rows: 1, w: Math.floor((AREA_FRAME_W - AREA_MEDIA_GAP) / 2) }
+    : areaGrid(s.images.length);
   return (
     <div className="ppd-page" style={{ padding: "52px 56px 88px" }}>
       <p className="ppd-eyebrow">{s.eyebrow}</p>
@@ -199,7 +214,7 @@ const AreaPage = ({ s, doc, url, n }: { s: Extract<Sheet, { kind: "area" }>; doc
         {s.images.map((img: DocImage) => (
           <div key={img.path} style={{ minHeight: 0, display: "flex", flexDirection: "column" }}>
             {/* Captions are deliberately not printed because the room name is already in the artwork. */}
-            <FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} />
+            <FramedImage src={url(img.path) || null} alt={img.caption ?? s.title} onRatio={(r) => noteRatio(img.path, r)} />
           </div>
         ))}
         </div>

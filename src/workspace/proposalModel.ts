@@ -3,7 +3,9 @@ import { DESIGN_AREAS } from "./designSchema";
 
 /* ---------------- document shape (stored in proposals.line_items) ---------------- */
 
-export interface DocImage { path: string; caption: string | null }
+/** w/h are the picture's pixel shape, carried from design_images so the layout can pair like with
+ *  like. Absent on documents written before 2026-11-06; the renderer then measures on load. */
+export interface DocImage { path: string; caption: string | null; w?: number | null; h?: number | null }
 /** One render page in the rail. `area` links it to a design area; null = a page sales added. */
 export interface DocPage { id: string; area: string | null; title: string; desc: string; images: DocImage[] }
 export interface ItemGroup { room: string; items: { item: string; qty: number }[] }
@@ -116,7 +118,7 @@ export const newId = () => crypto.randomUUID();
 
 /* ---------------- design → pages ---------------- */
 
-export interface SourceImage { storage_path: string; caption: string | null; room: string | null; kind: string; file_name: string | null }
+export interface SourceImage { storage_path: string; caption: string | null; room: string | null; kind: string; file_name: string | null; width?: number | null; height?: number | null }
 export interface SourceDesign { id: string; version: number; status: string; images: SourceImage[] }
 
 const isPdfPath = (p: string) => p.toLowerCase().endsWith(".pdf");
@@ -150,7 +152,7 @@ export const designParts = (design: SourceDesign) => {
   for (const i of [...roomed.filter((x) => !isMoodKind(x)), ...roomed.filter(isMoodKind)]) {
     const a = i.room ?? "Other";
     if (!map.has(a)) { map.set(a, []); order.push(a); }
-    map.get(a)!.push({ path: i.storage_path, caption: i.caption });
+    map.get(a)!.push({ path: i.storage_path, caption: i.caption, w: i.width ?? null, h: i.height ?? null });
   }
   // Canonical areas first; custom areas keep their first-seen order (sort is stable).
   const rank = (a: string) => AREA_RANK.get(a.toLowerCase()) ?? DESIGN_AREAS.length;
@@ -161,7 +163,7 @@ export const designParts = (design: SourceDesign) => {
     heroFromMood: !renders[0] && !!moodKind[0],
     areas: order.map((area) => ({ area, images: map.get(area)! })),
     floor: floor ? { path: floor.storage_path, name: floor.file_name } : null,
-    mood: usable.filter(isRoomless).map((i) => ({ path: i.storage_path, caption: i.caption })),
+    mood: usable.filter(isRoomless).map((i) => ({ path: i.storage_path, caption: i.caption, w: i.width ?? null, h: i.height ?? null })),
   };
 };
 
@@ -388,6 +390,9 @@ export const paginateItems = (groups: ItemGroup[], lastCap: number = ITEM_PAGE_C
  * living room. This also caps what sales can drag onto one page in the editor.
  */
 export const MAX_IMAGES_PER_PAGE = 2;
+/** "p" portrait, "l" landscape, "?" unknown — unknown pairs with unknown, as before. */
+export const shapeOf = (i: DocImage): "p" | "l" | "?" => (i.w && i.h ? (i.w < i.h ? "p" : "l") : "?");
+
 
 export type Sheet =
   | { kind: "cover" }
@@ -400,8 +405,16 @@ export const layoutSheets = (doc: ProposalDocument) => {
   const sheets: Sheet[] = [{ kind: "cover" }];
   if (doc.toggles.floorPlan) sheets.push({ kind: "floor" });
   const areaPage = (eyebrow: string, title: string, desc: string, images: DocImage[]) => {
+    // Pair like with like. Two landscapes stack well and two portraits sit side by side, but a portrait
+    // beside a landscape shrinks both and leaves dead bands — measured against Karl's renders on
+    // 2026-11-06 — so a mixed pair takes a page each and prints large. Pictures whose shape we don't
+    // know (documents written before this) pair as they always did.
     const chunks: DocImage[][] = [];
-    for (let i = 0; i < images.length; i += MAX_IMAGES_PER_PAGE) chunks.push(images.slice(i, i + MAX_IMAGES_PER_PAGE));
+    for (const img of images) {
+      const last = chunks[chunks.length - 1];
+      const sameShape = !!last && last.length < MAX_IMAGES_PER_PAGE && shapeOf(last[0]) === shapeOf(img);
+      if (sameShape) last.push(img); else chunks.push([img]);
+    }
     if (!chunks.length) chunks.push([]);
     chunks.forEach((imgs, k) => sheets.push({
       kind: "area", eyebrow: chunks.length > 1 ? `${eyebrow} · ${k + 1} of ${chunks.length}` : eyebrow,
