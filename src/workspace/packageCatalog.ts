@@ -108,11 +108,18 @@ export const setPackageTiers = (doc: ProposalDocument, picked: Tier[]): Proposal
     ],
     investment: {
       ...doc.investment,
-      options: tiers.map((t) => ({
-        label: tierLabel(t),
-        desc: `${style.name} · ${layout}${many} · ${TIER_TEXT[t].line.toLowerCase()}`,
-        amount: packagePrice(t, layout) * units,
-      })),
+      // A price already on the proposal is kept: sales and the GM agree figures above the list price
+      // (Fouad's Japandi studio went out at 28,600 / 33,500 against a 26,000 / 30,500 list), and
+      // adding or removing a tier must not quietly reset them. Only a newly shown tier takes the list.
+      options: tiers.map((t) => {
+        const label = tierLabel(t);
+        const already = doc.investment.options.find((o) => o.label === label);
+        return {
+          label,
+          desc: `${style.name} · ${layout}${many} · ${TIER_TEXT[t].line.toLowerCase()}`,
+          amount: already ? Number(already.amount) || 0 : packagePrice(t, layout) * units,
+        };
+      }),
     },
     finalAt: null,
   };
