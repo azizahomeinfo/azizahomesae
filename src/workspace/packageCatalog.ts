@@ -73,6 +73,51 @@ const standardItems = (unitType: string | null): ItemGroup[] =>
 export interface PackageChoice { style: StyleSlug; tiers: Tier[]; layout: PackageLayout; units: number }
 
 /** A complete proposal from the catalog: style photos, one page per tier offered, standard items, list prices. */
+/**
+ * Change how many prices a catalog proposal shows the client, after it was created. Sales pick the
+ * tiers in the New proposal dialog, but a client who asks "what else do you have?" shouldn't need a
+ * whole new proposal (Veronica, 2026-11-09). Everything that depends on the tiers is rebuilt — the
+ * prices, the tier pages, the cover line and the cover photo — and everything else is left alone,
+ * including the item list, the terms and any wording sales edited on the design-direction page.
+ */
+export const setPackageTiers = (doc: ProposalDocument, picked: Tier[]): ProposalDocument => {
+  if (doc.source !== "package" || !doc.pkg) return doc;
+  const tiers = TIERS.filter((t) => picked.includes(t));
+  if (!tiers.length) return doc;
+  const style = STYLES.find((s) => s.slug === doc.pkg.style) ?? STYLES[0];
+  const layout = doc.pkg.layout as PackageLayout;
+  const units = Math.max(1, Math.round(doc.pkg.units || 1));
+  const many = units > 1 ? ` × ${units} units` : "";
+  // Page 1 is the style's design direction and is not a tier page; the rest are rebuilt per tier.
+  const direction = doc.pages.slice(0, 1);
+  return {
+    ...doc,
+    pkg: { ...doc.pkg, tiers: [...tiers] },
+    cover: {
+      ...doc.cover,
+      scope: (tiers.length === 1 ? `${tierLabel(tiers[0])} · ${style.name}` : `${style.name} · ${tiers.join(" / ")}`) + (units > 1 ? ` · ${units} units` : ""),
+      hero: catalogImage(style.slug, tiers.length === 1 ? (tiers[0].toLowerCase() as Lowercase<Tier>) : "hero"),
+    },
+    pages: [
+      ...direction,
+      ...tiers.map((t) => ({
+        id: newId(), area: null, title: tierLabel(t),
+        desc: `${TIER_TEXT[t].line}. ${TIER_TEXT[t].includes}`,
+        images: [{ path: catalogImage(style.slug, t.toLowerCase() as Lowercase<Tier>), caption: null }],
+      })),
+    ],
+    investment: {
+      ...doc.investment,
+      options: tiers.map((t) => ({
+        label: tierLabel(t),
+        desc: `${style.name} · ${layout}${many} · ${TIER_TEXT[t].line.toLowerCase()}`,
+        amount: packagePrice(t, layout) * units,
+      })),
+    },
+    finalAt: null,
+  };
+};
+
 export const buildPackageDocument = (v: {
   lead: { name: string; property: string | null; building: string | null; location: string | null; unit_type: string | null };
   choice: PackageChoice;

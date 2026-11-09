@@ -15,7 +15,7 @@ import { RedesignDialog, RedesignStatus } from "./RedesignRequest";
 import { NewProposalDialog } from "./NewProposalDialog";
 import { PackageCostCheck } from "./PackageCostCheck";
 import { docFileName, printAs } from "./printAs";
-import { buildPackageDocument, isCatalogPath, packageLayoutFor, packagePrice, tierOfLabel, type PackageChoice } from "./packageCatalog";
+import { buildPackageDocument, isCatalogPath, packageLayoutFor, packagePrice, setPackageTiers, TIERS, tierLabel, tierOfLabel, type PackageChoice, type Tier } from "./packageCatalog";
 import { leadOwner, useCosting } from "./ffeQueries";
 import { useWorkspace } from "./WorkspaceProvider";
 import { shortDate } from "./format";
@@ -1113,6 +1113,27 @@ const ProposalDoc = () => {
             </RailSection>
 
             <RailSection title="Investment">
+              {/* How many prices the client is shown. Chosen at creation in the New proposal dialog, and
+                  changeable here afterwards: a client who asks "what else is there?" should not need a
+                  new proposal (Veronica, 2026-11-09). Rebuilds the prices, the tier pages and the cover. */}
+              {isPackage && current?.pkg && (
+                <Field label="Prices shown to the client">
+                  <div className="flex flex-wrap gap-1">
+                    {TIERS.map((t) => {
+                      const on = (d.pkg?.tiers ?? []).includes(t);
+                      const only = on && (d.pkg?.tiers ?? []).length === 1;
+                      return (
+                        <Button key={t} type="button" size="sm" variant={on ? "default" : "outline"} aria-pressed={on}
+                          disabled={!editable || locked || only}
+                          title={only ? "Keep at least one price" : undefined}
+                          onClick={() => change(setPackageTiers(d, on ? (d.pkg?.tiers ?? []).filter((x) => x !== t) as Tier[] : [...(d.pkg?.tiers ?? []) as Tier[], t]))}>
+                          {tierLabel(t)}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </Field>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <Field label="VAT %"><Input type="number" min={0} value={d.investment.vat} onChange={(e) => setInv({ vat: Number(e.target.value) || 0 })} /></Field>
                 <Field label="Downpayment %"><Input type="number" min={0} max={100} value={d.investment.down} onChange={(e) => setInv({ down: Math.min(100, Number(e.target.value) || 0) })} /></Field>
