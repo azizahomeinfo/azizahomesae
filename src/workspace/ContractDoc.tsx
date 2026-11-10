@@ -28,7 +28,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { shortDate } from "./format";
 import {
-  CATEGORIES, CONTRACT_UNIT_TYPES, SIGNATURE_COPY, bankFor, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractFromProposal, contractMoney, sectionsAsGroups, fillClause, makeSection,
+  CATEGORIES, CONTRACT_UNIT_TYPES, EMIRATES, SIGNATURE_COPY, bankFor, emirateOf, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractFromProposal, contractMoney, sectionsAsGroups, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
   type ContractDocument, type CSection,
 } from "./contractModel";
@@ -125,7 +125,7 @@ export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
       <div className="ctr-rule" />
     </div>),
     b("parties", <p>
-      This Sales Agreement (the "Agreement") is entered into <b>{longDate(d.date)}</b> (the "Effective Date"), by and between <b>{seller.name}</b>, with an address of {seller.address} (the "Seller") and <b>{d.client || "—"}</b>, with an address of Unit {d.unit || "—"}, {proj || "—"}, Dubai, UAE, (the "Buyer"), also individually referred to as "Party", and collectively "the Parties."
+      This Sales Agreement (the "Agreement") is entered into <b>{longDate(d.date)}</b> (the "Effective Date"), by and between <b>{seller.name}</b>, with an address of {seller.address} (the "Seller") and <b>{d.client || "—"}</b>, with an address of Unit {d.unit || "—"}, {proj || "—"}, {emirateOf(d)}, UAE, (the "Buyer"), also individually referred to as "Party", and collectively "the Parties."
     </p>),
     b("background", <>
       <h2 className="ctr-h2">Background</h2>
@@ -723,6 +723,11 @@ const ContractDoc = () => {
               <Field label="Building"><Input disabled={dis} value={d.building} onChange={(e) => change({ building: e.target.value })} /></Field>
             </div>
             <Field label="Project"><Input disabled={dis} value={d.project} onChange={(e) => change({ project: e.target.value })} /></Field>
+            <Field label="Emirate — printed as the Buyer's address">
+              <select className={sel} disabled={dis} value={emirateOf(d)} onChange={(e) => change({ emirate: e.target.value })}>
+                {EMIRATES.map((x) => <option key={x} value={x}>{x}</option>)}
+              </select>
+            </Field>
             <div className="grid grid-cols-2 gap-2">
               <Field label="Unit type">
                 <select className={sel} disabled={dis} value={d.unitType} onChange={(e) => change({ unitType: e.target.value })}>

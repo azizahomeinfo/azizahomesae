@@ -13,6 +13,9 @@ export interface ContractDocument {
   v: 1;
   client: string; unit: string; building: string; project: string;
   unitType: string; useType: string;
+  /** Emirate the property sits in — printed as the Buyer's address. Unset = Dubai, which is what
+   *  every contract printed before 2026-11-11 (Elsy's RAK studio was being addressed as Dubai). */
+  emirate?: string | null;
   date: string; deliveryDays: string;
   vatCharged: boolean; subtotal: number;
   deposit: number; delivery: number;
@@ -28,6 +31,20 @@ export interface ContractDocument {
 
 export const CONTRACT_UNIT_TYPES = UNIT_TYPES;
 export const USE_TYPES = ["End User", "Holiday Home"];
+export const EMIRATES = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Umm Al Quwain", "Fujairah"];
+/** Lead locations are typed free-hand ("RAK", "Business Bay"), so match the shorthands we actually use. */
+const EMIRATE_HINTS: [RegExp, string][] = [
+  [/\br\.?a\.?k\b|ras\s*al\s*-?\s*khaimah/i, "Ras Al Khaimah"],
+  [/\bauh\b|abu\s*dhabi/i, "Abu Dhabi"],
+  [/\bshj\b|sharjah/i, "Sharjah"],
+  [/ajman/i, "Ajman"],
+  [/\buaq\b|umm\s*al\s*quwain/i, "Umm Al Quwain"],
+  [/fujairah/i, "Fujairah"],
+];
+/** Dubai stays the default: every community in AREAS is a Dubai one, and so is most of the pipeline. */
+export const emirateFrom = (location: string | null | undefined) =>
+  EMIRATE_HINTS.find(([re]) => re.test(location ?? ""))?.[1] ?? "Dubai";
+export const emirateOf = (d: { emirate?: string | null }) => (d.emirate ?? "").trim() || "Dubai";
 export const SELLER = "Aziza Home L.L.C-FZ";
 // Seller identity follows the signing choice (vatCharged: true = company, false = individual).
 export const SELLERS = {
@@ -107,7 +124,7 @@ const mapUnitType = (t: string | null) => {
 const mapUse = (u: string | null) => (/holiday|short/i.test(u ?? "") ? "Holiday Home" : "End User");
 
 export const buildContract = (v: {
-  lead: { name: string; unit_type: string | null; building: string | null; property: string | null; use_type: string | null };
+  lead: { name: string; unit_type: string | null; building: string | null; property: string | null; use_type: string | null; location?: string | null };
   unit: string | null;
   option: { label: string; amount: number } | null;
   vat: number; down: number;
@@ -120,6 +137,7 @@ export const buildContract = (v: {
   project: v.lead.property ?? "",
   unitType: mapUnitType(v.lead.unit_type),
   useType: mapUse(v.lead.use_type),
+  emirate: emirateFrom(v.lead.location),
   date: new Date().toISOString().slice(0, 10),
   deliveryDays: DEFAULT_DELIVERY_DAYS,
   vatCharged: v.vat > 0,
