@@ -29,11 +29,14 @@ const isSalesSide = (a: Actor) => a.role === "gm" || a.isSalesOwner;
 /**
  * While the brief is still open, sales keeps editing every section of it — clients go on adding
  * requirements after it has gone to design, and before 2026-11-12 the brief locked the moment it
- * was submitted, so a late request had nowhere to go. "Design Approved" stays closed: reopening it
- * to "In Design" is the deliberate path. The designer is notified when sales changes a brief that
- * is already with them (ws_brief_edited_notice).
+ * was submitted, so a late request had nowhere to go. "Design Approved" is open too: approval is not
+ * the end of the client's requests, and leaving it closed meant an approved brief showed no action
+ * bar at all — no Submit, no Resubmit, nothing editable (Veronica, 2026-11-12). Reopening to
+ * "In Design" is still there for when the design itself has to be redone.
  */
-const OPEN_TO_SALES: BriefStatus[] = ["Draft", "Revision Requested", "Submitted", "Assigned", "In Design", "Design Ready"];
+const OPEN_TO_SALES: BriefStatus[] = [
+  "Draft", "Revision Requested", "Submitted", "Assigned", "In Design", "Design Ready", "Design Approved",
+];
 
 /** Which parts of the brief this person may edit at this status. Mirrors the database guard. */
 export const editRights = (status: BriefStatus, a: Actor) => {
