@@ -1596,6 +1596,7 @@ export type Database = {
           lists: Json
           must_haves: string | null
           ready_at: string | null
+          resubmitted_at: string | null
           revision_note: string | null
           rooms: Json
           status: Database["public"]["Enums"]["brief_status"]
@@ -1624,6 +1625,7 @@ export type Database = {
           lists?: Json
           must_haves?: string | null
           ready_at?: string | null
+          resubmitted_at?: string | null
           revision_note?: string | null
           rooms?: Json
           status?: Database["public"]["Enums"]["brief_status"]
@@ -1652,6 +1654,7 @@ export type Database = {
           lists?: Json
           must_haves?: string | null
           ready_at?: string | null
+          resubmitted_at?: string | null
           revision_note?: string | null
           rooms?: Json
           status?: Database["public"]["Enums"]["brief_status"]

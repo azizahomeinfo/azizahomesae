@@ -77,7 +77,8 @@ export const BriefActionBar = ({
           notify: n(d, `Brief assigned to you: ${lead}`, `${member.full_name} assigned you the requirement brief.`),
         });
       } else {
-        let patch: Record<string, unknown> = { status: a.to };
+        // A resubmission does not move the brief — it stamps it and tells the GM and the designer.
+        let patch: Record<string, unknown> = a.kind === "resubmit" ? {} : { status: a.to };
         let notify: NotifyTarget[] = [];
         if (a.kind === "submit") {
           patch = { ...patch, submitted_at: now() };
@@ -93,6 +94,11 @@ export const BriefActionBar = ({
         } else if (a.kind === "approve") {
           patch = { ...patch, approved_at: now() };
           notify = n(brief.designerId, `Design approved: ${lead}`);
+        } else if (a.kind === "resubmit") {
+          patch = { resubmitted_at: now() };
+          const targets = Array.from(new Set([...gms, brief.designerId].filter(Boolean) as string[]));
+          notify = targets.flatMap((u) => n(u, `Requirement brief updated · ${lead}`,
+            `${member.full_name} changed the brief and resubmitted it. Open it and check what changed before you carry on.`));
         } else if (a.kind === "revise") {
           const text = extra?.note?.trim();
           if (!text) return toast.error("A revision note is required");

@@ -49,7 +49,9 @@ export type BriefAction =
   | { kind: "ready"; label: string; to: "Design Ready" }
   | { kind: "approve"; label: string; to: "Design Approved" }
   | { kind: "revise"; label: string; to: "Revision Requested" }
-  | { kind: "resume"; label: string; to: "In Design" };
+  | { kind: "resume"; label: string; to: "In Design" }
+  /** Sales changed the brief after it went to design; `to` is the status it stays on. */
+  | { kind: "resubmit"; label: string; to: BriefStatus };
 
 export const availableActions = (status: BriefStatus, a: Actor): BriefAction[] => {
   const out: BriefAction[] = [];
@@ -76,6 +78,11 @@ export const availableActions = (status: BriefStatus, a: Actor): BriefAction[] =
     case "Revision Requested":
       if (des) out.push({ kind: "resume", label: "Resume design", to: "In Design" });
       break;
+  }
+  // Sales can keep editing after the brief has gone to design, so there has to be a deliberate way
+  // to say "this changed, look again". A button, not a notification on every autosave.
+  if (isSalesSide(a) && OPEN_TO_SALES.includes(status) && status !== "Draft") {
+    out.push({ kind: "resubmit", label: "Resubmit to GM & designer", to: status });
   }
   return out;
 };
