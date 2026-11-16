@@ -52,6 +52,10 @@ const LeadDetail = () => {
   const [lostReason, setLostReason] = useState("");
   const [convertOpen, setConvertOpen] = useState(false);
   const { data: projectCode } = useProjectCode(lead?.converted_project_id);
+  // Sold from a package, client confirmed, now they want real renders (0057 opens the design gate).
+  // Must stay above the isLoading / error / !lead returns below — a hook called after them changes
+  // the hook count between renders and React throws #310, which broke every lead page on 2026-11-16.
+  const requestDesign = useRequestDesignForPackage();
 
   const back = (
     <Link to="/workspace/leads" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -91,8 +95,6 @@ const LeadDetail = () => {
   const canConvert = member?.role === "gm" || member?.role === "sales";
   const canStartBrief = member?.role === "gm" || (!!member && lead.sales_id === member.user_id);
 
-  // Sold from a package, client confirmed, now they want real renders. 0057 opens the design gate.
-  const requestDesign = useRequestDesignForPackage();
   const askForRenders = async () => {
     if (!lead) return;
     try {
