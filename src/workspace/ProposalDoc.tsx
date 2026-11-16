@@ -313,6 +313,20 @@ const ProposalDoc = () => {
   const [counter, setCounter] = useState("");
   const [gmNote, setGmNote] = useState("");
 
+  /**
+   * An open editor holds an unsaved copy. If the GM re-quotes (or anyone edits) while it sits there,
+   * the screen keeps showing the old prices and pressing Save writes them back over the new ones —
+   * which is exactly what happened on Christian/L-1094: the rail still read "GM quotation V1 · 66,200"
+   * long after the quotation had moved to V3 · 66,800 (Veronica, 2026-11-06). Remember the server
+   * version a draft started from, so we can say so instead of letting it overwrite silently.
+   *
+   * MUST stay above the early returns below. It sat under them until 2026-11-16, so a cold load of
+   * /workspace/proposals/:id rendered the loading branch first (one fewer hook), then this ref on the
+   * next render — React #310, blank page. In-app navigation hid it: the query was already cached, so
+   * isLoading never flipped. Same rule as the refs in ContractDoc.
+   */
+  const draftBase = useRef<string | null>(null);
+
   const back = <Link to="/workspace/proposals" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /> All proposals</Link>;
   if (isLoading) return <div className="space-y-4">{back}<p className="text-muted-foreground">Loading…</p></div>;
   if (!lead || !member) return <div className="space-y-4">{back}<p className="text-muted-foreground">This lead doesn't exist or you don't have access to it.</p></div>;
@@ -352,14 +366,6 @@ const ProposalDoc = () => {
     : quote ? `GM quote V${quote.version} · prices locked` : "waiting for GM — prices below are budget placeholders";
   const markOf = (ok: boolean): Mark => (ok ? "ok" : attempted ? "block" : "wait");
 
-  /**
-   * An open editor holds an unsaved copy. If the GM re-quotes (or anyone edits) while it sits there,
-   * the screen keeps showing the old prices and pressing Save writes them back over the new ones —
-   * which is exactly what happened on Christian/L-1094: the rail still read "GM quotation V1 · 66,200"
-   * long after the quotation had moved to V3 · 66,800 (Veronica, 2026-11-06). Remember the server
-   * version a draft started from, so we can say so instead of letting it overwrite silently.
-   */
-  const draftBase = useRef<string | null>(null);
   const change = (doc: ProposalDocument) => {
     if (!draft) draftBase.current = row?.updated_at ?? null;
     setDraft({ ...doc, finalAt: null });
