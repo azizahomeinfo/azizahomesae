@@ -16,6 +16,12 @@ export const PAGE_H = 1123;
 export const PREVIEW_SCALE = 0.72;
 
 export const PROPOSAL_CSS = `
+/* The client document paints its own palette and must never be repainted by the viewer's machine.
+   Without these, Chrome's auto dark mode and Windows high-contrast invert the cream page to near
+   black — the cover reads as a black rectangle (Stella, 2026-11-16). color-scheme opts out of the
+   algorithmic dark pass; forced-color-adjust keeps the palette under forced colours; the print
+   variants keep both true on paper. None of them change how it looks on a normal screen. */
+.ppd, .ppd * { color-scheme: only light; forced-color-adjust: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .ppd { --pp-bg: hsl(38 65% 98%); --pp-ink: hsl(30 15% 15%); --pp-olive: hsl(68 16% 22%);
   --pp-muted: hsl(30 12% 30%); --pp-label: hsl(30 12% 35%); --pp-line: hsl(32 18% 58% / 0.45); --pp-line-soft: hsl(32 18% 58% / 0.3);
   --pp-line-strong: hsl(32 18% 58% / 0.6); --pp-field: hsl(32 30% 95%); --pp-card: hsl(0 0% 100%); }
@@ -89,6 +95,9 @@ const Foot = ({ client, n }: { client: string; n: number }) => (
 
 const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   const c = doc.cover;
+  // A signed storage URL lives an hour; a cover printed from a tab left open longer used to fail
+  // silently. Fall back to the plain page rather than a half-painted one.
+  const [heroFailed, setHeroFailed] = useState(false);
   const hero = url(c.hero ?? doc.moodBoard[0]?.path);
   const meta: [string, string][] = [
     ["Location", c.location || "—"], ["Date", c.date ? shortDate(c.date) : "—"], ["Validity", c.validity || "—"], ["Scope", c.scope || "—"],
@@ -96,12 +105,12 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
   return (
     <div className="ppd-page">
       {/* The cover is deliberately full-bleed and cropped at the client's request. */}
-      {hero && <img src={hero} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+      {hero && !heroFailed && <img src={hero} alt="" onError={() => setHeroFailed(true)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
         /* Horizontal anchor is per cover (MOOD_HERO_X crops past a mood board's printed room name); vertical stays at 42%. */
         objectPosition: `${Math.round((c.heroX ?? 0.5) * 100)}% 42%` }} />}
       {/* The fade starts at 56%, not 30%: the picture should fill the cover and stop just above the
           title block. Earlier the photograph was washed out from a third of the way down. */}
-      {hero && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 56%, hsl(38 65% 98% / 0.88) 72%, hsl(38 65% 98%) 80%, hsl(38 65% 98%) 100%)" }} />}
+      {hero && !heroFailed && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 56%, hsl(38 65% 98% / 0.88) 72%, hsl(38 65% 98%) 80%, hsl(38 65% 98%) 100%)" }} />}
       <img src={logo} alt="Aziza Home" style={{ position: "absolute", top: 62, left: 70, width: 147, height: 147, objectFit: "contain" }} />
       <div style={{ position: "absolute", left: 70, right: 70, bottom: 58 }}>
         <p className="ppd-eyebrow">Interior design proposal</p>
