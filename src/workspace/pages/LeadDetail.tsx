@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DriveLink } from "../DriveLink";
-import { useBrief, useCreateBrief, useLead, useLeadBudgets, useMembers, useUpdateLead } from "../queries";
+import { useBrief, useCreateBrief, useLead, useLeadBudgets, useMembers, useRequestDesignForPackage, useUpdateLead } from "../queries";
 import { useWorkspace } from "../WorkspaceProvider";
 import { blankBrief } from "../briefSchema";
 import type { BriefStatus } from "../briefWorkflow";
@@ -91,6 +91,20 @@ const LeadDetail = () => {
   const canConvert = member?.role === "gm" || member?.role === "sales";
   const canStartBrief = member?.role === "gm" || (!!member && lead.sales_id === member.user_id);
 
+  // Sold from a package, client confirmed, now they want real renders. 0057 opens the design gate.
+  const requestDesign = useRequestDesignForPackage();
+  const askForRenders = async () => {
+    if (!lead) return;
+    try {
+      const r = await requestDesign.mutateAsync({ leadId: lead.id });
+      toast.success(r.status === "Assigned"
+        ? `Sent to the designer with the ${r.items}-item list`
+        : `Sent to the GM to assign a designer — ${r.items} items`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not request the renders");
+    }
+  };
+
   const startBrief = async () => {
     if (!member) return;
     try {
@@ -167,6 +181,21 @@ const LeadDetail = () => {
               <p className="text-sm text-muted-foreground">From a package now, or from the designer's work for a serious client.</p>
             </div>
             <Button asChild variant="outline"><Link to={`/workspace/proposals/${lead.id}`}>Proposal</Link></Button>
+          </div>
+        )}
+        {brief && (brief.extra as { package?: boolean } | null)?.package === true
+          && (member?.role === "gm" || lead.sales_id === member?.user_id) && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-foreground">Mood board &amp; renders</p>
+              <p className="text-sm text-muted-foreground">
+                This was sold from a package, so the proposal uses catalog photography. Ask design for a mood
+                board and renders of this unit — the item list that was sold goes to the designer with it.
+              </p>
+            </div>
+            <Button variant="outline" disabled={requestDesign.isPending} onClick={askForRenders}>
+              {requestDesign.isPending ? "Requesting…" : "Ask design for renders"}
+            </Button>
           </div>
         )}
         {brief || briefStage ? (

@@ -305,6 +305,23 @@ export const useAssignBrief = () => {
 };
 
 /**
+ * Sales sold from a package, the client confirmed, and now they want a real mood board and renders.
+ * Opens the design gate on a package lead: the brief drops its package short-circuit, inherits the
+ * item list that was actually sold, and rejoins the design queue. See 0057.
+ */
+export const useRequestDesignForPackage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { leadId: string }) => {
+      const { data, error } = await supabase.rpc("ws_request_design_for_package" as never, { _lead: v.leadId } as never);
+      fail(error);
+      return data as unknown as { status: string; items: number };
+    },
+    onSettled: (_d, _e, v) => invalidateBrief(qc, v.leadId),
+  });
+};
+
+/**
  * The client's money. `leads.budget` lost its column grant on 2026-10-19 — Veronica: the designer
  * interface "shouldn't be able to see the contract value" — so it travels only through these two
  * RPCs, which answer the GM and the lead's own sales owner. For a designer the map is simply empty
