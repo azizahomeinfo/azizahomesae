@@ -56,6 +56,9 @@ const CSS = `
 .ctr-indent { padding-left: 18px; font-weight: 500; }
 .ctr-clause { break-inside: avoid; orphans: 3; widows: 3; margin: 12px 0; }
 .ctr-small { font-size: inherit; }
+/* Terms negotiated for one client print blue so they can see what moved from the standard agreement.
+   print-color-adjust keeps the colour on paper, where the rest of the document is black. */
+.ctr-amend { color: #1a56db; font-weight: 500; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .ctr-goods { width: 100%; border-collapse: collapse; font-size: 12.3px; color: hsl(var(--foreground)); margin: 8px 0 10px; }
 .ctr-goods tr { break-inside: avoid; }
 .ctr-goods th { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 6px 10px; text-align: left; }
@@ -113,6 +116,18 @@ export const GoodsTable = ({ rows }: { rows: GoodsRow[] }) => (
 );
 
 /** The agreement as an ordered list of blocks. Clauses never split; the goods table splits by row. */
+/**
+ * Clause text wrapped in [[double brackets]] prints blue — the amendments agreed with one client,
+ * so they can see at a glance what differs from the standard agreement. Everything outside the
+ * markers prints as normal. Sales sees the raw markers in the clause editor, which is the point:
+ * they are explicit, not invisible formatting.
+ */
+const amendMarks = (text: string): ReactNode[] =>
+  text.split(/(\[\[[\s\S]*?\]\])/g).map((part, i) =>
+    part.startsWith("[[") && part.endsWith("]]")
+      ? <span key={i} className="ctr-amend">{part.slice(2, -2)}</span>
+      : <span key={i}>{part}</span>);
+
 export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
   const m = contractMoney(d);
   const proj = projectLabel(d);
@@ -152,7 +167,7 @@ export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
       const n = i + 2;
       if (c.key === "price") {
         return b(c.id, <div className="ctr-clause ctr-pay ctr-small">
-          <p><b>{n}. {c.title}.</b> {priceSentence(d)} {paymentSentence(d)} {fillClause(c.body, d)}</p>
+          <p><b>{n}. {c.title}.</b> {priceSentence(d)} {paymentSentence(d)} {amendMarks(fillClause(c.body, d))}</p>
           <div className="ctr-strip">
             <div><span className="ctr-label">Total incl. VAT</span><b>{aedWhole(m.total)}</b></div>
             <div><span className="ctr-label">{m.dep}% on signing</span><b>{aedWhole(m.depA)}</b></div>
@@ -161,7 +176,7 @@ export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
           </div>
         </div>);
       }
-      return b(c.id, <div className="ctr-clause ctr-small"><p style={{ whiteSpace: "pre-line" }}><b>{n}. {c.title}.</b> {fillClause(c.body, d)}</p></div>);
+      return b(c.id, <div className="ctr-clause ctr-small"><p style={{ whiteSpace: "pre-line" }}><b>{n}. {c.title}.</b> {amendMarks(fillClause(c.body, d))}</p></div>);
     }),
     b("sign", <div className="ctr-sign">
       <p>{SIGNATURE_COPY.sig}</p>
