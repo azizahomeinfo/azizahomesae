@@ -357,7 +357,19 @@ const ProposalDoc = () => {
   const pkgDrift = isPackage && !pkgCosting && !!current && (groups ?? []).length > 0 && itemListDiff(current.itemList, groups ?? []).differs;
   const designOk = isPackage || (design?.status === "Accepted" && current?.designId === design.id);
   const quoteOk = isPackage ? pkgBelow.length === 0 && !pkgCosting && !pkgDrift : !!quote && current?.quoteVersion === quote.version;
-  const designText = isPackage ? `catalog package · ${current?.pkg?.style ?? ""}` : !design ? "waiting for designer" : design.status === "Accepted" ? `V${design.version} accepted` : `V${design.version} shared — accept it to finalise`;
+  /**
+   * This named the LATEST design, not the one this revision was built from. With proposal V4 carrying
+   * design V2 while design V3 sat unsubmitted, the chip read "V2 accepted" with no hint the two were
+   * different things — and once a newer design is accepted it would claim "V3 accepted" on a revision
+   * still showing V2's renders. Name the revision's own design, and say so when a newer one exists.
+   */
+  const builtOnV = current?.designVersion ?? null;
+  const designText = isPackage ? `catalog package · ${current?.pkg?.style ?? ""}`
+    : !design ? "waiting for designer"
+    : builtOnV && design.version !== builtOnV
+      ? `built on design V${builtOnV} — design V${design.version} ${design.status === "Accepted" ? "accepted" : "shared"}, refresh to use it`
+      : design.status === "Accepted" ? `V${design.version} accepted`
+      : `V${design.version} shared — accept it to finalise`;
   const quoteText = isPackage
     ? (pkgDrift ? "items changed — send them to the FF&E list for the designer to cost"
       : pkgCosting ? (costing?.status === "Returned" ? "with the designer — checking the costs of your item changes" : "with the GM — setting the final price")
@@ -603,7 +615,10 @@ const ProposalDoc = () => {
               value={row.id} onChange={(e) => { setSelectedId(e.target.value); setDraft(null); }}>
               {proposals.map((p) => (
                 <option key={p.id} value={p.id}>
-                  V{p.version} · {p.status}{p.doc.investment.options[0] ? ` · AED ${Number(p.doc.investment.options[0].amount).toLocaleString()}` : ""}{p.doc.source === "package" && p.doc.designId ? " · new design" : ""}
+                  {/* Proposal versions and design versions are separate counters — a re-quote makes a new
+                      proposal version without touching the design — so each revision names the design it
+                      carries. Without it V4 reading "design V2" looked like a bug (Veronica, 2026-11-17). */}
+                  V{p.version} · {p.status}{p.doc.investment.options[0] ? ` · AED ${Number(p.doc.investment.options[0].amount).toLocaleString()}` : ""}{p.doc.designVersion ? ` · design V${p.doc.designVersion}` : p.doc.source === "package" ? " · package" : ""}{p.doc.source === "package" && p.doc.designId ? " · new design" : ""}
                 </option>
               ))}
             </select>
