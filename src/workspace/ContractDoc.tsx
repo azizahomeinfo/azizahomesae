@@ -30,7 +30,7 @@ import { shortDate } from "./format";
 import {
   CATEGORIES, CONTRACT_UNIT_TYPES, EMIRATES, SIGNATURE_COPY, bankFor, emirateOf, footerLeft, sellerFor, USE_TYPES, aedWhole, buildContract, contractFromProposal, contractMoney, sectionsAsGroups, fillClause, makeSection,
   newClause, newItem, paymentSentence, preflight, priceSentence, projectLabel, standardClauses, templateFor,
-  type ContractDocument, type CSection,
+  type Clause, type ContractDocument, type CSection,
 } from "./contractModel";
 
 const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
@@ -117,16 +117,19 @@ export const GoodsTable = ({ rows }: { rows: GoodsRow[] }) => (
 
 /** The agreement as an ordered list of blocks. Clauses never split; the goods table splits by row. */
 /**
- * Clause text wrapped in [[double brackets]] prints blue — the amendments agreed with one client,
- * so they can see at a glance what differs from the standard agreement. Everything outside the
- * markers prints as normal. Sales sees the raw markers in the clause editor, which is the point:
- * they are explicit, not invisible formatting.
+ * Paragraphs listed in clause.amendedParas print blue — the terms negotiated with this client, so
+ * they can see what differs from the standard agreement. The flag lives on the clause rather than
+ * as markers inside the text, so the clause editor shows clean prose with no symbols in it.
  */
-const amendMarks = (text: string): ReactNode[] =>
-  text.split(/(\[\[[\s\S]*?\]\])/g).map((part, i) =>
-    part.startsWith("[[") && part.endsWith("]]")
-      ? <span key={i} className="ctr-amend">{part.slice(2, -2)}</span>
-      : <span key={i}>{part}</span>);
+const clauseParagraphs = (c: Clause, d: ContractDocument, lead: ReactNode): ReactNode[] => {
+  const amended = new Set(c.amendedParas ?? []);
+  return fillClause(c.body, d).split(/\n\n+/).map((para, i) => (
+    <p key={i} style={{ whiteSpace: "pre-line" }}>
+      {i === 0 && lead}
+      {amended.has(i) ? <span className="ctr-amend">{para}</span> : para}
+    </p>
+  ));
+};
 
 export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
   const m = contractMoney(d);
@@ -167,7 +170,7 @@ export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
       const n = i + 2;
       if (c.key === "price") {
         return b(c.id, <div className="ctr-clause ctr-pay ctr-small">
-          <p><b>{n}. {c.title}.</b> {priceSentence(d)} {paymentSentence(d)} {amendMarks(fillClause(c.body, d))}</p>
+          {clauseParagraphs(c, d, <><b>{n}. {c.title}.</b> {priceSentence(d)} {paymentSentence(d)} </>)}
           <div className="ctr-strip">
             <div><span className="ctr-label">Total incl. VAT</span><b>{aedWhole(m.total)}</b></div>
             <div><span className="ctr-label">{m.dep}% on signing</span><b>{aedWhole(m.depA)}</b></div>
@@ -176,7 +179,7 @@ export const contractBlocks = (d: ContractDocument): ContractBlock[] => {
           </div>
         </div>);
       }
-      return b(c.id, <div className="ctr-clause ctr-small"><p style={{ whiteSpace: "pre-line" }}><b>{n}. {c.title}.</b> {amendMarks(fillClause(c.body, d))}</p></div>);
+      return b(c.id, <div className="ctr-clause ctr-small">{clauseParagraphs(c, d, <><b>{n}. {c.title}.</b> </>)}</div>);
     }),
     b("sign", <div className="ctr-sign">
       <p>{SIGNATURE_COPY.sig}</p>

@@ -7,7 +7,13 @@ import type { ItemGroup } from "./proposalModel";
 export interface CItem { id: string; item: string; qty: string }
 export interface CSection { id: string; title: string; items: CItem[] }
 /** key marks the two structural clauses (2 Delivery, 3 Purchase Price) — they can't be deleted. */
-export interface Clause { id: string; key?: "delivery" | "price"; title: string; body: string }
+export interface Clause {
+  id: string; key?: "delivery" | "price"; title: string; body: string;
+  /** Indices of the paragraphs in `body` that were negotiated with this client; they print blue so
+   *  the client sees what differs from the standard agreement. Held as data rather than markers in
+   *  the text, so the clause editor shows clean prose (Veronica, 2026-11-18). */
+  amendedParas?: number[];
+}
 
 export interface ContractDocument {
   v: 1;
