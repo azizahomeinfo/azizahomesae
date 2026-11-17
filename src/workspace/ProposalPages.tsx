@@ -309,6 +309,11 @@ const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: P
       <p className="ppd-eyebrow">Everything included</p>
       <h2 className="ppd-serif" style={{ fontSize: 36, letterSpacing: "0.04em", lineHeight: 1.05 }}>{s.title}</h2>
     </div>
+    {/* Heavier than the rows beneath it on purpose: this is the line the client must not skim past.
+        Its height is reserved by ITEMS_NOTE_WEIGHT so it cannot push rows off the sheet. */}
+    {s.note && (
+      <p style={{ margin: "-6px 0 18px", fontSize: 11.5, lineHeight: 1.5, fontWeight: 700, color: "var(--pp-ink)" }}>{s.note}</p>
+    )}
     <div className="ppd-colgrid" style={{ flex: "1 1 auto", minHeight: 0, gridTemplateColumns: `repeat(${s.withInvest ? 4 : 3}, minmax(0, 1fr))` }}>
       {splitColumns(s.groups, s.withInvest ? 4 : 3).map((col, c) => (
         <div key={c} className="ppd-col">

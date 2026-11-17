@@ -76,6 +76,9 @@ export interface ProposalDocument {
   toggles: { floorPlan: boolean; moodBoard: boolean; itemList: boolean; investment: boolean; combine: boolean | null };
   /** Small line at the foot of every picture page (render pages and mood board). */
   imagesNote: string;
+  /** A statement printed above the item list, in bold — material or scope the client must not miss,
+   *  e.g. what the customised cabinets are made of. First item-list page only. */
+  itemsNote?: string | null;
   finalAt: string | null;
 }
 
@@ -310,6 +313,10 @@ export const itemFontOf = (doc: { itemFont?: number | null }) => {
 };
 
 export const ITEM_PAGE_CAP = 114;
+/** What the bold note above the item list costs the page, in the same weight units as a row.
+ *  Two printed lines plus its rule and margins; reserved on every item page, which under-fills a
+ *  second page rather than risking an overflow on the first. */
+export const ITEMS_NOTE_WEIGHT = 5;
 /** ~30 characters fit on one line of a 3-column item list; a longer name wraps and costs another row. */
 const ITEM_CHARS_PER_LINE = 30;
 const itemRows = (item: string, scale = 1) => Math.max(1, Math.ceil(item.length / (ITEM_CHARS_PER_LINE / scale)));
@@ -398,7 +405,7 @@ export type Sheet =
   | { kind: "cover" }
   | { kind: "floor" }
   | { kind: "area"; eyebrow: string; title: string; desc: string | null; images: DocImage[] }
-  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean; dense: boolean; scale: number }
+  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean; dense: boolean; scale: number; note?: string | null }
   | { kind: "invest" };
 
 export const layoutSheets = (doc: ProposalDocument) => {
@@ -438,17 +445,21 @@ export const layoutSheets = (doc: ProposalDocument) => {
   // Try the roomier dense setting too: a list a little over the normal cap still belongs on one page
   // with the price rather than spilling into an "Item list 2 of 2".
   const scale = itemFontOf(doc);
-  const combinedTry = showItems && showInvest ? paginateItems(groups, combinedDensePageCap(options) / scale, scale) : null;
+  const itemsNote = doc.itemsNote?.trim() || "";
+  // The note takes room from the page it prints on, so take it off the caps before paginating —
+  // otherwise it pushes the last rows off the sheet.
+  const noteCost = itemsNote ? ITEMS_NOTE_WEIGHT : 0;
+  const combinedTry = showItems && showInvest ? paginateItems(groups, combinedDensePageCap(options) / scale - noteCost, scale) : null;
   const guess = !!combinedTry?.fits;
   const combine = showItems && showInvest && (doc.toggles.combine ?? guess);
   const useTry = combine && combinedTry?.fits ? combinedTry : null;
-  const { pages } = useTry ?? paginateItems(groups, ITEM_PAGE_CAP / scale, scale);
+  const { pages } = useTry ?? paginateItems(groups, ITEM_PAGE_CAP / scale - noteCost, scale);
   const dense = !!useTry && useTry.usedWeight > combinedPageCap(options) / scale;
   if (showItems) {
     pages.forEach((g, k) => sheets.push({
       kind: "items", title: pages.length > 1 ? `Item list · ${k + 1} of ${pages.length}` : "Item list",
       groups: g, withInvest: combine && k === pages.length - 1,
-      dense: dense && k === pages.length - 1, scale,
+      dense: dense && k === pages.length - 1, scale, note: k === 0 ? itemsNote || null : null,
     }));
   }
   if (showInvest && !combine) sheets.push({ kind: "invest" });

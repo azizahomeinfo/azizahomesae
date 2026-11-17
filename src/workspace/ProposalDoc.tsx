@@ -1094,6 +1094,11 @@ const ProposalDoc = () => {
             </RailSection>
 
             <RailSection title="Item list">
+              <Field label="Note above the item list (printed in bold)">
+                <Textarea rows={3} value={d.itemsNote ?? ""} placeholder="e.g. All customised cabinets are Danube MDF melamine; colour chosen by the client."
+                  onChange={(e) => change({ ...d, itemsNote: e.target.value })} />
+              </Field>
+              <p className="text-xs text-muted-foreground">Shown once, above the first page of the list. Leave empty to hide it.</p>
               {/* Type size for the printed list. Bigger type fits fewer rows per page, so the list
                   simply runs onto another page — the page caps divide by the same scale. */}
               <Field label="Type size on the printed list">
