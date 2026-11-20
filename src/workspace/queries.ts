@@ -8,12 +8,14 @@ export type Lead = Omit<T["leads"]["Row"], "budget">;
 export type LeadInsert = T["leads"]["Insert"];
 export type LeadUpdate = T["leads"]["Update"];
 export type Comment = Pick<T["comments"]["Row"], "id" | "lead_id" | "project_id" | "author_id" | "body" | "mentions" | "created_at">;
-export type MemberLite = Pick<T["workspace_members"]["Row"], "user_id" | "full_name" | "role" | "title" | "active">;
+export type MemberLite = Pick<T["workspace_members"]["Row"], "user_id" | "full_name" | "role" | "second_role" | "title" | "active">;
 
 const LEAD_COLS =
   "id, ref, name, phone, email, property, building, location, unit_type, size, handover_status, exp_handover, use_type, target_date, scope, style, refs, floor_plan, source, sales_id, designer_id, status, last_contact, next_follow, notes, lost_reason, converted_project_id, is_demo, created_by, created_at, updated_at, closed_at, drive_url";
 const COMMENT_COLS = "id, lead_id, project_id, author_id, body, mentions, created_at";
-const MEMBER_COLS = "user_id, full_name, role, title, active";
+// second_role is here so a designer who also coordinates (Suha) can be picked as a coordinator;
+// workspace_members is column-granted, so a column left out of this list is invisible to the app.
+const MEMBER_COLS = "user_id, full_name, role, second_role, title, active";
 
 export const keys = {
   leads: ["ws", "leads"] as const,

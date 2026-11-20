@@ -14,6 +14,7 @@ import {
   BriefTab, ChangesTab, ComingSoon, DesignTab, DriveFolderField, DrawingsChecklist, FilesTab, IssuesTab, OverviewTab, SignedContractCard, SnaggingTab, TasksTab, TimelineTab,
 } from "../ProjectTabs";
 import AssignDesigner from "../AssignDesigner";
+import AssignCoordinator from "../AssignCoordinator";
 import { Team } from "./Projects";
 import { FfeTab, ProcurementTab } from "../FfeTab";
 import { ProjectSiteDetails } from "../CoordinatorCountdown";
@@ -138,6 +139,7 @@ const ProjectDetail = () => {
       </section>
 
       <AssignDesigner projectId={project.id} designerId={project.designer_id} />
+      <AssignCoordinator projectId={project.id} coordinatorId={project.coordinator_id} />
       <DriveFolderField project={project} />
       <SignedContractCard project={project} />
       <DrawingsChecklist project={project} />

@@ -438,6 +438,22 @@ export const useAssignDesigner = () => {
     onSettled: () => qc.invalidateQueries({ queryKey: ["ws"] }),
   });
 };
+/**
+ * GM-only (enforced in the DB, which also refuses anyone who can't do a coordinator job). Until
+ * 2026-11-20 nothing in the app called ws_assign_project_coordinator: every project kept whichever
+ * coordinator ws_convert_lead picked at conversion, and changing it meant a hand-written SQL update.
+ */
+export const useAssignCoordinator = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { projectId: string; coordinatorId: string | null }) => {
+      const { error } = await supabase.rpc("ws_assign_project_coordinator", { _project: v.projectId, _coordinator: v.coordinatorId as string });
+      fail(error);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["ws"] }),
+  });
+};
+
 export const SIGNED_CONTRACT = "Signed contract";
 export const SALES_PROPOSAL = "Proposal";
 /** Sales/GM-only categories (enforced by project_files policies); never drive drawing tasks. Stable keys. */
