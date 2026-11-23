@@ -110,7 +110,12 @@ const Cover = ({ doc, url }: { doc: ProposalDocument; url: Url }) => {
         objectPosition: `${Math.round((c.heroX ?? 0.5) * 100)}% 42%` }} />}
       {/* The fade starts at 56%, not 30%: the picture should fill the cover and stop just above the
           title block. Earlier the photograph was washed out from a third of the way down. */}
-      {hero && !heroFailed && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 56%, hsl(38 65% 98% / 0.88) 72%, hsl(38 65% 98%) 80%, hsl(38 65% 98%) 100%)" }} />}
+      {/* The first two stops are the page colour at zero alpha, NOT `transparent`. `transparent` is
+          rgba(0,0,0,0), and a renderer that interpolates it without premultiplying fades it through
+          opaque BLACK — which printed Stella's cover as a black rectangle down to the 56% stop while
+          the picture underneath was perfectly fine (2026-11-23). Naming the colour removes the
+          ambiguity; on screen it looks identical. */}
+      {hero && !heroFailed && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, hsl(38 65% 98% / 0) 0%, hsl(38 65% 98% / 0) 56%, hsl(38 65% 98% / 0.88) 72%, hsl(38 65% 98%) 80%, hsl(38 65% 98%) 100%)" }} />}
       <img src={logo} alt="Aziza Home" style={{ position: "absolute", top: 62, left: 70, width: 147, height: 147, objectFit: "contain" }} />
       <div style={{ position: "absolute", left: 70, right: 70, bottom: 58 }}>
         <p className="ppd-eyebrow">Interior design proposal</p>
