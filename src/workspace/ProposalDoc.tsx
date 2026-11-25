@@ -341,6 +341,9 @@ const ProposalDoc = () => {
   /* ---- gate ---- */
   // Package proposals: no designer, and the price list (less any discount the GM approved) is the floor.
   const isPackage = current?.source === "package";
+  /** Deliberately without renders: the floor plan and the item list. Nothing to wait on from design,
+   *  so the design gate is satisfied — but the GM quotation is still required, like any other. */
+  const noDesign = current?.source === "nodesign";
   const pkgLayout = packageLayoutFor(lead.unit_type).layout;
   const pkgUnits = Math.max(1, Number(current?.pkg?.units) || 1);
   const pkgFloor = (label: string) => {
@@ -355,7 +358,7 @@ const ProposalDoc = () => {
   // Package item changes: sent to the FF&E list → designer checks costs → GM quotes. Until then, no download.
   const pkgCosting = isPackage && !!costing && (costing.status === "Returned" || costing.status === "Submitted");
   const pkgDrift = isPackage && !pkgCosting && !!current && (groups ?? []).length > 0 && itemListDiff(current.itemList, groups ?? []).differs;
-  const designOk = isPackage || (design?.status === "Accepted" && current?.designId === design.id);
+  const designOk = isPackage || noDesign || (design?.status === "Accepted" && current?.designId === design.id);
   const quoteOk = isPackage ? pkgBelow.length === 0 && !pkgCosting && !pkgDrift : !!quote && current?.quoteVersion === quote.version;
   /**
    * This named the LATEST design, not the one this revision was built from. With proposal V4 carrying
@@ -365,6 +368,7 @@ const ProposalDoc = () => {
    */
   const builtOnV = current?.designVersion ?? null;
   const designText = isPackage ? `catalog package · ${current?.pkg?.style ?? ""}`
+    : noDesign ? "no renders — floor plan and item list only"
     : !design ? "waiting for designer"
     : builtOnV && design.version !== builtOnV
       ? `built on design V${builtOnV} — design V${design.version} ${design.status === "Accepted" ? "accepted" : "shared"}, refresh to use it`
@@ -409,6 +413,25 @@ const ProposalDoc = () => {
       toast.success(`Proposal V${nextVersion} created`);
     } catch (e) { toast.error(errMsg(e, "Could not generate proposal")); }
   };
+  /**
+   * No renders at all: the floor plan sales uploads plus the item list. Everything else is the normal
+   * route — the FF&E goes to the designer to cost and the GM to price — so the quotation gates this
+   * proposal exactly as it gates a designed one (Veronica, 2026-11-25).
+   */
+  const generateNoDesign = async () => {
+    try {
+      const doc: ProposalDocument = {
+        ...buildDocument({ lead: { ...lead, budget: leadBudget }, design: null, quote, groups: groups ?? [] }),
+        source: "nodesign",
+      };
+      const nextVersion = proposals.reduce((m, p) => Math.max(m, p.version), 0) + 1;
+      const id = await create.mutateAsync({ leadId: lead.id, doc, by: member.user_id, nextVersion });
+      synced.current = id; setSelectedId(id); setDraft(null); setNotices([]); setNewOpen(false);
+      toast.success(quote
+        ? `Proposal V${nextVersion} created — add the floor plan and send it`
+        : `Proposal V${nextVersion} created — the prices are placeholders until the GM quotes the FF&E`);
+    } catch (e) { toast.error(errMsg(e, "Could not create the proposal")); }
+  };
   const generatePackage = async (choice: PackageChoice) => {
     try {
       const doc = buildPackageDocument({ lead, choice });
@@ -420,7 +443,8 @@ const ProposalDoc = () => {
   };
   const newProposalDialog = (
     <NewProposalDialog open={newOpen} onOpenChange={setNewOpen} lead={lead} design={design ?? null} pending={create.isPending}
-      onDesigner={() => { void generate().then(() => setNewOpen(false)); }} onPackage={(c) => void generatePackage(c)} />
+      onDesigner={() => { void generate().then(() => setNewOpen(false)); }} onPackage={(c) => void generatePackage(c)}
+      onNoDesign={() => void generateNoDesign()} />
   );
   // "Aziza Home Proposal - Client - Building" as the suggested PDF name.
   const proposalFile = docFileName("Proposal", lead.name, lead.building || lead.property);
@@ -618,7 +642,7 @@ const ProposalDoc = () => {
                   {/* Proposal versions and design versions are separate counters — a re-quote makes a new
                       proposal version without touching the design — so each revision names the design it
                       carries. Without it V4 reading "design V2" looked like a bug (Veronica, 2026-11-17). */}
-                  V{p.version} · {p.status}{p.doc.investment.options[0] ? ` · AED ${Number(p.doc.investment.options[0].amount).toLocaleString()}` : ""}{p.doc.designVersion ? ` · design V${p.doc.designVersion}` : p.doc.source === "package" ? " · package" : ""}{p.doc.source === "package" && p.doc.designId ? " · new design" : ""}
+                  V{p.version} · {p.status}{p.doc.investment.options[0] ? ` · AED ${Number(p.doc.investment.options[0].amount).toLocaleString()}` : ""}{p.doc.designVersion ? ` · design V${p.doc.designVersion}` : p.doc.source === "package" ? " · package" : p.doc.source === "nodesign" ? " · no renders" : ""}{p.doc.source === "package" && p.doc.designId ? " · new design" : ""}
                 </option>
               ))}
             </select>

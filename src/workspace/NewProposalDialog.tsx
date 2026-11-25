@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Palette, PencilRuler } from "lucide-react";
+import { Check, FileText, Palette, PencilRuler } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -11,18 +11,21 @@ import {
 } from "./packageCatalog";
 
 /**
- * Two ways to make a proposal:
+ * Three ways to make a proposal:
  *  1. Involve a designer — the serious, on-budget client: renders and FF&E from the designer, price from the GM.
  *  2. From a package — sales alone, in minutes: a catalog style, the tiers to offer, the price list. Good for
  *     checking the client is aligned before any design work; lower prices go to the GM for approval.
+ *  3. Without a design — no renders, just the floor plan sales uploads and the item list. The FF&E still goes
+ *     designer -> GM, so the price is a real quotation and not a list price.
  */
-export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, onDesigner, onPackage }: {
+export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, onDesigner, onPackage, onNoDesign }: {
   open: boolean; onOpenChange: (o: boolean) => void;
   lead: { id: string; unit_type: string | null };
   design: { version: number; status: string } | null;
   pending: boolean;
   onDesigner: () => void;
   onPackage: (c: PackageChoice) => void;
+  onNoDesign: () => void;
 }) => {
   const [mode, setMode] = useState<"pick" | "package">("pick");
   const [style, setStyle] = useState<StyleSlug>("japandi");
@@ -45,7 +48,7 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
         </DialogHeader>
 
         {mode === "pick" ? (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <button type="button" onClick={() => setMode("package")}
               className="space-y-2 rounded-[var(--radius)] border border-border p-4 text-left hover:border-primary hover:bg-primary/5">
               <Palette className="h-5 w-5 text-primary" />
@@ -65,6 +68,12 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
                 </p>
               )}
             </div>
+            <button type="button" onClick={onNoDesign} disabled={pending}
+              className="space-y-2 rounded-[var(--radius)] border border-border p-4 text-left hover:border-primary hover:bg-primary/5 disabled:opacity-60">
+              <FileText className="h-5 w-5 text-primary" />
+              <p className="font-medium">Without a design</p>
+              <p className="text-sm text-muted-foreground">No renders — the floor plan you upload and the item list. The FF&amp;E still goes to the designer to cost and the GM to price, so the quote is a real one.</p>
+            </button>
           </div>
         ) : (
           <div className="space-y-5">

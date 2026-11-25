@@ -51,7 +51,9 @@ export interface ProposalDocument {
   v: 2;
   /** "package": made by sales from the design catalog, no designer — prices are the price list, floored by the
    *  GM (ws_proposal_price_guard). Absent/"design": the designer's renders and the GM's quotation. */
-  source?: "design" | "package";
+  /** "nodesign": sales made it without renders — the floor plan and the item list only. The FF&E
+   *  still goes designer -> GM for the quotation, so the price is as real as any other proposal. */
+  source?: "design" | "package" | "nodesign";
   pkg?: { style: string; layout: string; tiers: string[]; units?: number };
   designId: string | null;
   designVersion: number | null;
