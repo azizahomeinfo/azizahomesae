@@ -18,7 +18,7 @@ import {
  *  3. Without a design — no renders, just the floor plan sales uploads and the item list. The FF&E still goes
  *     designer -> GM, so the price is a real quotation and not a list price.
  */
-export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, onDesigner, onPackage, onNoDesign }: {
+export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, onDesigner, onPackage, onNoDesign, ffeRowCount, briefItemCount }: {
   open: boolean; onOpenChange: (o: boolean) => void;
   lead: { id: string; unit_type: string | null };
   design: { version: number; status: string } | null;
@@ -26,6 +26,10 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
   onDesigner: () => void;
   onPackage: (c: PackageChoice) => void;
   onNoDesign: () => void;
+  /** Rows on the lead's FF&E list — what the designer costs. Zero means the no-design route has nothing to price. */
+  ffeRowCount: number;
+  /** Items on the requirement brief, to tell "no brief yet" apart from "brief written, list not built". */
+  briefItemCount: number;
 }) => {
   const [mode, setMode] = useState<"pick" | "package">("pick");
   const [style, setStyle] = useState<StyleSlug>("japandi");
@@ -68,12 +72,20 @@ export const NewProposalDialog = ({ open, onOpenChange, lead, design, pending, o
                 </p>
               )}
             </div>
-            <button type="button" onClick={onNoDesign} disabled={pending}
-              className="space-y-2 rounded-[var(--radius)] border border-border p-4 text-left hover:border-primary hover:bg-primary/5 disabled:opacity-60">
+            <div className={cn("space-y-2 rounded-[var(--radius)] border p-4", ffeRowCount ? "border-border" : "border-dashed border-border")}>
               <FileText className="h-5 w-5 text-primary" />
               <p className="font-medium">Without a design</p>
               <p className="text-sm text-muted-foreground">No renders — the floor plan you upload and the item list. The FF&amp;E still goes to the designer to cost and the GM to price, so the quote is a real one.</p>
-            </button>
+              {ffeRowCount ? (
+                <Button size="sm" onClick={onNoDesign} disabled={pending}>{pending ? "Generating…" : `Generate from the ${ffeRowCount}-item list`}</Button>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {briefItemCount
+                    ? `No FF&E list yet. The brief has ${briefItemCount} items — the designer or the GM builds the list from it, then it is costed and priced.`
+                    : "No FF&E list yet. Fill in the requirement brief first — that is the list the designer costs and the GM prices."}
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-5">

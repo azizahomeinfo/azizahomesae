@@ -419,6 +419,12 @@ const ProposalDoc = () => {
    * proposal exactly as it gates a designed one (Veronica, 2026-11-25).
    */
   const generateNoDesign = async () => {
+    if (!ffeRowCount) {
+      toast.error(briefItemCount
+        ? "No FF&E list on this lead yet. The designer or the GM builds it from the requirement brief — then they cost it and the GM sets the price."
+        : "No FF&E list on this lead yet. Fill in the requirement brief first — that is the list the designer costs.");
+      return;
+    }
     try {
       const doc: ProposalDocument = {
         ...buildDocument({ lead: { ...lead, budget: leadBudget }, design: null, quote, groups: groups ?? [] }),
@@ -441,10 +447,21 @@ const ProposalDoc = () => {
       toast.success(`Package proposal V${nextVersion} created — edit the items, then Finalise & download`);
     } catch (e) { toast.error(errMsg(e, "Could not create the proposal")); }
   };
+  /**
+   * The no-design route has nothing to offer until the FF&E list exists: it IS the list the designer
+   * costs and the GM prices (useProposalItems reads ffe_items). Sales cannot create it — ws_seed_ffe
+   * is GM-or-designer only — so the dialog has to say who to ask rather than make an empty proposal.
+   */
+  const ffeRowCount = (groups ?? []).reduce((n, g) => n + g.items.length, 0);
+  const briefFfe = (brief?.ffe ?? []) as { items?: unknown[] }[];
+  const briefItemCount = Array.isArray(briefFfe)
+    ? briefFfe.reduce((n, sec) => n + (Array.isArray(sec?.items) ? sec.items.length : 0), 0)
+    : 0;
+
   const newProposalDialog = (
     <NewProposalDialog open={newOpen} onOpenChange={setNewOpen} lead={lead} design={design ?? null} pending={create.isPending}
       onDesigner={() => { void generate().then(() => setNewOpen(false)); }} onPackage={(c) => void generatePackage(c)}
-      onNoDesign={() => void generateNoDesign()} />
+      onNoDesign={() => void generateNoDesign()} ffeRowCount={ffeRowCount} briefItemCount={briefItemCount} />
   );
   // "Aziza Home Proposal - Client - Building" as the suggested PDF name.
   const proposalFile = docFileName("Proposal", lead.name, lead.building || lead.property);
