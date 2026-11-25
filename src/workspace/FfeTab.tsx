@@ -44,6 +44,12 @@ export interface FfeContext {
   salesId: string | null;
   /** A catalog-package lead: no design, so the list goes to the GM on its own ("Submit to GM"). */
   pkg?: boolean;
+  /**
+   * A brief lead the client wants no design for — "just a quote" (Mehdi / L-1110). With no renders there is
+   * nothing for "Submit design package" to carry, so the costed list goes to the GM on its own, exactly as a
+   * package lead's does. Once any design version exists this is false again and the two travel together.
+   */
+  noDesign?: boolean;
 }
 
 const errMsg = (e: unknown, f: string) => (e instanceof Error ? e.message : f);
@@ -1084,12 +1090,12 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
           {applyBtn}
           {/* The first submission goes with the renders ("Submit design package"). After that the list alone can go back
               to the GM: when the GM returned it, or to re-quote (e.g. a supplier price changed) — no new design version needed. */}
-          {ctx.pkg && canSubmit && status !== "Submitted" && (
+          {(ctx.pkg || ctx.noDesign) && canSubmit && status !== "Submitted" && (
             <Button size="sm" disabled={submitPkg.isPending} onClick={sendPkg}>
-              {submitPkg.isPending ? "Submitting…" : status === "Draft" ? "Submit to GM" : "Resubmit to GM"}
+              {submitPkg.isPending ? "Submitting…" : status === "Draft" ? (ctx.pkg ? "Submit to GM" : "Submit FF&E to GM") : "Resubmit to GM"}
             </Button>
           )}
-          {!ctx.pkg && canSubmit && (status === "Returned" || status === "Quoted") && (
+          {!ctx.pkg && !ctx.noDesign && canSubmit && (status === "Returned" || status === "Quoted") && (
             <Button size="sm" disabled={transition.isPending}
               onClick={() => {
                 const uncosted = rows.filter((r) => r.unit_cost == null).length;
@@ -1107,11 +1113,14 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
         {ctx.pkg && (role === "designer" || isGm) && !readOnly && status === "Draft" && (
           <p className="text-sm text-muted-foreground">A catalog package: check the items and give every one a unit cost ("Apply standard prices" fills what the price book knows), then press "Submit to GM". The GM sets the final price and sales get it in the proposal automatically.</p>
         )}
-        {!ctx.pkg && role === "designer" && status === "Draft" && (
+        {ctx.noDesign && (role === "designer" || isGm) && !readOnly && status === "Draft" && (
+          <p className="text-sm text-muted-foreground">This client asked for no design — just a quote. Give every item a unit cost ("Apply standard prices" fills what the price book knows), then press "Submit FF&E to GM". The GM sets the final price and sales get it in the proposal automatically. Upload renders on the Renders tab instead if the client does want a design.</p>
+        )}
+        {!ctx.pkg && !ctx.noDesign && role === "designer" && status === "Draft" && (
           <p className="text-sm text-muted-foreground">Specify every item for this design — supplier, quantity, dimensions and unit cost. A purchase link is optional: most trade suppliers are bought by phone or WhatsApp. The list goes to the GM together with your renders when you press "Submit design package" on the Renders tab; every item needs a unit cost.</p>
         )}
         {(role === "designer" || isGm) && !readOnly && status === "Submitted" && (
-          <p className="text-sm text-muted-foreground">{ctx.pkg ? "With the GM for the final price. Changes you make now reach the GM's view straight away." : "With the GM for pricing. You can still adjust and resubmit — use \"Resubmit design package\" on the Renders tab."}</p>
+          <p className="text-sm text-muted-foreground">{ctx.pkg || ctx.noDesign ? "With the GM for the final price. Changes you make now reach the GM's view straight away." : "With the GM for pricing. You can still adjust and resubmit — use \"Resubmit design package\" on the Renders tab."}</p>
         )}
         {role === "designer" && status === "Returned" && (
           <p className="text-sm text-muted-foreground">This list was sent back for costing. Fix the costing and resubmit it — the design doesn't need to be shared again.</p>
