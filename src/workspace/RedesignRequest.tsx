@@ -37,16 +37,21 @@ export const RedesignDialog = ({ open, onOpenChange, leadId, leadName, proposalI
   const rooms = useRooms(leadId, pages, open);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [overall, setOverall] = useState("");
+  // Items the client wants added, dropped or swapped. They belong in the SAME request as the renders:
+  // the designer returns one package and ffe_costings_pairs_design refuses to let the list go alone
+  // while the new version is still a draft (Veronica, 2026-11-26).
+  const [items, setItems] = useState("");
   const paths = rooms.flatMap((r) => r.paths).filter((p) => !p.toLowerCase().endsWith(".pdf") && !isCatalogPath(p));
   const { data: urls } = useSignedUrls(open ? paths : []);
   const req = useRequestRedesign();
   // The designer reads it as one note, organised by room, in the client's order.
   const feedback = [
     ...rooms.map((r) => [r.title, notes[r.title]?.trim()] as const).filter(([, n]) => n).map(([title, n]) => `${title}:\n${n}`),
+    ...(items.trim() ? [`Items to add, drop or change:\n${items.trim()}`] : []),
     ...(overall.trim() ? [`Overall:\n${overall.trim()}`] : []),
   ].join("\n\n");
   const send = () => req.mutate({ leadId, feedback, proposalId }, {
-    onSuccess: () => { toast.success("Sent to the designer — you'll be notified when the new version is shared"); setNotes({}); setOverall(""); onOpenChange(false); },
+    onSuccess: () => { toast.success("Sent to the designer — the new renders and the item list come back together"); setNotes({}); setOverall(""); setItems(""); onOpenChange(false); },
     onError: (e) => toast.error(errMsg(e, "Could not send the redesign request")),
   });
   return (
@@ -56,7 +61,8 @@ export const RedesignDialog = ({ open, onOpenChange, leadId, leadName, proposalI
           <DialogTitle>Client wants changes · {leadName}</DialogTitle>
           <DialogDescription>
             Go through the renders the client saw{proposalVersion ? ` in proposal V${proposalVersion}` : ""} and note what should change in each room — leave a room empty if it's fine.
-            The designer gets a new design version with your notes and a task; when they share it, accept it and save the proposal as a new revision (the GM re-prices FF&amp;E changes first).
+            This is the whole request: the renders <em>and</em> the item changes. The designer returns both together in one package — they can't send the item list on its own while the new version is unfinished.
+            The GM only re-prices if the items actually changed; otherwise the quotation you have still stands.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-5">
@@ -80,9 +86,15 @@ export const RedesignDialog = ({ open, onOpenChange, leadId, leadName, proposalI
           ))}
           {!rooms.length && <p className="text-sm text-muted-foreground">No renders to show yet — write the client's feedback below.</p>}
           <section className="space-y-2">
+            <h3 className="text-[11px] uppercase tracking-[0.22em] text-primary">Items to add, drop or change</h3>
+            <p className="text-xs text-muted-foreground">Things the client asked for that a drawing may not show — an extra lamp, a bigger dining table, drop the balcony set. The designer costs them and they travel back with the renders.</p>
+            <Textarea rows={3} value={items} onChange={(e) => setItems(e.target.value.slice(0, 3000))} aria-label="Items to add, drop or change"
+              placeholder="e.g. add a floor lamp in the bedroom, drop the balcony set, swap the 4-seat dining for 6" />
+          </section>
+          <section className="space-y-2">
             <h3 className="text-[11px] uppercase tracking-[0.22em] text-primary">Anything else</h3>
             <Textarea rows={3} value={overall} onChange={(e) => setOverall(e.target.value.slice(0, 3000))} aria-label="Other feedback"
-              placeholder="Overall style, layout, budget, items to add or drop…" />
+              placeholder="Overall style, layout, budget, timing…" />
           </section>
         </div>
         <DialogFooter>
