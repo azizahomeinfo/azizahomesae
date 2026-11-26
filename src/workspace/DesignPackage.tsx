@@ -607,6 +607,10 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const rendersScrollRef = useKeepScroll(open ? `design:${leadId}:renders` : null);
   // Live checklist mirroring ws_submit_design_package, so the gap is visible while uploading, not after pressing Submit.
   const { data: pkgImages = [] } = useDesignImages(open && selected?.status === "Draft" ? selected.id : undefined);
+  // Images on the LATEST version specifically (not whichever the designer is looking at): an unsubmitted
+  // draft that already has renders is the half-finished redesign that must travel with the FF&E list.
+  const { data: latestDraftImages = [] } = useDesignImages(open && latest?.status === "Draft" ? latest.id : undefined);
+  const pendingDesign = latest?.status === "Draft" && latestDraftImages.length > 0 ? latest.version : null;
   const { data: pkgItems = [] } = useFfeItems(open && selected?.status === "Draft" ? leadOwner(leadId) : undefined, member?.role !== "sales");
   const nRenders = pkgImages.filter((i) => /render/i.test(i.kind)).length;
   const nMood = pkgImages.filter((i) => /mood/i.test(i.kind)).length;
@@ -751,6 +755,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
                   designerId: brief?.designer_id ?? lead.designer_id, salesId: lead.sales_id, pkg: pkgLead,
                   // No design version started: the client wants a quote only, so the list goes to the GM alone.
                   noDesign: !pkgLead && !isLoading && designs.length === 0,
+                  pendingDesign,
                 }}
               />
             ) : <p className="text-muted-foreground">Loading…</p>}

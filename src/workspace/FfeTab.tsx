@@ -45,6 +45,14 @@ export interface FfeContext {
   /** A catalog-package lead: no design, so the list goes to the GM on its own ("Submit to GM"). */
   pkg?: boolean;
   /**
+   * Version number of a design version still sitting as a Draft WITH images — the client's redesign is
+   * half-finished. While it is there the list may not go to the GM alone (ffe_costings_pairs_design
+   * refuses it): "Submit design package" on the Renders tab sends the renders and the list together, so
+   * the GM prices the list that matches the drawings. Null when nothing is being redesigned, and then
+   * the list alone is fine — items the client added that no drawing shows.
+   */
+  pendingDesign?: number | null;
+  /**
    * A brief lead the client wants no design for — "just a quote" (Mehdi / L-1110). With no renders there is
    * nothing for "Submit design package" to carry, so the costed list goes to the GM on its own, exactly as a
    * package lead's does. Once any design version exists this is false again and the two travel together.
@@ -1095,7 +1103,12 @@ export const FfeSheet = ({ ctx, readOnly = false, rowBorder }: { ctx: FfeContext
               {submitPkg.isPending ? "Submitting…" : status === "Draft" ? (ctx.pkg ? "Submit to GM" : "Submit FF&E to GM") : "Resubmit to GM"}
             </Button>
           )}
-          {!ctx.pkg && !ctx.noDesign && canSubmit && (status === "Returned" || status === "Quoted") && (
+          {!ctx.pkg && !ctx.noDesign && canSubmit && (status === "Returned" || status === "Quoted") && ctx.pendingDesign != null && (
+            <p className="text-xs text-muted-foreground">
+              Design V{ctx.pendingDesign} is still a draft — send it and this list together with &ldquo;Submit design package&rdquo; on the Renders tab.
+            </p>
+          )}
+          {!ctx.pkg && !ctx.noDesign && canSubmit && (status === "Returned" || status === "Quoted") && ctx.pendingDesign == null && (
             <Button size="sm" disabled={transition.isPending}
               onClick={() => {
                 const uncosted = rows.filter((r) => r.unit_cost == null).length;
