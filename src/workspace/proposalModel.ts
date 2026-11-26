@@ -81,6 +81,13 @@ export interface ProposalDocument {
   /** A statement printed above the item list, in bold — material or scope the client must not miss,
    *  e.g. what the customised cabinets are made of. First item-list page only. */
   itemsNote?: string | null;
+  /**
+   * Where that note prints. "top" is the original: a line the client must read before the list, such as
+   * Christian's cabinet material. "bottom" puts it under the last page, which is where a note ABOUT the
+   * list belongs — Ewan's "Option B includes the motorised curtain sheer" is a footnote to the items,
+   * not a heading over them (Veronica, 2026-11-26).
+   */
+  itemsNotePos?: "top" | "bottom";
   finalAt: string | null;
 }
 
@@ -414,7 +421,7 @@ export type Sheet =
   | { kind: "cover" }
   | { kind: "floor" }
   | { kind: "area"; eyebrow: string; title: string; desc: string | null; images: DocImage[] }
-  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean; dense: boolean; scale: number; note?: string | null }
+  | { kind: "items"; title: string; groups: ItemGroup[]; withInvest: boolean; dense: boolean; scale: number; note?: string | null; notePos?: "top" | "bottom" }
   | { kind: "invest" };
 
 export const layoutSheets = (doc: ProposalDocument) => {
@@ -455,6 +462,7 @@ export const layoutSheets = (doc: ProposalDocument) => {
   // with the price rather than spilling into an "Item list 2 of 2".
   const scale = itemFontOf(doc);
   const itemsNote = doc.itemsNote?.trim() || "";
+  const notePos = doc.itemsNotePos === "bottom" ? "bottom" : "top";
   // The note takes room from the page it prints on, so take it off the caps before paginating —
   // otherwise it pushes the last rows off the sheet.
   const noteCost = itemsNote ? ITEMS_NOTE_WEIGHT : 0;
@@ -468,7 +476,9 @@ export const layoutSheets = (doc: ProposalDocument) => {
     pages.forEach((g, k) => sheets.push({
       kind: "items", title: pages.length > 1 ? `Item list · ${k + 1} of ${pages.length}` : "Item list",
       groups: g, withInvest: combine && k === pages.length - 1,
-      dense: dense && k === pages.length - 1, scale, note: k === 0 ? itemsNote || null : null,
+      dense: dense && k === pages.length - 1, scale, notePos: notePos,
+      // Top: on the first page, before the rows. Bottom: under the last page, after them.
+      note: (notePos === "bottom" ? k === pages.length - 1 : k === 0) ? itemsNote || null : null,
     }));
   }
   if (showInvest && !combine) sheets.push({ kind: "invest" });

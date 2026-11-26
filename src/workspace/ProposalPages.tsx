@@ -316,7 +316,7 @@ const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: P
     </div>
     {/* Heavier than the rows beneath it on purpose: this is the line the client must not skim past.
         Its height is reserved by ITEMS_NOTE_WEIGHT so it cannot push rows off the sheet. */}
-    {s.note && (
+    {s.note && s.notePos !== "bottom" && (
       <p style={{ margin: "-6px 0 18px", fontSize: 11.5, lineHeight: 1.5, fontWeight: 700, color: "var(--pp-ink)" }}>{s.note}</p>
     )}
     <div className="ppd-colgrid" style={{ flex: "1 1 auto", minHeight: 0, gridTemplateColumns: `repeat(${s.withInvest ? 4 : 3}, minmax(0, 1fr))` }}>
@@ -331,6 +331,11 @@ const ItemsPage = ({ s, doc, n }: { s: Extract<Sheet, { kind: "items" }>; doc: P
         </div>
       ))}
     </div>
+    {/* A note ABOUT the list sits under it, above the price block — the client reads the rows, then the
+        caveat. Same weight as the top variant: ITEMS_NOTE_WEIGHT already reserved its height. */}
+    {s.note && s.notePos === "bottom" && (
+      <p style={{ margin: "16px 0 0", paddingTop: 12, borderTop: "1px solid var(--pp-line)", fontSize: 11.5, lineHeight: 1.5, fontWeight: 700, color: "var(--pp-ink)" }}>{s.note}</p>
+    )}
     {s.withInvest && <InvestTable doc={doc} />}
     <Foot client={doc.cover.client} n={n} />
   </div>
