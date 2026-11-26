@@ -338,13 +338,18 @@ export const useSubmitDesign = () => {
   const inv = useInvalidateAll();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { leadId: string; design: DesignRow; notify: NotifyTarget[] }) => {
+    mutationFn: async (v: { leadId: string; design: DesignRow; notify: (quoteKept: boolean) => NotifyTarget[] }) => {
       const { error } = await supabase.rpc("ws_submit_design_package", { _design: v.design.id });
       fail(error);
+      // One quote per revision round: when the costed list is exactly what the GM already priced, the
+      // RPC leaves the costing 'Quoted' instead of withdrawing it. Read it back so the people we notify
+      // are told the truth — "quotation needed" to the GM would be wrong when nothing needs re-pricing.
+      const { data: c } = await supabase.from("ffe_costings").select("status").eq("lead_id", v.leadId).maybeSingle();
+      const quoteKept = (c as { status?: string } | null)?.status === "Quoted";
       // The package is submitted at this point; a failed heads-up must not read as a failed submission.
       let notified = true;
-      try { await notify(v.notify); } catch { notified = false; }
-      return { ...v, notified };
+      try { await notify(v.notify(quoteKept)); } catch { notified = false; }
+      return { ...v, notified, quoteKept };
     },
     onSettled: (_d, _e, v) => { inv(v.leadId); qc.invalidateQueries({ queryKey: ["ws", "costing"] }); },
   });
@@ -391,12 +396,14 @@ export const useDecideDesign = () => {
   return useMutation({
     mutationFn: async (v: {
       leadId: string; designId: string; briefId: string; deciderId: string;
-      accept: boolean; reason?: string; feedback?: string; notify: NotifyTarget[];
+      accept: boolean; reason?: string; feedback?: string; acceptNote?: string; notify: NotifyTarget[];
     }) => {
       const now = new Date().toISOString();
       const { error } = await supabase.from("designs").update(
         v.accept
-          ? { status: "Accepted", decided_at: now, decided_by: v.deciderId }
+          // accept_note is why a GM accepted instead of the sales owner; ws_design_guard requires it on
+          // that path and it is shown to sales. Sales accepting their own lead send null.
+          ? { status: "Accepted", decided_at: now, decided_by: v.deciderId, accept_note: v.acceptNote?.trim() || null }
           : { status: "Rejected", decided_at: now, decided_by: v.deciderId, reject_reason: v.reason ?? null, feedback: v.feedback || null },
       ).eq("id", v.designId);
       fail(error);

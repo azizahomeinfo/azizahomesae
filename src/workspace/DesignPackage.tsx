@@ -569,6 +569,12 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
   const canReview = !viewOnly &&
     isLatest && selected.status === "Submitted" && member?.role !== "designer" && (isGm || (!!lead && lead.sales_id === me));
   const canResubmit = !viewOnly && isLatest && selected?.status === "Submitted" && (isGm || editable);
+  // Sales accept for the client, because sales are the ones showing it to them. The GM may still accept
+  // — Veronica keeps both a GM and a sales login — but has to say why, and sales are told (ws_design_guard).
+  const salesOwner = !!lead && lead.sales_id === me;
+  const acceptNeedsReason = isGm && !salesOwner;
+  const [acceptOpen, setAcceptOpen] = useState(false);
+  const [acceptNote, setAcceptNote] = useState("");
   const doResubmit = async () => {
     if (!selected) return;
     try {
@@ -647,16 +653,23 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     if (gaps.length) { setSubmitError(`Can't submit yet — ${gaps.map((g) => g.fix).join(" ")}`); return; }
     setSubmitError(null);
     const gmIds = members.filter((m) => m.role === "gm" && m.active).map((m) => m.user_id).filter((u) => u !== member.user_id);
-    const notify: NotifyTarget[] = [
+    // When the costed list is exactly what the GM already priced, this is a design-only resubmission:
+    // her quotation stands and telling her "quotation needed" would send her to price it twice.
+    const notify = (quoteKept: boolean): NotifyTarget[] => [
       ...gmIds.map((user_id) => ({ user_id, kind: "design", lead_id: lead.id,
-        title: `${member.full_name} submitted design package V${selected.version} for ${lead.name} — quotation needed` })),
+        title: quoteKept
+          ? `${member.full_name} submitted design package V${selected.version} for ${lead.name} — the list is unchanged, your quotation still stands`
+          : `${member.full_name} submitted design package V${selected.version} for ${lead.name} — quotation needed` })),
       ...(lead.sales_id && lead.sales_id !== member.user_id && !gmIds.includes(lead.sales_id)
-        ? [{ user_id: lead.sales_id, kind: "design", lead_id: lead.id, title: `${member.full_name} submitted design V${selected.version} for ${lead.name} — ready for your review` }]
+        ? [{ user_id: lead.sales_id, kind: "design", lead_id: lead.id,
+            title: `${member.full_name} submitted design V${selected.version} for ${lead.name} — ready for your review${quoteKept ? " (price unchanged)" : ""}` }]
         : []),
     ];
     try {
       const r = await submit.mutateAsync({ leadId, design: selected, notify });
-      toast.success(`V${selected.version} sent — design to sales, FF&E to the GM`);
+      toast.success(r.quoteKept
+        ? `V${selected.version} sent to sales — the list is unchanged, so the GM's quotation still stands`
+        : `V${selected.version} sent — design to sales, FF&E to the GM`);
       if (!r.notified) toast.warning("Submitted, but sales and the GM couldn't be notified — please tell them.");
     } catch (e) {
       // Inline and persistent: a refusal that fades away reads as a broken button.
@@ -673,11 +686,11 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
     });
   };
 
-  const doDecide = async (accept: boolean, reason?: string, feedback?: string) => {
+  const doDecide = async (accept: boolean, reason?: string, feedback?: string, note?: string) => {
     if (!selected || !brief || !lead || !member) return;
     const designer = selected.designer_id ?? brief.designer_id;
-    const notify: NotifyTarget[] =
-      designer && designer !== member.user_id
+    const notify: NotifyTarget[] = [
+      ...(designer && designer !== member.user_id
         ? [{
             user_id: designer, kind: "design", lead_id: lead.id,
             title: accept
@@ -685,12 +698,22 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
               : `${member.full_name} requested changes to design V${selected.version} for ${lead.name}`,
             body: accept ? null : [reason, feedback].filter(Boolean).join(" — "),
           }]
-        : [];
+        : []),
+      // The sales owner is the one who shows the client: if the GM accepted instead, say so and why.
+      ...(accept && note?.trim() && lead.sales_id && lead.sales_id !== member.user_id
+        ? [{ user_id: lead.sales_id, kind: "design", lead_id: lead.id,
+             title: `${member.full_name} accepted design V${selected.version} for ${lead.name} on your behalf`,
+             body: note.trim() }]
+        : []),
+    ];
     try {
       await decide.mutateAsync({
-        leadId, designId: selected.id, briefId: brief.id, deciderId: member.user_id, accept, reason, feedback, notify,
+        leadId, designId: selected.id, briefId: brief.id, deciderId: member.user_id, accept, reason, feedback,
+        acceptNote: note, notify,
       });
       setRejectOpen(false);
+      setAcceptOpen(false);
+      setAcceptNote("");
       toast.success(accept ? "Design accepted" : "Changes requested");
     } catch (e) {
       toast.error(errMsg(e, "Could not save the decision"));
@@ -881,7 +904,7 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
           {canReview && (
             <>
               <Button variant="outline" onClick={() => setRejectOpen(true)} disabled={decide.isPending}>Request changes</Button>
-              <Button onClick={() => doDecide(true)} disabled={decide.isPending}>Accept design</Button>
+              <Button onClick={() => (acceptNeedsReason ? setAcceptOpen(true) : doDecide(true))} disabled={decide.isPending}>Accept design</Button>
             </>
           )}
           {canStartNext && isLatest && (
@@ -921,6 +944,29 @@ const DesignPackage = ({ leadId, open, onOpenChange, viewOnly = false }: Props) 
         </DialogContent>
       </Dialog>
       <RejectDialog open={rejectOpen} onOpenChange={setRejectOpen} pending={decide.isPending} onConfirm={(r, f) => doDecide(false, r, f)} />
+      {/* The GM accepting instead of the sales owner: ws_design_guard requires the reason, and sales are told. */}
+      <Dialog open={acceptOpen} onOpenChange={(o) => { setAcceptOpen(o); if (!o) setAcceptNote(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Accept on sales' behalf</DialogTitle>
+            <DialogDescription>
+              {(members.find((m) => m.user_id === lead?.sales_id)?.full_name ?? "Sales")} normally accepts this, because they show it to the client. Say why you are accepting it yourself — they will be told, with your reason.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="accept-note">Reason</Label>
+            <Textarea id="accept-note" rows={3} value={acceptNote} autoFocus
+              placeholder="e.g. client approved it verbally on site"
+              onChange={(e) => setAcceptNote(e.target.value.slice(0, 500))} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAcceptOpen(false)}>Cancel</Button>
+            <Button onClick={() => doDecide(true, undefined, undefined, acceptNote)} disabled={!acceptNote.trim() || decide.isPending}>
+              {decide.isPending ? "Accepting…" : "Accept design"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {lead && <RedesignDialog open={redesignOpen} onOpenChange={setRedesignOpen} leadId={leadId} leadName={lead.name} />}
     </div>
   );
