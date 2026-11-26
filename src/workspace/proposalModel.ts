@@ -284,9 +284,16 @@ export const normalizeDoc = (raw: unknown): ProposalDocument => {
 /* ---------------- numbers ---------------- */
 
 export const money = (n: number) => `AED ${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+/**
+ * The two instalments are whole dirhams and always add up to the total: the down payment is rounded and
+ * the balance takes the remainder. A straight percentage gave fractions nobody can transfer — Ewan's
+ * 101,178 split 80,942.40 / 20,235.60 — and two rounded percentages can miss the total by a dirham.
+ * Veronica, 2026-11-26: "80% we make 80942, 20% we make 20236."
+ */
 export const priceLines = (amount: number, vat: number, down: number) => {
   const total = amount * (1 + vat / 100);
-  return { base: amount, vat: total - amount, total, down: total * (down / 100), balance: total * (1 - down / 100) };
+  const downAmount = Math.round(total * (down / 100));
+  return { base: amount, vat: total - amount, total, down: downAmount, balance: total - downAmount };
 };
 /** units > 1: a package priced for several identical apartments — say so wherever the price is shown. */
 export const investEyebrow = (n: number, units?: number) =>
