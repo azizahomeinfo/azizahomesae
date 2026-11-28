@@ -547,6 +547,7 @@ export interface HandoverCheck {
   note: string | null;
   checked_at: string | null;
   checked_by: string | null;
+  snag_id: string | null;
 }
 
 /**
@@ -560,7 +561,7 @@ export const useHandoverChecks = (projectId: string | undefined) =>
     enabled: !!projectId,
     queryFn: async () => {
       const { data, error } = await supabase.from("handover_checks")
-        .select("item_id, present, note, checked_at, checked_by").eq("project_id", projectId!);
+        .select("item_id, present, note, checked_at, checked_by, snag_id").eq("project_id", projectId!);
       fail(error);
       return (data ?? []) as HandoverCheck[];
     },
@@ -583,6 +584,42 @@ export const useTickHandoverCheck = () => {
       return v;
     },
     onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: fKeys.handoverChecks(v.projectId) }),
+  });
+};
+
+/**
+ * A line the designer cannot tick becomes a snag there and then, instead of a note someone has to
+ * notice later (Veronica, 2026-11-28). The snag carries the item and the reason, lands in the same snag
+ * list as everything else, and is linked back to the line so the handover check shows its reference and
+ * status — and so one line can't spawn a second snag while the first is still open.
+ */
+export const useRaiseSnagForItem = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      projectId: string; itemId: string; room: string; item: string; qty: number; reason: string;
+    }) => {
+      const reason = v.reason.trim();
+      if (!reason) throw new Error("Say what is wrong with it");
+      const { data: top, error: qErr } = await supabase.from("snags").select("ref_seq").eq("project_id", v.projectId)
+        .not("ref_seq", "is", null).order("ref_seq", { ascending: false }).limit(1);
+      fail(qErr);
+      const seq = (top?.[0]?.ref_seq ?? 0) + 1;
+      const { data: snag, error } = await supabase.from("snags").insert({
+        project_id: v.projectId, area: v.room, ref_seq: seq, ref: `S-${String(seq).padStart(2, "0")}`,
+        description: `${v.item}${v.qty > 1 ? ` × ${v.qty}` : ""} — ${reason}`,
+      }).select("id").single();
+      fail(error);
+      const { error: cErr } = await supabase.from("handover_checks")
+        .upsert({ project_id: v.projectId, item_id: v.itemId, present: false, note: reason, snag_id: snag!.id },
+                { onConflict: "item_id" });
+      fail(cErr);
+      return v;
+    },
+    onSettled: (_d, _e, v) => {
+      qc.invalidateQueries({ queryKey: fKeys.snags(v.projectId) });
+      qc.invalidateQueries({ queryKey: fKeys.handoverChecks(v.projectId) });
+    },
   });
 };
 

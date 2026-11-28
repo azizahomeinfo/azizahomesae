@@ -31,7 +31,7 @@ import DesignImagesView from "./DesignImagesView";
 import DesignStatusPill from "./DesignStatusPill";
 import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
-import { projectOwner, useFfeItems, useHandoverChecks, useSnags, useTickHandoverCheck } from "./ffeQueries";
+import { projectOwner, useFfeItems, useHandoverChecks, useRaiseSnagForItem, useSnags, useTickHandoverCheck } from "./ffeQueries";
 import { SnagList } from "./SnagList";
 import { CoordinatorCountdown } from "./CoordinatorCountdown";
 
@@ -383,8 +383,12 @@ const InventoryCheck = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), false);
   const { data: checks = [] } = useHandoverChecks(project.id);
+  const { data: snags = [] } = useSnags(project.id);
   const tick = useTickHandoverCheck();
+  const raise = useRaiseSnagForItem();
   const [noteFor, setNoteFor] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
+  const snagById = new Map(snags.map((sn) => [sn.id, sn]));
   const items = rows.filter((r) => !r.internal);
   const by = new Map(checks.map((c) => [c.item_id, c]));
   const present = items.filter((i) => by.get(i.id)?.present).length;
@@ -397,7 +401,7 @@ const InventoryCheck = ({ project }: { project: Project }) => {
       <p className="mb-3 text-sm text-muted-foreground">
         {missing === 0
           ? "Every item the client signed for is accounted for."
-          : `${missing} item${missing === 1 ? "" : "s"} still to check. Tick what is in the unit; add a note where something is damaged, the wrong finish or short.`}
+          : `${missing} item${missing === 1 ? "" : "s"} still to check. Tick what is in the unit; anything you can't tick becomes a snag on the list above.`}
       </p>
       <div className="space-y-4">
         {rooms.map((room) => {
@@ -410,6 +414,8 @@ const InventoryCheck = ({ project }: { project: Project }) => {
                 {inRoom.map((i) => {
                   const c = by.get(i.id);
                   const open = noteFor === i.id;
+                  const snag = c?.snag_id ? snagById.get(c.snag_id) : undefined;
+                  const qty = Number(i.qty ?? 0);
                   return (
                     <li key={i.id} className="py-2">
                       <div className="flex items-start gap-3">
@@ -419,23 +425,41 @@ const InventoryCheck = ({ project }: { project: Project }) => {
                             { onError: (e) => toast.error(errMsg(e, "Could not save the check")) })} />
                         <label htmlFor={`inv-${i.id}`} className="min-w-0 flex-1 text-sm">
                           <span className={cn(c?.present && "text-muted-foreground line-through")}>{i.item}</span>
-                          <span className="text-muted-foreground"> × {Number(i.qty ?? 0)}</span>
-                          {c?.note && <span className="block text-xs text-destructive">{c.note}</span>}
+                          <span className="text-muted-foreground"> × {qty}</span>
+                          {snag && (
+                            <span className="block text-xs">
+                              <span className={cn("font-medium", snag.status === "Verified" ? "text-muted-foreground" : "text-destructive")}>
+                                {snag.ref ?? "Snag"} · {snag.status}
+                              </span>
+                              {c?.note && <span className="text-muted-foreground"> — {c.note}</span>}
+                            </span>
+                          )}
+                          {!snag && c?.note && <span className="block text-xs text-destructive">{c.note}</span>}
                         </label>
-                        <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setNoteFor(open ? null : i.id)}>
-                          {c?.note ? "Edit note" : "Note"}
-                        </Button>
+                        {/* One snag per line: while it is open the button points at it instead of raising another. */}
+                        {!snag ? (
+                          <Button variant="ghost" size="sm" className="shrink-0" disabled={!!c?.present}
+                            onClick={() => { setReason(""); setNoteFor(open ? null : i.id); }}>
+                            Can&rsquo;t tick
+                          </Button>
+                        ) : (
+                          <span className="shrink-0 self-center text-xs text-muted-foreground">Snag raised</span>
+                        )}
                       </div>
-                      {open && member && (
-                        <div className="mt-2 flex gap-2 pl-7">
-                          <Input autoFocus defaultValue={c?.note ?? ""} placeholder="e.g. delivered scratched, wrong finish, 2 of 4 arrived"
-                            onKeyDown={(e) => {
-                              if (e.key !== "Enter") return;
-                              tick.mutate({ projectId: project.id, itemId: i.id, note: (e.target as HTMLInputElement).value, by: member.user_id },
-                                { onError: (err) => toast.error(errMsg(err, "Could not save the note")) });
-                              setNoteFor(null);
-                            }} />
-                          <Button size="sm" variant="outline" onClick={() => setNoteFor(null)}>Close</Button>
+                      {open && member && !snag && (
+                        <div className="mt-2 flex flex-wrap gap-2 pl-7">
+                          <Input autoFocus value={reason} className="min-w-[14rem] flex-1"
+                            placeholder="What is wrong? e.g. delivered scratched, wrong finish, 2 of 8 arrived"
+                            onChange={(e) => setReason(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter" && reason.trim()) (e.target as HTMLInputElement).blur(); }} />
+                          <Button size="sm" disabled={!reason.trim() || raise.isPending}
+                            onClick={() => raise.mutate(
+                              { projectId: project.id, itemId: i.id, room, item: i.item, qty, reason },
+                              { onSuccess: () => { toast.success("Snag raised"); setNoteFor(null); setReason(""); },
+                                onError: (e) => toast.error(errMsg(e, "Could not raise the snag")) })}>
+                            {raise.isPending ? "Raising…" : "Raise snag"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setNoteFor(null)}>Cancel</Button>
                         </div>
                       )}
                     </li>

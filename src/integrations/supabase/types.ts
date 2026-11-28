@@ -861,6 +861,7 @@ export type Database = {
           note: string | null
           present: boolean
           project_id: string
+          snag_id: string | null
           updated_at: string
         }
         Insert: {
@@ -871,6 +872,7 @@ export type Database = {
           note?: string | null
           present?: boolean
           project_id: string
+          snag_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -881,6 +883,7 @@ export type Database = {
           note?: string | null
           present?: boolean
           project_id?: string
+          snag_id?: string | null
           updated_at?: string
         }
         Relationships: [

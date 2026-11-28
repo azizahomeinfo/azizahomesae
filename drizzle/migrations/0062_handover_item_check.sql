@@ -36,3 +36,9 @@ grant select, insert, update, delete on public.handover_checks to authenticated;
 drop trigger if exists handover_checks_touch on public.handover_checks;
 create trigger handover_checks_touch before update on public.handover_checks
   for each row execute function public.touch_updated_at();
+
+-- A line the designer cannot tick raises a snag there and then, rather than leaving a note for someone
+-- to notice later (Veronica, 2026-11-28: "raise a snag automatically"). One snag per line while it is
+-- open; the handover check shows its reference and status.
+alter table public.handover_checks add column if not exists snag_id uuid references public.snags(id) on delete set null;
+comment on column public.handover_checks.snag_id is 'The snag raised because this line could not be ticked at handover. One per line; cleared if the snag is deleted.';
