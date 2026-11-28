@@ -30,7 +30,10 @@ const ALL_TABS = Object.keys(TAB_LABEL) as ProjectTab[];
 export const TABS_BY_ROLE: Record<WorkspaceRole, ProjectTab[]> = {
   gm: ALL_TABS,
   sales: ["overview", "brief", "timeline", "changes", "files"],
-  designer: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "files"],
+  // Snagging reached the designer on 2026-11-28: she specified the items, so she is the one who checks
+  // them against the contract when the unit is done ("from designer interface they need to check all
+  // item list and snagging"). It carries no money — a snag list, tick boxes and process labels.
+  designer: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "snagging", "files"],
   coordinator: ["overview", "brief", "design", "ffe", "procurement", "timeline", "tasks", "issues", "changes", "snagging", "files"],
 };
 

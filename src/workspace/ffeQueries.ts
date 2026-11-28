@@ -51,6 +51,7 @@ export const fKeys = {
   ffe: (owner: string) => ["ws", "ffe", owner] as const,
   costing: (owner: string) => ["ws", "costing", owner] as const,
   snags: (projectId: string) => ["ws", "snags", projectId] as const,
+  handoverChecks: (projectId: string) => ["ws", "handover-checks", projectId] as const,
 };
 
 const fail = (e: { message: string } | null) => {
@@ -536,6 +537,53 @@ export const inheritLeadFfe = async (leadId: string, projectId: string) => {
   fail(error);
   const { error: cErr } = await supabase.from("ffe_costings").update({ project_id: projectId }).eq("lead_id", leadId).is("project_id", null);
   fail(cErr);
+};
+
+/* ---------------- handover: the contract list, checked line by line ---------------- */
+
+export interface HandoverCheck {
+  item_id: string;
+  present: boolean;
+  note: string | null;
+  checked_at: string | null;
+  checked_by: string | null;
+}
+
+/**
+ * One row per item the client signed for, so "is everything there?" stops being a single tick on
+ * "Inventory list signed". Keyed on ffe_items.id, which is what ws_contract_sections builds the
+ * client's document from — so the checklist and the contract cannot drift apart.
+ */
+export const useHandoverChecks = (projectId: string | undefined) =>
+  useQuery({
+    queryKey: fKeys.handoverChecks(projectId ?? ""),
+    enabled: !!projectId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("handover_checks")
+        .select("item_id, present, note, checked_at, checked_by").eq("project_id", projectId!);
+      fail(error);
+      return (data ?? []) as HandoverCheck[];
+    },
+  });
+
+export const useTickHandoverCheck = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { projectId: string; itemId: string; present?: boolean; note?: string; by: string }) => {
+      const patch: T["handover_checks"]["Insert"] = { project_id: v.projectId, item_id: v.itemId };
+      if (v.present !== undefined) {
+        patch.present = v.present;
+        patch.checked_at = v.present ? new Date().toISOString() : null;
+        patch.checked_by = v.present ? v.by : null;
+      }
+      if (v.note !== undefined) patch.note = v.note.trim() || null;
+      // One row per item (unique on item_id), so ticking twice updates instead of duplicating.
+      const { error } = await supabase.from("handover_checks").upsert(patch, { onConflict: "item_id" });
+      fail(error);
+      return v;
+    },
+    onSettled: (_d, _e, v) => qc.invalidateQueries({ queryKey: fKeys.handoverChecks(v.projectId) }),
+  });
 };
 
 /* ---------------- snags ---------------- */

@@ -31,7 +31,7 @@ import DesignImagesView from "./DesignImagesView";
 import DesignStatusPill from "./DesignStatusPill";
 import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
-import { useSnags } from "./ffeQueries";
+import { projectOwner, useFfeItems, useHandoverChecks, useSnags, useTickHandoverCheck } from "./ffeQueries";
 import { SnagList } from "./SnagList";
 import { CoordinatorCountdown } from "./CoordinatorCountdown";
 
@@ -373,6 +373,83 @@ export const ChangesTab = ({ project }: { project: Project }) => {
 
 /* ---------------- snagging (handover checklist only) ---------------- */
 
+/**
+ * Every line the client signed for, ticked off on site. "Inventory list signed" used to be one checkbox
+ * standing in for a hundred items; this is the list itself, in contract order, with room for what is
+ * wrong with a line rather than only whether it is there (Veronica, 2026-11-28: "make sure when sales
+ * handover then all is there"). Internal rows are left out — the client never signed for those.
+ */
+const InventoryCheck = ({ project }: { project: Project }) => {
+  const { member } = useWorkspace();
+  const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), false);
+  const { data: checks = [] } = useHandoverChecks(project.id);
+  const tick = useTickHandoverCheck();
+  const [noteFor, setNoteFor] = useState<string | null>(null);
+  const items = rows.filter((r) => !r.internal);
+  const by = new Map(checks.map((c) => [c.item_id, c]));
+  const present = items.filter((i) => by.get(i.id)?.present).length;
+  const missing = items.length - present;
+  const rooms = [...new Map(items.map((i) => [i.room, true])).keys()];
+  if (isLoading) return <Card title="Inventory check"><p className="text-sm text-muted-foreground">Loading…</p></Card>;
+  if (!items.length) return <Card title="Inventory check"><p className="text-sm text-muted-foreground">No item list on this project yet.</p></Card>;
+  return (
+    <Card title={`Inventory check · ${present} of ${items.length}`}>
+      <p className="mb-3 text-sm text-muted-foreground">
+        {missing === 0
+          ? "Every item the client signed for is accounted for."
+          : `${missing} item${missing === 1 ? "" : "s"} still to check. Tick what is in the unit; add a note where something is damaged, the wrong finish or short.`}
+      </p>
+      <div className="space-y-4">
+        {rooms.map((room) => {
+          const inRoom = items.filter((i) => i.room === room);
+          const okRoom = inRoom.filter((i) => by.get(i.id)?.present).length;
+          return (
+            <section key={room}>
+              <h4 className="mb-1 text-[11px] uppercase tracking-[0.2em] text-primary">{room} · {okRoom} of {inRoom.length}</h4>
+              <ul className="divide-y divide-border">
+                {inRoom.map((i) => {
+                  const c = by.get(i.id);
+                  const open = noteFor === i.id;
+                  return (
+                    <li key={i.id} className="py-2">
+                      <div className="flex items-start gap-3">
+                        <Checkbox id={`inv-${i.id}`} className="mt-0.5" checked={!!c?.present} disabled={!member}
+                          onCheckedChange={(v) => member && tick.mutate(
+                            { projectId: project.id, itemId: i.id, present: v === true, by: member.user_id },
+                            { onError: (e) => toast.error(errMsg(e, "Could not save the check")) })} />
+                        <label htmlFor={`inv-${i.id}`} className="min-w-0 flex-1 text-sm">
+                          <span className={cn(c?.present && "text-muted-foreground line-through")}>{i.item}</span>
+                          <span className="text-muted-foreground"> × {Number(i.qty ?? 0)}</span>
+                          {c?.note && <span className="block text-xs text-destructive">{c.note}</span>}
+                        </label>
+                        <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setNoteFor(open ? null : i.id)}>
+                          {c?.note ? "Edit note" : "Note"}
+                        </Button>
+                      </div>
+                      {open && member && (
+                        <div className="mt-2 flex gap-2 pl-7">
+                          <Input autoFocus defaultValue={c?.note ?? ""} placeholder="e.g. delivered scratched, wrong finish, 2 of 4 arrived"
+                            onKeyDown={(e) => {
+                              if (e.key !== "Enter") return;
+                              tick.mutate({ projectId: project.id, itemId: i.id, note: (e.target as HTMLInputElement).value, by: member.user_id },
+                                { onError: (err) => toast.error(errMsg(err, "Could not save the note")) });
+                              setNoteFor(null);
+                            }} />
+                          <Button size="sm" variant="outline" onClick={() => setNoteFor(null)}>Close</Button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
+    </Card>
+  );
+};
+
 export const SnaggingTab = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const { data: items = [], isLoading } = useHandover(project.id);
@@ -381,11 +458,19 @@ export const SnaggingTab = ({ project }: { project: Project }) => {
   const tick = useTickHandover();
   // "Snag list closed" is satisfied automatically once there is at least one snag and all are verified.
   const snagsClosed = snags.length > 0 && snags.every((s) => s.status === "Verified");
-  const isAuto = (label: string) => label === "Snag list closed" && snagsClosed;
+  // "Inventory list signed" is the old one-tick stand-in for the whole list; now that every line is
+  // checked individually, it satisfies itself once nothing is outstanding.
+  const { data: invRows = [] } = useFfeItems(projectOwner(project.id), false);
+  const { data: invChecks = [] } = useHandoverChecks(project.id);
+  const invItems = invRows.filter((r) => !r.internal);
+  const invDone = invItems.length > 0 && invItems.every((i) => invChecks.some((c) => c.item_id === i.id && c.present));
+  const isAuto = (label: string) =>
+    (label === "Snag list closed" && snagsClosed) || (label === "Inventory list signed" && invDone);
   const done = items.filter((i) => i.done || isAuto(i.label)).length;
   return (
     <div className="space-y-4">
       <SnagList project={project} snags={snags} />
+      <InventoryCheck project={project} />
       <Card title={`Handover checklist · ${done} of ${items.length}`}>
         {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : (
           <ul className="divide-y divide-border">
@@ -399,7 +484,9 @@ export const SnaggingTab = ({ project }: { project: Project }) => {
                   <label htmlFor={`ho-${i.id}`} className="min-w-0 flex-1 text-sm">
                     <span className={cn(checked && "text-muted-foreground line-through")}>{i.label}</span>
                     {auto && !i.done ? (
-                      <span className="block text-xs text-muted-foreground">Automatically satisfied — every snag is verified</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {i.label === "Inventory list signed" ? "Automatically satisfied — every item on the list is accounted for" : "Automatically satisfied — every snag is verified"}
+                      </span>
                     ) : i.done && i.done_at && (
                       <span className="block text-xs text-muted-foreground">
                         {members.find((m) => m.user_id === i.done_by)?.full_name ?? "Someone"} · {shortDate(i.done_at)}

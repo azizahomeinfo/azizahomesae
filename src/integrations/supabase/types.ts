@@ -852,6 +852,54 @@ export type Database = {
         }
         Relationships: []
       }
+      handover_checks: {
+        Row: {
+          checked_at: string | null
+          checked_by: string | null
+          id: string
+          item_id: string
+          note: string | null
+          present: boolean
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string | null
+          checked_by?: string | null
+          id?: string
+          item_id: string
+          note?: string | null
+          present?: boolean
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string | null
+          checked_by?: string | null
+          id?: string
+          item_id?: string
+          note?: string | null
+          present?: boolean
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_checks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "ffe_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handover_checks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       handover_items: {
         Row: {
           done: boolean
