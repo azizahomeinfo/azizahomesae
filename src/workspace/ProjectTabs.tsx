@@ -400,7 +400,12 @@ const InventoryCheck = ({ project }: { project: Project }) => {
     if (!printing) return;
     const off = () => setPrinting(false);
     window.addEventListener("afterprint", off);
-    return () => window.removeEventListener("afterprint", off);
+    // afterprint is not guaranteed — it does not fire at all in some contexts, and Safari's print()
+    // can return before it. Without this the sheet stayed mounted and the button sat on "Preparing…"
+    // until the page was reloaded. The timer is long enough not to pull the sheet out from under a
+    // print dialog that is still open.
+    const bail = window.setTimeout(off, 30_000);
+    return () => { window.removeEventListener("afterprint", off); window.clearTimeout(bail); };
   }, [printing]);
   const items = rows.filter((r) => !r.internal);
   const by = new Map(checks.map((c) => [c.item_id, c]));
@@ -445,9 +450,7 @@ const InventoryCheck = ({ project }: { project: Project }) => {
           ? "Every item the client signed for is accounted for."
           : `${missing} item${missing === 1 ? "" : "s"} still to check. Tick what is in the unit; anything you can't tick becomes a snag on the list above.`}
         </p>
-        <Button size="sm" variant="outline" className="shrink-0" onClick={download} disabled={printing}>
-          {printing ? "Preparing…" : "Download checklist"}
-        </Button>
+        <Button size="sm" variant="outline" className="shrink-0" onClick={download}>Download checklist</Button>
       </div>
       <div className="space-y-4">
         {rooms.map((room) => {
