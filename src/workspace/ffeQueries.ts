@@ -542,7 +542,8 @@ export const inheritLeadFfe = async (leadId: string, projectId: string) => {
 /* ---------------- handover: the contract list, checked line by line ---------------- */
 
 export interface HandoverCheck {
-  item_id: string;
+  line_key: string;
+  item_id: string | null;
   present: boolean;
   note: string | null;
   checked_at: string | null;
@@ -561,7 +562,7 @@ export const useHandoverChecks = (projectId: string | undefined) =>
     enabled: !!projectId,
     queryFn: async () => {
       const { data, error } = await supabase.from("handover_checks")
-        .select("item_id, present, note, checked_at, checked_by, snag_id").eq("project_id", projectId!);
+        .select("line_key, item_id, present, note, checked_at, checked_by, snag_id").eq("project_id", projectId!);
       fail(error);
       return (data ?? []) as HandoverCheck[];
     },
@@ -570,16 +571,16 @@ export const useHandoverChecks = (projectId: string | undefined) =>
 export const useTickHandoverCheck = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { projectId: string; itemId: string; present?: boolean; note?: string; by: string }) => {
-      const patch: T["handover_checks"]["Insert"] = { project_id: v.projectId, item_id: v.itemId };
+    mutationFn: async (v: { projectId: string; lineKey: string; itemId?: string | null; present?: boolean; note?: string; by: string }) => {
+      const patch: T["handover_checks"]["Insert"] = { project_id: v.projectId, line_key: v.lineKey, item_id: v.itemId ?? null };
       if (v.present !== undefined) {
         patch.present = v.present;
         patch.checked_at = v.present ? new Date().toISOString() : null;
         patch.checked_by = v.present ? v.by : null;
       }
       if (v.note !== undefined) patch.note = v.note.trim() || null;
-      // One row per item (unique on item_id), so ticking twice updates instead of duplicating.
-      const { error } = await supabase.from("handover_checks").upsert(patch, { onConflict: "item_id" });
+      // One row per checklist line, so ticking twice updates instead of duplicating.
+      const { error } = await supabase.from("handover_checks").upsert(patch, { onConflict: "project_id,line_key" });
       fail(error);
       return v;
     },
@@ -597,7 +598,8 @@ export const useRaiseSnagForItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: {
-      projectId: string; itemId: string; room: string; item: string; qty: number; reason: string;
+      projectId: string; lineKey: string; itemId?: string | null;
+      room: string; item: string; qty: number; reason: string;
     }) => {
       const reason = v.reason.trim();
       if (!reason) throw new Error("Say what is wrong with it");
@@ -611,8 +613,9 @@ export const useRaiseSnagForItem = () => {
       }).select("id").single();
       fail(error);
       const { error: cErr } = await supabase.from("handover_checks")
-        .upsert({ project_id: v.projectId, item_id: v.itemId, present: false, note: reason, snag_id: snag!.id },
-                { onConflict: "item_id" });
+        .upsert({ project_id: v.projectId, line_key: v.lineKey, item_id: v.itemId ?? null,
+                  present: false, note: reason, snag_id: snag!.id },
+                { onConflict: "project_id,line_key" });
       fail(cErr);
       return v;
     },

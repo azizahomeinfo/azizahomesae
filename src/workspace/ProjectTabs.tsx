@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useBrief, useLead, useMembers } from "./queries";
+import { useLeadContracts } from "./contractQueries";
 import { useDesigns, useSignedUrls } from "./designQueries";
 import {
   useChangeRequests, useDecideCR, useHandover, useIssues, useProjectFiles, useProjectTasks, useRaiseCR,
@@ -382,9 +383,14 @@ export const ChangesTab = ({ project }: { project: Project }) => {
  * wrong with a line rather than only whether it is there (Veronica, 2026-11-28: "make sure when sales
  * handover then all is there"). Internal rows are left out — the client never signed for those.
  */
+/** lower(room)|lower(item): the same key the database stores, so a line is one line everywhere. */
+const lineKeyOf = (room: string, item: string) =>
+  `${room.trim().toLowerCase()}|${item.trim().toLowerCase()}`;
+
 const InventoryCheck = ({ project }: { project: Project }) => {
   const { member } = useWorkspace();
   const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), false);
+  const { data: contracts = [] } = useLeadContracts(project.lead_id ?? undefined);
   const { data: checks = [] } = useHandoverChecks(project.id);
   const { data: snags = [] } = useSnags(project.id);
   const { data: members = [] } = useMembers();
@@ -407,16 +413,35 @@ const InventoryCheck = ({ project }: { project: Project }) => {
     const bail = window.setTimeout(off, 30_000);
     return () => { window.removeEventListener("afterprint", off); window.clearTimeout(bail); };
   }, [printing]);
-  const items = rows.filter((r) => !r.internal);
-  const by = new Map(checks.map((c) => [c.item_id, c]));
-  const present = items.filter((i) => by.get(i.id)?.present).length;
+  const ffe = rows.filter((r) => !r.internal);
+  // The checklist is what the CLIENT SIGNED, not what procurement happens to hold. Every project with
+  // a contract had drifted from it, and in the dangerous direction too: Rohit's signed contract had 17
+  // lines that were never on the FF&E list, so they were never checked (Veronica, 2026-11-28).
+  const contract = contracts[0];
+  const cSections = (contract?.doc?.sections ?? []) as { title: string; items: { item: string; qty: string }[] }[];
+  const ffeByKey = new Map(ffe.map((r) => [lineKeyOf(r.room, r.item), r]));
+  type Line = { key: string; room: string; item: string; qty: number; itemId: string | null; extra?: boolean };
+  const fromContract: Line[] = cSections.flatMap((sec) =>
+    (sec.items ?? []).map((it) => {
+      const key = lineKeyOf(sec.title, it.item);
+      return { key, room: sec.title, item: it.item, qty: Number(it.qty) || 1, itemId: ffeByKey.get(key)?.id ?? null };
+    }));
+  const contractKeys = new Set(fromContract.map((l) => l.key));
+  // Bought and installed but never written into the contract: still check them, but kept apart so the
+  // distinction stays visible.
+  const asExtras: Line[] = ffe
+    .filter((r) => !contractKeys.has(lineKeyOf(r.room, r.item)))
+    .map((r) => ({ key: lineKeyOf(r.room, r.item), room: r.room, item: r.item, qty: Number(r.qty ?? 0), itemId: r.id, extra: true }));
+  const items: Line[] = contract ? [...fromContract, ...asExtras] : asExtras.map((l) => ({ ...l, extra: false }));
+  const by = new Map(checks.map((c) => [c.line_key, c]));
+  const present = items.filter((i) => by.get(i.key)?.present).length;
   const missing = items.length - present;
-  const rooms = [...new Map(items.map((i) => [i.room, true])).keys()];
+  const rooms = [...new Map(items.map((i) => [`${i.extra ? "1" : "0"}|${i.room}`, true])).keys()];
   const sheetRows: SheetRow[] = items.map((i) => {
-    const c = by.get(i.id);
+    const c = by.get(i.key);
     const sn = c?.snag_id ? snagById.get(c.snag_id) : undefined;
     return {
-      id: i.id, room: i.room, item: i.item, qty: Number(i.qty ?? 0),
+      id: i.key, room: i.extra ? `${i.room} · also in the unit` : i.room, item: i.item, qty: i.qty,
       present: !!c?.present, note: c?.note ?? null,
       snagRef: sn?.ref ?? null, snagStatus: sn?.status ?? null,
     };
@@ -429,13 +454,13 @@ const InventoryCheck = ({ project }: { project: Project }) => {
   };
 
   if (isLoading) return <Card title="Inventory check"><p className="text-sm text-muted-foreground">Loading…</p></Card>;
-  if (!items.length) return <Card title="Inventory check"><p className="text-sm text-muted-foreground">No item list on this project yet.</p></Card>;
+  if (!items.length) return <Card title="Inventory check"><p className="text-sm text-muted-foreground">No contract and no item list on this project yet.</p></Card>;
   return (
     <Card title={`Inventory check · ${present} of ${items.length}`}>
       {printing && (
         <div style={{ position: "fixed", left: "-200vw", top: 0 }} aria-hidden>
           <style>{PROPOSAL_CSS}</style>
-          <HandoverSheet source="FF&E list" rows={sheetRows}
+          <HandoverSheet source={contract ? "contract" : "FF&E list"} rows={sheetRows}
             facts={{
               client: project.name, code: project.code, unit: unitLabel(project.unit, project.property),
               unitType: project.unit_type, area: project.location, handover: project.handover_date,
@@ -446,35 +471,46 @@ const InventoryCheck = ({ project }: { project: Project }) => {
       )}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-        {missing === 0
-          ? "Every item the client signed for is accounted for."
-          : `${missing} item${missing === 1 ? "" : "s"} still to check. Tick what is in the unit; anything you can't tick becomes a snag on the list above.`}
+          {contract
+            ? `From the ${contract.status === "Draft" ? "draft " : ""}contract${contract.status === "Signed" ? " the client signed" : ""}. `
+            : "No contract on this project yet, so this is the FF&E list. "}
+          {missing === 0
+            ? "Everything is accounted for."
+            : `${missing} item${missing === 1 ? "" : "s"} still to check. Tick what is in the unit; anything you can't tick becomes a snag on the list above.`}
         </p>
         <Button size="sm" variant="outline" className="shrink-0" onClick={download}>Download checklist</Button>
       </div>
       <div className="space-y-4">
-        {rooms.map((room) => {
-          const inRoom = items.filter((i) => i.room === room);
-          const okRoom = inRoom.filter((i) => by.get(i.id)?.present).length;
+        {rooms.map((roomKey) => {
+          const extra = roomKey.startsWith("1|");
+          const room = roomKey.slice(2);
+          const inRoom = items.filter((i) => `${i.extra ? "1" : "0"}|${i.room}` === roomKey);
+          const okRoom = inRoom.filter((i) => by.get(i.key)?.present).length;
           return (
-            <section key={room}>
-              <h4 className="mb-1 text-[11px] uppercase tracking-[0.2em] text-primary">{room} · {okRoom} of {inRoom.length}</h4>
+            <section key={roomKey}>
+              <h4 className="mb-1 text-[11px] uppercase tracking-[0.2em] text-primary">
+                {room} · {okRoom} of {inRoom.length}
+                {extra && <span className="ml-2 normal-case tracking-normal text-muted-foreground">also in the unit, not on the contract</span>}
+              </h4>
               <ul className="divide-y divide-border">
                 {inRoom.map((i) => {
-                  const c = by.get(i.id);
-                  const open = noteFor === i.id;
+                  const c = by.get(i.key);
+                  const open = noteFor === i.key;
                   const snag = c?.snag_id ? snagById.get(c.snag_id) : undefined;
-                  const qty = Number(i.qty ?? 0);
+                  const qty = i.qty;
                   return (
-                    <li key={i.id} className="py-2">
+                    <li key={i.key} className="py-2">
                       <div className="flex items-start gap-3">
-                        <Checkbox id={`inv-${i.id}`} className="mt-0.5" checked={!!c?.present} disabled={!member}
+                        <Checkbox id={`inv-${i.key}`} className="mt-0.5" checked={!!c?.present} disabled={!member}
                           onCheckedChange={(v) => member && tick.mutate(
-                            { projectId: project.id, itemId: i.id, present: v === true, by: member.user_id },
+                            { projectId: project.id, lineKey: i.key, itemId: i.itemId, present: v === true, by: member.user_id },
                             { onError: (e) => toast.error(errMsg(e, "Could not save the check")) })} />
-                        <label htmlFor={`inv-${i.id}`} className="min-w-0 flex-1 text-sm">
+                        <label htmlFor={`inv-${i.key}`} className="min-w-0 flex-1 text-sm">
                           <span className={cn(c?.present && "text-muted-foreground line-through")}>{i.item}</span>
                           <span className="text-muted-foreground"> × {qty}</span>
+                          {!i.extra && !i.itemId && (
+                            <span className="ml-2 text-xs text-warning">not on the FF&amp;E list — nothing was bought for this line</span>
+                          )}
                           {snag && (
                             <span className="block text-xs">
                               <span className={cn("font-medium", snag.status === "Verified" ? "text-muted-foreground" : "text-destructive")}>
@@ -488,7 +524,7 @@ const InventoryCheck = ({ project }: { project: Project }) => {
                         {/* One snag per line: while it is open the button points at it instead of raising another. */}
                         {!snag ? (
                           <Button variant="ghost" size="sm" className="shrink-0" disabled={!!c?.present}
-                            onClick={() => { setReason(""); setNoteFor(open ? null : i.id); }}>
+                            onClick={() => { setReason(""); setNoteFor(open ? null : i.key); }}>
                             Can&rsquo;t tick
                           </Button>
                         ) : (
@@ -503,7 +539,7 @@ const InventoryCheck = ({ project }: { project: Project }) => {
                             onKeyDown={(e) => { if (e.key === "Enter" && reason.trim()) (e.target as HTMLInputElement).blur(); }} />
                           <Button size="sm" disabled={!reason.trim() || raise.isPending}
                             onClick={() => raise.mutate(
-                              { projectId: project.id, itemId: i.id, room, item: i.item, qty, reason },
+                              { projectId: project.id, lineKey: i.key, itemId: i.itemId, room, item: i.item, qty, reason },
                               { onSuccess: () => { toast.success("Snag raised"); setNoteFor(null); setReason(""); },
                                 onError: (e) => toast.error(errMsg(e, "Could not raise the snag")) })}>
                             {raise.isPending ? "Raising…" : "Raise snag"}

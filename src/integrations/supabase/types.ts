@@ -857,7 +857,8 @@ export type Database = {
           checked_at: string | null
           checked_by: string | null
           id: string
-          item_id: string
+          item_id: string | null
+          line_key: string
           note: string | null
           present: boolean
           project_id: string
@@ -868,7 +869,8 @@ export type Database = {
           checked_at?: string | null
           checked_by?: string | null
           id?: string
-          item_id: string
+          item_id?: string | null
+          line_key: string
           note?: string | null
           present?: boolean
           project_id: string
@@ -879,7 +881,8 @@ export type Database = {
           checked_at?: string | null
           checked_by?: string | null
           id?: string
-          item_id?: string
+          item_id?: string | null
+          line_key?: string
           note?: string | null
           present?: boolean
           project_id?: string
