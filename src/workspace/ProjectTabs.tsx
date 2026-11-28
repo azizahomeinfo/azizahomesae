@@ -419,18 +419,45 @@ const InventoryCheck = ({ project }: { project: Project }) => {
   // lines that were never on the FF&E list, so they were never checked (Veronica, 2026-11-28).
   const contract = contracts[0];
   const cSections = (contract?.doc?.sections ?? []) as { title: string; items: { item: string; qty: string }[] }[];
-  const ffeByKey = new Map(ffe.map((r) => [lineKeyOf(r.room, r.item), r]));
   type Line = { key: string; room: string; item: string; qty: number; itemId: string | null; extra?: boolean };
+  /**
+   * Pair each contract line with the FF&E row that fulfils it by ITEM NAME, preferring a row in the
+   * matching room. The room alone is not reliable: Rohit's contract says "Guest Bedroom 1" where his
+   * FF&E calls it "Guest Bedroom 1(Green)", and matching on room+item flagged all 28 of those lines as
+   * nothing-bought. Each row is consumed once, so two "Nightstands" lines take two rows.
+   */
+  const pool = new Map<string, typeof ffe>();
+  for (const r of ffe) {
+    const k = r.item.trim().toLowerCase();
+    pool.set(k, [...(pool.get(k) ?? []), r]);
+  }
+  const take = (section: string, item: string) => {
+    const k = item.trim().toLowerCase();
+    const list = pool.get(k);
+    if (!list?.length) return null;
+    const sec = section.trim().toLowerCase();
+    let at = list.findIndex((r) => r.room.trim().toLowerCase() === sec);
+    if (at < 0) at = list.findIndex((r) => {
+      const room = r.room.trim().toLowerCase();
+      return room.startsWith(sec) || sec.startsWith(room);
+    });
+    if (at < 0) at = 0;
+    const [row] = list.splice(at, 1);
+    if (!list.length) pool.delete(k);
+    return row;
+  };
   const fromContract: Line[] = cSections.flatMap((sec) =>
-    (sec.items ?? []).map((it) => {
-      const key = lineKeyOf(sec.title, it.item);
-      return { key, room: sec.title, item: it.item, qty: Number(it.qty) || 1, itemId: ffeByKey.get(key)?.id ?? null };
+    (sec.items ?? []).map((it, n) => {
+      const row = take(sec.title, it.item);
+      return {
+        // n keeps two identical lines in one section apart; the key is what the tick is stored under.
+        key: lineKeyOf(sec.title, it.item) + (n ? `#${n}` : ""),
+        room: sec.title, item: it.item, qty: Number(it.qty) || 1, itemId: row?.id ?? null,
+      };
     }));
-  const contractKeys = new Set(fromContract.map((l) => l.key));
-  // Bought and installed but never written into the contract: still check them, but kept apart so the
-  // distinction stays visible.
-  const asExtras: Line[] = ffe
-    .filter((r) => !contractKeys.has(lineKeyOf(r.room, r.item)))
+  // Whatever the contract never claimed: bought and installed, still worth checking, kept apart.
+  const asExtras: Line[] = [...pool.values()].flat()
+    .sort((a, b) => a.sort_order - b.sort_order)
     .map((r) => ({ key: lineKeyOf(r.room, r.item), room: r.room, item: r.item, qty: Number(r.qty ?? 0), itemId: r.id, extra: true }));
   const items: Line[] = contract ? [...fromContract, ...asExtras] : asExtras.map((l) => ({ ...l, extra: false }));
   const by = new Map(checks.map((c) => [c.line_key, c]));
