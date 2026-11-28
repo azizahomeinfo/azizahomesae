@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,9 @@ import DesignStatusPill from "./DesignStatusPill";
 import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
 import { projectOwner, useFfeItems, useHandoverChecks, useRaiseSnagForItem, useSnags, useTickHandoverCheck } from "./ffeQueries";
+import { PROPOSAL_CSS } from "./ProposalPages";
+import { HandoverSheet, type SheetRow } from "./HandoverSheet";
+import { docFileName, printAs } from "./printAs";
 import { SnagList } from "./SnagList";
 import { CoordinatorCountdown } from "./CoordinatorCountdown";
 
@@ -384,25 +387,68 @@ const InventoryCheck = ({ project }: { project: Project }) => {
   const { data: rows = [], isLoading } = useFfeItems(projectOwner(project.id), false);
   const { data: checks = [] } = useHandoverChecks(project.id);
   const { data: snags = [] } = useSnags(project.id);
+  const { data: members = [] } = useMembers();
   const tick = useTickHandoverCheck();
   const raise = useRaiseSnagForItem();
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const snagById = new Map(snags.map((sn) => [sn.id, sn]));
+  // The sheet is mounted only while printing: off-screen so nobody sees it, and torn down on
+  // afterprint. The print stylesheet pulls it back into flow and hides the rest of the workspace.
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    if (!printing) return;
+    const off = () => setPrinting(false);
+    window.addEventListener("afterprint", off);
+    return () => window.removeEventListener("afterprint", off);
+  }, [printing]);
   const items = rows.filter((r) => !r.internal);
   const by = new Map(checks.map((c) => [c.item_id, c]));
   const present = items.filter((i) => by.get(i.id)?.present).length;
   const missing = items.length - present;
   const rooms = [...new Map(items.map((i) => [i.room, true])).keys()];
+  const sheetRows: SheetRow[] = items.map((i) => {
+    const c = by.get(i.id);
+    const sn = c?.snag_id ? snagById.get(c.snag_id) : undefined;
+    return {
+      id: i.id, room: i.room, item: i.item, qty: Number(i.qty ?? 0),
+      present: !!c?.present, note: c?.note ?? null,
+      snagRef: sn?.ref ?? null, snagStatus: sn?.status ?? null,
+    };
+  });
+  const download = () => {
+    setPrinting(true);
+    // Two frames: the sheet has to be laid out before the print dialog captures the page.
+    requestAnimationFrame(() => requestAnimationFrame(() =>
+      printAs(docFileName("Handover Checklist", project.name, project.code))));
+  };
+
   if (isLoading) return <Card title="Inventory check"><p className="text-sm text-muted-foreground">Loading…</p></Card>;
   if (!items.length) return <Card title="Inventory check"><p className="text-sm text-muted-foreground">No item list on this project yet.</p></Card>;
   return (
     <Card title={`Inventory check · ${present} of ${items.length}`}>
-      <p className="mb-3 text-sm text-muted-foreground">
+      {printing && (
+        <div style={{ position: "fixed", left: "-200vw", top: 0 }} aria-hidden>
+          <style>{PROPOSAL_CSS}</style>
+          <HandoverSheet source="FF&E list" rows={sheetRows}
+            facts={{
+              client: project.name, code: project.code, unit: project.unit ?? project.property,
+              unitType: project.unit_type, area: project.location, handover: project.handover_date,
+              designer: members.find((m) => m.user_id === project.designer_id)?.full_name ?? null,
+              coordinator: members.find((m) => m.user_id === project.coordinator_id)?.full_name ?? null,
+            }} />
+        </div>
+      )}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
         {missing === 0
           ? "Every item the client signed for is accounted for."
           : `${missing} item${missing === 1 ? "" : "s"} still to check. Tick what is in the unit; anything you can't tick becomes a snag on the list above.`}
-      </p>
+        </p>
+        <Button size="sm" variant="outline" className="shrink-0" onClick={download} disabled={printing}>
+          {printing ? "Preparing…" : "Download checklist"}
+        </Button>
+      </div>
       <div className="space-y-4">
         {rooms.map((room) => {
           const inRoom = items.filter((i) => i.room === room);
