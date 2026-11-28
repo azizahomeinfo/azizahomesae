@@ -33,7 +33,7 @@ import type { BriefStatus } from "./briefWorkflow";
 import type { DesignStatus } from "./designSchema";
 import { projectOwner, useFfeItems, useHandoverChecks, useRaiseSnagForItem, useSnags, useTickHandoverCheck } from "./ffeQueries";
 import { PROPOSAL_CSS } from "./ProposalPages";
-import { HandoverSheet, type SheetRow } from "./HandoverSheet";
+import { HandoverSheet, unitLabel, type SheetRow } from "./HandoverSheet";
 import { docFileName, printAs } from "./printAs";
 import { SnagList } from "./SnagList";
 import { CoordinatorCountdown } from "./CoordinatorCountdown";
@@ -432,7 +432,7 @@ const InventoryCheck = ({ project }: { project: Project }) => {
           <style>{PROPOSAL_CSS}</style>
           <HandoverSheet source="FF&E list" rows={sheetRows}
             facts={{
-              client: project.name, code: project.code, unit: project.unit ?? project.property,
+              client: project.name, code: project.code, unit: unitLabel(project.unit, project.property),
               unitType: project.unit_type, area: project.location, handover: project.handover_date,
               designer: members.find((m) => m.user_id === project.designer_id)?.full_name ?? null,
               coordinator: members.find((m) => m.user_id === project.coordinator_id)?.full_name ?? null,

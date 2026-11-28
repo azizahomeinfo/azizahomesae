@@ -23,6 +23,19 @@ export interface SheetRow {
   snagStatus?: string | null;
 }
 
+/**
+ * projects.unit is the building ("Regalia Tower", "Vida Dubai Mall") and projects.property is free
+ * text that is sometimes the unit number and sometimes the type. Show whichever says more, or both.
+ */
+export const unitLabel = (unit: string | null, property: string | null) => {
+  const u = unit?.trim(), p = property?.trim();
+  if (!u) return p || null;
+  if (!p) return u;
+  if (p.toLowerCase().includes(u.toLowerCase())) return p;
+  if (u.toLowerCase().includes(p.toLowerCase())) return u;
+  return `${u} · ${p}`;
+};
+
 export interface SheetFacts {
   client: string;
   code: string;
